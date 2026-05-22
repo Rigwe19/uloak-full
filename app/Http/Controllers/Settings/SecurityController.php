@@ -43,6 +43,8 @@ class SecurityController extends Controller implements HasMiddleware
             $props['requiresConfirmation'] = Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm');
         }
 
+        $props['title'] = 'Security Settings - Uloak';
+
         return Inertia::render('settings/security', $props);
     }
 

@@ -1,46 +1,47 @@
-import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
-import { ShareQRCode } from '@/components/dashboard/share-qr-code';
-import { AvatarGroup, Badge, Button } from '@/components/dashboard/ui';
-import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
-import { dashboard } from '@/routes';
-import storiesRoutes from '@/routes/dashboard/stories';
 import { Head, Link } from '@inertiajs/react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
 import {
     ArrowLeft,
-    Clock,
+    Upload,
+    MoreHorizontal,
     Filter,
     Grid,
     List as ListIcon,
-    MoreHorizontal,
+    Clock,
+    User as UserIcon,
     Play,
     Plus,
-    Upload,
-    User as UserIcon
+    Calendar,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Button, Badge } from '@/components/dashboard/ui';
+import { dashboard } from '@/routes';
+import storiesRoutes from '@/routes/dashboard/stories';
+import { AnnexEventMemoryModal } from '@/components/dashboard/annex-event-memory-modal';
+import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
 
-interface RoomShowProps {
-    room: {
-        id: string;
+interface EventShowProps {
+    event: {
+        id: string | number;
         slug: string;
         name: string;
         description: string;
         thumbnail: string;
+        event_date?: string;
         stories_count: number;
-        members: any[];
+        creator?: {
+            name: string;
+            avatar?: string;
+        };
     };
     stories: any[];
 }
 
-export default function RoomShow({ room, stories = [] }: RoomShowProps) {
+export default function EventShow({ event, stories = [] }: EventShowProps) {
     const [activeTab, setActiveTab] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
-
     const [isAnnexModalOpen, setIsAnnexModalOpen] = useState(false);
-
-    const canModify = true; // For now
 
     const allTags = useMemo(() => {
         const tags = new Set<string>();
@@ -72,27 +73,7 @@ export default function RoomShow({ room, stories = [] }: RoomShowProps) {
     }, [stories, activeTab, selectedTag]);
 
     const getStoryThumbnail = (story: any) => {
-        console.log(story, "story")
-        // direct thumbnail
-        if (story.type === 'photo' && story.thumbnail) return story.thumbnail;
-
-        // asset thumbnail
-        // const assetThumbnail = story.assets?.find(
-        //     (a: any) => a.thumbnail,
-        // )?.thumbnail;
-
-        // if (assetThumbnail) return assetThumbnail;
-
-        // asset file
-        // const assetFile = story.assets?.find(
-        //     (a: any) => a.url || a.fileUrl || a.path,
-        // );
-
-        // if (assetFile) {
-        //     return assetFile.url || assetFile.fileUrl || assetFile.path;
-        // }
-
-        // fallback placeholder
+        if (story.thumbnail) return story.thumbnail;
         return '/logo-stacked.png';
     };
 
@@ -102,19 +83,20 @@ export default function RoomShow({ room, stories = [] }: RoomShowProps) {
             animate={{ opacity: 1 }}
             className="relative min-h-screen bg-bg-dark"
         >
-            <Head title={room.name} />
-
+            <Head title={event.name} />
 
             {/* Atmosphere background */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
                 <div className="atmosphere absolute inset-0 opacity-30" />
-                <motion.img
-                    initial={{ scale: 1.2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 0.1 }}
-                    transition={{ duration: 2 }}
-                    src={room.thumbnail}
-                    className="h-full w-full object-cover blur-[100px]"
-                />
+                {event.thumbnail && (
+                    <motion.img
+                        initial={{ scale: 1.2, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 0.1 }}
+                        transition={{ duration: 2 }}
+                        src={event.thumbnail}
+                        className="h-full w-full object-cover blur-[100px]"
+                    />
+                )}
             </div>
 
             <main className="relative z-10 mx-auto max-w-7xl p-5 pb-32 md:p-8 lg:p-16">
@@ -129,48 +111,36 @@ export default function RoomShow({ room, stories = [] }: RoomShowProps) {
                                 className="transition-transform group-hover:-translate-x-1"
                             />
                             <span className="text-sm font-bold tracking-widest uppercase">
-                                House
+                                Dashboard
                             </span>
                         </Link>
-                        <div className="flex items-center gap-4">
-                            <AvatarGroup
-                                users={room.members.map((u) => ({
-                                    avatar: u.avatar,
-                                    name: u.name,
-                                }))}
-                            />
-                        </div>
                     </div>
 
                     <div className="flex flex-col justify-between gap-12 md:flex-row md:items-end">
                         <div className="space-y-6">
                             <div className="flex items-center gap-4">
-                                <Badge>{room.stories_count} Memories</Badge>
+                                <Badge>{event.stories_count} Memories</Badge>
                                 <div className="h-px w-12 bg-accent-gold/30" />
                                 <span className="text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
-                                    A Shared Heritage
+                                    Public Legacy Event
                                 </span>
                             </div>
                             <h1 className="text-4xl leading-none font-bold tracking-tight text-text-primary md:text-7xl">
-                                {room.name}
+                                {event.name}
                             </h1>
                             <p className="max-w-2xl text-lg leading-relaxed font-light text-text-muted">
-                                {room.description}
+                                {event.description}
                             </p>
+
+                            {event.event_date && (
+                                <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-accent-gold uppercase">
+                                    <Calendar size={14} />
+                                    <span>Event Date: {new Date(event.event_date).toLocaleDateString('en-US', { dateStyle: 'long' })}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4">
-                            <ShareQRCode
-                                roomSlug={room.slug}
-                                roomName={room.name}
-                            />
-                            {/* <Button
-                                variant="outline"
-                                icon={Mic}
-                                onClick={() => setIsAnnexModalOpen(true)}
-                            >
-                                Record Echo
-                            </Button> */}
                             <Button
                                 icon={Upload}
                                 onClick={() => setIsAnnexModalOpen(true)}
@@ -182,6 +152,7 @@ export default function RoomShow({ room, stories = [] }: RoomShowProps) {
                     </div>
                 </header>
 
+                {/* YouTube Style Video Playlist Player */}
                 <section className="mb-16">
                     <VideoPlaylistPlayer stories={stories} />
                 </section>
@@ -377,29 +348,27 @@ export default function RoomShow({ room, stories = [] }: RoomShowProps) {
                             ))}
                         </AnimatePresence>
 
-                        {canModify && (
-                            <motion.div
-                                layout
-                                onClick={() => setIsAnnexModalOpen(true)}
-                                className={`group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 ${viewMode === 'grid' ? 'h-[400px]' : 'h-32 flex-row gap-6'}`}
-                            >
-                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold">
-                                    <Plus size={32} />
-                                </div>
-                                <span className="text-xs font-bold tracking-[0.3em] text-text-primary uppercase transition-colors group-hover:text-accent-gold">
-                                    Annex Memory
-                                </span>
-                            </motion.div>
-                        )}
+                        <motion.div
+                            layout
+                            onClick={() => setIsAnnexModalOpen(true)}
+                            className={`group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 ${viewMode === 'grid' ? 'h-[400px]' : 'h-32 flex-row gap-6'}`}
+                        >
+                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold">
+                                <Plus size={32} />
+                            </div>
+                            <span className="text-xs font-bold tracking-[0.3em] text-text-primary uppercase transition-colors group-hover:text-accent-gold">
+                                Annex Memory
+                            </span>
+                        </motion.div>
                     </div>
                 </section>
             </main>
 
-            {/* Annex Memory Modal */}
-            <AnnexMemoryModal
+            {/* Annex Event Memory Modal */}
+            <AnnexEventMemoryModal
                 isOpen={isAnnexModalOpen}
                 onClose={() => setIsAnnexModalOpen(false)}
-                room={room as any}
+                event={event}
             />
         </motion.div>
     );

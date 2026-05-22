@@ -2,26 +2,23 @@
 
 namespace App\Models;
 
-use Database\Factories\RoomFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-class Room extends Model
+class Event extends Model
 {
-    /** @use HasFactory<RoomFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'thumbnail', 'description', 'privacy', 'created_by'];
+    protected $fillable = ['name', 'slug', 'thumbnail', 'description', 'privacy', 'created_by', 'event_date'];
 
     protected static function booted(): void
     {
-        static::creating(function ($room) {
-            if (empty($room->slug)) {
-                $room->slug = Str::slug($room->name).'-'.Str::random(6);
+        static::creating(function ($event) {
+            if (empty($event->slug)) {
+                $event->slug = Str::slug($event->name).'-'.Str::random(6);
             }
         });
     }
@@ -34,11 +31,6 @@ class Room extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function members(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class);
     }
 
     public function stories(): HasMany

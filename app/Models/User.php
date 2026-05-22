@@ -44,6 +44,11 @@ class User extends Authenticatable
         return $this->hasMany(Room::class, 'created_by');
     }
 
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class, 'created_by');
+    }
+
     public function stories(): HasMany
     {
         return $this->hasMany(Story::class);

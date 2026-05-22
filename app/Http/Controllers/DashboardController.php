@@ -17,6 +17,7 @@ class DashboardController extends Controller
     {
         return Inertia::render('dashboard/index', [
             'dashboardData' => $this->dashboardService->getDashboardData($request->user()),
+            'title' => 'Dashboard - Uloak',
         ]);
     }
 }

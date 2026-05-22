@@ -17,16 +17,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');
     Route::get('settings/house', function () {
-        return Inertia::render('settings/house');
+        return Inertia::render('settings/house', [
+            'title' => 'House Settings - Uloak',
+        ]);
     })->name('house.edit');
 
     Route::get('settings/privacy', function () {
-        return Inertia::render('settings/privacy');
+        return Inertia::render('settings/privacy', [
+            'title' => 'Privacy Settings - Uloak',
+        ]);
     })->name('privacy.edit');
 
     Route::put('settings/password', [SecurityController::class, 'update'])
         ->middleware('throttle:6,1')
         ->name('user-password.update');
 
-    Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    Route::get('settings/appearance', function () {
+        return Inertia::render('settings/appearance', [
+            'title' => 'Appearance Settings - Uloak',
+        ]);
+    })->name('appearance.edit');
 });

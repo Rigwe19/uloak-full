@@ -15,6 +15,7 @@ class RegisterResponse implements RegisterResponseContract
 
         if ($request->header('X-Inertia')) {
             return Inertia::render('auth/register', [
+                'title' => 'Create Account - Uloak',
                 'passwordRules' => Password::defaults()->toPasswordRulesString(),
                 'doorTransition' => true,
                 'doorRedirect' => $home,

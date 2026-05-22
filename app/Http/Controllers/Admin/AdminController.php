@@ -17,6 +17,7 @@ class AdminController extends Controller
     public function dashboard(): Response
     {
         return Inertia::render('admin/dashboard', [
+            'title' => 'Admin Dashboard - Uloak',
             'stats' => [
                 'totalUsers' => User::count(),
                 'totalRooms' => Room::count(),
@@ -30,6 +31,7 @@ class AdminController extends Controller
     public function users(): Response
     {
         return Inertia::render('admin/users', [
+            'title' => 'Manage Users - Uloak',
             'users' => User::latest()->get(),
         ]);
     }
@@ -37,6 +39,7 @@ class AdminController extends Controller
     public function rooms(): Response
     {
         return Inertia::render('admin/rooms', [
+            'title' => 'Manage Rooms - Uloak',
             'rooms' => Room::with('members')->latest()->get(),
         ]);
     }
@@ -44,6 +47,7 @@ class AdminController extends Controller
     public function enquiries(): Response
     {
         return Inertia::render('admin/enquiries', [
+            'title' => 'Enquiries - Uloak',
             'enquiries' => Enquiry::latest()->get(),
         ]);
     }
@@ -51,6 +55,7 @@ class AdminController extends Controller
     public function pages(): Response
     {
         return Inertia::render('admin/pages', [
+            'title' => 'Manage Pages - Uloak',
             'pages' => Page::all(),
         ]);
     }
@@ -58,6 +63,7 @@ class AdminController extends Controller
     public function editPage(Page $page): Response
     {
         return Inertia::render('admin/pages/edit', [
+            'title' => ($page->title ?? 'Edit Page').' - Uloak',
             'page' => $page,
         ]);
     }
@@ -65,13 +71,16 @@ class AdminController extends Controller
     public function memberships(): Response
     {
         return Inertia::render('admin/memberships', [
+            'title' => 'Memberships - Uloak',
             'page' => Page::where('slug', '/membership')->first(),
         ]);
     }
 
     public function settings(): Response
     {
-        return Inertia::render('admin/settings');
+        return Inertia::render('admin/settings', [
+            'title' => 'Admin Settings - Uloak',
+        ]);
     }
 
     public function updatePage(Request $request, Page $page)

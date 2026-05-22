@@ -14,6 +14,7 @@ class TwoFactorLoginResponse implements TwoFactorLoginResponseContract
 
         if ($request->header('X-Inertia')) {
             return Inertia::render('auth/two-factor-challenge', [
+                'title' => 'Two-Factor Authentication - Uloak',
                 'doorTransition' => true,
                 'doorRedirect' => $home,
             ])->toResponse($request);

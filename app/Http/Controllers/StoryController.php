@@ -47,18 +47,22 @@ class StoryController extends Controller
      */
     public function show(Story $story): Response
     {
-        $story->load(['user', 'room']);
+        $story->load(['user', 'room', 'event']);
 
         $nextStory = Story::where('room_id', $story->room_id)
+            ->where('event_id', $story->event_id)
             ->where('id', '>', $story->id)
             ->first();
 
         $prevStory = Story::where('room_id', $story->room_id)
+            ->where('event_id', $story->event_id)
             ->where('id', '<', $story->id)
             ->orderBy('id', 'desc')
             ->first();
 
         return Inertia::render('dashboard/stories/show', [
+            'title' => $story->title.' - Uloak',
+            'meta_description' => $story->description ?? 'A memory preserved on Uloak.',
             'story' => [
                 'id' => $story->id,
                 'title' => $story->title,
@@ -78,11 +82,16 @@ class StoryController extends Controller
                     'date' => $comment->created_at->diffForHumans(),
                 ]),
             ],
-            'room' => [
+            'room' => $story->room ? [
                 'id' => $story->room->id,
                 'slug' => $story->room->slug,
                 'name' => $story->room->name,
-            ],
+            ] : null,
+            'event' => $story->event ? [
+                'id' => $story->event->id,
+                'slug' => $story->event->slug,
+                'name' => $story->event->name,
+            ] : null,
             'nextStoryId' => $nextStory?->id,
             'prevStoryId' => $prevStory?->id,
         ]);

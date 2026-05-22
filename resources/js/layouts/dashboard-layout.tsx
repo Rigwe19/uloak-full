@@ -128,7 +128,7 @@ export default function DashboardLayout({
             </nav>
 
             {/* Main Content */}
-            <main className="perspective-2000 w-full grow overflow-y-auto pb-32 md:pb-8">
+            <main className="perspective-2000 w-full grow pb-32 md:pb-8">
                 <AnimatePresence mode="wait" initial={false}>
                     <PageTransition key={url} type="door">
                         {children}

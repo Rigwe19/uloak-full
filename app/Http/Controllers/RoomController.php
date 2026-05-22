@@ -22,6 +22,8 @@ class RoomController extends Controller
         $room->loadCount('stories');
 
         return Inertia::render('dashboard/rooms/show', [
+            'title' => $room->name.' - Uloak',
+            'meta_description' => $room->description ?? 'Browse memories in this room on Uloak.',
             'room' => $room,
             'stories' => $room->stories->map(fn ($story) => [
                 'id' => $story->id,
@@ -32,6 +34,8 @@ class RoomController extends Controller
                 'author' => $story->user->name,
                 'tags' => $story->tags ?? [],
                 'date' => $story->created_at->format('M d, Y'),
+                'file_url' => $story->file_url,
+                'assets' => $story->assets ?? [],
             ]),
         ]);
     }
@@ -41,6 +45,7 @@ class RoomController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'privacy' => ['required', 'string', 'in:public,private'],
             'thumbnail' => ['nullable', 'image', 'max:2048'],
         ]);
 

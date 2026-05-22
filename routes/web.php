@@ -3,10 +3,12 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\ShareController;
 use App\Http\Controllers\StoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,12 +21,20 @@ Route::get('/contact', [PageController::class, 'show'])->defaults('slug', 'conta
 Route::get('/privacy', [PageController::class, 'show'])->defaults('slug', 'privacy')->name('privacy');
 Route::get('/membership', [PageController::class, 'show'])->defaults('slug', 'membership')->name('membership');
 
+// Guest Sharing & Magic Link Gateway Routes
+Route::get('/share/rooms/{slug}', [ShareController::class, 'showRoom'])->name('share.rooms.show');
+Route::get('/share/events/{slug}', [ShareController::class, 'showEvent'])->name('share.events.show');
+Route::post('/share/send-link', [ShareController::class, 'sendMagicLink'])->name('share.send-link');
+Route::get('/magic-login', [ShareController::class, 'magicLogin'])->name('magic.login');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
         Route::resource('rooms', RoomController::class)->only(['show', 'store']);
         Route::post('rooms/{room}/stories', [StoryController::class, 'store'])->name('rooms.stories.store');
+        Route::resource('events', EventController::class)->only(['show', 'store']);
+        Route::post('events/{event}/stories', [EventController::class, 'storeStory'])->name('events.stories.store');
         Route::get('stories/{story}', [StoryController::class, 'show'])->name('stories.show');
         Route::post('stories/{story}/comments', [CommentController::class, 'store'])->name('stories.comments.store');
         Route::post('stories/{story}/assets', [StoryController::class, 'addAsset'])->name('stories.assets.store');

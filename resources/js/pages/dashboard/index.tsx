@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Badge, AvatarGroup } from '@/components/dashboard/ui';
 import { RoomCard } from '@/components/dashboard/room-card';
 import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
+import { store as storeRoom } from '@/routes/dashboard/rooms';
+import { store as storeEvent } from '@/routes/dashboard/events';
 import {
     Plus,
     Camera,
@@ -13,7 +15,11 @@ import {
     Share2,
     X,
     Search,
+    Calendar,
+    Lock,
+    Globe,
 } from 'lucide-react';
+import { Portal } from '@/components/portal';
 
 interface DashboardProps {
     dashboardData: {
@@ -37,16 +43,28 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
     const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
-    const [roomPrivacy, setRoomPrivacy] = useState('Public');
+    const [createMode, setCreateMode] = useState<'room' | 'event'>('room');
 
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         description: '',
-        privacy: 'Public',
+        privacy: 'public',
         thumbnail: null as File | null,
+        event_date: '',
     });
 
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!isCreateRoomOpen) return;
+
+        const original = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = original;
+        };
+    }, [isCreateRoomOpen]);
 
     const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -60,14 +78,18 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
         }
     };
 
-    const handleCreateRoom = (e: React.FormEvent) => {
+    const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/dashboard/rooms', {
+
+        const url = createMode === 'room' ? storeRoom().url : storeEvent().url;
+
+        post(url, {
             forceFormData: true,
             onSuccess: () => {
                 setIsCreateRoomOpen(false);
                 setThumbnailPreview(null);
                 reset();
+                setCreateMode('room');
             },
         });
     };
@@ -89,8 +111,8 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                 room.name.toLowerCase().includes(query) ||
                 (room.description || '').toLowerCase().includes(query);
 
-            const matchesCategory = 
-                !activeCategory || 
+            const matchesCategory =
+                !activeCategory ||
                 (activeCategory === 'Photos' && (room.photos_count > 0)) ||
                 (activeCategory === 'Videos' && (room.videos_count > 0)) ||
                 (activeCategory === 'Voices' && (room.audios_count > 0)) ||
@@ -104,7 +126,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
     return (
         <div className="mx-auto max-w-7xl p-5 pb-32 md:p-8 md:pb-8 lg:p-16">
             <Head title="Dashboard" />
-            
+
             {/* Dashboard Header */}
             <header className="mb-12 flex flex-col justify-between gap-8 md:mb-16 md:flex-row md:items-end">
                 <div className="flex flex-col gap-2">
@@ -200,7 +222,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                             <Badge>{filteredRooms.length}</Badge>
                         </div>
                         <p className="text-xs text-text-muted md:text-sm">
-                            {searchQuery 
+                            {searchQuery
                                 ? `Found ${filteredRooms.length} rooms matching your search.`
                                 : 'Explore the different spaces of your family legacy.'}
                         </p>
@@ -211,6 +233,18 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                     {filteredRooms.map((room) => (
                         <RoomCard key={room.id} room={room} />
                     ))}
+                    <motion.div
+                        layout
+                        onClick={() => setIsCreateRoomOpen(true)}
+                        className="group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 h-[400px]"
+                    >
+                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold">
+                            <Plus size={32} />
+                        </div>
+                        <span className="text-xs font-bold tracking-[0.3em] text-text-primary uppercase transition-colors group-hover:text-accent-gold">
+                            Create
+                        </span>
+                    </motion.div>
                 </div>
             </section>
 
@@ -224,18 +258,18 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                         </div>
                         <Button variant="ghost" className="text-xs font-bold tracking-widest text-accent-gold uppercase">View All</Button>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                         {recentStories.map((story) => (
-                            <Link 
-                                key={story.id} 
+                            <Link
+                                key={story.id}
                                 href={`/dashboard/stories/${story.id}`}
                                 className="group relative aspect-square overflow-hidden rounded-[32px] border border-white/5 bg-surface/40"
                             >
-                                <img 
-                                    src={story.thumbnail} 
-                                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                    alt={story.title} 
+                                <img
+                                    src={story.thumbnail}
+                                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    alt={story.title}
                                 />
                                 <div className="absolute inset-0 bg-linear-to-t from-bg-dark/90 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
                                 <div className="absolute inset-x-0 bottom-0 p-6">
@@ -259,131 +293,223 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                 rooms={rooms}
             />
 
-            {/* Create Room Modal */}
+            {/* Create Room / Event Modal */}
             <AnimatePresence>
                 {isCreateRoomOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-100 flex items-end justify-center bg-black/80 p-4 backdrop-blur-md md:items-center md:p-8"
-                    >
+                    <Portal>
                         <motion.div
-                            initial={{ y: '100%', opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: '100%', opacity: 0 }}
-                            transition={{
-                                type: 'spring',
-                                damping: 30,
-                                stiffness: 300,
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-50 grid place-items-end md:place-items-center bg-black/80 p-4 backdrop-blur-md"
+                            onClick={() => {
+                                setIsCreateRoomOpen(false);
+                                setCreateMode('room');
                             }}
-                            className="relative mb-24 w-full max-w-xl rounded-[32px] border border-white/10 bg-surface p-8 shadow-2xl ring-1 ring-white/5 md:mb-0 md:p-10"
                         >
-                            <div className="absolute top-4 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-white/10 md:hidden" />
-
-                            <button
-                                onClick={() => setIsCreateRoomOpen(false)}
-                                className="absolute top-6 right-6 text-text-muted transition-colors hover:text-text-primary md:top-8 md:right-8"
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.98, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.98, y: 20 }}
+                                transition={{
+                                    type: "spring",
+                                    damping: 28,
+                                    stiffness: 260,
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="relative w-full max-w-xl max-h-[80vh] md:max-h-[85vh] overflow-y-auto overscroll-contain rounded-[32px] border border-white/10 bg-surface p-8 shadow-2xl ring-1 ring-white/5 md:p-10"
                             >
-                                <X size={24} />
-                            </button>
+                                <div className="absolute top-4 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-white/10 md:hidden" />
 
-                            <div className="mb-8">
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-gold/10 text-accent-gold md:mb-6 md:h-14 md:w-14">
-                                    <Plus size={28} />
-                                </div>
-                                <h2 className="mb-2 text-2xl font-bold text-text-primary md:text-3xl">
-                                    Open a New Room
-                                </h2>
-                                <p className="text-sm leading-relaxed text-text-muted">
-                                    Each room is a dedicated sanctuary for a
-                                    family branch or heritage collection.
-                                </p>
-                            </div>
+                                <button
+                                    onClick={() => {
+                                        setIsCreateRoomOpen(false);
+                                        setCreateMode('room');
+                                    }}
+                                    className="absolute top-6 right-6 text-text-muted transition-colors hover:text-text-primary md:top-8 md:right-8"
+                                >
+                                    <X size={24} />
+                                </button>
 
-                            <form onSubmit={handleCreateRoom} className="flex flex-col gap-6 pb-12 md:pb-0">
-                                <div className="space-y-2">
-                                    <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                        Room Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g., The Heritage Hall"
-                                        value={data.name}
-                                        onChange={(e) =>
-                                            setData('name', e.target.value)
-                                        }
-                                        className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
-                                        required
-                                    />
-                                    {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                        Room Description
-                                    </label>
-                                    <textarea
-                                        placeholder="Describe the purpose of this space..."
-                                        rows={3}
-                                        value={data.description}
-                                        onChange={(e) =>
-                                            setData('description', e.target.value)
-                                        }
-                                        className="w-full resize-none rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
-                                    />
-                                    {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                        Room Thumbnail
-                                    </label>
-                                    <div 
-                                        onClick={() => document.getElementById('room-thumbnail-input')?.click()}
-                                        className="relative aspect-video w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border-subtle bg-bg-dark transition-all hover:border-accent-gold/40"
-                                    >
-                                        {thumbnailPreview ? (
-                                            <img src={thumbnailPreview} className="h-full w-full object-cover" alt="Preview" />
-                                        ) : (
-                                            <div className="flex h-full flex-col items-center justify-center gap-2 text-text-muted">
-                                                <Camera size={24} />
-                                                <span className="text-xs">Add a cover image</span>
-                                            </div>
-                                        )}
-                                        <input
-                                            id="room-thumbnail-input"
-                                            type="file"
-                                            className="hidden"
-                                            onChange={handleThumbnailChange}
-                                            accept="image/*"
-                                        />
+                                {/* Mode Tabs */}
+                                <div className="mb-8">
+                                    <div className="mb-6 inline-flex rounded-2xl border border-white/5 bg-bg-dark p-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCreateMode('room')}
+                                            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold tracking-widest uppercase transition-all ${createMode === 'room'
+                                                ? 'bg-accent-gold text-bg-dark shadow-lg shadow-accent-gold/20'
+                                                : 'text-text-muted hover:text-text-primary'
+                                                }`}
+                                        >
+                                            <Plus size={14} />
+                                            Room
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCreateMode('event')}
+                                            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold tracking-widest uppercase transition-all ${createMode === 'event'
+                                                ? 'bg-accent-gold text-bg-dark shadow-lg shadow-accent-gold/20'
+                                                : 'text-text-muted hover:text-text-primary'
+                                                }`}
+                                        >
+                                            <Calendar size={14} />
+                                            Event
+                                        </button>
                                     </div>
-                                    {errors.thumbnail && <p className="mt-1 text-xs text-red-500">{errors.thumbnail}</p>}
+
+                                    <h2 className="mb-2 text-2xl font-bold text-text-primary md:text-3xl">
+                                        {createMode === 'room' ? 'Open a New Room' : 'Create a New Event'}
+                                    </h2>
+                                    <p className="text-sm leading-relaxed text-text-muted">
+                                        {createMode === 'room'
+                                            ? 'Each room is a dedicated sanctuary for a family branch or heritage collection.'
+                                            : 'An event gathers memories around a special occasion or moment in time.'}
+                                    </p>
                                 </div>
 
-                                <div className="flex flex-col gap-4 pt-4 sm:flex-row">
-                                    <Button
-                                        variant="outline"
-                                        className="w-full"
-                                        onClick={() =>
-                                            setIsCreateRoomOpen(false)
-                                        }
-                                        type="button"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        variant="primary"
-                                        className="w-full"
-                                        type="submit"
-                                        disabled={processing}
-                                    >
-                                        Create Room
-                                    </Button>
-                                </div>
-                            </form>
+                                <form onSubmit={handleCreate} className="flex flex-col gap-6">
+                                    <div className="space-y-2">
+                                        <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                            {createMode === 'room' ? 'Room Name' : 'Event Name'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder={createMode === 'room' ? 'e.g., The Heritage Hall' : 'e.g., Grandma\'s 80th Birthday'}
+                                            value={data.name}
+                                            onChange={(e) =>
+                                                setData('name', e.target.value)
+                                            }
+                                            className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
+                                            required
+                                        />
+                                        {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                            {createMode === 'room' ? 'Room Description' : 'Event Description'}
+                                        </label>
+                                        <textarea
+                                            placeholder={createMode === 'room' ? 'Describe the purpose of this space...' : 'Describe this special occasion...'}
+                                            rows={3}
+                                            value={data.description}
+                                            onChange={(e) =>
+                                                setData('description', e.target.value)
+                                            }
+                                            className="w-full resize-none rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
+                                        />
+                                        {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
+                                    </div>
+
+                                    {/* Event Date - only for events */}
+                                    {createMode === 'event' && (
+                                        <div className="space-y-2">
+                                            <label className="ml-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                <Calendar size={12} />
+                                                Event Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={data.event_date}
+                                                onChange={(e) =>
+                                                    setData('event_date', e.target.value)
+                                                }
+                                                className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
+                                            />
+                                            {errors.event_date && <p className="mt-1 text-xs text-red-500">{errors.event_date}</p>}
+                                        </div>
+                                    )}
+
+                                    {/* Privacy Toggle */}
+                                    <div className="space-y-2">
+                                        <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                            Privacy
+                                        </label>
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setData('privacy', 'public')}
+                                                className={`flex flex-1 items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm transition-all ${data.privacy === 'public'
+                                                    ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
+                                                    : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
+                                                    }`}
+                                            >
+                                                <Globe size={18} />
+                                                <div className="flex flex-col items-start">
+                                                    <span className="text-xs font-semibold">Public</span>
+                                                    <span className="text-[10px] text-text-muted">Anyone with the link can view</span>
+                                                </div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setData('privacy', 'private')}
+                                                className={`flex flex-1 items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm transition-all ${data.privacy === 'private'
+                                                    ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
+                                                    : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
+                                                    }`}
+                                            >
+                                                <Lock size={18} />
+                                                <div className="flex flex-col items-start">
+                                                    <span className="text-xs font-semibold">Private</span>
+                                                    <span className="text-[10px] text-text-muted">Only invited members</span>
+                                                </div>
+                                            </button>
+                                        </div>
+                                        {errors.privacy && <p className="mt-1 text-xs text-red-500">{errors.privacy}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                            {createMode === 'room' ? 'Room Thumbnail' : 'Event Thumbnail'}
+                                        </label>
+                                        <div
+                                            onClick={() => document.getElementById('create-thumbnail-input')?.click()}
+                                            className="relative aspect-video w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border-subtle bg-bg-dark transition-all hover:border-accent-gold/40"
+                                        >
+                                            {thumbnailPreview ? (
+                                                <img src={thumbnailPreview} className="h-full w-full object-cover" alt="Preview" />
+                                            ) : (
+                                                <div className="flex h-full flex-col items-center justify-center gap-2 text-text-muted">
+                                                    <Camera size={24} />
+                                                    <span className="text-xs">Add a cover image</span>
+                                                </div>
+                                            )}
+                                            <input
+                                                id="create-thumbnail-input"
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleThumbnailChange}
+                                                accept="image/*"
+                                            />
+                                        </div>
+                                        {errors.thumbnail && <p className="mt-1 text-xs text-red-500">{errors.thumbnail}</p>}
+                                    </div>
+
+                                    <div className="flex flex-col gap-4 pt-2 sm:flex-row">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full"
+                                            onClick={() => {
+                                                setIsCreateRoomOpen(false);
+                                                setCreateMode('room');
+                                            }}
+                                            type="button"
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            variant="primary"
+                                            className="w-full"
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            {createMode === 'room' ? 'Create Room' : 'Create Event'}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
+                    </Portal>
                 )}
             </AnimatePresence>
         </div>

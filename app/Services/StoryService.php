@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Event;
 use App\Models\Room;
 use App\Models\Story;
 use App\Models\User;
@@ -14,15 +15,17 @@ class StoryService
         private AssemblyAIService $assemblyAIService
     ) {}
 
-    public function createStory(User $user, Room $room, array $data): Story
+    public function createStory(User $user, Room|Event $space, array $data): Story
     {
         $fileUrl = null;
         $assets = [];
+        $folderPrefix = $space instanceof Room ? 'rooms' : 'events';
+        $spaceId = $space->id;
 
         if (isset($data['files']) && is_array($data['files'])) {
             foreach ($data['files'] as $file) {
                 if ($file instanceof UploadedFile) {
-                    $path = $file->store('stories/'.$room->id.'/assets', 'public');
+                    $path = $file->store('stories/'.$folderPrefix.'/'.$spaceId.'/assets', 'public');
                     $url = Storage::url($path);
 
                     $mime = $file->getMimeType();
@@ -48,18 +51,17 @@ class StoryService
 
         // Handle single file (legacy or specific upload)
         if (isset($data['file']) && $data['file'] instanceof UploadedFile) {
-            $path = $data['file']->store('stories/'.$room->id, 'public');
+            $path = $data['file']->store('stories/'.$folderPrefix.'/'.$spaceId, 'public');
             $fileUrl = Storage::url($path);
         }
 
         // Handle recording specifically if it comes as a blob
         if (isset($data['recording']) && $data['recording'] instanceof UploadedFile) {
-            $path = $data['recording']->store('stories/'.$room->id.'/audio', 'public');
+            $path = $data['recording']->store('stories/'.$folderPrefix.'/'.$spaceId.'/audio', 'public');
             $fileUrl = Storage::url($path);
             $fullPath = storage_path('app/public/'.$path);
 
-            $story = Story::create([
-                'room_id' => $room->id,
+            $storyData = [
                 'user_id' => $user->id,
                 'title' => $data['title'] ?? 'New Memory',
                 'type' => 'audio',
@@ -69,7 +71,15 @@ class StoryService
                 'thumbnail' => $fileUrl,
                 'transcript_status' => 'processing',
                 'assets' => $assets,
-            ]);
+            ];
+
+            if ($space instanceof Room) {
+                $storyData['room_id'] = $space->id;
+            } else {
+                $storyData['event_id'] = $space->id;
+            }
+
+            $story = Story::create($storyData);
 
             $audioUrl = $this->assemblyAIService->uploadFile($fullPath);
             $transcriptId = $this->assemblyAIService->createTranscript(
@@ -87,8 +97,7 @@ class StoryService
             $type = 'collection';
         }
 
-        return Story::create([
-            'room_id' => $room->id,
+        $storyData = [
             'user_id' => $user->id,
             'title' => $data['title'] ?? 'New Memory',
             'type' => $type,
@@ -97,6 +106,14 @@ class StoryService
             'duration' => $data['duration'] ?? null,
             'thumbnail' => $data['thumbnail'] ?? $fileUrl,
             'assets' => $assets,
-        ]);
+        ];
+
+        if ($space instanceof Room) {
+            $storyData['room_id'] = $space->id;
+        } else {
+            $storyData['event_id'] = $space->id;
+        }
+
+        return Story::create($storyData);
     }
 }
