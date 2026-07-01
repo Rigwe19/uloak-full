@@ -8,10 +8,10 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg-dark p-8">
+        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg-dark md:p-8 p-4">
             {/* Background Ambience */}
             <div className="absolute inset-0 z-0">
-                <div className="absolute top-1/2 left-1/2 h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-gold/5 blur-[120px]" />
+                <div className="absolute top-1/2 left-1/2 h-200 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-gold/5 blur-[120px]" />
             </div>
 
             <motion.div

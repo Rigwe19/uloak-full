@@ -231,10 +231,10 @@ export function Footer() {
                             </li>
                             <li>
                                 <a
-                                    href="mailto:hello@uloak.com"
+                                    href="mailto:hello@uloakstories.com"
                                     className="text-sm text-text-muted transition-colors hover:text-accent-gold"
                                 >
-                                    hello@uloak.com
+                                    hello@uloakstories.com
                                 </a>
                             </li>
                         </ul>

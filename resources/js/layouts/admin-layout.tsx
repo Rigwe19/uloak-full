@@ -1,12 +1,18 @@
-import { Link, usePage } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Users, DoorOpen, MessageSquare, FileText, Settings, LogOut, CreditCard } from 'lucide-react';
-import React from 'react';
-import { router } from '@inertiajs/react';
-import { logout, home } from '@/routes';
-import admin from '@/routes/admin';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { PageTransition } from '@/components/page-transition';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
+import { home, logout } from '@/routes';
+import admin from '@/routes/admin';
+import { Link, router, usePage } from '@inertiajs/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Activity, CreditCard, DoorOpen, FileText, LayoutDashboard, LogOut, MessageSquare, MoreHorizontal, Settings, Users } from 'lucide-react';
+import React from 'react';
 
 interface SidebarItem {
     id: string;
@@ -34,6 +40,7 @@ export default function AdminLayout({
         { id: 'enquiries', icon: MessageSquare, label: 'Enquiries', href: admin.enquiries().url },
         { id: 'pages', icon: FileText, label: 'Pages', href: admin.pages().url },
         { id: 'memberships', icon: CreditCard, label: 'Memberships', href: admin.memberships().url },
+        { id: 'activity-logs', icon: Activity, label: 'Activity Logs', href: admin.activityLogs().url },
         { id: 'settings', icon: Settings, label: 'Settings', href: admin.settings().url },
     ];
 
@@ -42,7 +49,7 @@ export default function AdminLayout({
     };
 
     const isActive = (href: string) => {
-        return url === href || url.startsWith(href + '/');
+        return url === href || url.endsWith(href + '/');
     };
 
     return (
@@ -88,45 +95,132 @@ export default function AdminLayout({
             </aside>
 
             {/* Mobile Bottom Nav */}
-            <nav className="pointer-events-none fixed right-0 bottom-0 left-0 z-60 bg-linear-to-t from-bg-dark via-bg-dark/95 to-transparent px-4 pt-4 pb-8 md:hidden">
-                <div className="pointer-events-auto flex items-center justify-around rounded-[28px] border border-white/10 bg-surface/80 p-2 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl">
-                    <Link
-                        href={admin.users().url}
-                        className={`rounded-2xl p-3 transition-all ${isActive(admin.users().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
-                    >
-                        <Users size={22} />
-                    </Link>
-                    <Link
-                        href={admin.rooms().url}
-                        className={`relative rounded-2xl p-3 transition-all ${isActive(admin.rooms().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
-                    >
-                        <DoorOpen size={22} />
-                    </Link>
+            <nav className="fixed right-0 bottom-0 left-0 z-60 bg-linear-to-t from-bg-dark via-bg-dark/95 to-transparent px-3 pt-4 pb-2 md:hidden">
+                <div className="flex items-center justify-around rounded-[28px] border border-white/10 bg-surface/80 px-1 py-1 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl">
 
                     <Link
                         href={admin.dashboard().url}
-                        className={`-mt-10 flex h-14 w-14 items-center justify-center rounded-2xl border-4 border-bg-dark transition-all ${isActive(admin.dashboard().url) ? 'bg-accent-gold text-bg-dark shadow-[0_10px_30px_rgba(198,161,91,0.4)]' : 'bg-surface text-text-muted'}`}
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(admin.dashboard().url)
+                                ? 'bg-accent-gold/10 text-accent-gold'
+                                : 'text-text-muted'
+                            }`}
                     >
-                        <LayoutDashboard size={24} />
+                        <LayoutDashboard size={20} />
+                        <span className="text-[9px] font-medium tracking-wider uppercase">
+                            Overview
+                        </span>
                     </Link>
 
                     <Link
-                        href={admin.settings().url}
-                        className={`rounded-2xl p-3 transition-all ${isActive(admin.settings().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
+                        href={admin.users().url}
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(admin.users().url)
+                                ? 'bg-accent-gold/10 text-accent-gold'
+                                : 'text-text-muted'
+                            }`}
                     >
-                        <Settings size={22} />
+                        <Users size={20} />
+                        <span className="text-[9px] font-medium tracking-wider uppercase">
+                            Users
+                        </span>
                     </Link>
-                    <button
-                        onClick={handleLogout}
-                        className="rounded-2xl p-3 text-text-muted transition-colors hover:text-red-400"
+
+                    <Link
+                        href={admin.rooms().url}
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(admin.rooms().url)
+                                ? 'bg-accent-gold/10 text-accent-gold'
+                                : 'text-text-muted'
+                            }`}
                     >
-                        <LogOut size={22} />
-                    </button>
+                        <DoorOpen size={20} />
+                        <span className="text-[9px] font-medium tracking-wider uppercase">
+                            Rooms
+                        </span>
+                    </Link>
+
+                    <Link
+                        href={admin.enquiries().url}
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(admin.enquiries().url)
+                                ? 'bg-accent-gold/10 text-accent-gold'
+                                : 'text-text-muted'
+                            }`}
+                    >
+                        <MessageSquare size={20} />
+                        <span className="text-[9px] font-medium tracking-wider uppercase">
+                            Enquiries
+                        </span>
+                    </Link>
+
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <button className="flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 text-text-muted">
+                                <MoreHorizontal size={20} />
+                                <span className="text-[9px] font-medium tracking-wider uppercase">
+                                    More
+                                </span>
+                            </button>
+                        </SheetTrigger>
+
+                        <SheetContent
+                            side="right"
+                            className="rounded-t-3xl border-border-subtle bg-bg-dark"
+                        >
+                            <SheetHeader>
+                                <SheetTitle>More Options</SheetTitle>
+                            </SheetHeader>
+
+                            <div className="space-y-2">
+
+                                <Link
+                                    href={admin.pages().url}
+                                    className="flex items-center gap-3 rounded-xl p-4 hover:bg-surface"
+                                >
+                                    <FileText size={18} />
+                                    <span>Pages</span>
+                                </Link>
+
+                                <Link
+                                    href={admin.memberships().url}
+                                    className="flex items-center gap-3 rounded-xl p-4 hover:bg-surface"
+                                >
+                                    <CreditCard size={18} />
+                                    <span>Memberships</span>
+                                </Link>
+
+                                <Link
+                                    href={admin.activityLogs().url}
+                                    className="flex items-center gap-3 rounded-xl p-4 hover:bg-surface"
+                                >
+                                    <Activity size={18} />
+                                    <span>Activity Logs</span>
+                                </Link>
+
+                                <Link
+                                    href={admin.settings().url}
+                                    className="flex items-center gap-3 rounded-xl p-4 hover:bg-surface"
+                                >
+                                    <Settings size={18} />
+                                    <span>Settings</span>
+                                </Link>
+
+                                <div className="px-4 py-2">
+                                    <ThemeToggle />
+                                </div>
+
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex w-full items-center gap-3 rounded-xl p-4 text-red-400 hover:bg-surface"
+                                >
+                                    <LogOut size={18} />
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </SheetContent>
+                    </Sheet>
                 </div>
             </nav>
 
             {/* Main Content */}
-            <main className="w-full grow overflow-y-auto pb-32 md:pb-8">
+            <main className="min-w-0 w-full grow overflow-x-hidden overflow-y-auto mb-18 md:pb-8">
                 <AnimatePresence mode="wait" initial={false}>
                     <PageTransition key={url}>
                         {children}

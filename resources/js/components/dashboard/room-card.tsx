@@ -10,6 +10,9 @@ import { Link, router } from '@inertiajs/react';
 import { Badge, AvatarGroup, Button } from './ui';
 import { X, Play, Share2, Info, ArrowRight } from 'lucide-react';
 import { show } from '@/routes/dashboard/rooms';
+import { createPortal } from 'react-dom';
+import { ResponsiveModal } from '@/components/responsive-modal';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface User {
     id: number;
@@ -24,19 +27,22 @@ interface Room {
     thumbnail?: string | null;
     description: string;
     stories_count?: number;
+    tributes_count?: number;
+    enable_tributes?: boolean;
     members: User[];
 }
 
 export function RoomCard({ room }: { room: Room }) {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
-
+    
     const mouseX = useSpring(x, { stiffness: 500, damping: 50 });
     const mouseY = useSpring(y, { stiffness: 500, damping: 50 });
 
     const rotateX = useTransform(mouseY, [-0.5, 0.5], [10, -10]);
     const rotateY = useTransform(mouseX, [-0.5, 0.5], [-10, 10]);
 
+    const isMobile = useIsMobile();
     const [isHovered, setIsHovered] = useState(false);
     const [showDetail, setShowDetail] = useState(false);
     const [isEntering, setIsEntering] = useState(false);
@@ -91,7 +97,7 @@ export function RoomCard({ room }: { room: Room }) {
                     z: isEntering ? 200 : -20,
                 }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className={`group surface-glow perspective-1000 relative h-[400px] cursor-pointer overflow-hidden rounded-3xl border border-border-subtle bg-surface ${isEntering ? 'pointer-events-none' : ''}`}
+                className={`group surface-glow perspective-1000 relative h-100 cursor-pointer overflow-hidden rounded-3xl border border-border-subtle bg-surface ${isEntering ? 'pointer-events-none' : ''}`}
                 onClick={handleEnterRoom}
             >
                 <div
@@ -120,7 +126,7 @@ export function RoomCard({ room }: { room: Room }) {
                 >
                     <div className="flex items-center justify-between">
                         <Badge className="bg-accent-gold/20 text-accent-gold transition-colors duration-500 group-hover:bg-accent-gold group-hover:text-bg-dark">
-                            {room.stories_count || 0} STORIES
+                            {room.stories_count || room?.tributes_count || 0} {room?.enable_tributes ? 'TRIBUTES' : 'STORIES'}
                         </Badge>
                         <div className="flex gap-2">
                             <button
@@ -128,10 +134,10 @@ export function RoomCard({ room }: { room: Room }) {
                                     e.stopPropagation();
                                     setShowDetail(true);
                                 }}
-                                className="flex h-10 w-10 scale-50 items-center justify-center rounded-full bg-white/10 text-text-primary opacity-0 shadow-xl backdrop-blur-md transition-all duration-300 group-hover:scale-100 group-hover:opacity-100 hover:bg-accent-gold hover:text-bg-dark"
+                                className="flex md:h-10 md:w-10 scale-50 items-center justify-center rounded-full text-primary md:opacity-0 shadow-xl backdrop-blur-md transition-all duration-300 md:group-hover:scale-100 md:group-hover:opacity-100 md:hover:bg-accent-gold md:hover:text-bg-dark"
                                 title="View Details"
                             >
-                                <Info size={16} />
+                                <Info className='size-10 md:size-4' />
                             </button>
                         </div>
                     </div>
@@ -178,8 +184,58 @@ export function RoomCard({ room }: { room: Room }) {
                 </div>
             </motion.div>
 
-            {/* Room Detail Peek Modal - "Inspecting an object" interaction */}
-            <AnimatePresence>
+            {/* Room Detail Peek – mobile: Sheet / desktop: 3D spring portal */}
+            {isMobile ? (
+                <ResponsiveModal
+                    isOpen={showDetail}
+                    onClose={() => setShowDetail(false)}
+                    title={room.name}
+                    titleHidden
+                    // fullHeight
+                    showHandle
+                >
+                    {/* Mobile layout: stacked, scrollable */}
+                    <div className="flex flex-col h-full">
+                        <div className="relative h-56 w-full overflow-hidden shrink-0">
+                            {room.thumbnail ? (
+                                <img src={room.thumbnail} className="h-full w-full object-cover" alt={room.name} />
+                            ) : (
+                                <div className="flex h-full w-full items-center justify-center bg-surface">
+                                    <span className="text-6xl font-bold text-text-muted opacity-20">{room.name.charAt(0)}</span>
+                                </div>
+                            )}
+                            <div className="vignette absolute inset-0" />
+                        </div>
+                        <div className="flex flex-col gap-6 p-6 overflow-y-auto flex-1">
+                            <div>
+                                <Badge className="mb-4 border border-accent-gold/20 bg-accent-gold/10 text-accent-gold">Legacy Chamber</Badge>
+                                <h2 className="mb-3 text-3xl font-bold tracking-tight text-text-primary">{room.name}</h2>
+                                <p className="leading-relaxed font-light text-text-muted">{room.description}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-6 border-y border-border-subtle py-6">
+                                <div>
+                                    <span className="mb-3 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">Guardians</span>
+                                    <AvatarGroup users={room.members.map((u) => ({ avatar: u.avatar, avatar_url: (u as any).avatar_url, name: u.name }))} />
+                                </div>
+                                <div>
+                                    <span className="mb-3 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">Stored Memories</span>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="font-outfit text-3xl font-bold text-text-primary">{room.stories_count || room?.tributes_count || 0}</span>
+                                        <span className="text-sm tracking-tighter text-text-muted uppercase">Collections</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-3 pb-4">
+                                <Link href={show(room.slug).url}>
+                                    <Button className="w-full rounded-2xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">Step Inside Room <ArrowRight /></Button>
+                                </Link>
+                                <Button variant="secondary" icon={Share2} className="w-full rounded-2xl font-bold border-border-subtle">Invite Kin</Button>
+                            </div>
+                        </div>
+                    </div>
+                </ResponsiveModal>
+            ) : (
+                createPortal(<AnimatePresence>
                 {showDetail && (
                     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 lg:p-8">
                         <motion.div
@@ -187,7 +243,7 @@ export function RoomCard({ room }: { room: Room }) {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowDetail(false)}
-                            className="absolute inset-0 bg-bg-dark/95 backdrop-blur-2xl"
+                            className="absolute inset-0 bg-bg-dark/65 backdrop-blur-2xl"
                         />
 
                         <motion.div
@@ -247,7 +303,7 @@ export function RoomCard({ room }: { room: Room }) {
                                 </motion.div>
                             </div>
 
-                            <div className="relative flex grow flex-col justify-center bg-surface p-10 lg:p-16">
+                            <div className="md:relative flex grow flex-col justify-center bg-surface p-4 lg:p-16 lg:w-1/2">
                                 <button
                                     onClick={() => setShowDetail(false)}
                                     className="absolute top-10 right-10 flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-surface font-bold text-text-muted transition-all hover:bg-surface/80 hover:text-text-primary"
@@ -259,7 +315,7 @@ export function RoomCard({ room }: { room: Room }) {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.2 }}
-                                    className="flex flex-col gap-10"
+                                    className="flex flex-col gap-4 md:gap-10"
                                 >
                                     <div>
                                         <Badge className="mb-6 border border-accent-gold/20 bg-accent-gold/10 text-accent-gold">
@@ -294,7 +350,7 @@ export function RoomCard({ room }: { room: Room }) {
                                             </span>
                                             <div className="flex items-baseline gap-2">
                                                 <span className="font-outfit text-4xl font-bold text-text-primary">
-                                                    {room.stories_count || 0}
+                                                    {room.stories_count || room?.tributes_count || 0}
                                                 </span>
                                                 <span className="text-sm tracking-tighter text-text-muted uppercase">
                                                     Collections
@@ -303,12 +359,12 @@ export function RoomCard({ room }: { room: Room }) {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-wrap gap-5 pt-4">
+                                    <div className="flex flex-wrap gap-2 md:gap-5 pt-4">
                                         <Link
                                             href={show(room.slug).url}
-                                            className="min-w-[240px] flex-1"
+                                            className="md:min-w-60 flex-1"
                                         >
-                                            <Button className="group w-full rounded-2xl py-5 text-xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">
+                                            <Button className="group w-full rounded-2xl md:py-5 text-sm md:text-xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">
                                                 Step Inside Room
                                                 <ArrowRight className="transition-transform group-hover:translate-x-2" />
                                             </Button>
@@ -316,7 +372,7 @@ export function RoomCard({ room }: { room: Room }) {
                                         <Button
                                             variant="secondary"
                                             icon={Share2}
-                                            className="rounded-2xl border-border-subtle px-8 py-5 font-bold"
+                                            className="rounded-2xl text-sm md:text-base border-border-subtle md:px-8 md:py-5 font-bold"
                                         >
                                             Invite Kin
                                         </Button>
@@ -326,7 +382,8 @@ export function RoomCard({ room }: { room: Room }) {
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence>, document.body)
+            )}
         </>
     );
 }

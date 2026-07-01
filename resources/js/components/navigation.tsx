@@ -53,9 +53,9 @@ export function Navbar() {
     const links = [
         { name: 'About', path: about().url },
         { name: 'How It Works', path: howItWorks().url },
-        { name: 'Legacy Films', path: legacyFilms().url },
+        { name: 'Services', path: legacyFilms().url },
         { name: 'Community', path: communityProjects().url },
-        { name: 'Membership', path: membership().url },
+        { name: 'Subcription', path: membership().url },
         { name: 'Contact', path: contact().url },
     ];
 
@@ -63,14 +63,14 @@ export function Navbar() {
 
     return (
         <nav
-            className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${isScrolled ? 'border-b border-border-subtle bg-bg-dark/80 py-4 backdrop-blur-md' : 'bg-transparent py-8'}`}
+            className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${isScrolled ? 'border-b border-border-subtle bg-bg-dark/80 py-2 backdrop-blur-md' : 'bg-transparent py-4'}`}
         >
             <div className="mx-auto flex max-w-7xl items-center justify-between px-8">
                 <Link href={home().url} className="flex items-center">
                     <img
                         src="/logo.png"
                         alt="ULOAK - House of Stories"
-                        className="h-10 w-auto object-contain lg:h-12"
+                        className="h-18 w-auto object-contain lg:h-24"
                     />
                 </Link>
 
@@ -194,12 +194,11 @@ export function Footer() {
                             <img
                                 src="/logo-stacked.png"
                                 alt="ULOAK - House of Stories"
-                                className="h-auto w-10 object-contain"
+                                className="h-auto w-24 object-contain"
                             />
                         </Link>
                         <p className="max-w-xs text-sm leading-relaxed text-text-muted">
-                            A private digital home where diaspora families
-                            preserve family stories, culture, and memory.
+                            A private digital home to capture moments, collect tributes, and preserve memories in organised rooms.
                         </p>
                     </div>
 
@@ -221,7 +220,7 @@ export function Footer() {
                                     href={legacyFilms().url}
                                     className="text-sm text-text-muted transition-colors hover:text-accent-gold"
                                 >
-                                    Legacy Films
+                                    Services
                                 </Link>
                             </li>
                             <li>
@@ -282,7 +281,9 @@ export function Footer() {
                         <ul className="flex flex-col gap-4">
                             <li>
                                 <a
-                                    href="#"
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    href="https://www.instagram.com/uloakstories/"
                                     className="text-sm text-text-muted transition-colors hover:text-accent-gold"
                                 >
                                     Instagram
@@ -290,7 +291,9 @@ export function Footer() {
                             </li>
                             <li>
                                 <a
-                                    href="#"
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    href="https://linkedin.com/company/uloak"
                                     className="text-sm text-text-muted transition-colors hover:text-accent-gold"
                                 >
                                     LinkedIn
@@ -298,10 +301,52 @@ export function Footer() {
                             </li>
                             <li>
                                 <a
-                                    href="mailto:hello@uloak.com"
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    href="https://x.com/uloakHQ"
                                     className="text-sm text-text-muted transition-colors hover:text-accent-gold"
                                 >
-                                    hello@uloak.com
+                                    X
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    href="https://www.facebook.com/profile.php?id=61582751621270"
+                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                >
+                                    Facebook
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    href="http://www.youtube.com/@ULOAK"
+                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                >
+                                    Youtube
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    href="https://www.tiktok.com/@uloakhq"
+                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                >
+                                    Tiktok
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    href="mailto:hello@uloakstories.com"
+                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                >
+                                    hello@uloakstories.com
                                 </a>
                             </li>
                         </ul>

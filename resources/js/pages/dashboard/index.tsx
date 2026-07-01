@@ -18,6 +18,11 @@ import {
     Calendar,
     Lock,
     Globe,
+    Heart,
+    BookOpen,
+    Tag,
+    Music,
+    Image,
 } from 'lucide-react';
 import { Portal } from '@/components/portal';
 
@@ -44,13 +49,22 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
     const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
     const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
     const [createMode, setCreateMode] = useState<'room' | 'event'>('room');
-
+    
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         description: '',
         privacy: 'public',
         thumbnail: null as File | null,
         event_date: '',
+        room_type: 'general',
+        enable_tributes: false,
+        enable_condolence_attendance: false,
+        enable_candle_lighting: false,
+        tribute_name: '',
+        tribute_song: null as File | null,
+        media_items: [] as File[],
+        start_date: '',
+        end_date: '',
     });
 
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -82,6 +96,14 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
         e.preventDefault();
 
         const url = createMode === 'room' ? storeRoom().url : storeEvent().url;
+
+        // If room doesn't need tributes, reset tribute flags
+        const tributeTypes = ['birthday', 'burial', 'wedding', 'anniversary', 'memorial'];
+        if (createMode === 'room' && !tributeTypes.includes(data.room_type)) {
+            setData('enable_tributes', false);
+            setData('enable_condolence_attendance', false);
+            setData('enable_candle_lighting', false);
+        }
 
         post(url, {
             forceFormData: true,
@@ -153,7 +175,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                             placeholder="Search rooms or memories..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-2xl border border-border-subtle bg-surface py-3 pr-10 pl-12 text-sm text-text-primary shadow-inner transition-all focus:border-accent-gold/50 focus:outline-none md:w-64 xl:w-80"
+                            className="w-full rounded-2xl border border-border-subtle bg-surface py-3 pr-10 pl-12 text-sm text-text-primary shadow-inner transition-all focus:border-accent-gold/50 focus:outline-none md:max-w-64 xl:max-w-80"
                         />
                         {searchQuery && (
                             <button
@@ -417,6 +439,230 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                                                 className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
                                             />
                                             {errors.event_date && <p className="mt-1 text-xs text-red-500">{errors.event_date}</p>}
+                                        </div>
+                                    )}
+
+                                    {/* Room Type - only for rooms */}
+                                    {createMode === 'room' && (
+                                        <div className="space-y-2">
+                                            <label className="ml-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                <Tag size={12} />
+                                                Room Type
+                                            </label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {[
+                                                    { value: 'general', label: 'General', icon: Files },
+                                                    { value: 'birthday', label: 'Birthday', icon: Heart },
+                                                    { value: 'burial', label: 'Burial', icon: BookOpen },
+                                                    { value: 'wedding', label: 'Wedding', icon: Heart },
+                                                    { value: 'anniversary', label: 'Anniversary', icon: Heart },
+                                                    { value: 'memorial', label: 'Memorial', icon: BookOpen },
+                                                    { value: 'graduation', label: 'Graduation', icon: Heart },
+                                                ].map((type) => {
+                                                    const Icon = type.icon;
+                                                    const isSelected = data.room_type === type.value;
+                                                    return (
+                                                        <button
+                                                            key={type.value}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setData('room_type', type.value);
+                                                            }}
+                                                            className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-xs transition-all ${isSelected
+                                                                ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
+                                                                : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
+                                                                }`}
+                                                        >
+                                                            <Icon size={16} />
+                                                            {type.label}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            {errors.room_type && <p className="mt-1 text-xs text-red-500">{errors.room_type}</p>}
+                                        </div>
+                                    )}
+
+                                    {/* Background Music - available for all room types */}
+                                    {createMode === 'room' && (
+                                        <div className="space-y-2">
+                                            <label className="ml-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                <Music size={12} />
+                                                Background Music (Optional)
+                                            </label>
+                                            <div className="relative border border-dashed border-accent-gold/20 rounded-xl bg-bg-dark p-4 transition-all hover:border-accent-gold text-center cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept=".mp3,.wav,.ogg"
+                                                    onChange={(e) => {
+                                                        setData('tribute_song', e.target.files?.[0] || null);
+                                                    }}
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                />
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <Music className="w-5 h-5 text-accent-gold" />
+                                                    <span className="text-[11px] font-medium text-text-muted">
+                                                        {data.tribute_song ? data.tribute_song.name : 'Upload background music (mp3, wav, ogg)'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Tribute Features */}
+                                    {createMode === 'room' && (
+                                        <div className="space-y-4 rounded-2xl border border-white/5 bg-bg-dark/50 p-5">
+                                            <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                                <Heart size={14} />
+                                                Tribute Features
+                                            </div>
+
+                                            {/* Enable Tributes */}
+                                            <label className="flex cursor-pointer items-center justify-between gap-4">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-sm font-semibold text-text-primary">Accept Tributes</span>
+                                                    <span className="text-xs text-text-muted">Allow visitors to leave tribute messages</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('enable_tributes', !data.enable_tributes)}
+                                                    className={`relative h-7 w-12 shrink-0 rounded-full transition-all ${data.enable_tributes ? 'bg-accent-gold' : 'bg-white/10'}`}
+                                                >
+                                                    <span className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_tributes ? 'translate-x-5' : ''}`}>
+                                                        {data.enable_tributes && <span className="text-[8px] text-accent-gold">✓</span>}
+                                                    </span>
+                                                </button>
+                                            </label>
+
+                                            {/* Enable Condolence Attendance */}
+                                            <label className="flex cursor-pointer items-center justify-between gap-4">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-sm font-semibold text-text-primary">Condolence Attendance</span>
+                                                    <span className="text-xs text-text-muted">Allow visitors to sign condolence attendance</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('enable_condolence_attendance', !data.enable_condolence_attendance)}
+                                                    className={`relative h-7 w-12 shrink-0 rounded-full transition-all ${data.enable_condolence_attendance ? 'bg-accent-gold' : 'bg-white/10'}`}
+                                                >
+                                                    <span className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_condolence_attendance ? 'translate-x-5' : ''}`}>
+                                                        {data.enable_condolence_attendance && <span className="text-[8px] text-accent-gold">✓</span>}
+                                                    </span>
+                                                </button>
+                                            </label>
+
+                                            {/* Enable Candle Lighting */}
+                                            <label className="flex cursor-pointer items-center justify-between gap-4">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-sm font-semibold text-text-primary">Light a Candle</span>
+                                                    <span className="text-xs text-text-muted">Allow visitors to light a virtual candle</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('enable_candle_lighting', !data.enable_candle_lighting)}
+                                                    className={`relative h-7 w-12 shrink-0 rounded-full transition-all ${data.enable_candle_lighting ? 'bg-accent-gold' : 'bg-white/10'}`}
+                                                >
+                                                    <span className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_candle_lighting ? 'translate-x-5' : ''}`}>
+                                                        {data.enable_candle_lighting && <span className="text-[8px] text-accent-gold">✓</span>}
+                                                    </span>
+                                                </button>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {/* Name of Celebrant/Deceased */}
+                                    {createMode === 'room' && (
+                                        <div className="space-y-2">
+                                            <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                Name of {data.room_type === 'burial' || data.room_type === 'memorial' ? 'Deceased' : 'Celebrant'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder={data.room_type === 'burial' || data.room_type === 'memorial' ? "e.g., John Doe" : "e.g., Jane Smith"}
+                                                value={data.tribute_name}
+                                                onChange={(e) => setData('tribute_name', e.target.value)}
+                                                className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
+                                            />
+                                        </div>
+                                    )}
+                                    {/* Start Date */}
+                                    {createMode === 'room' && (
+                                        <div className="space-y-2">
+                                            <label className="ml-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                <Calendar size={12} />
+                                                Start Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={data.start_date}
+                                                onChange={(e) => setData('start_date', e.target.value)}
+                                                className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* End Date */}
+                                    {createMode === 'room' && (
+                                        <div className="space-y-2">
+                                            <label className="ml-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                <Calendar size={12} />
+                                                End Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={data.end_date}
+                                                onChange={(e) => setData('end_date', e.target.value)}
+                                                className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Media Gallery Upload */}
+                                    {createMode === 'room' && (
+                                        <div className="space-y-2">
+                                            <label className="ml-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                <Image size={12} />
+                                                Media Gallery (Carousel)
+                                            </label>
+                                            <p className="text-[10px] text-text-muted -mt-1 leading-snug ml-1">Images and videos shown as a carousel at the top of the room page.</p>
+                                            <div className="relative border border-dashed border-accent-gold/20 rounded-xl bg-bg-dark p-4 transition-all hover:border-accent-gold text-center cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.webm"
+                                                    onChange={(e) => {
+                                                        const files = e.target.files;
+                                                        if (files) {
+                                                            setData('media_items', [...data.media_items, ...Array.from(files)]);
+                                                        }
+                                                    }}
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                />
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <Image className="w-5 h-5 text-accent-gold" />
+                                                    <span className="text-[11px] font-medium text-text-muted">Add images & videos (multiple)</span>
+                                                </div>
+                                            </div>
+                                            {data.media_items.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {data.media_items.map((file, idx) => (
+                                                        <div key={idx} className="flex items-center gap-1.5 bg-surface/30 border border-white/5 px-2.5 py-1.5 rounded-lg text-[10px] text-text-muted">
+                                                            <Camera size={12} className="text-accent-gold shrink-0" />
+                                                            <span className="truncate max-w-[120px]">{file.name}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const updated = data.media_items.filter((_, i) => i !== idx);
+                                                                    setData('media_items', updated);
+                                                                }}
+                                                                className="text-red-400 hover:text-red-300 ml-1"
+                                                            >
+                                                                <X size={12} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 

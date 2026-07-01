@@ -22,6 +22,7 @@ createInertiaApp({
                 'community-projects',
                 'contact',
                 'privacy',
+                'share'
             ].includes(name):
                 return GuestLayout;
             case name.startsWith('auth/'):
@@ -34,8 +35,10 @@ createInertiaApp({
                 return [DashboardLayout, SettingsLayout];
             case name.startsWith('admin/'):
                 return null;
+            case name.startsWith('family/'):
+                return null;
             default:
-                return AppLayout;
+                return GuestLayout;
         }
     },
     strictMode: true,

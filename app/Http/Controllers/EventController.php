@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Story;
+use App\Services\ActivityLogger;
 use App\Services\StoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +15,8 @@ use Inertia\Response;
 class EventController extends Controller
 {
     public function __construct(
-        protected StoryService $storyService
+        protected StoryService $storyService,
+        protected ActivityLogger $activityLogger
     ) {}
 
     /**
@@ -63,6 +66,13 @@ class EventController extends Controller
 
         $event = $request->user()->events()->create($validated);
 
+        $this->activityLogger->log(
+            "Created event: {$event->name}",
+            Event::class,
+            (string) $event->id,
+            ['event_name' => $event->name]
+        );
+
         return redirect()->route('dashboard.events.show', $event->slug);
     }
 
@@ -87,7 +97,14 @@ class EventController extends Controller
             $validated['thumbnail'] = Storage::url($path);
         }
 
-        $this->storyService->createStory($request->user(), $event, $validated);
+        $story = $this->storyService->createStory($request->user(), $event, $validated);
+
+        $this->activityLogger->log(
+            "Created story in event: {$event->name}",
+            Story::class,
+            (string) $story->id,
+            ['event_id' => $event->id, 'event_name' => $event->name]
+        );
 
         return redirect()->back()->with('success', 'Memory preserved in event successfully.');
     }

@@ -8,6 +8,10 @@ import {
     Mail,
     Lock,
     AlertCircle,
+    Fingerprint,
+    Eye,
+    EyeClosed,
+    Loader,
 } from 'lucide-react';
 
 import { DoorOpeningOverlay } from '@/components/door-opening-overlay';
@@ -15,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { login, register } from '@/routes';
 import password from '@/routes/password';
+import { Toggle } from '@/components/ui/toggle';
 
 interface Props {
     status?: string;
@@ -32,12 +37,21 @@ export default function Login({
     doorRedirect,
 }: Props) {
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [isPasskeySupported, setIsPasskeySupported] = useState(false);
+    const [isPasskeyLoggingIn, setIsPasskeyLoggingIn] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
         remember: false,
     });
+
+    useEffect(() => {
+        setIsPasskeySupported(
+            typeof window !== 'undefined' &&
+            window.PublicKeyCredential !== undefined,
+        );
+    }, []);
 
     const handleComplete = useCallback(() => {
         router.visit(doorRedirect ?? '/dashboard');
@@ -57,19 +71,150 @@ export default function Login({
         });
     };
 
+    const handlePasskeyLogin = async () => {
+        if (!isPasskeySupported) return;
+
+        setIsPasskeyLoggingIn(true);
+
+        try {
+            const response = await fetch('/passkeys/login/options', {
+                method: 'GET',
+                headers: { Accept: 'application/json' },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to get login options');
+            }
+
+            const responseData = await response.json();
+            const rawOptions = responseData.options ?? responseData;
+
+            // WebAuthn challenge and credential IDs come as base64url strings from JSON;
+            // they must be converted to ArrayBuffer for the browser API.
+            if (rawOptions.challenge && typeof rawOptions.challenge === 'string') {
+                rawOptions.challenge = Uint8Array.from(atob(rawOptions.challenge.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
+            }
+            if (rawOptions.allowCredentials) {
+                rawOptions.allowCredentials = rawOptions.allowCredentials.map((cred: any) => ({
+                    ...cred,
+                    id: typeof cred.id === 'string'
+                        ? Uint8Array.from(atob(cred.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer
+                        : cred.id,
+                }));
+            }
+
+            const credential = await navigator.credentials.get({
+                publicKey: rawOptions,
+            });
+
+            if (!credential) {
+                throw new Error('Passkey assertion cancelled');
+            }
+
+            const loginResponse = await fetch('/passkeys/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.getAttribute('content') ?? '',
+                },
+                body: JSON.stringify({
+                    id: (credential as PublicKeyCredential).id,
+                    type: (credential as PublicKeyCredential).type,
+                    rawId: Array.from(
+                        new Uint8Array(
+                            (credential as PublicKeyCredential).rawId,
+                        ),
+                    ),
+                    response: {
+                        authenticatorData: Array.from(
+                            new Uint8Array(
+                                (
+                                    (credential as PublicKeyCredential)
+                                        .response as AuthenticatorAssertionResponse
+                                ).authenticatorData,
+                            ),
+                        ),
+                        clientDataJSON: Array.from(
+                            new Uint8Array(
+                                (
+                                    (credential as PublicKeyCredential)
+                                        .response as AuthenticatorAssertionResponse
+                                ).clientDataJSON,
+                            ),
+                        ),
+                        signature: Array.from(
+                            new Uint8Array(
+                                (
+                                    (credential as PublicKeyCredential)
+                                        .response as AuthenticatorAssertionResponse
+                                ).signature,
+                            ),
+                        ),
+                        userHandle: ((
+                            (credential as PublicKeyCredential)
+                                .response as AuthenticatorAssertionResponse
+                        ).userHandle
+                            ? Array.from(
+                                new Uint8Array(
+                                    (
+                                        (
+                                            (credential as PublicKeyCredential)
+                                                .response as AuthenticatorAssertionResponse
+                                        ).userHandle as ArrayBuffer
+                                    ),
+                                ),
+                            )
+                            : null
+                        ),
+                    },
+                }),
+            });
+
+            if (loginResponse.ok) {
+                window.location.href = '/dashboard';
+            } else {
+                const errorData = await loginResponse.json();
+                throw new Error(errorData.message || 'Passkey login failed');
+            }
+        } catch (error) {
+            console.error('Passkey login error:', error);
+            setIsPasskeyLoggingIn(false);
+        }
+    };
+
     const socialProviders = [
-        { name: 'Google', icon: Chrome, color: 'hover:text-red-400' },
-        { name: 'Apple', icon: Apple, color: 'hover:text-white' },
-        { name: 'Facebook', icon: Facebook, color: 'hover:text-blue-400' },
+        {
+            name: 'Google',
+            icon: Chrome,
+            color: 'hover:text-red-400',
+            href: '/auth/google/redirect',
+        },
+        {
+            name: 'Apple',
+            icon: Apple,
+            color: 'hover:text-white',
+            href: '/auth/apple/redirect',
+        },
+        {
+            name: 'Facebook',
+            icon: Facebook,
+            color: 'hover:text-blue-400',
+            href: '/auth/facebook/redirect',
+        },
     ];
+    const [eyeOpen, setEyeOpen] = useState(false);
+    
 
     return (
-        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg-dark p-8">
+        <div className="relative flex max-h-screen items-center justify-center overflow-hidden bg-bg-dark md:p-8">
             <Head title="Welcome Home" />
 
             {/* Background Ambience */}
             <div className="absolute inset-0 z-0">
-                <div className="absolute top-1/2 left-1/2 h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-gold/5 blur-[120px]" />
+                <div className="absolute top-1/2 left-1/2 h-200 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-gold/5 blur-[120px]" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -125,16 +270,23 @@ export default function Login({
                                         className="absolute top-1/2 left-4 z-10 -translate-y-1/2 text-text-muted transition-colors group-focus-within:text-accent-gold"
                                         size={20}
                                     />
-                                    <Input
-                                        type="password"
-                                        placeholder="Password"
-                                        required
-                                        value={data.password}
-                                        onChange={(e) =>
-                                            setData('password', e.target.value)
-                                        }
-                                        className="w-full rounded-2xl border-border-subtle bg-surface py-7 pr-4 pl-12 text-base text-text-primary transition-all placeholder:text-text-muted/50 focus:border-accent-gold/50"
-                                    />
+                                    <div className="relative w-full">
+                                        <Input
+                                            type={!eyeOpen ? "password" : 'text'}
+                                            placeholder="Password"
+                                            required
+                                            value={data.password}
+                                            onChange={(e) =>
+                                                setData('password', e.target.value)
+                                            }
+                                            className="w-full rounded-2xl border-border-subtle bg-surface py-7 pr-4 pl-12 text-base text-text-primary transition-all placeholder:text-text-muted/50 focus:border-accent-gold/50"
+                                        />
+                                        <div className="absolute right-0 top-0 bottom-0 w-16 flex justify-center items-center text-accent-gold">
+                                            {eyeOpen && <Eye onClick={() => setEyeOpen(false)} className='' />}
+                                            {!eyeOpen && <EyeClosed onClick={() => setEyeOpen(true)} className='' />}
+                                        </div>
+                                    </div>
+
                                     {errors.password && (
                                         <p className="mt-1 ml-4 flex items-center gap-1 text-xs text-red-400">
                                             <AlertCircle size={12} />{' '}
@@ -176,6 +328,7 @@ export default function Login({
                                 disabled={processing}
                                 className="w-full rounded-2xl bg-accent-gold py-7 text-lg font-bold text-bg-dark shadow-[0_20px_40px_rgba(198,161,91,0.1)] transition-all hover:bg-accent-gold/90 disabled:opacity-50"
                             >
+                                {processing && <Loader className='animate-spin' />}
                                 {processing
                                     ? 'Verifying...'
                                     : 'Enter the House'}
@@ -190,19 +343,37 @@ export default function Login({
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-4 gap-4">
                                 {socialProviders.map((provider) => (
-                                    <button
+                                    <a
                                         key={provider.name}
-                                        type="button"
+                                        href={provider.href}
                                         className={`flex items-center justify-center rounded-2xl border border-border-subtle bg-surface p-4 text-text-muted transition-all ${provider.color} hover:border-accent-gold/20`}
                                     >
                                         <provider.icon size={20} />
-                                    </button>
+                                    </a>
                                 ))}
+                                {isPasskeySupported && (
+                                    <button
+                                        type="button"
+                                        onClick={handlePasskeyLogin}
+                                        disabled={isPasskeyLoggingIn}
+                                        className="flex items-center justify-center rounded-2xl border border-border-subtle bg-surface p-4 text-text-muted transition-all hover:border-accent-gold/20 hover:text-green-400"
+                                        title="Sign in with Passkey"
+                                    >
+                                        <Fingerprint
+                                            size={20}
+                                            className={
+                                                isPasskeyLoggingIn
+                                                    ? 'animate-pulse'
+                                                    : ''
+                                            }
+                                        />
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="rounded-2xl border border-border-subtle bg-surface/50 p-4">
+                            {/* <div className="rounded-2xl border border-border-subtle bg-surface/50 p-4">
                                 <p className="mb-2 text-center text-[10px] tracking-widest text-text-muted uppercase">
                                     Seeded Credentials
                                 </p>
@@ -216,7 +387,7 @@ export default function Login({
                                         admin@uloak.com / password
                                     </span>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {canRegister && (
                                 <p className="mt-8 text-center text-sm text-text-muted">

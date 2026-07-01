@@ -1,22 +1,24 @@
 import { Head, Link } from '@inertiajs/react';
-import { 
-    BookOpen, 
-    Camera, 
-    Film, 
-    Share2, 
-    Shield, 
-    Users, 
-    Key, 
-    LayoutGrid, 
-    Mic, 
-    Book, 
-    Briefcase, 
-    FileText, 
-    Coffee, 
+import {
+    BookOpen,
+    Camera,
+    Film,
+    Share2,
+    Shield,
+    Users,
+    Key,
+    LayoutGrid,
+    Mic,
+    Book,
+    Briefcase,
+    FileText,
+    Coffee,
     Lock,
     Globe,
     Zap,
-    Microscope
+    Microscope,
+    Heart,
+    Database
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import React from 'react';
@@ -90,11 +92,11 @@ export default function HowItWorks({ page }: Props) {
     ];
 
     return (
-        <GuestLayout>
-            <Head>
+        <>
+            {/* <Head>
                 <title>{page?.title || 'How It Works'} | Uloak</title>
                 <meta name="description" content={page?.meta_description || 'Learn how Uloak helps you preserve your family heritage and stories.'} />
-            </Head>
+            </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
                 {/* Hero Section */}
@@ -134,7 +136,7 @@ export default function HowItWorks({ page }: Props) {
                             <div className="grid gap-24 lg:gap-40">
                                 {steps.map((step: any, i: number) => {
                                     const IconComponent = iconMap[step.icon as keyof typeof iconMap] || Share2;
-                                    
+
                                     return (
                                         <motion.div
                                             key={step.title}
@@ -209,6 +211,6 @@ export default function HowItWorks({ page }: Props) {
                     </motion.div>
                 </section>
             </div>
-        </GuestLayout>
+        </>
     );
 }

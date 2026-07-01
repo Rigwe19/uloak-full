@@ -35,125 +35,221 @@ interface MembershipPageProps {
     };
 }
 
-export default function Membership({ page }: MembershipPageProps) {
+export default function Membership({
+    page,
+    subscriptions_enabled,
+}: MembershipPageProps & { subscriptions_enabled: boolean }) {
     const { hero, plans, faqs } = page.content;
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     return (
-        <GuestLayout>
+        <>
             <Head title={page.title} />
 
-            {/* Hero Section */}
+            {/* HERO */}
             <section className="relative overflow-hidden pt-32 pb-20 lg:pt-48 lg:pb-32">
                 <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(212,175,55,0.05),transparent_40%)]" />
-                
+
                 <div className="mx-auto max-w-7xl px-8">
                     <div className="max-w-3xl">
-                        <motion.h1 
+                        <motion.h1
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="mb-6 text-5xl font-light tracking-tight text-text-primary md:text-7xl"
                         >
                             {hero.title}
                         </motion.h1>
-                        <motion.p 
+
+                        <motion.p
                             initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
+                            animate={{ opacity: 1, y: 0 }}
                             className="text-xl leading-relaxed text-text-muted"
                         >
                             {hero.subtitle}
                         </motion.p>
+
+                        {/* STATUS BADGE */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className={`mt-8 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm
+                                ${subscriptions_enabled
+                                    ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                                    : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400'
+                                }
+                            `}
+                        >
+                            <span
+                                className={`h-2 w-2 rounded-full animate-pulse ${subscriptions_enabled ? 'bg-green-400' : 'bg-yellow-400'
+                                    }`}
+                            />
+
+                            {subscriptions_enabled
+                                ? 'Subscriptions active'
+                                : 'Live product — subscriptions coming soon'}
+                        </motion.div>
                     </div>
                 </div>
             </section>
 
-            {/* Pricing Section */}
-            <section className="py-20 lg:py-32">
-                <div className="mx-auto max-w-7xl px-8">
-                    <div className="grid gap-8 md:grid-cols-2 lg:max-w-5xl lg:mx-auto">
-                        {plans.map((plan, index) => (
-                            <motion.div
-                                key={plan.name}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                viewport={{ once: true }}
-                                className={`relative flex flex-col rounded-3xl border p-8 transition-all duration-500 hover:translate-y-[-4px] ${
-                                    plan.highlight 
-                                        ? 'border-accent-gold bg-surface/50 shadow-[0_0_40px_rgba(212,175,55,0.1)]' 
-                                        : 'border-border-subtle bg-surface/30'
-                                }`}
-                            >
-                                {plan.highlight && (
-                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-accent-gold px-4 py-1 text-[10px] font-bold tracking-widest text-bg-dark uppercase">
-                                        Most Popular
-                                    </div>
-                                )}
+            {/* ========================= */}
+            {/* CONDITIONAL RENDERING */}
+            {/* ========================= */}
 
-                                <div className="mb-8">
-                                    <h3 className="mb-2 text-2xl font-light text-text-primary">{plan.name}</h3>
-                                    <p className="text-sm text-text-muted">{plan.desc}</p>
+            {subscriptions_enabled ? (
+                <>
+                    {/* ORIGINAL PRICING UI (UNCHANGED) */}
+                    <section className="py-20 lg:py-32">
+                        <div className="mx-auto max-w-7xl px-8">
+                            <div className="grid gap-8 md:grid-cols-2 lg:max-w-5xl lg:mx-auto">
+                                {plans.map((plan, index) => (
+                                    <motion.div
+                                        key={plan.name}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        viewport={{ once: true }}
+                                        className={`relative flex flex-col rounded-3xl border p-8 transition-all duration-500 hover:translate-y-[-4px] ${plan.highlight
+                                            ? 'border-accent-gold bg-surface/50 shadow-[0_0_40px_rgba(212,175,55,0.1)]'
+                                            : 'border-border-subtle bg-surface/30'
+                                            }`}
+                                    >
+                                        {plan.highlight && (
+                                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-accent-gold px-4 py-1 text-[10px] font-bold tracking-widest text-bg-dark uppercase">
+                                                Most Popular
+                                            </div>
+                                        )}
+
+                                        <div className="mb-8">
+                                            <h3 className="mb-2 text-2xl font-light text-text-primary">
+                                                {plan.name}
+                                            </h3>
+                                            <p className="text-sm text-text-muted">
+                                                {plan.desc}
+                                            </p>
+                                        </div>
+
+                                        <div className="mb-8 flex items-baseline gap-1">
+                                            <span className="text-4xl font-light text-text-primary">
+                                                {plan.price}
+                                            </span>
+                                            <span className="text-sm text-text-muted">
+                                                /{plan.interval}
+                                            </span>
+                                        </div>
+
+                                        <ul className="mb-10 flex flex-col gap-4">
+                                            {plan.features.map((feature) => (
+                                                <li
+                                                    key={feature}
+                                                    className="flex items-start gap-3 text-sm text-text-muted"
+                                                >
+                                                    <Check
+                                                        size={16}
+                                                        className="mt-0.5 shrink-0 text-accent-gold"
+                                                    />
+                                                    {feature}
+                                                </li>
+                                            ))}
+                                        </ul>
+
+                                        <div className="mt-auto">
+                                            <Link href={register().url}>
+                                                <Button
+                                                    variant={
+                                                        plan.highlight
+                                                            ? 'primary'
+                                                            : 'outline'
+                                                    }
+                                                    className="w-full py-6 text-base"
+                                                >
+                                                    {plan.button}
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                </>
+            ) : (
+                <>
+                    {/* COMING SOON (SAFE, NON-GENERIC) */}
+                    <section className="py-20 lg:py-32">
+                        <div className="mx-auto max-w-4xl px-8">
+                            <div className="rounded-3xl border border-border-subtle bg-surface/30 p-10 lg:p-14">
+                                <h2 className="mb-6 text-2xl font-light text-text-primary">
+                                    Membership is not active yet
+                                </h2>
+
+                                <div className="space-y-4 text-text-muted leading-relaxed">
+                                    <p>
+                                        Uloak is already fully functional today — you can create memorials,
+                                        share stories, and use the platform without any payment.
+                                    </p>
+
+                                    <p>
+                                        We are currently building the subscription system that will unlock
+                                        optional premium features in the future.
+                                    </p>
+
+                                    <p>
+                                        When it launches, nothing you currently use will be taken away.
+                                        It will simply add new capabilities on top of what already exists.
+                                    </p>
                                 </div>
 
-                                <div className="mb-8 flex items-baseline gap-1">
-                                    <span className="text-4xl font-light text-text-primary">{plan.price}</span>
-                                    <span className="text-sm text-text-muted">/{plan.interval}</span>
+                                <div className="mt-10 flex items-center gap-3 text-sm text-text-muted">
+                                    <span className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
+                                    No billing • No paywall • Full access active
                                 </div>
+                            </div>
+                        </div>
+                    </section>
+                </>
+            )}
 
-                                <ul className="mb-10 flex flex-col gap-4">
-                                    {plan.features.map((feature) => (
-                                        <li key={feature} className="flex items-start gap-3 text-sm text-text-muted">
-                                            <Check size={16} className="mt-0.5 shrink-0 text-accent-gold" />
-                                            {feature}
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <div className="mt-auto">
-                                    <Link href={register().url}>
-                                        <Button 
-                                            variant={plan.highlight ? 'primary' : 'outline'} 
-                                            className="w-full py-6 text-base"
-                                        >
-                                            {plan.button}
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* FAQ Section */}
+            {/* FAQ stays ALWAYS (important trust anchor) */}
             <section className="bg-surface/10 py-20 lg:py-32">
                 <div className="mx-auto max-w-3xl px-8">
                     <div className="mb-16 text-center">
-                        <h2 className="mb-4 text-3xl font-light text-text-primary md:text-4xl">Common Questions</h2>
-                        <p className="text-text-muted">Everything you need to know about Uloak membership.</p>
+                        <h2 className="mb-4 text-3xl font-light text-text-primary md:text-4xl">
+                            Common Questions
+                        </h2>
+                        <p className="text-text-muted">
+                            Everything you need to know about Uloak membership.
+                        </p>
                     </div>
 
                     <div className="flex flex-col gap-4">
                         {faqs.map((faq, index) => (
-                            <div 
+                            <div
                                 key={index}
-                                className="overflow-hidden rounded-2xl border border-border-subtle bg-surface/20 transition-all duration-300"
+                                className="overflow-hidden rounded-2xl border border-border-subtle bg-surface/20"
                             >
                                 <button
-                                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                                    onClick={() =>
+                                        setOpenFaq(openFaq === index ? null : index)
+                                    }
                                     className="flex w-full items-center justify-between p-6 text-left"
                                 >
-                                    <span className="font-medium text-text-primary">{faq.question}</span>
-                                    {openFaq === index ? <ChevronUp size={20} className="text-accent-gold" /> : <ChevronDown size={20} className="text-text-muted" />}
+                                    <span className="font-medium text-text-primary">
+                                        {faq.question}
+                                    </span>
                                 </button>
-                                
+
                                 <motion.div
                                     initial={false}
-                                    animate={{ height: openFaq === index ? 'auto' : 0, opacity: openFaq === index ? 1 : 0 }}
+                                    animate={{
+                                        height: openFaq === index ? 'auto' : 0,
+                                        opacity: openFaq === index ? 1 : 0,
+                                    }}
                                     className="px-6"
                                 >
-                                    <div className="pb-6 text-sm leading-relaxed text-text-muted">
+                                    <div className="pb-6 text-sm text-text-muted">
                                         {faq.answer}
                                     </div>
                                 </motion.div>
@@ -162,29 +258,6 @@ export default function Membership({ page }: MembershipPageProps) {
                     </div>
                 </div>
             </section>
-
-            {/* Final CTA */}
-            <section className="py-24 lg:py-48">
-                <div className="mx-auto max-w-7xl px-8">
-                    <div className="relative overflow-hidden rounded-[3rem] bg-bg-dark border border-border-subtle p-12 lg:p-24">
-                        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.08),transparent_70%)]" />
-                        
-                        <div className="relative z-10 mx-auto max-w-2xl text-center">
-                            <h2 className="mb-8 text-4xl font-light tracking-tight text-text-primary md:text-6xl">
-                                Ready to build your digital home?
-                            </h2>
-                            <p className="mb-12 text-lg text-text-muted">
-                                Your family's story is the most valuable asset you own. Start preserving it today.
-                            </p>
-                            <Link href={register().url}>
-                                <Button size="lg" className="px-12 py-8 text-lg">
-                                    Become a Member
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </GuestLayout>
+        </>
     );
 }

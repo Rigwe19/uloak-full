@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Story;
+use App\Services\ActivityLogger;
 use App\Services\StoryService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -13,7 +15,8 @@ use Inertia\Response;
 class StoryController extends Controller
 {
     public function __construct(
-        protected StoryService $storyService
+        protected StoryService $storyService,
+        protected ActivityLogger $activityLogger
     ) {}
 
     /**
@@ -37,7 +40,23 @@ class StoryController extends Controller
             $validated['thumbnail'] = Storage::url($path);
         }
 
-        $this->storyService->createStory($request->user(), $room, $validated);
+        $story = $this->storyService->createStory($request->user(), $room, $validated);
+
+        if ($request->user()) {
+            $this->activityLogger->log(
+                "Created story: {$story->title}",
+                Story::class,
+                (string) $story->id,
+                ['room_id' => $room->id, 'room_name' => $room->name]
+            );
+        } else {
+            $this->activityLogger->logForGuest(
+                "Created story: {$story->title}",
+                ['guest_name' => $request->input('guest_name')],
+                Story::class,
+                (string) $story->id
+            );
+        }
 
         return redirect()->back()->with('success', 'Memory preserved successfully.');
     }
@@ -69,7 +88,7 @@ class StoryController extends Controller
                 'description' => $story->description,
                 'type' => $story->type,
                 'thumbnail' => $story->thumbnail,
-                'author' => $story->user->name,
+                'author' => $story->user?->name ?? $story->guest_name,
                 'date' => $story->created_at->format('M d, Y'),
                 'tags' => $story->tags ?? [],
                 'assets' => $story->assets ?? [],
@@ -78,7 +97,7 @@ class StoryController extends Controller
                 'comments' => $story->comments()->with('user')->latest()->get()->map(fn ($comment) => [
                     'id' => $comment->id,
                     'content' => $comment->content,
-                    'author' => $comment->user->name,
+                    'author' => $comment->user?->name ?? $comment->guest_name,
                     'date' => $comment->created_at->diffForHumans(),
                 ]),
             ],
@@ -137,5 +156,22 @@ class StoryController extends Controller
         $story->update(['assets' => $assets, 'type' => 'collection']);
 
         return redirect()->back()->with('success', 'Asset added to collection.');
+    }
+
+    /**
+     * Delete a story.
+     */
+    public function destroy(Story $story): RedirectResponse
+    {
+        $story->delete();
+
+        $this->activityLogger->log(
+            "Deleted story: {$story->title}",
+            Story::class,
+            (string) $story->id,
+            ['room_id' => $story->room_id]
+        );
+
+        return redirect()->back()->with('success', 'Memory deleted.');
     }
 }

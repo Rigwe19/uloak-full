@@ -26,6 +26,7 @@ interface Story {
 
 interface VideoPlaylistPlayerProps {
     stories: Story[];
+    fullscreen?: boolean;
 }
 
 interface PlayableVideo {
@@ -39,7 +40,7 @@ interface PlayableVideo {
     date: string;
 }
 
-export function VideoPlaylistPlayer({ stories = [] }: VideoPlaylistPlayerProps) {
+export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoPlaylistPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [currentIdx, setCurrentIdx] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -170,7 +171,7 @@ export function VideoPlaylistPlayer({ stories = [] }: VideoPlaylistPlayerProps) 
             <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative overflow-hidden rounded-[32px] border border-white/5 bg-surface/30 p-12 text-center shadow-2xl backdrop-blur-sm"
+                className="relative overflow-hidden rounded-4xl border border-white/5 bg-surface/30 p-12 text-center shadow-2xl backdrop-blur-sm"
             >
                 <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-accent-gold/20 bg-accent-gold/5 text-accent-gold/70">
                     <Tv size={36} className="stroke-[1.5]" />
@@ -181,7 +182,7 @@ export function VideoPlaylistPlayer({ stories = [] }: VideoPlaylistPlayerProps) 
                 <p className="mx-auto max-w-md text-sm leading-relaxed text-text-muted">
                     No video memories have been preserved in this homestead yet. Click the "Annex Memory" button below to add your first legacy film.
                 </p>
-                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-accent-gold/10 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-linear-to-r from-transparent via-accent-gold/10 to-transparent" />
             </motion.div>
         );
     }
@@ -190,9 +191,9 @@ export function VideoPlaylistPlayer({ stories = [] }: VideoPlaylistPlayerProps) 
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="overflow-hidden rounded-[32px] border border-white/10 bg-surface/40 shadow-[0_30px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+            className={`overflow-hidden ${!fullscreen ? 'rounded-4xl' : ''} border border-white/10 bg-surface/40 shadow-[0_30px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl`}
         >
-            <div className="relative flex flex-col justify-between bg-black/60 w-full h-[300px] sm:h-[450px] md:h-[550px] lg:h-[600px] group">
+            <div className={`relative flex flex-col justify-between bg-black/60 w-full ${!fullscreen?'h-75 sm:h-112.5 md:h-137.5 lg:h-150':'aspect-video'} group`}>
                 <video
                     ref={videoRef}
                     src={activeVideo?.url}
@@ -280,7 +281,7 @@ export function VideoPlaylistPlayer({ stories = [] }: VideoPlaylistPlayerProps) 
                 {/* Quick Title overlay when controls are hidden */}
                 <div className="absolute top-6 left-6 pointer-events-none bg-black/60 backdrop-blur-md border border-white/5 rounded-full px-4 py-2 text-xs font-semibold tracking-wider text-text-primary flex items-center gap-2">
                     <span className="text-accent-gold font-mono">NOW PLAYING:</span>
-                    <span>{activeVideo?.title}</span>
+                    <span className='flex-1 w-1/3 truncate'>{activeVideo?.title}</span>
                     {playlist.length > 1 && (
                         <span className="ml-2 rounded-full bg-accent-gold/10 px-2.5 py-0.5 text-[9px] font-bold text-accent-gold border border-accent-gold/20">
                             {currentIdx + 1} of {playlist.length}
@@ -290,7 +291,7 @@ export function VideoPlaylistPlayer({ stories = [] }: VideoPlaylistPlayerProps) 
             </div>
 
             {/* Description Details bar at the bottom */}
-            <div className="border-t border-white/5 bg-black/20 p-6 flex flex-col md:flex-row justify-between gap-6">
+            {!fullscreen && <div className="border-t border-white/5 bg-black/20 p-6 flex flex-col md:flex-row justify-between gap-6">
                 <div className="space-y-2">
                     <h4 className="text-xl font-bold text-text-primary">{activeVideo?.title}</h4>
                     <p className="text-xs font-light text-text-muted leading-relaxed max-w-3xl italic">
@@ -307,7 +308,7 @@ export function VideoPlaylistPlayer({ stories = [] }: VideoPlaylistPlayerProps) 
                         <span>{activeVideo?.date}</span>
                     </div>
                 </div>
-            </div>
+            </div>}
         </motion.div>
     );
 }

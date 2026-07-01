@@ -22,6 +22,10 @@ class RoomFactory extends Factory
             'name' => $this->faker->words(3, true),
             'description' => $this->faker->paragraph(),
             'created_by' => User::factory(),
+            'room_type' => 'general',
+            'enable_tributes' => false,
+            'enable_condolence_attendance' => false,
+            'enable_candle_lighting' => false,
         ];
     }
 }

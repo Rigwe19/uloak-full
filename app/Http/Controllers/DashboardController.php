@@ -15,6 +15,8 @@ class DashboardController extends Controller
 
     public function index(Request $request): Response
     {
+        logger('tributes check', [$this->dashboardService->getDashboardData($request->user())]);
+
         return Inertia::render('dashboard/index', [
             'dashboardData' => $this->dashboardService->getDashboardData($request->user()),
             'title' => 'Dashboard - Uloak',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Page;
+use App\Models\Room;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
@@ -12,11 +13,22 @@ class PageController extends Controller
     {
         $page = Page::where('slug', '/')->first();
 
+        $featuredRooms = Room::whereHas('creator', function ($query) {
+            $query->where('is_admin', true);
+        })
+            ->with(['members', 'creator'])
+            ->withCount('stories')
+            ->latest()
+            ->take(6)
+            ->get();
+
         return Inertia::render('welcome', [
             'canRegister' => Features::enabled(Features::registration()),
             'page' => $page,
             'title' => $page?->title ?? 'Home - Uloak, House of Stories',
             'meta_description' => $page?->meta_description ?? 'Uloak helps you preserve your family stories, heritage, and memories for generations to come.',
+            'meta_image' => url('/images/og-image.webp'),
+            'featuredRooms' => $featuredRooms,
         ]);
     }
 
@@ -46,8 +58,10 @@ class PageController extends Controller
 
         return Inertia::render($slug, [
             'page' => $page,
-            'title' => $page?->title ?? ($titles[$slug] ?? 'Uloak'),
+            'title' => $page?->title ?? ($titles[$slug] ?? 'Uloak, House of Stories'),
             'meta_description' => $page?->meta_description ?? ($descriptions[$slug] ?? 'Preserve your family stories, heritage, and memories with Uloak.'),
+            'meta_image' => url('/images/og-image.webp'),
+            'meta_url' => url()->current(),
         ]);
     }
 }

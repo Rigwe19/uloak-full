@@ -9,6 +9,8 @@ class Comment extends Model
     protected $fillable = [
         'story_id',
         'user_id',
+        'guest_name',
+        'guest_email',
         'content',
         'parent_id',
     ];
@@ -31,5 +33,13 @@ class Comment extends Model
     public function replies()
     {
         return $this->hasMany(Comment::class, 'parent_id');
+    }
+
+    /**
+     * Get the display name for the comment author.
+     */
+    public function authorName(): string
+    {
+        return $this->user?->name ?? $this->guest_name ?? 'Anonymous';
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,14 +11,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
-use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\Passkey;
+use Laravel\Passkeys\PasskeyAuthenticatable;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 #[Fillable(['name', 'email', 'avatar', 'password', 'is_admin'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements PasskeyUser
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory;
+    use HasPushSubscriptions;
+    use Notifiable;
+    use PasskeyAuthenticatable;
 
     protected $appends = ['avatar_url'];
 
@@ -32,6 +36,16 @@ class User extends Authenticatable
         }
 
         return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=C0A060&background=1A1A1A';
+    }
+
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
+    public function passkeys(): HasMany
+    {
+        return $this->hasMany(Passkey::class, 'user_id');
     }
 
     public function rooms(): BelongsToMany
@@ -67,5 +81,40 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
             'is_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the display name for passkey UI.
+     */
+    public function getPasskeyDisplayName(): string
+    {
+        return $this->name ?? $this->email;
+    }
+
+    /**
+     * Get the user handle (binary-safe identifier).
+     */
+    public function getPasskeyUserHandle(): string
+    {
+        // Use the primary key as the handle; ensure it's string
+        return (string) $this->getKey();
+    }
+
+    /**
+     * Determine if the user has any registered passkeys.
+     */
+    public function hasPasskeysEnabled(): bool
+    {
+        return $this->passkeys()->exists();
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function markAllAsRead()
+    {
+        $this->notifications()->update(['read_at' => now()]);
     }
 }

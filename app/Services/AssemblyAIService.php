@@ -59,10 +59,41 @@ class AssemblyAIService
 
             // optional but useful for sync UI
             'word_boost' => [],
-            'webhook_url' => 'https://webhook.site/bd44e705-5a6e-475f-9a74-997b2d646c3b', // $webhookUrl,
+            'webhook_url' => 'https://uloakstories.com/api/webhooks/assemblyai', // $webhookUrl, // 'https://webhook.site/bd44e705-5a6e-475f-9a74-997b2d646c3b', // ,
         ]);
         logger('assembly.info', $response->json());
 
         return $response->json()['id'];
+    }
+
+    /**
+     * Create a transcription job without a webhook (used for polling in queued jobs).
+     */
+    public function createTranscriptSimple(string $audioUrl): string
+    {
+        $response = Http::withHeaders([
+            'authorization' => $this->apiKey,
+            'content-type' => 'application/json',
+        ])->post("{$this->baseUrl}/transcript", [
+            'audio_url' => $audioUrl,
+            'punctuate' => true,
+            'format_text' => true,
+        ]);
+
+        return $response->json()['id'];
+    }
+
+    /**
+     * Poll a transcript by ID and return its status + text.
+     *
+     * @return array{status: string, text: string|null}
+     */
+    public function getTranscript(string $transcriptId): array
+    {
+        $response = Http::withHeaders([
+            'authorization' => $this->apiKey,
+        ])->get("{$this->baseUrl}/transcript/{$transcriptId}");
+
+        return $response->json();
     }
 }

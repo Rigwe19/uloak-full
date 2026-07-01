@@ -17,7 +17,7 @@ class RoomService
 
     public function getRoomDetails(Room $room): Room
     {
-        return $room->load(['members', 'stories.user', 'stories.room', 'creator']);
+        return $room->load(['members', 'stories.user', 'stories.room', 'creator', 'tributes']);
     }
 
     public function createRoom(User $user, array $data): Room

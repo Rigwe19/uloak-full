@@ -34,6 +34,7 @@ class SecurityController extends Controller implements HasMiddleware
         $props = [
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'passkeys' => $request->user()->passkeys()->orderBy('created_at', 'desc')->get(),
         ];
 
         if (Features::canManageTwoFactorAuthentication()) {

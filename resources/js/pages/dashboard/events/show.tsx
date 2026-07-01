@@ -13,12 +13,16 @@ import {
     Play,
     Plus,
     Calendar,
+    Download,
+    Settings,
 } from 'lucide-react';
-import { Button, Badge } from '@/components/dashboard/ui';
+import { Button, Badge, AvatarGroup } from '@/components/dashboard/ui';
 import { dashboard } from '@/routes';
 import storiesRoutes from '@/routes/dashboard/stories';
 import { AnnexEventMemoryModal } from '@/components/dashboard/annex-event-memory-modal';
 import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
+import { ShareQRCode } from '@/components/dashboard/share-qr-code';
+import { createPortal } from 'react-dom';
 
 interface EventShowProps {
     event: {
@@ -114,6 +118,38 @@ export default function EventShow({ event, stories = [] }: EventShowProps) {
                                 Dashboard
                             </span>
                         </Link>
+                        <div className="flex gap-4">
+                            <div className="flex flex-wrap items-center gap-4">
+                                <ShareQRCode roomType='events' roomSlug={event.slug} roomName={event.name} />
+                                {/* <Button icon={Settings} variant="outline" onClick={() => setIsEditRoomModalOpen(true)} className="hidden md:inline-flex">
+                                    Edit Room
+                                </Button> */}
+                                {/* <button onClick={() => setIsEditRoomModalOpen(true)} className="md:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-text-muted hover:text-text-primary hover:border-white/20 transition-all" title="Edit Room">
+                                    <Settings size={18} />
+                                </button> */}
+                                {/* <a
+                                    href={`/rooms/${event.slug}/download-media`}
+                                    download
+                                    className="hidden md:inline-flex items-center gap-2 rounded-xl border border-accent-gold/20 hover:border-accent-gold/40 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-accent-gold transition-all"
+                                >
+                                    <Download size={14} />
+                                    Download Media
+                                </a> */}
+                                <a
+                                    href={`/rooms/${event.slug}/download-media`}
+                                    download
+                                    className="md:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-accent-gold/20 text-accent-gold hover:border-accent-gold/40 transition-all"
+                                    title="Download all tribute media"
+                                >
+                                    <Download size={16} />
+                                </a>
+                                <div className="flex items-center gap-4">
+                                    {/* <AvatarGroup
+                                        users={event.members.map((u) => ({ avatar: u.avatar_url, name: u.name }))}
+                                    /> */}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex flex-col justify-between gap-12 md:flex-row md:items-end">
@@ -365,11 +401,11 @@ export default function EventShow({ event, stories = [] }: EventShowProps) {
             </main>
 
             {/* Annex Event Memory Modal */}
-            <AnnexEventMemoryModal
+            {createPortal(<AnnexEventMemoryModal
                 isOpen={isAnnexModalOpen}
                 onClose={() => setIsAnnexModalOpen(false)}
                 event={event}
-            />
+            />, document.body)}
         </motion.div>
     );
 }

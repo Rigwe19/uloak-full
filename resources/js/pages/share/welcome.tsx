@@ -10,6 +10,7 @@ import {
     Check,
 } from 'lucide-react';
 import { Button } from '@/components/dashboard/ui';
+import { sendLink } from '@/routes/share';
 
 interface ShareWelcomeProps {
     type: 'room' | 'event';
@@ -36,7 +37,7 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('share.send-link'), {
+        post(sendLink().url, {
             onSuccess: () => {
                 setSubmitted(true);
             },

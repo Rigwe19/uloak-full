@@ -50,11 +50,11 @@ export default function Contact({ page }: Props) {
     };
 
     return (
-        <GuestLayout>
-            <Head>
+        <>
+            {/* <Head>
                 <title>{page?.title || 'Contact Us'} | Uloak</title>
                 <meta name="description" content={page?.meta_description || 'Get in touch with Uloak for storytelling services and collaborations.'} />
-            </Head>
+            </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
                 <section className="relative min-h-[60vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
@@ -110,7 +110,7 @@ export default function Contact({ page }: Props) {
                                                     className="w-full rounded-2xl border border-white/5 bg-bg-dark px-6 py-4 text-sm outline-none transition-all focus:border-accent-gold/50"
                                                     placeholder="Nnanna Adim"
                                                     value={formData.name}
-                                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 />
                                             </div>
                                             <div className="space-y-3">
@@ -120,7 +120,7 @@ export default function Contact({ page }: Props) {
                                                     className="w-full rounded-2xl border border-white/5 bg-bg-dark px-6 py-4 text-sm outline-none transition-all focus:border-accent-gold/50"
                                                     placeholder="hello@uloak.co.uk"
                                                     value={formData.email}
-                                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                 />
                                             </div>
                                         </div>
@@ -129,7 +129,7 @@ export default function Contact({ page }: Props) {
                                             <select
                                                 className="w-full appearance-none rounded-2xl border border-white/5 bg-bg-dark px-6 py-4 text-sm outline-none transition-all focus:border-accent-gold/50"
                                                 value={formData.subject}
-                                                onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                                             >
                                                 <option>General Inquiry</option>
                                                 <option>Legacy Film Inquiry</option>
@@ -144,7 +144,7 @@ export default function Contact({ page }: Props) {
                                                 className="w-full resize-none rounded-2xl border border-white/5 bg-bg-dark px-6 py-4 text-sm outline-none transition-all focus:border-accent-gold/50"
                                                 placeholder="How can we help you tell your story?"
                                                 value={formData.message}
-                                                onChange={(e) => setFormData({...formData, message: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                             />
                                         </div>
                                         <Button type="submit" disabled={sending} className="h-16 w-full rounded-2xl text-lg font-bold">
@@ -186,6 +186,6 @@ export default function Contact({ page }: Props) {
                     </div>
                 </section>
             </div>
-        </GuestLayout>
+        </>
     );
 }

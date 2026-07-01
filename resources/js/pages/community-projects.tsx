@@ -90,11 +90,11 @@ export default function CommunityProjects({ page }: Props) {
     ];
 
     return (
-        <GuestLayout>
-            <Head>
+        <>
+            {/* <Head>
                 <title>{page?.title || 'Community & Impact'} | Uloak</title>
                 <meta name="description" content={page?.meta_description || 'Discover the social impact and community projects led by Uloak.'} />
-            </Head>
+            </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
                 {/* Hero Section */}
@@ -165,7 +165,7 @@ export default function CommunityProjects({ page }: Props) {
                         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {impactAreas.map((area: any, i: number) => {
                                 const IconComponent = iconMap[area.icon as keyof typeof iconMap] || Heart;
-                                
+
                                 return (
                                     <motion.div
                                         key={i}
@@ -228,6 +228,6 @@ export default function CommunityProjects({ page }: Props) {
                     </motion.div>
                 </section>
             </div>
-        </GuestLayout>
+        </>
     );
 }

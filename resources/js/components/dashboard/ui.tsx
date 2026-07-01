@@ -94,7 +94,7 @@ export function AvatarGroup({
             {displayUsers.map((user, i) => (
                 <div
                     key={i}
-                    className="bg-surface-light flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-surface"
+                    className="bg-surface-light flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-surface"
                     title={user.name}
                 >
                     {user.avatar_url || user.avatar ? (

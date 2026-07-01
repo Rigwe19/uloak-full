@@ -1,5 +1,4 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
     X, Plus, Camera, Video, MessageSquare, Files, 
     Upload, ArrowLeft, Check, Loader2, Play
@@ -7,6 +6,7 @@ import {
 import { useForm } from '@inertiajs/react';
 import { Button } from './ui';
 import { VoiceRecorder } from './voice-recorder';
+import { ResponsiveModal } from '@/components/responsive-modal';
 
 interface Room {
     id: number;
@@ -146,25 +146,15 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
         }, 300);
     };
 
-    if (!isOpen) return null;
-
     return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-110 flex items-end justify-center bg-black/80 p-4 backdrop-blur-md md:items-center md:p-8"
-            >
-                <motion.div
-                    initial={{ y: '100%', opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: '100%', opacity: 0 }}
-                    transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                    className="relative mb-24 w-full max-w-xl overflow-hidden rounded-[32px] border border-white/10 bg-surface p-8 shadow-2xl ring-1 ring-white/5 md:mb-0 md:p-10"
-                >
-                    <div className="absolute top-4 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-white/10 md:hidden" />
-
+        <ResponsiveModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="Add Memory"
+            titleHidden
+            desktopMaxWidth="max-w-xl"
+        >
+            <div className="relative p-8 md:p-10">
                     <button
                         onClick={handleClose}
                         className="absolute top-6 right-6 text-text-muted transition-colors hover:text-text-primary md:top-8 md:right-8"
@@ -464,16 +454,15 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
                             </Button>
                         </div>
                     )}
-                </motion.div>
+            </div>
 
-                {/* Voice Recorder Overlay (Separate Portal-like) */}
-                {step === 'voice' && (
-                    <VoiceRecorder 
-                        onClose={() => setStep('selection')} 
-                        onSave={handleSaveVoice}
-                    />
-                )}
-            </motion.div>
-        </AnimatePresence>
+            {/* Voice Recorder Overlay (Separate Portal-like) */}
+            {step === 'voice' && (
+                <VoiceRecorder 
+                    onClose={() => setStep('selection')} 
+                    onSave={handleSaveVoice}
+                />
+            )}
+        </ResponsiveModal>
     );
 }

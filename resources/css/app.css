@@ -13,6 +13,8 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
+    --font-serif: 'Outfit';
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -145,21 +147,17 @@
     }
 
     .mask-edge {
-        mask-image: linear-gradient(
-            to bottom,
-            transparent,
-            black 15%,
-            black 85%,
-            transparent
-        );
+        mask-image: linear-gradient(to bottom,
+                transparent,
+                black 15%,
+                black 85%,
+                transparent);
     }
 
     .vignette {
-        background: radial-gradient(
-            circle at center,
-            transparent 0%,
-            rgba(0, 0, 0, 0.4) 100%
-        );
+        background: radial-gradient(circle at center,
+                transparent 0%,
+                rgba(0, 0, 0, 0.4) 100%);
     }
 }
 
@@ -170,5 +168,70 @@
 
     body {
         @apply bg-bg-dark font-sans text-text-primary transition-colors duration-300;
+    }
+}
+
+@keyframes candleFlicker {
+
+    0%,
+    100% {
+        transform: scaleX(1) scaleY(1) translateY(0);
+        opacity: 1;
+    }
+
+    15% {
+        transform: scaleX(0.91) scaleY(1.05) translateY(-0.5px);
+        opacity: 0.95;
+    }
+
+    30% {
+        transform: scaleX(1.06) scaleY(0.96) translateY(0.5px);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scaleX(0.94) scaleY(1.07) translateY(-1px);
+        opacity: 0.93;
+    }
+
+    70% {
+        transform: scaleX(1.05) scaleY(0.97) translateY(0.3px);
+        opacity: 0.97;
+    }
+
+    85% {
+        transform: scaleX(0.97) scaleY(1.02) translateY(-0.3px);
+        opacity: 0.98;
+    }
+}
+
+@keyframes candleInner {
+
+    0%,
+    100% {
+        transform: scaleX(1) scaleY(1);
+        opacity: 0.85;
+    }
+
+    25% {
+        transform: scaleX(0.88) scaleY(1.06);
+        opacity: 0.9;
+    }
+
+    60% {
+        transform: scaleX(1.06) scaleY(0.94);
+        opacity: 0.78;
+    }
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        opacity: 0.38;
+    }
+
+    50% {
+        opacity: 0.6;
     }
 }

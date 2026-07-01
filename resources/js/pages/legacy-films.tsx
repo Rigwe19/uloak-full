@@ -114,7 +114,7 @@ export default function LegacyFilms({ page }: Props) {
     ];
 
     return (
-        <GuestLayout>
+        <>
             <Head title="Legacy Films & Services - ULOAK" />
             <div className="bg-bg-dark pt-20">
                 {/* Hero Section */}
@@ -337,6 +337,6 @@ export default function LegacyFilms({ page }: Props) {
                     </div>
                 </section>
             </div>
-        </GuestLayout>
+        </>
     );
 }

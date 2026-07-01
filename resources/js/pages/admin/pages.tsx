@@ -41,9 +41,9 @@ export default function AdminPages({ pages }: Props) {
                             Manage and edit the dynamic content across the Uloak platform.
                         </p>
                     </div>
-                    <Button className="gap-2">
+                    {/* <Button className="gap-2">
                         <Plus size={18} /> New Page
-                    </Button>
+                    </Button> */}
                 </div>
 
                 {/* Pages List */}

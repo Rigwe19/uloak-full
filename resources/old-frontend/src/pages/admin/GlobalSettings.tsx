@@ -16,7 +16,7 @@ export default function GlobalSettings() {
     const [settings, setSettings] = useState({
         siteName: 'Uloak',
         adminEmail: 'admin@uloak.com',
-        contactEmail: 'hello@uloak.com',
+        contactEmail: 'hello@uloakstories.com',
         defaultLanguage: 'English',
         maintenanceMode: false,
         accentColor: '#C6A15B',

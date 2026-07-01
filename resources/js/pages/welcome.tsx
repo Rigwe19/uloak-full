@@ -1,14 +1,14 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import {
     BookOpen,
     ChevronLeft,
     ChevronRight,
     Clock,
+    Loader,
     Lock,
     Play,
     Shield,
-    Sparkles,
-    Users,
+    Users
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import React, { useEffect, useState } from 'react';
@@ -16,7 +16,10 @@ import React, { useEffect, useState } from 'react';
 import { ShareQRCode } from '@/components/share-qr-code';
 import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
-import { login, register } from '@/routes';
+import { login } from '@/routes';
+import { store } from '@/routes/waiting-list';
+import { SiFacebook, SiInstagram, SiTiktok, SiX, SiYoutube } from '@icons-pack/react-simple-icons';
+import { Linkedin } from 'lucide-react';
 
 const slides = [
     {
@@ -108,9 +111,11 @@ const Room = ({
 export default function Welcome({
     canRegister = true,
     page,
+    featuredRooms = [],
 }: {
     canRegister?: boolean;
     page?: any;
+    featuredRooms?: any[];
 }) {
     const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -129,8 +134,32 @@ export default function Welcome({
     const prevSlide = () =>
         setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
 
+    const [success, setSuccess] = useState(false);
+
+    const { data, setData, reset, post, errors, processing, resetAndClearErrors } = useForm({
+        name: '',
+        email: ''
+    });
+
+    const handleFormChange = (key: 'name' | 'email', value: string) => {
+        setData(key, value);
+    }
+
+    const submitForm = () => {
+        setSuccess(false);
+        post(store.url(), {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                setSuccess(true);
+                reset();
+            },
+            // onFinish: () => resetAndClearErrors(),
+        })
+    }
+
     return (
-        <GuestLayout>
+        <>
             <Head title="ULOAK - House of Stories" />
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
@@ -407,6 +436,71 @@ export default function Welcome({
                     </div>
                 </Room>
 
+                {/* 4.5 FEATURED ROOMS */}
+                <Room className="bg-bg-dark">
+                    <div className="mx-auto w-full max-w-7xl px-8">
+                        <div className="mb-16 text-center">
+                            <span className="mb-6 block text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                Featured Rooms
+                            </span>
+                            <h2 className="text-5xl font-bold tracking-tight md:text-6xl">
+                                Explore Our <span className="text-accent-gold italic">Heritage</span>
+                            </h2>
+                            <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
+                                Discover curated spaces showcasing the richness of our shared legacy.
+                            </p>
+                        </div>
+
+                        {featuredRooms && featuredRooms.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                                {featuredRooms.map((room: any, i: number) => (
+                                    <motion.div
+                                        key={room.id}
+                                        initial={{ opacity: 0, y: 30 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className="group overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20"
+                                    >
+                                        <div className="relative aspect-[4/3] overflow-hidden">
+                                            <img
+                                                src={room.thumbnail}
+                                                alt={room.name}
+                                                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
+                                            <div className="absolute inset-0 bg-linear-to-t from-bg-dark/80 via-transparent to-transparent" />
+                                            <div className="absolute bottom-0 left-0 right-0 p-6">
+                                                <h3 className="text-xl font-bold text-white">{room.name}</h3>
+                                                <p className="mt-1 text-sm text-white/60 line-clamp-2">{room.description}</p>
+                                            </div>
+                                            <div className="absolute top-4 right-4 rounded-full bg-accent-gold/90 px-3 py-1 text-[10px] font-bold text-bg-dark uppercase tracking-wider">
+                                                {room.stories_count} Memories
+                                            </div>
+                                        </div>
+                                        <div className="p-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Users size={14} className="text-accent-gold" />
+                                                    <span className="text-xs text-text-muted">{room.members?.length || 0} members</span>
+                                                </div>
+                                                <Link
+                                                    href={`/share/rooms/${room.slug}`}
+                                                    className="text-xs font-bold tracking-wider text-accent-gold hover:underline"
+                                                >
+                                                    View Room
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center">
+                                <p className="text-text-muted">No featured rooms yet. Check back soon.</p>
+                            </div>
+                        )}
+                    </div>
+                </Room>
+
                 {/* 5. THE GARDEN (FINAL CTA) */}
                 <Room className="bg-bg-dark" id="start">
                     <div className="max-w-4xl px-8 text-center">
@@ -445,7 +539,143 @@ export default function Welcome({
                     {/* Decorative architectural background element */}
                     <div className="pointer-events-none absolute bottom-0 left-0 h-[50vh] w-full bg-gradient-to-t from-accent-gold/5 to-transparent" />
                 </Room>
+
+                {/* 6. WAITING LIST & SOCIAL CONNECTION */}
+                <Room className="bg-surface py-24">
+                    <div className="mx-auto max-w-4xl px-8">
+                        <div className="mb-16 text-center">
+                            <span className="mb-6 block text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                Join the Journey
+                            </span>
+                            <h2 className="mb-6 text-5xl leading-tight font-bold tracking-tight md:text-7xl">
+                                Be the first to know
+                            </h2>
+                            <p className="mx-auto max-w-2xl text-xl leading-relaxed font-light text-text-muted">
+                                Uloak is opening its doors soon. Leave your details and we'll invite you in when it's time.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
+                            {/* Waiting List Form */}
+                            <div className="rounded-[2rem] border border-border-subtle bg-bg-dark p-10">
+                                <h3 className="mb-6 text-3xl font-bold">Join the Waiting List</h3>
+                                <p className="mb-8 text-text-muted">
+                                    Early access is coming soon. Add your name below and we'll reach out the moment Uloak is ready for you.
+                                </p>
+
+                                {success && (
+                                    <div className="mb-6 rounded-xl border border-green-500/20 bg-green-500/10 p-4 text-center">
+                                        <p className="text-lg font-medium text-green-400">You're on the list! Check your email for confirmation.</p>
+                                    </div>
+                                )}
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <label htmlFor="name" className="mb-2 block text-sm font-bold uppercase tracking-wider">
+                                            Full Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            required
+                                            value={data.name}
+                                            onChange={e => handleFormChange('name', e.target.value)}
+                                            className="w-full rounded-xl border border-border-subtle bg-bg-dark px-5 py-4 text-lg focus:border-accent-gold focus:outline-none"
+                                            placeholder="Your name"
+                                        />
+                                        {errors.name && <p className='text-red-600 text-sm'>{errors.name}</p>}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="email" className="mb-2 block text-sm font-bold uppercase tracking-wider">
+                                            Email Address
+                                        </label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            required
+                                            value={data.email}
+                                            onChange={e => handleFormChange('email', e.target.value)}
+                                            className="w-full rounded-xl border border-border-subtle bg-bg-dark px-5 py-4 text-lg focus:border-accent-gold focus:outline-none"
+                                            placeholder="you@example.com"
+                                        />
+                                        {errors.email && <p className='text-red-600 text-sm'>{errors.email}</p>}
+                                    </div>
+                                    <Button onClick={submitForm} type="submit" className="w-full rounded-full py-5 text-lg">
+                                        {processing ? 'Joining the List' : 'Join Waiting List'}
+                                        {processing  && <Loader className='animate-spin' />}
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Social Media & Community */}
+                            <div className="flex flex-col justify-center rounded-[2rem] border border-border-subtle bg-bg-dark p-10">
+                                <h3 className="mb-6 text-3xl font-bold">Stay Connected</h3>
+                                <p className="mb-8 text-text-muted">
+                                    Follow us for behind-the-scenes updates, launch announcements, and stories from our community.
+                                </p>
+                                <div className="space-y-4">
+                                    <a
+                                        href="https://linkedin.com/company/uloak"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
+                                    >
+                                        <Linkedin className="text-accent-gold" size={24} />
+                                        <span className="text-lg font-medium">Follow on LinkedIn</span>
+                                    </a>
+                                    <a
+                                        href="https://instagram.com/uloak"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
+                                    >
+                                        <SiInstagram className="text-accent-gold" size={24} />
+                                        <span className="text-lg font-medium">Follow on Instagram</span>
+                                    </a>
+                                    <a
+                                        href="https://www.facebook.com/profile.php?id=61582751621270"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
+                                    >
+                                        <SiFacebook className="text-accent-gold" size={24} />
+                                        <span className="text-lg font-medium">Follow on Facebook</span>
+                                    </a>
+                                    <a
+                                        href="http://www.youtube.com/@ULOAK"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
+                                    >
+                                        <SiYoutube className="text-accent-gold" size={24} />
+                                        <span className="text-lg font-medium">Follow on Youtube</span>
+                                    </a>
+                                    <a
+                                        href="https://x.com/uloakHQ"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
+                                    >
+                                        <SiX className="text-accent-gold" size={24} />
+                                        <span className="text-lg font-medium">Follow on X</span>
+                                    </a>
+                                    <a
+                                        href="https://facebook.com/uloak"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
+                                    >
+                                        <SiTiktok className="text-accent-gold" size={24} />
+                                        <span className="text-lg font-medium">Follow on Ticktok</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Room>
             </div>
-        </GuestLayout>
+        </>
     );
 }

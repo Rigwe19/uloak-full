@@ -3,41 +3,134 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\RoomMember;
+use App\Services\ActivityLogger;
 use App\Services\RoomService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use ZipArchive;
 
 class RoomController extends Controller
 {
     public function __construct(
-        protected RoomService $roomService
+        protected RoomService $roomService,
+        protected ActivityLogger $activityLogger
     ) {}
 
     public function show(Room $room): Response
     {
         $room = $this->roomService->getRoomDetails($room);
         $room->loadCount('stories');
+        $pendingTributes = $room->tributes()->where('is_approved', false)->latest()->get();
+        $approvedTributes = $room->tributes()->where('is_approved', true)->latest()->get();
+        $allTributes = $room->tributes;
+        $candles = $room->candles()->orderByRaw('CASE WHEN is_approved = false THEN 0 ELSE 1 END')->get();
+
+        $pageTitle = $room->name.' - Uloak, House of Stories';
+        $pageDescription = $room->description
+            ? Str::limit($room->description, 155)
+            : 'Browse memories, stories, and tributes in this room on Uloak.';
 
         return Inertia::render('dashboard/rooms/show', [
-            'title' => $room->name.' - Uloak',
-            'meta_description' => $room->description ?? 'Browse memories in this room on Uloak.',
-            'room' => $room,
+            'title' => $pageTitle,
+            'meta_description' => $pageDescription,
+            'meta_image' => $room->thumbnail ?? url('/images/og-image.webp'),
+            'room' => [
+                ...$room->toArray(),
+                'room_type' => $room->room_type ?? null,
+                'tributes_count' => $room->tributes()->count(),
+            ],
+            'pendingTributes' => $pendingTributes,
+            'approvedTributes' => $approvedTributes,
+            'allTributes' => $allTributes,
             'stories' => $room->stories->map(fn ($story) => [
                 'id' => $story->id,
                 'title' => $story->title,
                 'thumbnail' => $story->thumbnail,
                 'type' => $story->type,
                 'description' => $story->description,
-                'author' => $story->user->name,
+                'author' => $story->user?->name ?? $story->guest_name,
                 'tags' => $story->tags ?? [],
                 'date' => $story->created_at->format('M d, Y'),
                 'file_url' => $story->file_url,
                 'assets' => $story->assets ?? [],
             ]),
+            'candles' => $candles,
         ]);
+    }
+
+    public function update(Request $request, Room $room): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'privacy' => ['required', 'string', 'in:public,private'],
+            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
+            'enable_tributes' => ['nullable', 'boolean'],
+            'enable_condolence_attendance' => ['nullable', 'boolean'],
+            'enable_candle_lighting' => ['nullable', 'boolean'],
+            'tribute_name' => ['nullable', 'string', 'max:255'],
+            'tribute_song' => ['nullable', 'file', 'mimes:mp3,wav,ogg', 'max:10240'],
+            'media_items' => ['nullable', 'array'],
+            'media_items.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm', 'max:10240'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
+        ]);
+
+        if ($request->hasFile('thumbnail')) {
+            $path = $request->file('thumbnail')->store('rooms/thumbnails', 'public');
+            $validated['thumbnail'] = Storage::url($path);
+        }
+
+        if ($request->hasFile('tribute_song')) {
+            $path = $request->file('tribute_song')->store('rooms/tribute-songs', 'public');
+            $validated['tribute_song'] = Storage::url($path);
+        }
+
+        // Merge existing media URLs with newly uploaded files
+        $existingMediaUrls = $request->input('existing_media_urls');
+        $existingMedia = [];
+        if ($existingMediaUrls) {
+            $decoded = json_decode($existingMediaUrls, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $url) {
+                    $existingMedia[] = [
+                        'url' => $url,
+                        'type' => str_contains($url, '.mp4') || str_contains($url, '.mov') || str_contains($url, '.webm') ? 'video' : 'image',
+                    ];
+                }
+            }
+        }
+
+        $newMedia = [];
+        if ($request->hasFile('media_files')) {
+            foreach ($request->file('media_files') as $file) {
+                $path = $file->store('rooms/media', 'public');
+                $newMedia[] = [
+                    'url' => Storage::url($path),
+                    'type' => str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image',
+                ];
+            }
+        }
+
+        $validated['media_items'] = array_merge($existingMedia, $newMedia);
+
+        $room->update($validated);
+
+        $this->activityLogger->log(
+            "Updated room: {$room->name}",
+            Room::class,
+            (string) $room->id,
+            ['room_name' => $room->name]
+        );
+
+        return back()->with('success', 'Room updated successfully.');
     }
 
     public function store(Request $request): RedirectResponse
@@ -47,6 +140,16 @@ class RoomController extends Controller
             'description' => ['nullable', 'string'],
             'privacy' => ['required', 'string', 'in:public,private'],
             'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
+            'enable_tributes' => ['nullable', 'boolean'],
+            'enable_condolence_attendance' => ['nullable', 'boolean'],
+            'enable_candle_lighting' => ['nullable', 'boolean'],
+            'tribute_name' => ['nullable', 'string', 'max:255'],
+            'tribute_song' => ['nullable', 'file', 'mimes:mp3,wav,ogg', 'max:10240'],
+            'media_items' => ['nullable', 'array'],
+            'media_items.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm', 'max:10240'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
         ]);
 
         if ($request->hasFile('thumbnail')) {
@@ -54,8 +157,256 @@ class RoomController extends Controller
             $validated['thumbnail'] = Storage::url($path);
         }
 
+        if ($request->hasFile('tribute_song')) {
+            $path = $request->file('tribute_song')->store('rooms/tribute-songs', 'public');
+            $validated['tribute_song'] = Storage::url($path);
+        }
+
+        if ($request->hasFile('media_items')) {
+            $mediaUrls = [];
+            foreach ($request->file('media_items') as $file) {
+                $path = $file->store('rooms/media', 'public');
+                $mediaUrls[] = [
+                    'url' => Storage::url($path),
+                    'type' => str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image',
+                ];
+            }
+            $validated['media_items'] = $mediaUrls;
+        }
+
         $room = $this->roomService->createRoom($request->user(), $validated);
 
+        $this->activityLogger->log(
+            "Created room: {$room->name}",
+            Room::class,
+            (string) $room->id,
+            ['room_name' => $room->name]
+        );
+
         return redirect()->route('dashboard.rooms.show', $room);
+    }
+
+    /**
+     * Download all media (images, videos, audio) from all tributes and stories in a room as a ZIP file.
+     */
+    public function downloadMedia(Room $room)
+    {
+        $files = [];
+        $tributes = $room->tributes;
+        $stories = $room->stories;
+
+        // Collect from tributes
+        foreach ($tributes as $tribute) {
+            $prefix = Str::slug($tribute->name, '_').'_';
+
+            // Collect images
+            if (! empty($tribute->images)) {
+                foreach ($tribute->images as $image) {
+                    $relativePath = preg_replace('#^storage/#', '', ltrim($image, '/'));
+                    $absolutePath = Storage::disk('public')->path($relativePath);
+                    if (file_exists($absolutePath)) {
+                        $files[] = [
+                            'path' => $absolutePath,
+                            'name' => $prefix.'image_'.basename($relativePath),
+                        ];
+                    }
+                }
+            }
+
+            // Collect video
+            if (! empty($tribute->video)) {
+                $relativePath = ltrim($tribute->video, '/');
+                $absolutePath = Storage::disk('public')->path($relativePath);
+                if (file_exists($absolutePath)) {
+                    $files[] = [
+                        'path' => $absolutePath,
+                        'name' => $prefix.'video_'.basename($relativePath),
+                    ];
+                }
+            }
+
+            // Collect audio
+            if (! empty($tribute->audio)) {
+                $relativePath = ltrim($tribute->audio, '/');
+                $absolutePath = Storage::disk('public')->path($relativePath);
+                if (file_exists($absolutePath)) {
+                    $files[] = [
+                        'path' => $absolutePath,
+                        'name' => $prefix.'audio_'.basename($relativePath),
+                    ];
+                }
+            }
+        }
+
+        // Collect from stories
+        foreach ($stories as $story) {
+            $storyPrefix = 'story_'.$story->id.'_';
+
+            // Collect file_url (main media file)
+            if (! empty($story->file_url)) {
+                $relativePath = preg_replace('#^storage/#', '', ltrim($story->file_url, '/'));
+                $absolutePath = Storage::disk('public')->path($relativePath);
+                if (file_exists($absolutePath)) {
+                    $files[] = [
+                        'path' => $absolutePath,
+                        'name' => $storyPrefix.'main_'.basename($relativePath),
+                    ];
+                }
+            }
+
+            // Collect assets (additional uploaded files)
+            if (! empty($story->assets)) {
+                foreach ($story->assets as $index => $asset) {
+                    $assetUrl = $asset['url'] ?? null;
+                    if ($assetUrl) {
+                        $relativePath = preg_replace('#^storage/#', '', ltrim($assetUrl, '/'));
+                        $absolutePath = Storage::disk('public')->path($relativePath);
+                        if (file_exists($absolutePath)) {
+                            $files[] = [
+                                'path' => $absolutePath,
+                                'name' => $storyPrefix.'asset_'.($index + 1).'_'.basename($relativePath),
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // Collect thumbnail if different from file_url
+            if (! empty($story->thumbnail) && $story->thumbnail !== $story->file_url) {
+                $relativePath = preg_replace('#^storage/#', '', ltrim($story->thumbnail, '/'));
+                $absolutePath = Storage::disk('public')->path($relativePath);
+                if (file_exists($absolutePath)) {
+                    $files[] = [
+                        'path' => $absolutePath,
+                        'name' => $storyPrefix.'thumbnail_'.basename($relativePath),
+                    ];
+                }
+            }
+        }
+
+        if (empty($files)) {
+            logger('No media files found in any tributes or stories for this room.');
+
+            return back()->with('error', 'No media files found in this room.');
+        }
+
+        $sanitizedName = Str::slug($room->name, '_');
+        $zipFilename = "{$sanitizedName}_media.zip";
+        $zipPath = storage_path("app/{$zipFilename}");
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            logger('Could not create ZIP file.');
+
+            return back()->with('error', 'Could not create ZIP file.');
+        }
+
+        foreach ($files as $file) {
+            $zip->addFile($file['path'], $file['name']);
+        }
+        $zip->close();
+
+        return response()->download($zipPath, $zipFilename, [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
+    }
+
+    // ── Family Member Management ──
+
+    /**
+     * List family members for a room.
+     */
+    public function members(Room $room): JsonResponse
+    {
+        abort_unless($room->created_by === auth()->id(), 403);
+
+        $members = $room->familyMembers()->latest()->get()->map(fn ($m) => [
+            'id' => $m->id,
+            'name' => $m->name,
+            'email' => $m->email,
+            'relationship' => $m->relationship,
+            'access_url' => route('family.access', $m->access_token),
+            'created_at' => $m->created_at->format('M d, Y'),
+        ]);
+
+        return response()->json(['members' => $members]);
+    }
+
+    /**
+     * Add a family member to a room.
+     */
+    public function storeMember(Request $request, Room $room): RedirectResponse
+    {
+        abort_unless($room->created_by === auth()->id(), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'relationship' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $member = $room->familyMembers()->create($validated);
+
+        $this->activityLogger->log(
+            "Added family member to room: {$room->name}",
+            RoomMember::class,
+            (string) $member->id,
+            ['room_id' => $room->id, 'room_name' => $room->name, 'member_name' => $member->name]
+        );
+
+        $accessUrl = route('family.access', $member->access_token);
+
+        return back()->with('success', 'Family member added! Share this link with them: '.$accessUrl);
+    }
+
+    /**
+     * Remove a family member from a room.
+     */
+    public function destroyMember(Room $room, RoomMember $member): RedirectResponse
+    {
+        abort_unless($room->created_by === auth()->id(), 403);
+
+        if ($member->room_id !== $room->id) {
+            abort(404);
+        }
+
+        $memberName = $member->name;
+        $memberId = $member->getKey();
+
+        $member->delete();
+
+        $this->activityLogger->log(
+            "Removed family member from room: {$room->name}",
+            RoomMember::class,
+            (string) $memberId,
+            ['room_id' => $room->id, 'room_name' => $room->name, 'member_name' => $memberName]
+        );
+
+        return back()->with('success', 'Family member removed.');
+    }
+
+    /**
+     * Regenerate a family member's access token.
+     */
+    public function regenerateMemberToken(Room $room, RoomMember $member): RedirectResponse
+    {
+        abort_unless($room->created_by === auth()->id(), 403);
+
+        if ($member->room_id !== $room->id) {
+            abort(404);
+        }
+
+        $member->regenerateToken();
+
+        $this->activityLogger->log(
+            "Regenerated access token for member: {$member->name} in room: {$room->name}",
+            RoomMember::class,
+            (string) $member->getKey(),
+            ['room_id' => $room->id, 'room_name' => $room->name, 'member_name' => $member->name]
+        );
+
+        $accessUrl = route('family.access', $member->access_token);
+
+        return back()->with('success', 'New access link generated: '.$accessUrl);
     }
 }

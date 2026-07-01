@@ -50,7 +50,7 @@ export default function AdminRooms({ rooms }: Props) {
                             <input 
                                 type="text"
                                 placeholder="Search rooms..."
-                                className="h-10 w-64 rounded-xl border border-border-subtle bg-surface/50 pl-10 pr-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
+                                className="h-10 w-full md:w-64 rounded-xl border border-border-subtle bg-surface/50 pl-10 pr-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                             />
                         </div>
                         <Button variant="outline" size="sm" className="gap-2">

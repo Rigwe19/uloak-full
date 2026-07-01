@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutGrid, Search, Bell, Settings, LogOut } from 'lucide-react';
+import { LayoutGrid, Search, Bell, BellRing, Settings, LogOut } from 'lucide-react';
 import React from 'react';
 import { router } from '@inertiajs/react';
 import { logout, home, dashboard as dashboardRoute } from '@/routes';
@@ -8,6 +8,7 @@ import dashboard from '@/routes/dashboard';
 import { edit } from '@/routes/profile';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { PageTransition } from '@/components/page-transition';
+import { PushSubscriptionManager } from '@/components/push-subscription-manager';
 
 interface SidebarItem {
     id: string;
@@ -89,51 +90,56 @@ export default function DashboardLayout({
             </aside>
 
             {/* Mobile Bottom Nav */}
-            <nav className="pointer-events-none fixed right-0 bottom-0 left-0 z-60 bg-linear-to-t from-bg-dark via-bg-dark/95 to-transparent px-4 pt-4 pb-8 md:hidden">
-                <div className="pointer-events-auto flex items-center justify-around rounded-[28px] border border-white/10 bg-surface/80 p-2 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl">
+            <nav className="pointer-events-none fixed right-0 bottom-0 left-0 z-60 bg-linear-to-t from-bg-dark via-bg-dark/95 to-transparent px-3 pt-4 pb-2 md:hidden">
+                <div className="pointer-events-auto flex items-center justify-around rounded-[28px] border border-white/10 bg-surface/80 px-1 py-1 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl">
                     <Link
                         href={dashboard.search().url}
-                        className={`rounded-2xl p-3 transition-all ${isActive(dashboard.search().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(dashboard.search().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
                     >
-                        <Search size={22} />
+                        <Search size={20} />
+                        <span className="text-[9px] font-medium tracking-wider uppercase">Search</span>
                     </Link>
                     <Link
                         href={dashboard.notifications().url}
-                        className={`relative rounded-2xl p-3 transition-all ${isActive(dashboard.notifications().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
+                        className={`relative flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(dashboard.notifications().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
                     >
-                        <Bell size={22} />
-                        <div className="absolute top-3 right-3 h-1.5 w-1.5 rounded-full border border-surface bg-accent-gold" />
+                        <Bell size={20} />
+                        <div className="absolute top-1 right-3 h-1.5 w-1.5 rounded-full border border-surface bg-accent-gold" />
+                        <span className="text-[9px] font-medium tracking-wider uppercase">Alerts</span>
                     </Link>
 
                     <Link
                         href={dashboardRoute().url}
-                        className={`-mt-10 flex h-14 w-14 items-center justify-center rounded-2xl border-4 border-bg-dark transition-all ${isActive(dashboardRoute().url) ? 'bg-accent-gold text-bg-dark shadow-[0_10px_30px_rgba(198,161,91,0.4)]' : 'bg-surface text-text-muted'}`}
+                        className={`-mt-8 flex h-12 w-12 items-center justify-center rounded-2xl border-4 border-bg-dark transition-all ${isActive(dashboardRoute().url) ? 'bg-accent-gold text-bg-dark shadow-[0_10px_30px_rgba(198,161,91,0.4)]' : 'bg-surface text-text-muted'}`}
                     >
-                        <LayoutGrid size={24} />
+                        <LayoutGrid size={22} />
                     </Link>
 
                     <Link
                         href={edit().url}
-                        className={`rounded-2xl p-3 transition-all ${isActive(edit().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(edit().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
                     >
-                        <Settings size={22} />
+                        <Settings size={20} />
+                        <span className="text-[9px] font-medium tracking-wider uppercase">Settings</span>
                     </Link>
                     <button
                         onClick={handleLogout}
-                        className="rounded-2xl p-3 text-text-muted transition-colors hover:text-red-400"
+                        className="flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 text-text-muted transition-colors hover:text-red-400"
                     >
-                        <LogOut size={22} />
+                        <LogOut size={20} />
+                        <span className="text-[9px] font-medium tracking-wider uppercase">Logout</span>
                     </button>
                 </div>
             </nav>
 
             {/* Main Content */}
-            <main className="perspective-2000 w-full grow pb-32 md:pb-8">
+            <main className="perspective-2000 min-w-0 w-full grow overflow-x-hidden pb-32 md:pb-8">
                 <AnimatePresence mode="wait" initial={false}>
                     <PageTransition key={url} type="door">
                         {children}
                     </PageTransition>
                 </AnimatePresence>
+                <PushSubscriptionManager />
             </main>
         </div>
     );

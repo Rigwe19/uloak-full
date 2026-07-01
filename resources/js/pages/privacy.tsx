@@ -68,7 +68,7 @@ export default function Privacy({ page }: Props) {
     ];
 
     return (
-        <GuestLayout>
+        <>
             <Head>
                 <title>{page?.title || 'Privacy Policy'} | Uloak</title>
                 <meta name="description" content={page?.meta_description || 'Our commitment to protecting your privacy and family stories.'} />
@@ -141,6 +141,6 @@ export default function Privacy({ page }: Props) {
                     </div>
                 </section>
             </div>
-        </GuestLayout>
+        </>
     );
 }

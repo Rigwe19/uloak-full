@@ -60,13 +60,13 @@ export default function About({ page }: Props) {
     };
 
     const content = page?.content || {};
-    
-    const hero = content.hero || { 
-        title: 'A house built for stories that matter.', 
-        subtitle: 'Uloak is a storytelling movement based in the UK. We exist to preserve the stories that make us human — through film, technology, community, and research.' 
+
+    const hero = content?.hero || {
+        title: 'A house built for stories that matter.',
+        subtitle: 'Uloak is a storytelling movement based in the UK. We exist to preserve the stories that make us human — through film, technology, community, and research.'
     };
-    
-    const origin = content.origin || {
+
+    const origin = content?.origin || {
         quote: '"The stories we fail to capture today become the silences our grandchildren inherit tomorrow."',
         paragraphs: [
             'Uloak began from a simple, persistent question: what happens to the stories we fail to tell? Every family has an elder whose wisdom will one day be irretrievable. Every community has a history that mainstream archives overlook. Every culture carries stories that need more than a photograph and a caption to survive.',
@@ -109,11 +109,11 @@ export default function About({ page }: Props) {
     ];
 
     return (
-        <GuestLayout>
-            <Head>
+        <>
+            {/* <Head>
                 <title>{page?.title || 'About Us'} | Uloak</title>
                 <meta name="description" content={page?.meta_description || 'Learn about Uloak, our mission to preserve human stories, and the people behind the movement.'} />
-            </Head>
+            </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
                 {/* Hero Section */}
@@ -332,6 +332,6 @@ export default function About({ page }: Props) {
                     </motion.div>
                 </section>
             </div>
-        </GuestLayout>
+        </>
     );
 }

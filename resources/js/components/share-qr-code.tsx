@@ -5,7 +5,6 @@ import {
     Mail,
     QrCode,
     Share2,
-    Sparkles,
     X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -82,12 +81,6 @@ export const ShareQRCode: React.FC<ShareQRCodeProps> = ({
                             </button>
 
                             <div className="mb-6 text-center">
-                                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-accent-gold/20 bg-accent-gold/10">
-                                    <Sparkles
-                                        className="text-accent-gold"
-                                        size={32}
-                                    />
-                                </div>
                                 <h3 className="text-2xl font-bold tracking-tight">
                                     Open the Gateway
                                 </h3>
