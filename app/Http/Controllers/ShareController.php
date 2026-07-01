@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\MagicLinkMail;
 use App\Models\Event;
 use App\Models\Room;
+use App\Models\RoomGuestSubscription;
 use App\Models\Story;
 use App\Models\User;
 use App\Services\ActivityLogger;
@@ -22,7 +23,9 @@ use Inertia\Response as InertiaResponse;
 
 class ShareController extends Controller
 {
-    public function __construct(protected ActivityLogger $activityLogger) {}
+    public function __construct(protected ActivityLogger $activityLogger)
+    {
+    }
 
     public function showRoom(string $slug): InertiaResponse
     {
@@ -318,6 +321,10 @@ class ShareController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
         ]);
+        $exists = RoomGuestSubscription::where('room_id', $room->id)->where('email', $validated['email'])->exists();
+        if($exists){
+            return redirect()->back()->with('success', 'You\'ve been registered!');
+        }
 
         $room->guestSubscriptions()->updateOrCreate(
             ['email' => $validated['email']],
