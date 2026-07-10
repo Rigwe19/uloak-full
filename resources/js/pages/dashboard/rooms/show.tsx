@@ -156,7 +156,7 @@ return;
 }
 
         setDeleting(true);
-        router.delete(`/dashboard/stories/${storyToDelete.id}`, {
+        router.delete(`/dashboard/stories/${storyToDelete.uuid}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setStoryToDelete(null);
@@ -565,7 +565,7 @@ return;
                         ) : undefined}
                     >
                         {(story) => {
-                            const link = storiesRoutes.show(story.id).url;
+                            const link = storiesRoutes.show(story.uuid).url;
 
                             return (
                                 <Link href={link} className="group block h-full">

@@ -37,7 +37,7 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
     const [mediaType, setMediaType] = useState<MediaType | null>(null);
     const { addToQueue, removeFromQueue, cancelUpload, retryUpload, uploads } = useUploadQueue();
 
-    const completedUploads = uploads.filter((u) => u.status === 'processing')
+    const completedUploads = uploads.filter((u) => u.status === 'ready')
     const hasReadyUploads = completedUploads.length > 0
 
     const { data, setData, post, processing, errors, reset } = useForm({

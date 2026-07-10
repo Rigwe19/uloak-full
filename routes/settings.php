@@ -1,15 +1,35 @@
 <?php
 
 use App\Http\Controllers\HouseMemberController;
+use App\Http\Controllers\PersonController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::middleware(['auth'])->group(function () {
-    Route::redirect('settings', '/settings/profile');
+    Route::redirect('settings', '/settings/about');
+    Route::redirect('settings/profile', '/settings/about');
 
-    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Person section
+    Route::get('settings/about', [PersonController::class, 'settingsAbout'])->name('settings.about');
+    Route::get('settings/family-tree', [PersonController::class, 'settingsFamilyTree'])->name('settings.family-tree');
+    Route::get('settings/timeline', [PersonController::class, 'settingsTimeline'])->name('settings.timeline');
+    Route::get('settings/stories', [PersonController::class, 'settingsStories'])->name('settings.stories');
+    Route::get('settings/media', [PersonController::class, 'settingsMedia'])->name('settings.media');
+    Route::get('settings/heritage', [PersonController::class, 'settingsHeritage'])->name('settings.heritage');
+    Route::get('settings/memories', [PersonController::class, 'settingsMemories'])->name('settings.memories');
+    Route::get('settings/permissions', [PersonController::class, 'settingsPermissions'])->name('settings.permissions');
+    Route::get('settings/activity', [PersonController::class, 'settingsActivity'])->name('settings.activity');
+    Route::put('settings/person', [PersonController::class, 'settingsUpdate'])->name('settings.person.update');
+
+    // Danger Zone
+    Route::get('settings/danger-zone', function () {
+        return Inertia::render('settings/danger-zone', [
+            'title' => 'Danger Zone - Uloak',
+        ]);
+    })->name('settings.danger-zone');
+
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 

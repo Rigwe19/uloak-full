@@ -8,6 +8,7 @@ use App\Models\Story;
 use App\Services\ActivityLogger;
 use App\Services\AnalyticsService;
 use App\Services\StoryService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -86,21 +87,32 @@ class StoryController extends Controller
             ->orderBy('id', 'desc')
             ->first();
 
-        $sprite = null;
+        $media = null;
         foreach ($story->assets ?? [] as $asset) {
             if (isset($asset['media_uuid'])) {
                 $media = Media::where('uuid', $asset['media_uuid'])->first();
-                if ($media && $media->sprite) {
-                    $sprite = $media->sprite;
+                if ($media) {
                     break;
                 }
             }
+        }
+
+        $thumbnail = $story->thumbnail ?? $media?->thumbnail ?? $media?->url ?? null;
+        $fileUrl = $story->file_url ?? $media?->url ?? null;
+        $sprite = $media?->sprite ?? null;
+
+        if (! $story->thumbnail && ! $story->file_url && $media) {
+            $story->update([
+                'thumbnail' => $thumbnail,
+                'file_url' => $fileUrl,
+            ]);
         }
 
         return Inertia::render('dashboard/stories/show', [
             'title' => $story->title.' - Uloak',
             'meta_description' => $story->description ?? 'A memory preserved on Uloak.',
             'story' => [
+                'uuid' => $story->uuid,
                 'id' => $story->id,
                 'title' => $story->title,
                 'description' => $story->description,
@@ -130,8 +142,101 @@ class StoryController extends Controller
                 'slug' => $story->event->slug,
                 'name' => $story->event->name,
             ] : null,
-            'nextStoryId' => $nextStory?->id,
-            'prevStoryId' => $prevStory?->id,
+            'prevStory' => $prevStory ? [
+                'uuid' => $prevStory->uuid,
+                'id' => $prevStory->id,
+                'title' => $prevStory->title,
+                'thumbnail' => $prevStory->thumbnail,
+            ] : null,
+            'nextStory' => $nextStory ? [
+                'uuid' => $nextStory->uuid,
+                'id' => $nextStory->id,
+                'title' => $nextStory->title,
+                'thumbnail' => $nextStory->thumbnail,
+            ] : null,
+        ]);
+    }
+
+    public function showData(Story $story): JsonResponse
+    {
+        $story->load(['user', 'room', 'event']);
+
+        $nextStory = Story::where('room_id', $story->room_id)
+            ->where('event_id', $story->event_id)
+            ->where('id', '>', $story->id)
+            ->first();
+
+        $prevStory = Story::where('room_id', $story->room_id)
+            ->where('event_id', $story->event_id)
+            ->where('id', '<', $story->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $media = null;
+        foreach ($story->assets ?? [] as $asset) {
+            if (isset($asset['media_uuid'])) {
+                $media = Media::where('uuid', $asset['media_uuid'])->first();
+                if ($media) {
+                    break;
+                }
+            }
+        }
+
+        $thumbnail = $story->thumbnail ?? $media?->thumbnail ?? $media?->url ?? null;
+        $fileUrl = $story->file_url ?? $media?->url ?? null;
+        $sprite = $media?->sprite ?? null;
+
+        if (! $story->thumbnail && ! $story->file_url && $media) {
+            $story->update([
+                'thumbnail' => $thumbnail,
+                'file_url' => $fileUrl,
+            ]);
+        }
+
+        return response()->json([
+            'story' => [
+                'uuid' => $story->uuid,
+                'id' => $story->id,
+                'title' => $story->title,
+                'description' => $story->description,
+                'type' => $story->type,
+                'thumbnail' => $thumbnail,
+                'author' => $story->user?->name ?? $story->guest_name,
+                'date' => $story->created_at->format('M d, Y'),
+                'tags' => $story->tags ?? [],
+                'assets' => $story->assets ?? [],
+                'fileUrl' => $fileUrl,
+                'sprite' => $sprite,
+                'transcript' => $story->transcript ?? [],
+                'comments' => $story->comments()->with('user')->latest()->get()->map(fn ($comment) => [
+                    'id' => $comment->id,
+                    'content' => $comment->content,
+                    'author' => $comment->user?->name ?? $comment->guest_name,
+                    'date' => $comment->created_at->diffForHumans(),
+                ]),
+            ],
+            'room' => $story->room ? [
+                'id' => $story->room->id,
+                'slug' => $story->room->slug,
+                'name' => $story->room->name,
+            ] : null,
+            'event' => $story->event ? [
+                'id' => $story->event->id,
+                'slug' => $story->event->slug,
+                'name' => $story->event->name,
+            ] : null,
+            'prevStory' => $prevStory ? [
+                'uuid' => $prevStory->uuid,
+                'id' => $prevStory->id,
+                'title' => $prevStory->title,
+                'thumbnail' => $prevStory->thumbnail,
+            ] : null,
+            'nextStory' => $nextStory ? [
+                'uuid' => $nextStory->uuid,
+                'id' => $nextStory->id,
+                'title' => $nextStory->title,
+                'thumbnail' => $nextStory->thumbnail,
+            ] : null,
         ]);
     }
 

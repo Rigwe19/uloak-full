@@ -1,16 +1,11 @@
-import { Head } from '@inertiajs/react';
-import { motion } from 'framer-motion';
-import {
-    MapPin, Calendar, Globe, BookOpen, Award, Heart,
-    Languages, Users, Quote, Star, Crosshair, Flag,
-    Church, Map, TreePine, Sparkles,
-} from 'lucide-react';
-import React from 'react';
-import PersonLayout from '@/layouts/person-layout';
+import { useForm, Head, usePage } from '@inertiajs/react';
+import { Camera, Pencil, X, Save, MapPin, Calendar, Star, Heart, Users, Globe, BookOpen, Map, Flag, Church, TreePine, Sparkles, Languages, Quote, Crosshair, Award } from 'lucide-react';
+import React, { useState } from 'react';
 import type { Person } from '@/types/person';
+import InputError from '@/components/input-error';
 
 interface AboutProps {
-    person: Person;
+    person: Person | null;
     identity: any;
     heritage: any;
     languages: any[];
@@ -20,49 +15,28 @@ interface AboutProps {
     personality: any[];
     milestones: any[];
     tags: any[];
+    mustVerifyEmail: boolean;
+    status?: string;
 }
 
-const stagger = {
-    container: { animate: { transition: { staggerChildren: 0.08 } } },
-    item: { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } } },
-};
-
-function DecoBlob({ className }: { className: string }) {
-    return <div className={`pointer-events-none absolute rounded-full bg-accent-gold/5 blur-[100px] ${className}`} />;
-}
-
-function SectionCard({ icon: Icon, title, children, className = '', delay = 0 }: { icon: any; title: string; children: React.ReactNode; className?: string; delay?: number }) {
+function SectionCard({ icon: Icon, title, children, className = '' }: { icon: any; title: string; children: React.ReactNode; className?: string }) {
     return (
-        <motion.section
-            variants={stagger.item}
-            className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-surface/80 p-6 backdrop-blur-sm transition-all hover:border-accent-gold/10 hover:shadow-[0_0_40px_rgba(198,161,91,0.04)] ${className}`}
-        >
-            <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-accent-gold/[0.03] blur-[60px] transition-all group-hover:bg-accent-gold/[0.06]" />
-            <div className="relative">
-                <div className="mb-4 flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-gold/10">
-                        <Icon size={15} className="text-accent-gold" />
-                    </div>
-                    <h3 className="text-sm font-bold tracking-wide text-text-primary">{title}</h3>
+        <div className={`rounded-2xl border border-white/[0.06] bg-surface/80 p-6 backdrop-blur-sm ${className}`}>
+            <div className="mb-4 flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-gold/10">
+                    <Icon size={15} className="text-accent-gold" />
                 </div>
-                {children}
+                <h3 className="text-sm font-bold tracking-wide text-text-primary">{title}</h3>
             </div>
-        </motion.section>
-    );
-}
-
-function Pill({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-    return (
-        <span className={`inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-text-primary backdrop-blur-sm transition-all hover:border-accent-gold/20 hover:bg-accent-gold/[0.04] ${className}`}>
             {children}
-        </span>
+        </div>
     );
 }
 
-function Detail({ icon: Icon, label, value, className = '' }: { icon?: any; label: string; value: string; className?: string }) {
+function Detail({ icon: Icon, label, value }: { icon?: any; label: string; value?: string | null }) {
     if (!value) return null;
     return (
-        <div className={`flex items-start gap-3 ${className}`}>
+        <div className="flex items-start gap-3">
             {Icon && (
                 <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.03]">
                     <Icon size={13} className="text-text-muted" />
@@ -76,28 +50,150 @@ function Detail({ icon: Icon, label, value, className = '' }: { icon?: any; labe
     );
 }
 
-export default function About({ person, identity, heritage, languages, roles, titles, addresses, personality, milestones, tags }: AboutProps) {
+function InlineEditSection({ title, icon: Icon, children, onSave, isEditing: controlledEdit, onToggle }: { title: string; icon: any; children: React.ReactNode; onSave?: () => void; isEditing?: boolean; onToggle?: () => void }) {
+    const [internalEditing, setInternalEditing] = useState(false);
+    const editing = controlledEdit ?? internalEditing;
+    const toggle = onToggle ?? (() => setInternalEditing((p) => !p));
+
+    return (
+        <div className="group relative rounded-2xl border border-white/[0.06] bg-surface/80 p-6 backdrop-blur-sm transition-all hover:border-accent-gold/10">
+            <button
+                onClick={toggle}
+                className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-lg text-text-muted opacity-0 transition-all hover:bg-accent-gold/10 hover:text-accent-gold group-hover:opacity-100"
+            >
+                {editing ? <X size={14} /> : <Pencil size={14} />}
+            </button>
+            <div className="mb-4 flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-gold/10">
+                    <Icon size={15} className="text-accent-gold" />
+                </div>
+                <h3 className="text-sm font-bold tracking-wide text-text-primary">{title}</h3>
+            </div>
+            {children}
+            {editing && onSave && (
+                <div className="mt-4 flex justify-end">
+                    <button
+                        onClick={onSave}
+                        className="flex items-center gap-1.5 rounded-lg bg-accent-gold px-4 py-2 text-xs font-bold text-bg-dark transition-all hover:bg-accent-gold/90"
+                    >
+                        <Save size={14} />
+                        Save
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function SettingsAbout({ person, identity, heritage, languages, roles, titles, addresses, personality, milestones, tags, mustVerifyEmail, status }: AboutProps) {
+    const { auth } = usePage().props as any;
+
+    const [preview, setPreview] = useState<string | null>(auth.user?.avatar_url ?? null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const { data: accountData, setData: setAccountData, post: postAccount, processing: accountProcessing, errors: accountErrors } = useForm({
+        name: auth.user?.name ?? '',
+        email: auth.user?.email ?? '',
+        avatar: null as File | null,
+        _method: 'patch',
+    });
+
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setAccountData('avatar', file);
+            setPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const submitAccount = (e: React.FormEvent) => {
+        e.preventDefault();
+        postAccount('/settings/profile', {
+            preserveScroll: true,
+            forceFormData: true,
+        });
+    };
+
+    if (!person) {
+        return (
+            <>
+                <Head title="About - Uloak" />
+                <div className="flex flex-col items-center justify-center py-16">
+                    <BookOpen size={40} className="text-text-muted/30" />
+                    <p className="mt-4 text-sm text-text-muted">No person profile yet.</p>
+                </div>
+            </>
+        );
+    }
+
     const hasIdentity = identity && (identity.legal_name || identity.display_name || identity.nickname || identity.gender);
     const hasHeritage = heritage && (heritage.nationality || heritage.ethnicity || heritage.tribe || heritage.clan || heritage.religion);
-    const hasLifeEvents = identity?.birth_date || identity?.death_date || identity?.burial_location;
     const hasRoles = roles?.length > 0;
     const hasTitles = titles?.length > 0;
     const hasLanguages = languages?.length > 0;
     const hasAddresses = addresses?.length > 0;
     const hasMilestones = milestones?.length > 0;
     const hasTags = tags?.length > 0;
-    const hasPersonality = personality?.length > 0;
 
     return (
-        <div>
+        <>
             <Head title={(identity?.display_name ?? 'About') + ' - Uloak'} />
 
-            <motion.div variants={stagger.container} initial="initial" animate="animate" className="relative space-y-5">
-                {/* Biography Hero */}
+            <div className="space-y-6">
+                {/* Account Section */}
+                <InlineEditSection title="Account" icon={Star} onSave={submitAccount}>
+                    <form onSubmit={submitAccount} className="space-y-6">
+                        <div className="flex flex-col items-center gap-6 sm:flex-row">
+                            <div className="group relative">
+                                <img
+                                    src={preview || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop'}
+                                    className="h-20 w-20 rounded-[32px] object-cover ring-4 ring-border-subtle md:h-24 md:w-24"
+                                    alt=""
+                                />
+                                <div
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-[32px] bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
+                                >
+                                    <Camera size={20} className="text-white" />
+                                </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    onChange={handleAvatarChange}
+                                    accept="image/*"
+                                />
+                            </div>
+                            <div className="flex-1 space-y-4">
+                                <div>
+                                    <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">Full Name</label>
+                                    <input
+                                        value={accountData.name}
+                                        onChange={(e) => setAccountData('name', e.target.value)}
+                                        className="mt-1 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-all focus:border-accent-gold/50"
+                                    />
+                                    <InputError message={accountErrors.name} />
+                                </div>
+                                <div>
+                                    <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">Email</label>
+                                    <input
+                                        type="email"
+                                        value={accountData.email}
+                                        onChange={(e) => setAccountData('email', e.target.value)}
+                                        className="mt-1 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-all focus:border-accent-gold/50"
+                                    />
+                                    <InputError message={accountErrors.email} />
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </InlineEditSection>
+
+                {/* Biography */}
                 {identity?.biography && (
-                    <motion.section variants={stagger.item} className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-surface/90 via-surface/50 to-surface/30 p-7 backdrop-blur-sm sm:p-9">
-                        <DecoBlob className="-left-20 -top-20 h-60 w-60" />
-                        <DecoBlob className="-bottom-20 -right-20 h-40 w-40" />
+                    <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-surface/90 via-surface/50 to-surface/30 p-7 backdrop-blur-sm sm:p-9">
+                        <div className="pointer-events-none absolute -left-20 -top-20 h-60 w-60 rounded-full bg-accent-gold/5 blur-[100px]" />
+                        <div className="pointer-events-none absolute -bottom-20 -right-20 h-40 w-40 rounded-full bg-accent-gold/5 blur-[100px]" />
                         <div className="relative">
                             <div className="mb-4 flex items-center gap-2">
                                 <Quote size={16} className="text-accent-gold/60" />
@@ -107,37 +203,35 @@ export default function About({ person, identity, heritage, languages, roles, ti
                                 {identity.biography}
                             </p>
                         </div>
-                    </motion.section>
+                    </div>
                 )}
 
-                {/* Short Introduction as an accent bar */}
+                {/* Short Introduction */}
                 {identity?.short_introduction && !identity?.biography && (
-                    <motion.div variants={stagger.item} className="relative rounded-2xl border border-accent-gold/10 bg-gradient-to-r from-accent-gold/[0.04] to-transparent px-6 py-4">
+                    <div className="rounded-2xl border border-accent-gold/10 bg-gradient-to-r from-accent-gold/[0.04] to-transparent px-6 py-4">
                         <p className="text-sm italic text-text-muted/80">&ldquo;{identity.short_introduction}&rdquo;</p>
-                    </motion.div>
+                    </div>
                 )}
 
                 {/* Stats Row */}
-                {person && (
-                    <motion.div variants={stagger.item} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        {[
-                            { icon: Heart, label: 'Living Status', value: person.living_status === 'living' ? 'Living' : 'Deceased', color: person.living_status === 'living' ? 'text-emerald-400' : 'text-slate-400' },
-                            { icon: TreePine, label: 'Type', value: person.type?.replace(/_/g, ' ') ?? '—' },
-                            { icon: Star, label: 'Featured', value: person.is_featured ? 'Featured' : '—' },
-                            { icon: Users, label: 'Role', value: person.family_branch || 'Member' },
-                        ].map((stat, i) => (
-                            <div key={i} className="rounded-xl border border-white/[0.06] bg-surface/50 px-4 py-3 backdrop-blur-sm">
-                                <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-text-muted">
-                                    <stat.icon size={12} className={stat.color || 'text-accent-gold'} />
-                                    {stat.label}
-                                </div>
-                                <p className="text-sm font-bold text-text-primary capitalize">{stat.value}</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                        { icon: Heart, label: 'Living Status', value: person.living_status === 'living' ? 'Living' : 'Deceased', color: person.living_status === 'living' ? 'text-emerald-400' : 'text-slate-400' },
+                        { icon: TreePine, label: 'Type', value: person.type?.replace(/_/g, ' ') ?? '—' },
+                        { icon: Star, label: 'Featured', value: person.is_featured ? 'Featured' : '—' },
+                        { icon: Users, label: 'Role', value: person.family_branch || 'Member' },
+                    ].map((stat, i) => (
+                        <div key={i} className="rounded-xl border border-white/[0.06] bg-surface/50 px-4 py-3 backdrop-blur-sm">
+                            <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-text-muted">
+                                <stat.icon size={12} className={stat.color || 'text-accent-gold'} />
+                                {stat.label}
                             </div>
-                        ))}
-                    </motion.div>
-                )}
+                            <p className="text-sm font-bold text-text-primary capitalize">{stat.value}</p>
+                        </div>
+                    ))}
+                </div>
 
-                {/* Identity & Heritage 2-col grid */}
+                {/* Identity & Heritage */}
                 <div className="grid gap-5 md:grid-cols-2">
                     {hasIdentity && (
                         <SectionCard icon={BookOpen} title="Identity">
@@ -174,7 +268,6 @@ export default function About({ person, identity, heritage, languages, roles, ti
                         </SectionCard>
                     )}
 
-                    {/* Family & Lineage */}
                     {(person.family_branch || person.clan || person.kindred || person.ancestral_home) && (
                         <SectionCard icon={TreePine} title="Lineage">
                             <div className="space-y-4">
@@ -187,7 +280,6 @@ export default function About({ person, identity, heritage, languages, roles, ti
                         </SectionCard>
                     )}
 
-                    {/* Addresses */}
                     {hasAddresses && (
                         <SectionCard icon={MapPin} title="Addresses">
                             <div className="space-y-4">
@@ -245,19 +337,13 @@ export default function About({ person, identity, heritage, languages, roles, ti
                     )}
                 </div>
 
-                {/* Milestones Timeline */}
+                {/* Milestones */}
                 {hasMilestones && (
-                    <SectionCard icon={Sparkles} title="Milestones" className="md:col-span-2">
+                    <SectionCard icon={Sparkles} title="Milestones">
                         <div className="relative space-y-5">
-                            <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-accent-gold/40 via-accent-gold/20 to-transparent" />
-                            {milestones.map((m: any, i: number) => (
-                                <motion.div
-                                    key={m.id}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.06, duration: 0.35 }}
-                                    className="relative flex items-start gap-4 pl-6"
-                                >
+                            <div className="absolute bottom-2 left-[7px] top-2 w-px bg-gradient-to-b from-accent-gold/40 via-accent-gold/20 to-transparent" />
+                            {milestones.map((m: any) => (
+                                <div key={m.id} className="relative flex items-start gap-4 pl-6">
                                     <div className="absolute left-0 top-1.5 h-3.5 w-3.5 rounded-full border-2 border-accent-gold bg-bg-dark" />
                                     <div className="flex-1">
                                         <div className="flex flex-wrap items-baseline gap-2">
@@ -266,23 +352,23 @@ export default function About({ person, identity, heritage, languages, roles, ti
                                         </div>
                                         {m.description && <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{m.description}</p>}
                                     </div>
-                                </motion.div>
+                                </div>
                             ))}
                         </div>
                     </SectionCard>
                 )}
 
-                {/* Languages & Tags row */}
+                {/* Languages & Tags */}
                 <div className="grid gap-5 md:grid-cols-2">
                     {hasLanguages && (
                         <SectionCard icon={Languages} title="Languages">
                             <div className="flex flex-wrap gap-2">
                                 {languages.map((l: any) => (
-                                    <Pill key={l.id}>
+                                    <span key={l.id} className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-text-primary backdrop-blur-sm">
                                         {l.language}
                                         {l.dialect ? ` (${l.dialect})` : ''}
                                         <span className="ml-0.5 text-text-muted">· {l.proficiency}</span>
-                                    </Pill>
+                                    </span>
                                 ))}
                             </div>
                         </SectionCard>
@@ -292,7 +378,7 @@ export default function About({ person, identity, heritage, languages, roles, ti
                         <SectionCard icon={Star} title="Tags">
                             <div className="flex flex-wrap gap-2">
                                 {tags.map((t: any) => (
-                                    <span key={t.id} className="inline-flex items-center rounded-full bg-accent-gold/[0.07] px-3 py-1.5 text-xs font-medium text-accent-gold backdrop-blur-sm transition-all hover:bg-accent-gold/[0.12]">
+                                    <span key={t.id} className="inline-flex items-center rounded-full bg-accent-gold/[0.07] px-3 py-1.5 text-xs font-medium text-accent-gold backdrop-blur-sm">
                                         #{t.tag}
                                     </span>
                                 ))}
@@ -302,16 +388,16 @@ export default function About({ person, identity, heritage, languages, roles, ti
                 </div>
 
                 {/* Empty state */}
-                {!hasIdentity && !hasHeritage && !hasLifeEvents && !hasLanguages && !hasRoles && !hasTitles && !hasMilestones && !hasTags && !identity?.biography && !person.family_branch && (
-                    <motion.div variants={stagger.item} className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.08] py-16">
+                {!hasIdentity && !hasHeritage && !hasLanguages && !hasRoles && !hasTitles && !hasMilestones && !hasTags && !identity?.biography && !person.family_branch && (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.08] py-16">
                         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent-gold/10">
                             <BookOpen size={24} className="text-accent-gold/60" />
                         </div>
                         <p className="text-sm font-medium text-text-muted">No details added yet</p>
                         <p className="mt-1 text-xs text-text-muted/60">Edit this profile to add biographical information</p>
-                    </motion.div>
+                    </div>
                 )}
-            </motion.div>
-        </div>
+            </div>
+        </>
     );
 }

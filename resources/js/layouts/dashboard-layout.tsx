@@ -9,8 +9,7 @@ import { PushSubscriptionManager } from '@/components/push-subscription-manager'
 import { getPatternBackground } from '@/lib/house-patterns';
 import { logout, home, dashboard as dashboardRoute } from '@/routes';
 import dashboard from '@/routes/dashboard';
-import { edit } from '@/routes/profile';
-import { show as peopleShow } from '@/routes/people';
+
 
 interface SidebarItem {
     id: string;
@@ -81,8 +80,8 @@ export default function DashboardLayout({
         { id: 'search', icon: Search, label: 'Search', href: dashboard.search().url },
         { id: 'notifications', icon: Bell, label: 'Notifications', href: dashboard.notifications().url },
         { id: 'analytics', icon: BarChart3, label: 'Analytics', href: dashboard.analytics().url },
-        ...(authPerson ? [{ id: 'profile', icon: User, label: 'Profile', href: peopleShow(authPerson.uuid).url + '/about' }] : []),
-        { id: 'settings', icon: Settings, label: 'Settings', href: edit().url },
+        ...(authPerson ? [{ id: 'profile', icon: User, label: 'Profile', href: '/settings/about' }] : []),
+        { id: 'settings', icon: Settings, label: 'Settings', href: '/settings/house' },
     ];
 
     const handleLogout = () => {
@@ -141,7 +140,7 @@ export default function DashboardLayout({
 
             {/* Mobile Bottom Nav */}
             <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-4 md:hidden">
-                <div className="pointer-events-auto relative grid h-20 grid-cols-6 items-center rounded-[30px] border border-white/10 bg-surface/85 px-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-1 ring-white/5 backdrop-blur-2xl">
+                <div className="pointer-events-auto relative grid h-20 grid-cols-5 items-center rounded-[30px] border border-white/10 bg-surface/85 px-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-1 ring-white/5 backdrop-blur-2xl">
 
                     {/* Search */}
                     <Link
@@ -174,7 +173,7 @@ export default function DashboardLayout({
                     <div className="flex justify-center">
                         <Link
                             href={dashboardRoute().url}
-                            className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-[22px] border-4 border-bg-dark transition-all duration-300 ${isActive(dashboardRoute().url)
+                            className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-full border-4 border-bg-dark transition-all duration-300 ${isActive(dashboardRoute().url)
                                     ? 'bg-accent-gold text-bg-dark shadow-[0_18px_40px_rgba(198,161,91,.45)]'
                                     : 'bg-surface text-text-muted shadow-lg'
                                 }`}
@@ -185,8 +184,8 @@ export default function DashboardLayout({
 
                     {/* Settings */}
                     <Link
-                        href={edit().url}
-                        className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${isActive(edit().url)
+                        href="/settings/house"
+                        className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${isActive('/settings/house')
                                 ? 'bg-accent-gold/10 text-accent-gold'
                                 : 'text-text-muted hover:bg-white/5 hover:text-white'
                             }`}
@@ -194,19 +193,6 @@ export default function DashboardLayout({
                         <Settings size={20} />
                         <span className="text-[10px] font-medium">Settings</span>
                     </Link>
-
-                    {authPerson && (
-                        <Link
-                            href={peopleShow(authPerson.uuid).url + '/about'}
-                            className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${isActive(peopleShow(authPerson.uuid).url)
-                                ? 'bg-accent-gold/10 text-accent-gold'
-                                : 'text-text-muted hover:bg-white/5 hover:text-white'
-                            }`}
-                        >
-                            <User size={20} />
-                            <span className="text-[10px] font-medium">Profile</span>
-                        </Link>
-                    )}
 
                     {/* Logout */}
                     <button

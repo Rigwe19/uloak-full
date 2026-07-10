@@ -180,6 +180,7 @@ class HouseAccessController extends Controller
             'approvedTributes' => $approvedTributes,
             'allTributes' => $allTributes,
             'stories' => $room->stories->map(fn ($story) => [
+                'uuid' => $story->uuid,
                 'id' => $story->id,
                 'title' => $story->title,
                 'thumbnail' => $story->thumbnail,

@@ -522,97 +522,99 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
                         }
                     >
                         {(story) => (
-                            <div className="surface-glow group flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20">
-                                {story.type === 'audio' ? (
-                                    <div className="relative aspect-4/3 overflow-hidden bg-linear-to-br from-amber-900/60 via-purple-900/40 to-bg-dark">
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <Music className="text-accent-gold/20" size={80} strokeWidth={1} />
-                                        </div>
-                                        <div className="absolute inset-0 flex items-center justify-center gap-[3px] px-8">
-                                            {Array.from({ length: 24 }).map((_, j) => (
-                                                <motion.div key={j} className="w-[3px] rounded-full bg-accent-gold/60"
-                                                    animate={{ height: [8 + Math.random() * 40, 8 + Math.random() * 40, 8 + Math.random() * 40] }}
-                                                    transition={{ duration: 0.8 + Math.random() * 0.6, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 0.4 }} />
-                                            ))}
-                                        </div>
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30">
-                                                <Headphones size={24} fill="currentColor" />
+                            <Link href={`/dashboard/stories/${story.uuid}`} className="block h-full">
+                                <div className="surface-glow group flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20">
+                                    {story.type === 'audio' ? (
+                                        <div className="relative aspect-4/3 overflow-hidden bg-linear-to-br from-amber-900/60 via-purple-900/40 to-bg-dark">
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Music className="text-accent-gold/20" size={80} strokeWidth={1} />
+                                            </div>
+                                            <div className="absolute inset-0 flex items-center justify-center gap-[3px] px-8">
+                                                {Array.from({ length: 24 }).map((_, j) => (
+                                                    <motion.div key={j} className="w-[3px] rounded-full bg-accent-gold/60"
+                                                        animate={{ height: [8 + Math.random() * 40, 8 + Math.random() * 40, 8 + Math.random() * 40] }}
+                                                        transition={{ duration: 0.8 + Math.random() * 0.6, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 0.4 }} />
+                                                ))}
+                                            </div>
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30">
+                                                    <Headphones size={24} fill="currentColor" />
+                                                </div>
+                                            </div>
+                                            <div className="absolute top-4 left-4">
+                                                <Badge className="border-amber-500/20 bg-amber-500/15 text-amber-300 text-[10px] tracking-widest uppercase backdrop-blur-md">
+                                                    <Music size={10} className="mr-1 inline" /> Audio
+                                                </Badge>
                                             </div>
                                         </div>
-                                        <div className="absolute top-4 left-4">
-                                            <Badge className="border-amber-500/20 bg-amber-500/15 text-amber-300 text-[10px] tracking-widest uppercase backdrop-blur-md">
-                                                <Music size={10} className="mr-1 inline" /> Audio
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                ) : story.type === 'video' ? (
-                                    <div className="relative aspect-4/3 overflow-hidden">
-                                        <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
-                                            onError={(e) => {
+                                    ) : story.type === 'video' ? (
+                                        <div className="relative aspect-4/3 overflow-hidden">
+                                            <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                onError={(e) => {
  e.currentTarget.src = '/logo-stacked.png'; 
 }}
-                                            className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                                        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-linear-to-b from-bg-dark/60 to-transparent" />
-                                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-bg-dark/60 to-transparent" />
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
-                                            <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30 transition-transform duration-500 group-hover:scale-100">
-                                                <Play size={24} fill="currentColor" className="ml-1" />
+                                                className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                            <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-linear-to-b from-bg-dark/60 to-transparent" />
+                                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-bg-dark/60 to-transparent" />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
+                                                <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30 transition-transform duration-500 group-hover:scale-100">
+                                                    <Play size={24} fill="currentColor" className="ml-1" />
+                                                </div>
+                                            </div>
+                                            <div className="absolute top-4 left-4">
+                                                <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">
+                                                    <Film size={10} className="mr-1 inline" /> Video
+                                                </Badge>
+                                            </div>
+                                            <div className="absolute top-4 right-4">
+                                                <Badge className="border-white/10 bg-bg-dark/60 px-3 py-1 text-[9px] font-bold tracking-wider text-text-muted uppercase backdrop-blur-md">HD</Badge>
                                             </div>
                                         </div>
-                                        <div className="absolute top-4 left-4">
-                                            <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">
-                                                <Film size={10} className="mr-1 inline" /> Video
-                                            </Badge>
-                                        </div>
-                                        <div className="absolute top-4 right-4">
-                                            <Badge className="border-white/10 bg-bg-dark/60 px-3 py-1 text-[9px] font-bold tracking-wider text-text-muted uppercase backdrop-blur-md">HD</Badge>
-                                        </div>
-                                    </div>
-                                ) : story.type === 'photo' ? (
-                                    <div className="relative aspect-4/3 overflow-hidden">
-                                        <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
-                                            onError={(e) => {
+                                    ) : story.type === 'photo' ? (
+                                        <div className="relative aspect-4/3 overflow-hidden">
+                                            <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                onError={(e) => {
  e.currentTarget.src = '/logo-stacked.png'; 
 }}
-                                            className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
-                                            <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30 transition-transform duration-500 group-hover:scale-100">
-                                                <Play size={24} fill="currentColor" className="ml-1" />
+                                                className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
+                                                <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30 transition-transform duration-500 group-hover:scale-100">
+                                                    <Play size={24} fill="currentColor" className="ml-1" />
+                                                </div>
+                                            </div>
+                                            <div className="absolute top-4 left-4">
+                                                <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">{story.type}</Badge>
                                             </div>
                                         </div>
-                                        <div className="absolute top-4 left-4">
-                                            <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">{story.type}</Badge>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="relative aspect-4/3 overflow-hidden">
-                                        <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
-                                            onError={(e) => {
+                                    ) : (
+                                        <div className="relative aspect-4/3 overflow-hidden">
+                                            <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                onError={(e) => {
  e.currentTarget.src = '/logo-stacked.png'; 
 }}
-                                            className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20" />
-                                        <div className="absolute top-4 left-4">
-                                            <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">{story.type}</Badge>
+                                                className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20" />
+                                            <div className="absolute top-4 left-4">
+                                                <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">{story.type}</Badge>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                                <div className="flex grow flex-col justify-between gap-6 p-8">
-                                    <div className="space-y-3">
-                                        <h3 className="text-xl font-bold text-text-primary transition-colors group-hover:text-accent-gold">{story.title}</h3>
-                                        <p className="line-clamp-2 text-sm font-light text-text-muted italic">"{story.description}"</p>
-                                    </div>
-                                    <div className="flex items-center justify-between border-t border-white/5 pt-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
-                                        <div className="flex items-center gap-2">
-                                            <UserIcon size={12} className="text-accent-gold" /> {story.author}
+                                    )}
+                                    <div className="flex grow flex-col justify-between gap-6 p-8">
+                                        <div className="space-y-3">
+                                            <h3 className="text-xl font-bold text-text-primary transition-colors group-hover:text-accent-gold">{story.title}</h3>
+                                            <p className="line-clamp-2 text-sm font-light text-text-muted italic">"{story.description}"</p>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Clock size={12} className="text-accent-gold" /> {story.date}
+                                        <div className="flex items-center justify-between border-t border-white/5 pt-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
+                                            <div className="flex items-center gap-2">
+                                                <UserIcon size={12} className="text-accent-gold" /> {story.author}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={12} className="text-accent-gold" /> {story.date}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         )}
                     </StoryFeed>
                 )}

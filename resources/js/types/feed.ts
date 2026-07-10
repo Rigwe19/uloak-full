@@ -1,4 +1,5 @@
 export interface FeedStory {
+    uuid: string;
     id: number;
     title: string;
     type: string;

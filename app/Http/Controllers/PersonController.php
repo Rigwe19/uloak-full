@@ -9,6 +9,7 @@ use App\Person\Enums\PermissionAbility;
 use App\Person\Enums\PersonType;
 use App\Person\Enums\Visibility;
 use App\Services\PersonService;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -406,6 +407,370 @@ class PersonController extends Controller
         }
 
         return redirect()->route('people.show', $person)
+            ->with('flash', ['success' => 'Person updated successfully.']);
+    }
+
+    public function settingsAbout(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/about', [
+                'title' => 'About - Uloak',
+                'person' => null,
+                'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+                'status' => $request->session()->get('status'),
+            ]);
+        }
+
+        $person->load([
+            'identity', 'heritage', 'languages', 'roles', 'titles',
+            'addresses', 'personality', 'milestones', 'tags',
+        ]);
+
+        return Inertia::render('settings/about', [
+            'title' => ($person->identity?->display_name ?? 'About').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'identity' => $person->identity,
+            'heritage' => $person->heritage,
+            'languages' => $person->languages,
+            'roles' => $person->roles,
+            'titles' => $person->titles,
+            'addresses' => $person->addresses,
+            'personality' => $person->personality,
+            'milestones' => $person->milestones,
+            'tags' => $person->tags,
+            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'status' => $request->session()->get('status'),
+        ]);
+    }
+
+    public function settingsFamilyTree(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/family-tree', [
+                'title' => 'Family Tree - Uloak',
+                'person' => null,
+            ]);
+        }
+
+        $graph = $this->personService->getRelationshipGraph($person);
+
+        return Inertia::render('settings/family-tree', [
+            'title' => ($person->identity?->display_name ?? 'Family Tree').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'graph' => $graph,
+        ]);
+    }
+
+    public function settingsTimeline(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/timeline', [
+                'title' => 'Timeline - Uloak',
+                'person' => null,
+            ]);
+        }
+
+        $events = $this->personService->getTimeline($person);
+
+        return Inertia::render('settings/timeline', [
+            'title' => ($person->identity?->display_name ?? 'Timeline').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'events' => $events,
+        ]);
+    }
+
+    public function settingsStories(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/stories', [
+                'title' => 'Stories - Uloak',
+                'person' => null,
+            ]);
+        }
+
+        $stories = $person->storyLinks()
+            ->with(['story' => fn ($q) => $q->with('room:id,name,slug')])
+            ->latest()
+            ->paginate(12);
+
+        return Inertia::render('settings/stories', [
+            'title' => ($person->identity?->display_name ?? 'Stories').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'stories' => $stories,
+        ]);
+    }
+
+    public function settingsMedia(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/media', [
+                'title' => 'Media - Uloak',
+                'person' => null,
+            ]);
+        }
+
+        $media = $this->personService->getMediaArchive($person);
+
+        return Inertia::render('settings/media', [
+            'title' => ($person->identity?->display_name ?? 'Media').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'media' => $media,
+        ]);
+    }
+
+    public function settingsHeritage(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/heritage', [
+                'title' => 'Heritage - Uloak',
+                'person' => null,
+            ]);
+        }
+
+        $person->load('heritage', 'languages');
+
+        return Inertia::render('settings/heritage', [
+            'title' => ($person->identity?->display_name ?? 'Heritage').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'heritage' => $person->heritage,
+            'languages' => $person->languages,
+        ]);
+    }
+
+    public function settingsMemories(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/memories', [
+                'title' => 'Memories - Uloak',
+                'person' => null,
+            ]);
+        }
+
+        $memories = $person->storyLinks()
+            ->with(['story' => fn ($q) => $q->with('room:id,name,slug')])
+            ->latest()
+            ->paginate(12);
+
+        return Inertia::render('settings/memories', [
+            'title' => ($person->identity?->display_name ?? 'Memories').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'memories' => $memories,
+        ]);
+    }
+
+    public function settingsPermissions(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/permissions', [
+                'title' => 'Permissions - Uloak',
+                'person' => null,
+            ]);
+        }
+
+        $permissions = $this->personService->getPermissions($person);
+        $consents = $this->personService->getConsents($person);
+
+        return Inertia::render('settings/permissions', [
+            'title' => ($person->identity?->display_name ?? 'Permissions').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'permissions' => $permissions,
+            'consents' => $consents,
+        ]);
+    }
+
+    public function settingsActivity(Request $request): Response
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return Inertia::render('settings/activity', [
+                'title' => 'Activity - Uloak',
+                'person' => null,
+            ]);
+        }
+
+        $logs = $this->personService->getActivity($person);
+
+        return Inertia::render('settings/activity', [
+            'title' => ($person->identity?->display_name ?? 'Activity').' - Uloak',
+            'person' => $this->serializePerson($person, $request),
+            'logs' => $logs,
+        ]);
+    }
+
+    public function settingsUpdate(Request $request): RedirectResponse
+    {
+        $person = $request->user()->person;
+
+        if (! $person) {
+            return redirect()->route('settings.about')
+                ->with('flash', ['error' => 'No person profile found.']);
+        }
+
+        $validated = $request->validate([
+            'legal_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'display_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'nickname' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'traditional_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'type' => ['sometimes', 'required', 'string', 'in:'.implode(',', array_column(PersonType::cases(), 'value'))],
+            'living_status' => ['sometimes', 'required', 'string', 'in:'.implode(',', array_column(LivingStatus::cases(), 'value'))],
+            'family_branch' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'clan' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'kindred' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'ancestral_home' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'diaspora_generation' => ['sometimes', 'nullable', 'integer', 'min:0'],
+            'birth_date' => ['sometimes', 'nullable', 'date'],
+            'death_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:birth_date'],
+            'birth_place' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'death_place' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'burial_location' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'gender' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'biography' => ['sometimes', 'nullable', 'string'],
+            'short_introduction' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'age_visibility' => ['sometimes', 'nullable', 'string', 'in:'.implode(',', array_column(Visibility::cases(), 'value'))],
+
+            'heritage.nationality' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.ethnicity' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.tribe' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.clan' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.village' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.town' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.state' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.country' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.religion' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'heritage.migration_story' => ['sometimes', 'nullable', 'string'],
+
+            'languages' => ['sometimes', 'nullable', 'array'],
+            'languages.*.language' => ['required_with:languages', 'string', 'max:255'],
+            'languages.*.dialect' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'languages.*.proficiency' => ['sometimes', 'nullable', 'string', 'max:50'],
+
+            'addresses' => ['sometimes', 'nullable', 'array'],
+            'addresses.*.type' => ['required_with:addresses', 'string', 'max:50'],
+            'addresses.*.line1' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'addresses.*.city' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'addresses.*.town' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'addresses.*.village' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'addresses.*.state' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'addresses.*.country' => ['sometimes', 'nullable', 'string', 'max:255'],
+
+            'milestones' => ['sometimes', 'nullable', 'array'],
+            'milestones.*.title' => ['required_with:milestones', 'string', 'max:255'],
+            'milestones.*.description' => ['sometimes', 'nullable', 'string'],
+            'milestones.*.date' => ['sometimes', 'nullable', 'date'],
+            'milestones.*.category' => ['sometimes', 'nullable', 'string', 'max:255'],
+
+            'roles' => ['sometimes', 'nullable', 'array'],
+            'roles.*.role' => ['required_with:roles', 'string', 'max:255'],
+            'roles.*.context' => ['sometimes', 'nullable', 'string', 'max:255'],
+
+            'titles' => ['sometimes', 'nullable', 'array'],
+            'titles.*.title' => ['required_with:titles', 'string', 'max:255'],
+            'titles.*.is_traditional' => ['sometimes', 'nullable', 'boolean'],
+            'titles.*.granted_by' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'titles.*.year' => ['sometimes', 'nullable', 'integer'],
+
+            'tags' => ['sometimes', 'nullable', 'array'],
+            'tags.*' => ['string', 'max:255'],
+        ]);
+
+        if ($request->has('type') || $request->has('living_status') || $request->hasAny(['family_branch', 'clan', 'kindred', 'ancestral_home', 'diaspora_generation'])) {
+            $person->update([
+                'type' => $validated['type'] ?? $person->type,
+                'living_status' => $validated['living_status'] ?? $person->living_status,
+                'family_branch' => $validated['family_branch'] ?? $person->family_branch,
+                'clan' => $validated['clan'] ?? $person->clan,
+                'kindred' => $validated['kindred'] ?? $person->kindred,
+                'ancestral_home' => $validated['ancestral_home'] ?? $person->ancestral_home,
+                'diaspora_generation' => $validated['diaspora_generation'] ?? $person->diaspora_generation,
+            ]);
+        }
+
+        if ($request->hasAny(['legal_name', 'display_name', 'nickname', 'traditional_name', 'gender', 'birth_date', 'death_date', 'birth_place', 'death_place', 'burial_location', 'biography', 'short_introduction', 'age_visibility'])) {
+            $this->personService->updateIdentity($person, [
+                'legal_name' => $validated['legal_name'] ?? $person->identity?->legal_name,
+                'display_name' => $validated['display_name'] ?? $person->identity?->display_name,
+                'nickname' => $validated['nickname'] ?? $person->identity?->nickname,
+                'traditional_name' => $validated['traditional_name'] ?? null,
+                'gender' => $validated['gender'] ?? $person->identity?->gender,
+                'birth_date' => $validated['birth_date'] ?? $person->identity?->birth_date,
+                'death_date' => $validated['death_date'] ?? $person->identity?->death_date,
+                'birth_place' => $validated['birth_place'] ?? $person->identity?->birth_place,
+                'death_place' => $validated['death_place'] ?? $person->identity?->death_place,
+                'burial_location' => $validated['burial_location'] ?? $person->identity?->burial_location,
+                'biography' => $validated['biography'] ?? $person->identity?->biography,
+                'short_introduction' => $validated['short_introduction'] ?? null,
+                'age_visibility' => $validated['age_visibility'] ?? $person->identity?->age_visibility ?? Visibility::Public->value,
+            ]);
+        }
+
+        if ($request->has('heritage')) {
+            $heritage = $validated['heritage'];
+            $person->heritage()->updateOrCreate(
+                ['person_id' => $person->id],
+                $heritage
+            );
+        }
+
+        if ($request->has('languages')) {
+            $person->languages()->delete();
+            foreach ($validated['languages'] ?? [] as $lang) {
+                $person->languages()->create($lang);
+            }
+        }
+
+        if ($request->has('addresses')) {
+            $person->addresses()->delete();
+            foreach ($validated['addresses'] ?? [] as $addr) {
+                $person->addresses()->create($addr);
+            }
+        }
+
+        if ($request->has('milestones')) {
+            $person->milestones()->delete();
+            foreach ($validated['milestones'] ?? [] as $ms) {
+                $person->milestones()->create($ms);
+            }
+        }
+
+        if ($request->has('roles')) {
+            $person->roles()->delete();
+            foreach ($validated['roles'] ?? [] as $role) {
+                $person->roles()->create($role);
+            }
+        }
+
+        if ($request->has('titles')) {
+            $person->titles()->delete();
+            foreach ($validated['titles'] ?? [] as $title) {
+                $person->titles()->create($title);
+            }
+        }
+
+        if ($request->has('tags')) {
+            $person->tags()->delete();
+            foreach ($validated['tags'] ?? [] as $tag) {
+                $person->tags()->create(['tag' => $tag]);
+            }
+        }
+
+        return redirect()->back()
             ->with('flash', ['success' => 'Person updated successfully.']);
     }
 

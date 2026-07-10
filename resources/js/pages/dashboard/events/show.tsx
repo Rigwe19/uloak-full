@@ -206,7 +206,7 @@ return story.thumbnail;
                     >
                         {(story) => (
                             <Link
-                                href={storiesRoutes.show(story.id).url}
+                                href={storiesRoutes.show(story.uuid).url}
                                 className="group block h-full"
                             >
                                 {viewMode === 'grid' ? (

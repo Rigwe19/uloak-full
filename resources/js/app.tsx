@@ -40,8 +40,8 @@ createInertiaApp({
                 return null;
             case name.startsWith('family/'):
                 return null;
-            case name.startsWith('people/'):
-                return DashboardLayout;
+            // case name.startsWith('people/'):
+            //     return DashboardLayout;
             case name.startsWith('house/'):
                 return HouseLayout;
             default:

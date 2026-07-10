@@ -124,6 +124,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('events', EventController::class)->only(['show', 'store']);
         Route::post('events/{event}/stories', [EventController::class, 'storeStory'])->name('events.stories.store');
         Route::get('stories/{story}', [StoryController::class, 'show'])->name('stories.show');
+        Route::get('stories/{story}/data', [StoryController::class, 'showData'])->name('stories.data');
         Route::delete('stories/{story}', [StoryController::class, 'destroy'])->name('stories.destroy');
         Route::post('stories/{story}/comments', [CommentController::class, 'store'])->name('stories.comments.store');
         Route::post('stories/{story}/assets', [StoryController::class, 'addAsset'])->name('stories.assets.store');

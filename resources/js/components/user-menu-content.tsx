@@ -10,8 +10,6 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import admin from '@/routes/admin';
-import { edit } from '@/routes/profile';
-import { show as peopleShow } from '@/routes/people';
 import type { User } from '@/types';
 
 type Props = {
@@ -54,7 +52,7 @@ export function UserMenuContent({ user }: Props) {
                     <DropdownMenuItem asChild>
                         <Link
                             className="block w-full cursor-pointer"
-                            href={peopleShow(authPerson.uuid).url + '/about'}
+                            href="/settings/about"
                             prefetch
                             onClick={cleanup}
                         >
@@ -66,7 +64,7 @@ export function UserMenuContent({ user }: Props) {
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"
-                        href={edit()}
+                        href="/settings/house"
                         prefetch
                         onClick={cleanup}
                     >

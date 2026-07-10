@@ -36,6 +36,7 @@ class RoomController extends Controller
         $candles = $room->candles()->orderByRaw('CASE WHEN is_approved = false THEN 0 ELSE 1 END')->get();
 
         $storiesPaginator = $room->stories()->latest()->cursorPaginate(24)->through(fn ($story) => [
+            'uuid' => $story->uuid,
             'id' => $story->id,
             'title' => $story->title,
             'thumbnail' => $story->thumbnail,

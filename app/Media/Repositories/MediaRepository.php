@@ -41,7 +41,7 @@ class MediaRepository
 
     public function findByCloudinaryPublicId(string $publicId): ?Media
     {
-        return Media::where('path', $publicId)->first();
+        return Media::where('cloudinary_public_id', $publicId)->first();
     }
 
     public function createFromUpload(

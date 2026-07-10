@@ -28,6 +28,7 @@ class EventController extends Controller
         $event->loadCount('stories');
 
         $paginator = $event->stories()->with('user')->latest()->cursorPaginate(24)->through(fn ($story) => [
+            'uuid' => $story->uuid,
             'id' => $story->id,
             'title' => $story->title,
             'thumbnail' => $story->thumbnail,

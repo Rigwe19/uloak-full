@@ -19,8 +19,8 @@ import {
     Mic,
     Info,
 } from 'lucide-react';
-import React, { useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import type { KeyboardEvent, TouchEvent } from 'react';
 import { toast } from 'sonner';
 import { Button, Badge } from '@/components/dashboard/ui';
 import { VoiceRecorder } from '@/components/dashboard/voice-recorder';
@@ -36,35 +36,50 @@ interface Comment {
     date: string;
 }
 
+interface StoryData {
+    uuid: string;
+    id: number;
+    title: string;
+    description: string;
+    type: string;
+    thumbnail: string;
+    author: string;
+    date: string;
+    tags: string[];
+    assets: any[];
+    fileUrl?: string;
+    sprite?: any;
+    transcript?: any;
+    comments: Comment[];
+}
+
+interface StoryPreview {
+    uuid: string;
+    id: number;
+    title: string;
+    thumbnail: string;
+}
+
 interface StoryViewerProps {
-    story: {
-        id: number;
-        title: string;
-        description: string;
-        type: string;
-        thumbnail: string;
-        author: string;
-        date: string;
-        tags: string[];
-        assets: any[];
-        fileUrl?: string;
-        sprite?: any;
-        transcript?: any;
-        comments: Comment[];
-    };
+    story: StoryData;
     room: {
         id: number;
         slug: string;
         name: string;
     };
-    nextStoryId?: number;
-    prevStoryId?: number;
+    prevStory: StoryPreview | null;
+    nextStory: StoryPreview | null;
 }
 
-export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: StoryViewerProps) {
+const SWIPE_THRESHOLD = 60;
+
+export default function StoryViewer({ story: initialStory, room, prevStory: initialPrev, nextStory: initialNext }: StoryViewerProps) {
+    const [currentStory, setCurrentStory] = useState<StoryData>(initialStory);
+    const [prev, setPrev] = useState<StoryPreview | null>(initialPrev);
+    const [next, setNext] = useState<StoryPreview | null>(initialNext);
     const [likes, setLikes] = useState(12);
     const [isLiked, setIsLiked] = useState(false);
-    const [tags, setTags] = useState<string[]>(story.tags || []);
+    const [tags, setTags] = useState<string[]>(initialStory.tags || []);
     const [newTag, setNewTag] = useState('');
     const [showTagInput, setShowTagInput] = useState(false);
     const [activeAssetIndex, setActiveAssetIndex] = useState(0);
@@ -73,38 +88,136 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
     const [isAddingAsset, setIsAddingAsset] = useState(false);
     const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
     const [showInfoPanel, setShowInfoPanel] = useState(false);
+    const [swipeDir, setSwipeDir] = useState<'up' | 'down' | null>(null);
+    const [transitioning, setTransitioning] = useState(false);
+    const touchStartY = useRef(0);
+    const touchStartX = useRef(0);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const storyCache = useRef<Map<string, StoryData>>(new Map());
 
-    const videoPlayerVideo: PlayerVideo = {
-        id: story.id,
-        storyId: story.id,
-        title: story.title,
-        description: story.description,
-        url: story.fileUrl || null,
-        thumbnail: story.thumbnail || null,
-        preview: null,
-        sprite: story.sprite || null,
-        author: story.author,
-        date: story.date,
+    const story = currentStory;
+
+    const preloadStory = async (uuid: string) => {
+        if (storyCache.current.has(uuid)) return;
+        try {
+            const res = await fetch(`/dashboard/stories/${uuid}/data`, {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.story) {
+                storyCache.current.set(uuid, data.story);
+            }
+            if (data.prevStory) {
+                setPrev(data.prevStory);
+            }
+            if (data.nextStory) {
+                setNext(data.nextStory);
+            }
+        } catch {
+            // silent
+        }
     };
 
-    const collectionVideoAsset = (asset: any, idx: number): PlayerVideo => ({
-        id: `story-${story.id}-asset-${idx}`,
-        storyId: story.id,
-        title: asset.title || `${story.title} - Video ${idx + 1}`,
-        description: story.description,
-        url: asset.url || null,
-        thumbnail: story.thumbnail || null,
-        preview: null,
-        sprite: null,
-    });
+    const navigateTo = (uuid: string, preview: StoryPreview) => {
+        setTransitioning(true);
+
+        const cached = storyCache.current.get(uuid);
+        if (cached) {
+            setCurrentStory(cached);
+        } else {
+            setCurrentStory({
+                uuid: preview.uuid,
+                id: preview.id,
+                title: preview.title,
+                description: '',
+                type: 'photo',
+                thumbnail: preview.thumbnail,
+                author: '',
+                date: '',
+                tags: [],
+                assets: [],
+                fileUrl: undefined,
+                sprite: undefined,
+                transcript: undefined,
+                comments: [],
+            });
+            preloadStory(uuid).then(() => {
+                const loaded = storyCache.current.get(uuid);
+                if (loaded) {
+                    setCurrentStory(loaded);
+                }
+                setTransitioning(false);
+            });
+        }
+
+        setLikes(12);
+        setIsLiked(false);
+        setTags(storyCache.current.get(uuid)?.tags || []);
+        setShowTagInput(false);
+        setActiveAssetIndex(0);
+        setShowInfoPanel(false);
+        window.history.replaceState(null, '', `/dashboard/stories/${uuid}`);
+
+        preloadStory(uuid);
+
+        setTimeout(() => setTransitioning(false), 100);
+    };
+
+    useEffect(() => {
+        storyCache.current.set(initialStory.uuid, initialStory);
+        if (initialNext?.uuid) preloadStory(initialNext.uuid);
+        if (initialPrev?.uuid) preloadStory(initialPrev.uuid);
+    }, []);
 
     const handleClose = () => {
         router.get(`/dashboard/rooms/${room.slug}`);
     };
 
-    const navigateStory = (id: number) => {
-        router.get(`/dashboard/stories/${id}`);
+    useEffect(() => {
+        const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+            if (e.key === 'ArrowUp' && prev?.uuid) {
+                e.preventDefault();
+                navigateTo(prev.uuid, prev);
+            } else if (e.key === 'ArrowDown' && next?.uuid) {
+                e.preventDefault();
+                navigateTo(next.uuid, next);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [prev?.uuid, next?.uuid]);
+
+    const handleTouchStart = (e: TouchEvent) => {
+        touchStartY.current = e.touches[0].clientY;
+        touchStartX.current = e.touches[0].clientX;
+        setSwipeDir(null);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+        const dy = e.touches[0].clientY - touchStartY.current;
+        const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
+
+        if (Math.abs(dy) > 20 && Math.abs(dy) > dx * 1.5) {
+            setSwipeDir(dy < 0 ? 'up' : 'down');
+        } else {
+            setSwipeDir(null);
+        }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+        const dy = e.changedTouches[0].clientY - touchStartY.current;
+
+        if (Math.abs(dy) > SWIPE_THRESHOLD) {
+            if (dy < 0 && next?.uuid) {
+                navigateTo(next.uuid, next);
+            } else if (dy > 0 && prev?.uuid) {
+                navigateTo(prev.uuid, prev);
+            }
+        }
+
+        setSwipeDir(null);
     };
 
     const submitComment = (e: React.FormEvent) => {
@@ -115,7 +228,7 @@ return;
 }
 
         setIsSubmittingComment(true);
-        router.post(`/dashboard/stories/${story.id}/comments`, {
+        router.post(`/dashboard/stories/${story.uuid}/comments`, {
             content: newComment
         }, {
             onSuccess: () => {
@@ -138,7 +251,7 @@ return;
         formData.append('file', file);
         formData.append('title', file.name.split('.')[0]);
 
-        router.post(`/dashboard/stories/${story.id}/assets`, formData, {
+        router.post(`/dashboard/stories/${story.uuid}/assets`, formData, {
             onSuccess: () => setIsAddingAsset(false),
             onError: () => setIsAddingAsset(false)
         });
@@ -151,7 +264,7 @@ return;
         formData.append('recording', file);
         formData.append('title', `Voice Memo - ${new Date().toLocaleDateString()}`);
 
-        router.post(`/dashboard/stories/${story.id}/assets`, formData, {
+        router.post(`/dashboard/stories/${story.uuid}/assets`, formData, {
             onSuccess: () => {
                 setIsAddingAsset(false);
                 setShowVoiceRecorder(false);
@@ -183,6 +296,30 @@ addTag();
 }
     };
 
+    const videoPlayerVideo: PlayerVideo = {
+        id: story.id,
+        storyId: story.id,
+        title: story.title,
+        description: story.description,
+        url: story.fileUrl || null,
+        thumbnail: story.thumbnail || null,
+        preview: null,
+        sprite: story.sprite || null,
+        author: story.author,
+        date: story.date,
+    };
+
+    const collectionVideoAsset = (asset: any, idx: number): PlayerVideo => ({
+        id: `story-${story.id}-asset-${idx}`,
+        storyId: story.id,
+        title: asset.title || `${story.title} - Video ${idx + 1}`,
+        description: story.description,
+        url: asset.url || null,
+        thumbnail: story.thumbnail || null,
+        preview: null,
+        sprite: null,
+    });
+
     const isVideo = story.type === 'video';
 
     return (
@@ -197,9 +334,14 @@ addTag();
             <Head title={story.title} />
 
             {/* Visual Content Section — fills available space for video */}
-            <div className={`relative flex w-full items-center justify-center overflow-hidden bg-black ${
-                isVideo ? 'flex-1' : 'h-full min-h-0 lg:flex-1'
-            }`}>
+            <div
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                className={`relative flex w-full items-center justify-center overflow-hidden bg-black ${
+                    isVideo ? 'flex-1' : 'h-full min-h-0 lg:flex-1'
+                }`}
+            >
                 {isVideo && videoPlayerVideo.url ? (
                     <div className="absolute inset-0">
                         <VideoPlayer
@@ -466,25 +608,29 @@ addTag();
                     </div>
                 </div>
 
-                {/* Navigation Arrows */}
-                {prevStoryId && (
-                    <div className="absolute inset-y-0 left-2 flex items-center md:left-4">
-                        <button
-                            onClick={() => navigateStory(prevStoryId)}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/60 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white md:h-12 md:w-12"
+                {/* Swipe hint arrows — visible when prev/next exists */}
+                {prev?.uuid && (
+                    <div className="pointer-events-none absolute top-4 left-1/2 z-10 -translate-x-1/2">
+                        <motion.div
+                            animate={{ y: [0, 4, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                            className="flex flex-col items-center gap-1 rounded-full bg-black/30 px-3 py-1.5 backdrop-blur-sm"
                         >
-                            <ChevronLeft size={24} className="md:size-[32px]" />
-                        </button>
+                            <ChevronLeft size={12} className="rotate-90 text-white/50" />
+                            <span className="text-[9px] font-medium tracking-wider text-white/40 uppercase">Prev</span>
+                        </motion.div>
                     </div>
                 )}
-                {nextStoryId && (
-                    <div className="absolute inset-y-0 right-2 flex items-center md:right-4">
-                        <button
-                            onClick={() => navigateStory(nextStoryId)}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/60 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white md:h-12 md:w-12"
+                {next?.uuid && (
+                    <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2">
+                        <motion.div
+                            animate={{ y: [0, -4, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                            className="flex flex-col items-center gap-1 rounded-full bg-black/30 px-3 py-1.5 backdrop-blur-sm"
                         >
-                            <ChevronRight size={24} className="md:size-[32px]" />
-                        </button>
+                            <span className="text-[9px] font-medium tracking-wider text-white/40 uppercase">Next</span>
+                            <ChevronRight size={12} className="rotate-90 text-white/50" />
+                        </motion.div>
                     </div>
                 )}
             </div>

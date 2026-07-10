@@ -77,7 +77,7 @@ export default function PersonLayout({ children, person, stats }: { children: Re
                 </div>
             </motion.div>
 
-            <nav className="mb-8 flex flex-wrap gap-1 border-b border-border-subtle">
+            {/* <nav className="mb-8 flex flex-wrap gap-1 border-b border-border-subtle">
                 {tabs.map((tab) => {
                     const isActive = currentTab === tab.route || (currentTab === '' && tab.route === 'about');
 
@@ -96,7 +96,7 @@ export default function PersonLayout({ children, person, stats }: { children: Re
                         </Link>
                     );
                 })}
-            </nav>
+            </nav> */}
 
             <main>{children}</main>
         </div>
