@@ -1,12 +1,12 @@
 import { Link } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { User, Shield, Palette, Home, Lock, KeyRound } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import { User, Shield, Palette, Home, Lock, KeyRound } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 const sidebarNavItems = [
     {
@@ -54,6 +54,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                     <div className="no-scrollbar flex gap-2 overflow-x-auto rounded-2xl border border-border-subtle bg-surface/50 p-1.5 lg:flex-col">
                         {sidebarNavItems.map((item) => {
                             const active = isCurrentOrParentUrl(item.href);
+
                             return (
                                 <Link
                                     key={item.href}

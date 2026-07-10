@@ -1,5 +1,3 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { router, Head, useForm, Link } from '@inertiajs/react';
 import {
     Chrome,
@@ -13,13 +11,15 @@ import {
     EyeClosed,
     Loader,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { DoorOpeningOverlay } from '@/components/door-opening-overlay';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Toggle } from '@/components/ui/toggle';
 import { login, register } from '@/routes';
 import password from '@/routes/password';
-import { Toggle } from '@/components/ui/toggle';
 
 interface Props {
     status?: string;
@@ -72,7 +72,9 @@ export default function Login({
     };
 
     const handlePasskeyLogin = async () => {
-        if (!isPasskeySupported) return;
+        if (!isPasskeySupported) {
+return;
+}
 
         setIsPasskeyLoggingIn(true);
 
@@ -94,6 +96,7 @@ export default function Login({
             if (rawOptions.challenge && typeof rawOptions.challenge === 'string') {
                 rawOptions.challenge = Uint8Array.from(atob(rawOptions.challenge.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
             }
+
             if (rawOptions.allowCredentials) {
                 rawOptions.allowCredentials = rawOptions.allowCredentials.map((cred: any) => ({
                     ...cred,
@@ -177,6 +180,7 @@ export default function Login({
                 window.location.href = '/dashboard';
             } else {
                 const errorData = await loginResponse.json();
+
                 throw new Error(errorData.message || 'Passkey login failed');
             }
         } catch (error) {

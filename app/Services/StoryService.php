@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Media\MediaManager;
 use App\Models\Event;
+use App\Models\Media;
 use App\Models\Room;
 use App\Models\Story;
 use App\Models\User;
@@ -12,34 +14,33 @@ use Illuminate\Support\Facades\Storage;
 class StoryService
 {
     public function __construct(
-        private AssemblyAIService $assemblyAIService
+        private AssemblyAIService $assemblyAIService,
+        private MediaManager $mediaManager,
     ) {}
 
     public function createStory(User $user, Room|Event $space, array $data): Story
     {
         $fileUrl = null;
         $assets = [];
-        $folderPrefix = $space instanceof Room ? 'rooms' : 'events';
-        $spaceId = $space->id;
 
         if (isset($data['files']) && is_array($data['files'])) {
             foreach ($data['files'] as $file) {
                 if ($file instanceof UploadedFile) {
-                    $path = $file->store('stories/'.$folderPrefix.'/'.$spaceId.'/assets', 'public');
-                    $url = Storage::url($path);
+                    $media = $this->uploadViaPipeline($file);
+                    $url = $media->url();
 
-                    $mime = $file->getMimeType();
                     $type = 'photo';
-                    if ($mime === 'application/pdf') {
+                    if ($media->mime_type === 'application/pdf') {
                         $type = 'pdf';
-                    } elseif (str_contains($mime, 'video')) {
+                    } elseif (str_contains($media->mime_type, 'video')) {
                         $type = 'video';
                     }
 
                     $assets[] = [
                         'url' => $url,
                         'type' => $type,
-                        'title' => $file->getClientOriginalName(),
+                        'title' => $media->original_name,
+                        'media_uuid' => $media->uuid,
                     ];
 
                     if (! $fileUrl) {
@@ -49,17 +50,48 @@ class StoryService
             }
         }
 
+        // Handle pre-uploaded media UUIDs (Cloudinary direct upload)
+        if (isset($data['media_uuids']) && is_array($data['media_uuids'])) {
+            foreach ($data['media_uuids'] as $uuid) {
+                $media = Media::where('uuid', $uuid)->first();
+
+                if (! $media) {
+                    continue;
+                }
+
+                $type = 'photo';
+                if ($media->mime_type === 'application/pdf') {
+                    $type = 'pdf';
+                } elseif (str_contains($media->mime_type, 'video')) {
+                    $type = 'video';
+                } elseif (str_contains($media->mime_type, 'audio')) {
+                    $type = 'audio';
+                }
+
+                $assets[] = [
+                    'url' => $media->url(),
+                    'type' => $type,
+                    'title' => $media->original_name,
+                    'media_uuid' => $media->uuid,
+                ];
+
+                if (! $fileUrl) {
+                    $fileUrl = $media->url();
+                }
+            }
+        }
+
         // Handle single file (legacy or specific upload)
         if (isset($data['file']) && $data['file'] instanceof UploadedFile) {
-            $path = $data['file']->store('stories/'.$folderPrefix.'/'.$spaceId, 'public');
-            $fileUrl = Storage::url($path);
+            $media = $this->uploadViaPipeline($data['file']);
+            $fileUrl = $media->url();
         }
 
         // Handle recording specifically if it comes as a blob
         if (isset($data['recording']) && $data['recording'] instanceof UploadedFile) {
-            $path = $data['recording']->store('stories/'.$folderPrefix.'/'.$spaceId.'/audio', 'public');
-            $fileUrl = Storage::url($path);
-            $fullPath = storage_path('app/public/'.$path);
+            $media = $this->mediaManager->uploadAudio($data['recording']);
+            $fileUrl = $media->url();
+            $fullPath = Storage::disk($media->disk)->path($media->path);
 
             $storyData = [
                 'user_id' => $user->id,
@@ -115,5 +147,16 @@ class StoryService
         }
 
         return Story::create($storyData);
+    }
+
+    protected function uploadViaPipeline(UploadedFile $file): Media
+    {
+        $mime = $file->getMimeType() ?: $file->getClientMimeType();
+
+        if (str_starts_with($mime, 'video/')) {
+            return $this->mediaManager->uploadVideo($file);
+        }
+
+        return $this->mediaManager->uploadImage($file);
     }
 }

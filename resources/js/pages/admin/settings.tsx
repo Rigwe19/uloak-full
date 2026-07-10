@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
-import AdminLayout from '@/layouts/admin-layout';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Globe,
     Shield,
@@ -9,8 +8,9 @@ import {
     Cpu,
     Save
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
 import { Button } from '@/components/dashboard/ui';
+import AdminLayout from '@/layouts/admin-layout';
 
 const tabs = [
     { id: 'general', label: 'General Settings', icon: Globe },

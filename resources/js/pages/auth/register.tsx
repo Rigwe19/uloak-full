@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { router, Head, useForm, Link } from '@inertiajs/react';
 import { User, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { DoorOpeningOverlay } from '@/components/door-opening-overlay';
 import { Button } from '@/components/ui/button';

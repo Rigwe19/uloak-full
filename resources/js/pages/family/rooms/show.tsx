@@ -53,7 +53,10 @@ export default function FamilyRoomShow({ room, stories, member }: Props) {
     const [storyToDelete, setStoryToDelete] = useState<Story | null>(null);
     const [deleting, setDeleting] = useState(false);
     const confirmDeleteStory = useCallback(() => {
-        if (!storyToDelete) return;
+        if (!storyToDelete) {
+return;
+}
+
         setDeleting(true);
         router.delete(`/family/rooms/${room.slug}/stories/${storyToDelete.id}`, {
             preserveScroll: true,

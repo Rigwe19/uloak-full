@@ -6,13 +6,24 @@ export function PushSubscriptionManager() {
     const [showPrompt, setShowPrompt] = useState(true);
     const { enableNotifications } = usePushSubscription();
 
-    if (!('Notification' in window)) return null;
-    if (Notification.permission === 'granted') return null;
-    if (!showPrompt) return null;
+    if (!('Notification' in window)) {
+return null;
+}
+
+    if (Notification.permission === 'granted') {
+return null;
+}
+
+    if (!showPrompt) {
+return null;
+}
 
     const handleEnable = async () => {
         const ok = await enableNotifications();
-        if (ok) setShowPrompt(false);
+
+        if (ok) {
+setShowPrompt(false);
+}
     };
 
     return (

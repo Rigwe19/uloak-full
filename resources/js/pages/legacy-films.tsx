@@ -179,6 +179,7 @@ export default function LegacyFilms({ page }: Props) {
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                             {displayServices.map((service: any, i: number) => {
                                 const IconComponent = iconMap[service.icon] || Film;
+
                                 return (
                                     <motion.div
                                         key={i}

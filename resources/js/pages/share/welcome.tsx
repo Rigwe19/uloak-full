@@ -1,6 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import React, { useState } from 'react';
 import {
     Sparkles,
     User as UserIcon,
@@ -9,6 +8,7 @@ import {
     Lock,
     Check,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/dashboard/ui';
 import { sendLink } from '@/routes/share';
 

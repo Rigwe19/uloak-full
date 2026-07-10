@@ -213,6 +213,7 @@ export default function About({ page }: Props) {
                         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {values.map((value: any, i: number) => {
                                 const IconComponent = iconMap[value.icon as keyof typeof iconMap] || Shield;
+
                                 return (
                                     <motion.div
                                         key={i}
@@ -290,6 +291,7 @@ export default function About({ page }: Props) {
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {expressions.map((expression: any, i: number) => {
                                 const IconComponent = iconMap[expression.icon as keyof typeof iconMap] || Shield;
+
                                 return (
                                     <motion.div
                                         key={i}

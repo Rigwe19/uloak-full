@@ -1,11 +1,14 @@
 import { createInertiaApp } from '@inertiajs/react';
+import { RequestLoader } from '@/components/request-loader';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
+import { ConfirmProvider } from '@/hooks/use-confirm';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
-import GuestLayout from '@/layouts/guest-layout';
 import DashboardLayout from '@/layouts/dashboard-layout';
+import GuestLayout from '@/layouts/guest-layout';
+import HouseLayout from '@/layouts/house-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -37,6 +40,10 @@ createInertiaApp({
                 return null;
             case name.startsWith('family/'):
                 return null;
+            case name.startsWith('people/'):
+                return DashboardLayout;
+            case name.startsWith('house/'):
+                return HouseLayout;
             default:
                 return GuestLayout;
         }
@@ -45,14 +52,15 @@ createInertiaApp({
     withApp(app) {
         return (
             <TooltipProvider delayDuration={0}>
-                {app}
-                <Toaster />
+                <ConfirmProvider>
+                    {app}
+                    <RequestLoader />
+                    <Toaster />
+                </ConfirmProvider>
             </TooltipProvider>
         );
     },
-    progress: {
-        color: '#4B5563',
-    },
+    progress: false,
 });
 
 // This will set light / dark mode on load...

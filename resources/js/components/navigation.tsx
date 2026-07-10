@@ -47,6 +47,7 @@ export function Navbar() {
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
+
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -59,7 +60,9 @@ export function Navbar() {
         { name: 'Contact', path: contact().url },
     ];
 
-    if (isApp) return null;
+    if (isApp) {
+return null;
+}
 
     return (
         <nav
@@ -183,7 +186,9 @@ export function Footer() {
     const { url } = usePage();
     const isApp = url.startsWith('/dashboard') || url.startsWith('/settings');
 
-    if (isApp) return null;
+    if (isApp) {
+return null;
+}
 
     return (
         <footer className="border-t border-border-subtle bg-bg-dark pt-24 pb-12">

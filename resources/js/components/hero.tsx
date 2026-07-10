@@ -1,9 +1,9 @@
-import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import gsap from "gsap";
 import { usePage } from "@inertiajs/react";
 import { format } from 'date-fns'
+import { motion } from "framer-motion";
+import gsap from "gsap";
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 const Hero: React.FC = () => {
     const { room } = usePage<{ room: { name: string, description?: string, created_at?: string, media_items?: { url: string, type: string }[], room_type: string, tribute_name?: string, start_date?: string, end_date?: string; enable_tributes?: boolean } }>().props
@@ -30,6 +30,7 @@ const Hero: React.FC = () => {
         const timer = setInterval(() => {
             setCurrentHeroIndex((prev) => (prev + 1) % (media?.length ?? 0));
         }, 6000);
+
         return () => clearInterval(timer);
     }, []);
 
@@ -37,9 +38,13 @@ const Hero: React.FC = () => {
     useEffect(() => {
         // 1. Image slides crossfade & upscale Ken burns transition
         heroImagesRef.current.forEach((el, index) => {
-            if (!el) return;
+            if (!el) {
+return;
+}
+
             if (index === currentHeroIndex) {
                 gsap.killTweensOf(el);
+
                 if (heroImgContentRef.current[index]) {
                     gsap.killTweensOf(heroImgContentRef.current[index]);
                 }
@@ -67,6 +72,7 @@ const Hero: React.FC = () => {
         // 2. Animated text caption entrance
         if (heroTextRef.current) {
             const texts = heroTextRef.current.querySelectorAll(".gsap-hero-text");
+
             if (texts.length > 0) {
                 gsap.killTweensOf(texts);
                 gsap.fromTo(texts,
@@ -111,7 +117,11 @@ const Hero: React.FC = () => {
 
     const handleLightboxNav = (dir: "prev" | "next", e: React.MouseEvent) => {
         e.stopPropagation();
-        if (lightboxIndex === null || lightboxImages.length <= 1) return;
+
+        if (lightboxIndex === null || lightboxImages.length <= 1) {
+return;
+}
+
         if (dir === "prev") {
             setLightboxIndex((prev) => (prev !== null ? (prev - 1 + lightboxImages.length) % lightboxImages.length : 0));
         } else {
@@ -166,6 +176,7 @@ const Hero: React.FC = () => {
     };
 
     const content = heroContent[room?.room_type] || heroContent.birthday;
+
     return (
         <div className="w-full space-y-0">
             {/* GSAP-DRIVEN HERO CAROUSEL - Full width and rounded-none on mobile, elegant with border-radius on desktop */}
@@ -184,12 +195,16 @@ const Hero: React.FC = () => {
                     {media?.map((img, index) => (
                         <div
                             key={img.id}
-                            ref={(el) => { heroImagesRef.current[index] = el; }}
+                            ref={(el) => {
+ heroImagesRef.current[index] = el; 
+}}
                             onClick={() => openGalleryLightbox(index)}
                             className="absolute inset-0 w-full h-full opacity-0 pointer-events-none cursor-pointer overflow-hidden transition-all duration-300"
                         >
                             <img
-                                ref={(el) => { heroImgContentRef.current[index] = el; }}
+                                ref={(el) => {
+ heroImgContentRef.current[index] = el; 
+}}
                                 src={img.url}
                                 alt={img.alt}
                                 className="w-full h-full object-cover object-top md:object-[center_30%]"

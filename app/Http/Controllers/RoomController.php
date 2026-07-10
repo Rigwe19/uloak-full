@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Media\MediaManager;
+use App\Models\Media;
 use App\Models\Room;
 use App\Models\RoomMember;
 use App\Services\ActivityLogger;
@@ -9,6 +11,7 @@ use App\Services\RoomService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -19,7 +22,8 @@ class RoomController extends Controller
 {
     public function __construct(
         protected RoomService $roomService,
-        protected ActivityLogger $activityLogger
+        protected ActivityLogger $activityLogger,
+        protected MediaManager $mediaManager,
     ) {}
 
     public function show(Room $room): Response
@@ -30,6 +34,19 @@ class RoomController extends Controller
         $approvedTributes = $room->tributes()->where('is_approved', true)->latest()->get();
         $allTributes = $room->tributes;
         $candles = $room->candles()->orderByRaw('CASE WHEN is_approved = false THEN 0 ELSE 1 END')->get();
+
+        $storiesPaginator = $room->stories()->latest()->cursorPaginate(24)->through(fn ($story) => [
+            'id' => $story->id,
+            'title' => $story->title,
+            'thumbnail' => $story->thumbnail,
+            'type' => $story->type,
+            'description' => $story->description,
+            'author' => $story->user?->name ?? $story->guest_name,
+            'tags' => $story->tags ?? [],
+            'date' => $story->created_at->format('M d, Y'),
+            'file_url' => $story->file_url,
+            'assets' => $story->assets ?? [],
+        ]);
 
         $pageTitle = $room->name.' - Uloak, House of Stories';
         $pageDescription = $room->description
@@ -48,18 +65,12 @@ class RoomController extends Controller
             'pendingTributes' => $pendingTributes,
             'approvedTributes' => $approvedTributes,
             'allTributes' => $allTributes,
-            'stories' => $room->stories->map(fn ($story) => [
-                'id' => $story->id,
-                'title' => $story->title,
-                'thumbnail' => $story->thumbnail,
-                'type' => $story->type,
-                'description' => $story->description,
-                'author' => $story->user?->name ?? $story->guest_name,
-                'tags' => $story->tags ?? [],
-                'date' => $story->created_at->format('M d, Y'),
-                'file_url' => $story->file_url,
-                'assets' => $story->assets ?? [],
-            ]),
+            'stories' => $storiesPaginator->items(),
+            'pagination' => [
+                'next_cursor' => $storiesPaginator->nextCursor()?->encode(),
+                'path' => $storiesPaginator->path(),
+                'per_page' => $storiesPaginator->perPage(),
+            ],
             'candles' => $candles,
         ]);
     }
@@ -70,7 +81,7 @@ class RoomController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'privacy' => ['required', 'string', 'in:public,private'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
             'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
             'enable_tributes' => ['nullable', 'boolean'],
             'enable_condolence_attendance' => ['nullable', 'boolean'],
@@ -84,13 +95,13 @@ class RoomController extends Controller
         ]);
 
         if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('rooms/thumbnails', 'public');
-            $validated['thumbnail'] = Storage::url($path);
+            $media = $this->mediaManager->uploadImage($request->file('thumbnail'));
+            $validated['thumbnail'] = $media->url();
         }
 
         if ($request->hasFile('tribute_song')) {
-            $path = $request->file('tribute_song')->store('rooms/tribute-songs', 'public');
-            $validated['tribute_song'] = Storage::url($path);
+            $media = $this->mediaManager->uploadAudio($request->file('tribute_song'));
+            $validated['tribute_song'] = $media->url();
         }
 
         // Merge existing media URLs with newly uploaded files
@@ -111,10 +122,10 @@ class RoomController extends Controller
         $newMedia = [];
         if ($request->hasFile('media_files')) {
             foreach ($request->file('media_files') as $file) {
-                $path = $file->store('rooms/media', 'public');
+                $media = $this->uploadViaPipeline($file);
                 $newMedia[] = [
-                    'url' => Storage::url($path),
-                    'type' => str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image',
+                    'url' => $media->url(),
+                    'type' => str_starts_with($media->mime_type, 'video') ? 'video' : 'image',
                 ];
             }
         }
@@ -139,7 +150,7 @@ class RoomController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'privacy' => ['required', 'string', 'in:public,private'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
             'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
             'enable_tributes' => ['nullable', 'boolean'],
             'enable_condolence_attendance' => ['nullable', 'boolean'],
@@ -153,25 +164,25 @@ class RoomController extends Controller
         ]);
 
         if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('rooms/thumbnails', 'public');
-            $validated['thumbnail'] = Storage::url($path);
+            $media = $this->mediaManager->uploadImage($request->file('thumbnail'));
+            $validated['thumbnail'] = $media->url();
         }
 
         if ($request->hasFile('tribute_song')) {
-            $path = $request->file('tribute_song')->store('rooms/tribute-songs', 'public');
-            $validated['tribute_song'] = Storage::url($path);
+            $media = $this->mediaManager->uploadAudio($request->file('tribute_song'));
+            $validated['tribute_song'] = $media->url();
         }
 
         if ($request->hasFile('media_items')) {
-            $mediaUrls = [];
+            $mediaItems = [];
             foreach ($request->file('media_items') as $file) {
-                $path = $file->store('rooms/media', 'public');
-                $mediaUrls[] = [
-                    'url' => Storage::url($path),
-                    'type' => str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image',
+                $media = $this->uploadViaPipeline($file);
+                $mediaItems[] = [
+                    'url' => $media->url(),
+                    'type' => str_starts_with($media->mime_type, 'video') ? 'video' : 'image',
                 ];
             }
-            $validated['media_items'] = $mediaUrls;
+            $validated['media_items'] = $mediaItems;
         }
 
         $room = $this->roomService->createRoom($request->user(), $validated);
@@ -215,7 +226,7 @@ class RoomController extends Controller
 
             // Collect video
             if (! empty($tribute->video)) {
-                $relativePath = ltrim($tribute->video, '/');
+                $relativePath = preg_replace('#^storage/#', '', ltrim($tribute->video, '/'));
                 $absolutePath = Storage::disk('public')->path($relativePath);
                 if (file_exists($absolutePath)) {
                     $files[] = [
@@ -227,7 +238,7 @@ class RoomController extends Controller
 
             // Collect audio
             if (! empty($tribute->audio)) {
-                $relativePath = ltrim($tribute->audio, '/');
+                $relativePath = preg_replace('#^storage/#', '', ltrim($tribute->audio, '/'));
                 $absolutePath = Storage::disk('public')->path($relativePath);
                 if (file_exists($absolutePath)) {
                     $files[] = [
@@ -309,6 +320,17 @@ class RoomController extends Controller
         return response()->download($zipPath, $zipFilename, [
             'Content-Type' => 'application/zip',
         ])->deleteFileAfterSend(true);
+    }
+
+    protected function uploadViaPipeline(UploadedFile $file): Media
+    {
+        $mime = $file->getMimeType() ?: $file->getClientMimeType();
+
+        if (str_starts_with($mime, 'video/')) {
+            return $this->mediaManager->uploadVideo($file);
+        }
+
+        return $this->mediaManager->uploadImage($file);
     }
 
     // ── Family Member Management ──

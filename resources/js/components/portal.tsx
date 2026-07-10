@@ -8,7 +8,9 @@ export function Portal({ children }: { children: React.ReactNode }) {
         setMounted(true);
     }, []);
 
-    if (!mounted) return null;
+    if (!mounted) {
+return null;
+}
 
     return createPortal(children, document.body);
 }

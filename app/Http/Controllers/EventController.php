@@ -24,25 +24,32 @@ class EventController extends Controller
      */
     public function show(Event $event): Response
     {
-        $event->load(['creator', 'stories.user']);
+        $event->load('creator');
         $event->loadCount('stories');
+
+        $paginator = $event->stories()->with('user')->latest()->cursorPaginate(24)->through(fn ($story) => [
+            'id' => $story->id,
+            'title' => $story->title,
+            'thumbnail' => $story->thumbnail,
+            'type' => $story->type,
+            'description' => $story->description,
+            'author' => $story->user->name,
+            'tags' => $story->tags ?? [],
+            'date' => $story->created_at->format('M d, Y'),
+            'file_url' => $story->file_url,
+            'assets' => $story->assets ?? [],
+        ]);
 
         return Inertia::render('dashboard/events/show', [
             'title' => $event->name.' - Uloak',
             'meta_description' => $event->description ?? 'Browse memories in this event on Uloak.',
             'event' => $event,
-            'stories' => $event->stories->map(fn ($story) => [
-                'id' => $story->id,
-                'title' => $story->title,
-                'thumbnail' => $story->thumbnail,
-                'type' => $story->type,
-                'description' => $story->description,
-                'author' => $story->user->name,
-                'tags' => $story->tags ?? [],
-                'date' => $story->created_at->format('M d, Y'),
-                'file_url' => $story->file_url,
-                'assets' => $story->assets ?? [],
-            ]),
+            'stories' => $paginator->items(),
+            'pagination' => [
+                'next_cursor' => $paginator->nextCursor()?->encode(),
+                'path' => $paginator->path(),
+                'per_page' => $paginator->perPage(),
+            ],
         ]);
     }
 
@@ -55,7 +62,7 @@ class EventController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'privacy' => ['required', 'string', 'in:public,private'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
             'event_date' => ['nullable', 'date'],
         ]);
 
@@ -87,9 +94,11 @@ class EventController extends Controller
             'type' => ['required', 'string', 'in:video,audio,photo,document'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file'],
             'duration' => ['nullable', 'string'],
+            'media_uuids' => ['nullable', 'array'],
+            'media_uuids.*' => ['string', 'uuid'],
         ]);
 
         if ($request->hasFile('thumbnail')) {

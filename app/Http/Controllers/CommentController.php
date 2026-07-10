@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Story;
 use App\Services\ActivityLogger;
+use App\Services\AnalyticsService;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    public function __construct(protected ActivityLogger $activityLogger)
-    {
-    }
+    public function __construct(
+        protected ActivityLogger $activityLogger,
+        protected AnalyticsService $analytics,
+    ) {}
 
     public function store(Request $request, Story $story)
     {
@@ -34,6 +36,8 @@ class CommentController extends Controller
         }
 
         $comment = $story->comments()->create($data);
+
+        $this->analytics->track('comment.created', story: $story);
 
         if ($request->user()) {
             $this->activityLogger->log(

@@ -1,6 +1,6 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, TrendingUp, Users, DollarSign, ArrowUpRight, ArrowDownRight, Calendar, Activity, ShieldCheck } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/dashboard/ui';
 
 interface Plan {
@@ -17,7 +17,9 @@ interface PlanPerformanceModalProps {
 }
 
 export default function PlanPerformanceModal({ isOpen, onClose, plan }: PlanPerformanceModalProps) {
-    if (!plan) return null;
+    if (!plan) {
+return null;
+}
 
     // Mock data for the charts
     const revenueData = [320, 450, 410, 580, 620, 780, 860];
@@ -41,6 +43,7 @@ export default function PlanPerformanceModal({ isOpen, onClose, plan }: PlanPerf
         return data.map((d, i) => {
             const x = i * step;
             const y = height - ((d - min) / range) * height;
+
             return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
         }).join(' ');
     };
@@ -164,6 +167,7 @@ export default function PlanPerformanceModal({ isOpen, onClose, plan }: PlanPerf
                                                 const max = Math.max(...revenueData);
                                                 const min = Math.min(...revenueData);
                                                 const y = 200 - ((d - min) / (max - min)) * 200;
+
                                                 return (
                                                     <circle key={i} cx={x} cy={y} r="4" fill="#D4AF37" />
                                                 );

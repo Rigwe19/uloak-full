@@ -1,7 +1,7 @@
-import { Monitor, Moon, Sun } from 'lucide-react';
-import { useAppearance } from '@/hooks/use-appearance';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Monitor, Moon, Sun } from 'lucide-react';
 import React from 'react';
+import { useAppearance } from '@/hooks/use-appearance';
 
 export function ThemeToggle({ className = '' }: { className?: string }) {
     const { appearance, updateAppearance } = useAppearance();

@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Play,
@@ -11,16 +10,17 @@ import {
     User,
     Calendar,
 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 interface Story {
     id: string | number;
     title: string;
-    thumbnail?: string;
+    thumbnail?: string | null;
     type: string;
     description?: string;
     author?: string;
     date?: string;
-    file_url?: string;
+    file_url?: string | null;
     assets?: any[];
 }
 
@@ -94,6 +94,7 @@ export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoP
     // Reset state and autoplay when active video changes or on initial load
     useEffect(() => {
         setProgress(0);
+
         if (videoRef.current) {
             videoRef.current.load();
             videoRef.current.play()
@@ -106,7 +107,9 @@ export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoP
     }, [currentIdx]);
 
     const handlePlayPause = () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current) {
+return;
+}
 
         if (isPlaying) {
             videoRef.current.pause();
@@ -119,25 +122,37 @@ export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoP
     };
 
     const handleMuteToggle = () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current) {
+return;
+}
+
         videoRef.current.muted = !isMuted;
         setIsMuted(!isMuted);
     };
 
     const handleTimeUpdate = () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current) {
+return;
+}
+
         const cur = videoRef.current.currentTime;
         const dur = videoRef.current.duration || 0;
         setProgress((cur / dur) * 100 || 0);
     };
 
     const handleLoadedMetadata = () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current) {
+return;
+}
+
         setDuration(videoRef.current.duration || 0);
     };
 
     const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!videoRef.current || duration === 0) return;
+        if (!videoRef.current || duration === 0) {
+return;
+}
+
         const rect = e.currentTarget.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const percentage = clickX / rect.width;
@@ -153,14 +168,21 @@ export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoP
     };
 
     const formatTime = (time: number) => {
-        if (isNaN(time)) return '00:00';
+        if (isNaN(time)) {
+return '00:00';
+}
+
         const mins = Math.floor(time / 60);
         const secs = Math.floor(time % 60);
+
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
     const handleFullscreen = () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current) {
+return;
+}
+
         if (videoRef.current.requestFullscreen) {
             videoRef.current.requestFullscreen();
         }

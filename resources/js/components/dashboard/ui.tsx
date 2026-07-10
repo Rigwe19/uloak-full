@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
+import type { LucideIcon } from 'lucide-react';
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
 
 interface ButtonProps {
     children?: React.ReactNode;

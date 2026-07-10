@@ -1,7 +1,5 @@
-import React, { useState, useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { RoomCard } from '@/components/dashboard/room-card';
 import {
     Search as SearchIcon,
     X,
@@ -11,6 +9,8 @@ import {
     Video,
     Camera,
 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { RoomCard } from '@/components/dashboard/room-card';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
 interface SearchProps {

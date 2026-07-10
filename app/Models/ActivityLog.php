@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['user_id', 'description', 'subject_type', 'subject_id', 'properties', 'ip_address', 'user_agent'])]
 class ActivityLog extends Model
 {
+    const UPDATED_AT = null;
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

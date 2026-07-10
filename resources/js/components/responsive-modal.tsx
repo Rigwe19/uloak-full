@@ -83,7 +83,7 @@ export function ResponsiveModal({
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                        className="absolute inset-0 bg-black/60 backdrop-blur-md"
                     />
                     {/* Dialog card */}
                     <motion.div
@@ -91,7 +91,7 @@ export function ResponsiveModal({
                         animate={{ y: 0, opacity: 1, scale: 1 }}
                         exit={{ y: 40, opacity: 0, scale: 0.97 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                        className={`relative w-full ${desktopMaxWidth} ${fullHeight ? 'h-[90vh] flex flex-col' : 'max-h-[90vh]'} overflow-hidden rounded-[32px] border border-white/10 bg-surface shadow-2xl ring-1 ring-white/5 ${className}`}
+                        className={`relative w-full ${desktopMaxWidth} ${fullHeight ? 'h-[90vh] flex flex-col' : 'max-h-[90vh]'} overflow-y-auto rounded-[32px] border border-white/10 bg-surface shadow-2xl ring-1 ring-white/5 ${className}`}
                     >
                         {children}
                     </motion.div>

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Heart, User, Mic, Check, X, Trash2, Expand, Download, X as XIcon } from "lucide-react";
 import React, { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { VideoPlayer } from '@/components/media/VideoPlayer';
 
 const tributeCardVariants = {
     hidden: { opacity: 0, y: 16 },
@@ -65,13 +66,17 @@ function ImageLightbox({ images, startIndex, onClose }: { images: string[]; star
             {images.length > 1 && (
                 <>
                     <button
-                        onClick={(e) => { e.stopPropagation(); prev(); }}
+                        onClick={(e) => {
+ e.stopPropagation(); prev(); 
+}}
                         className="absolute left-6 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-md transition-all"
                     >
                         ‹
                     </button>
                     <button
-                        onClick={(e) => { e.stopPropagation(); next(); }}
+                        onClick={(e) => {
+ e.stopPropagation(); next(); 
+}}
                         className="absolute right-6 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-md transition-all"
                     >
                         ›
@@ -116,6 +121,7 @@ function TributeMeta({
 }) {
     const date = new Date(tribute[dateKey] ?? tribute.createdAt ?? tribute.created_at);
     const relation = tribute[relationKey] ?? tribute.relation ?? tribute.relationship;
+
     return (
         <div className="flex items-start gap-3">
             <TributeAvatar variant={variant} />
@@ -142,7 +148,10 @@ function TributeMeta({
 }
 
 function TributeQuote({ quote, variant }: { quote: string | null | undefined; variant: 'pending' | 'approved' }) {
-    if (!quote) return null;
+    if (!quote) {
+return null;
+}
+
     return (
         <div
             className={`px-4 py-3 rounded-r-lg border-l-2
@@ -162,7 +171,10 @@ function TributeQuote({ quote, variant }: { quote: string | null | undefined; va
 }
 
 function TributeAudio({ audio, transcript, transcriptStatus }: { audio: string | null | undefined; transcript?: string | null; transcriptStatus?: string | null }) {
-    if (!audio) return null;
+    if (!audio) {
+return null;
+}
+
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2 text-accent-gold">
@@ -201,7 +213,9 @@ function TributeImages({ images }: { images: string[] | null | undefined }) {
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
 
-    if (!images || images.length === 0) return null;
+    if (!images || images.length === 0) {
+return null;
+}
 
     const openLightbox = (idx: number) => {
         setLightboxIndex(idx);
@@ -239,10 +253,29 @@ function TributeImages({ images }: { images: string[] | null | undefined }) {
 }
 
 function TributeVideo({ video }: { video: string | null | undefined }) {
-    if (!video) return null;
+    if (!video) {
+return null;
+}
+
     return (
         <div className="border border-white/5 rounded-lg overflow-hidden bg-surface">
-            <video src={video} controls className="w-full aspect-video" preload="metadata" />
+            <VideoPlayer
+                video={{
+                    id: `tribute-video-${video}`,
+                    title: 'Tribute Video',
+                    url: video,
+                    thumbnail: null,
+                    preview: null,
+                    sprite: null,
+                }}
+                autoPlay={false}
+                showControls
+                showSpeedControl={false}
+                showPip={false}
+                showVolumeSlider
+                className="w-full aspect-video"
+                videoClassName="w-full h-full object-contain"
+            />
         </div>
     );
 }
@@ -416,7 +449,9 @@ interface PendingTributesSectionProps<T> {
 }
 
 export function PendingTributesSection<T extends TributeItem>({ pendingTributes, onApprove, onDelete }: PendingTributesSectionProps<T>) {
-    if (!pendingTributes || pendingTributes.length === 0) return null;
+    if (!pendingTributes || pendingTributes.length === 0) {
+return null;
+}
 
     return (
         <div className="mt-16">
@@ -448,7 +483,9 @@ interface ApprovedTributesSectionProps<T> {
 }
 
 export function ApprovedTributesSection<T extends TributeItem>({ approvedTributes, onDelete, context }: ApprovedTributesSectionProps<T>) {
-    if (!approvedTributes || approvedTributes.length === 0) return null;
+    if (!approvedTributes || approvedTributes.length === 0) {
+return null;
+}
 
     const isBirthday = context?.room_type === 'birthday';
 
@@ -479,7 +516,9 @@ interface SubmittedTributesSectionProps<T> {
 }
 
 export function SubmittedTributesSection<T extends TributeItem>({ tributes }: SubmittedTributesSectionProps<T>) {
-    if (!tributes || tributes.length === 0) return null;
+    if (!tributes || tributes.length === 0) {
+return null;
+}
 
     return (
         <div className="mt-16">

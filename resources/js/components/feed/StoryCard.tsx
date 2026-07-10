@@ -1,0 +1,73 @@
+import { Music } from 'lucide-react';
+import MediaPlaceholder from '@/components/feed/MediaPlaceholder';
+import { VideoCard } from '@/components/media/VideoCard';
+import type { FeedStory } from '@/types/feed';
+
+interface StoryCardProps {
+    story: FeedStory;
+    onClick?: () => void;
+    renderMedia?: (story: FeedStory) => React.ReactNode;
+    className?: string;
+    aspectRatio?: string;
+}
+
+export default function StoryCard({
+    story,
+    onClick,
+    renderMedia,
+    className = '',
+    aspectRatio = 'aspect-video',
+}: StoryCardProps) {
+    const mediaUrl = story.file_url || story.assets?.[0]?.url || null;
+
+    const defaultMedia = () => {
+        if (renderMedia) {
+return renderMedia(story);
+}
+
+        if (story.type === 'video' && mediaUrl) {
+            return (
+                <VideoCard
+                    video={{
+                        id: story.id,
+                        storyId: story.id,
+                        title: story.title,
+                        url: mediaUrl,
+                        thumbnail: story.thumbnail || null,
+                        preview: null,
+                        sprite: null,
+                    }}
+                    onClick={onClick}
+                />
+            );
+        }
+
+        if (story.type === 'audio') {
+            return <MediaPlaceholder type="audio" />;
+        }
+
+        if (mediaUrl) {
+            return (
+                <img
+                    src={story.thumbnail || mediaUrl || '/logo-stacked.png'}
+                    alt={story.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    onError={(e) => {
+                        e.currentTarget.src = '/logo-stacked.png';
+                    }}
+                />
+            );
+        }
+
+        return <MediaPlaceholder />;
+    };
+
+    return (
+        <div
+            className={`relative ${aspectRatio} overflow-hidden bg-bg-dark cursor-pointer ${className}`}
+            onClick={onClick}
+        >
+            {defaultMedia()}
+        </div>
+    );
+}

@@ -1,3 +1,7 @@
+import { Link, router, usePage } from '@inertiajs/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Activity, BarChart3, CreditCard, DoorOpen, FileText, LayoutDashboard, LogOut, MessageSquare, MoreHorizontal, Settings, Users } from 'lucide-react';
+import React from 'react';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { PageTransition } from '@/components/page-transition';
 import {
@@ -9,10 +13,6 @@ import {
 } from '@/components/ui/sheet';
 import { home, logout } from '@/routes';
 import admin from '@/routes/admin';
-import { Link, router, usePage } from '@inertiajs/react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, CreditCard, DoorOpen, FileText, LayoutDashboard, LogOut, MessageSquare, MoreHorizontal, Settings, Users } from 'lucide-react';
-import React from 'react';
 
 interface SidebarItem {
     id: string;
@@ -38,6 +38,7 @@ export default function AdminLayout({
         { id: 'users', icon: Users, label: 'Users', href: admin.users().url },
         { id: 'rooms', icon: DoorOpen, label: 'Rooms', href: admin.rooms().url },
         { id: 'enquiries', icon: MessageSquare, label: 'Enquiries', href: admin.enquiries().url },
+        { id: 'analytics', icon: BarChart3, label: 'Analytics', href: admin.analytics().url },
         { id: 'pages', icon: FileText, label: 'Pages', href: admin.pages().url },
         { id: 'memberships', icon: CreditCard, label: 'Memberships', href: admin.memberships().url },
         { id: 'activity-logs', icon: Activity, label: 'Activity Logs', href: admin.activityLogs().url },
@@ -169,6 +170,14 @@ export default function AdminLayout({
                             </SheetHeader>
 
                             <div className="space-y-2">
+
+                                <Link
+                                    href={admin.analytics().url}
+                                    className="flex items-center gap-3 rounded-xl p-4 hover:bg-surface"
+                                >
+                                    <BarChart3 size={18} />
+                                    <span>Analytics</span>
+                                </Link>
 
                                 <Link
                                     href={admin.pages().url}

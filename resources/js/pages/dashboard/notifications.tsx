@@ -1,7 +1,7 @@
-import React from 'react';
 import { Head, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { MoreVertical, Bell, ChevronRight } from 'lucide-react';
+import React from 'react';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
 interface Notification {
@@ -33,8 +33,14 @@ export default function Notifications({ notifications }: NotificationsProps) {
     };
 
     const filteredNotifications = notifications.data.filter((n) => {
-        if (filter === 'All') return true;
-        if (filter === 'Unread') return !n.read_at;
+        if (filter === 'All') {
+return true;
+}
+
+        if (filter === 'Unread') {
+return !n.read_at;
+}
+
         return true;
     });
 

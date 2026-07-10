@@ -1,8 +1,8 @@
+import { usePage } from '@inertiajs/react';
+import { AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { Navbar, Footer } from '@/components/navigation';
 import { PageTransition } from '@/components/page-transition';
-import { usePage } from '@inertiajs/react';
-import { AnimatePresence } from 'framer-motion';
 
 export default function GuestLayout({
     children,

@@ -1,3 +1,4 @@
+import { SiFacebook, SiInstagram, SiTiktok, SiX, SiYoutube } from '@icons-pack/react-simple-icons';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     BookOpen,
@@ -10,6 +11,7 @@ import {
     Shield,
     Users
 } from 'lucide-react';
+import { Linkedin } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import React, { useEffect, useState } from 'react';
 
@@ -18,8 +20,6 @@ import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/waiting-list';
-import { SiFacebook, SiInstagram, SiTiktok, SiX, SiYoutube } from '@icons-pack/react-simple-icons';
-import { Linkedin } from 'lucide-react';
 
 const slides = [
     {
@@ -56,6 +56,7 @@ const SplitText = ({
     className?: string;
 }) => {
     const words = text.split(' ');
+
     return (
         <div className={`flex flex-wrap gap-x-[0.25em] ${className}`}>
             {words.map((word, i) => (
@@ -126,6 +127,7 @@ export default function Welcome({
         const timer = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
         }, 10000);
+
         return () => clearInterval(timer);
     }, [displaySlides.length]);
 
@@ -377,6 +379,7 @@ export default function Welcome({
                                         },
                                     ]).map((item: any, i: number) => {
                                         const IconComponent = item.icon === 'Play' ? Play : (item.icon === 'BookOpen' ? BookOpen : Shield);
+
                                         return (
                                             <motion.div
                                                 key={item.title}

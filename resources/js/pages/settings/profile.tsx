@@ -1,10 +1,10 @@
 import { useForm, Head, usePage } from '@inertiajs/react';
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
-import InputError from '@/components/input-error';
-import { Button, Badge } from '@/components/dashboard/ui';
 import { Camera, Check, ShieldCheck } from 'lucide-react';
 import React from 'react';
+import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import { Button, Badge } from '@/components/dashboard/ui';
+import DeleteUser from '@/components/delete-user';
+import InputError from '@/components/input-error';
 
 export default function Profile({
     mustVerifyEmail,
@@ -26,6 +26,7 @@ export default function Profile({
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+
         if (file) {
             setData('avatar', file);
             const url = URL.createObjectURL(file);

@@ -1,6 +1,6 @@
+import { Play, Pause, Volume2, Gauge, RotateCw, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
-import { Play, Pause, Volume2, Gauge, RotateCw, RotateCcw } from 'lucide-react';
 
 interface AudioWaveformPlayerProps {
     src: string;
@@ -28,7 +28,9 @@ export default function AudioWaveformPlayer({
     const [playbackRate, setPlaybackRate] = useState(1);
     const [currentSeconds, setCurrentSeconds] = useState(0);
     const getSpeakerColor = (speaker?: string) => {
-        if (!speaker) return 'text-accent-gold';
+        if (!speaker) {
+return 'text-accent-gold';
+}
 
         const colors = [
             'text-accent-gold',
@@ -40,6 +42,7 @@ export default function AudioWaveformPlayer({
         ];
 
         let hash = 0;
+
         for (let i = 0; i < speaker.length; i++) {
             hash = speaker.charCodeAt(i) + ((hash << 5) - hash);
         }
@@ -50,7 +53,9 @@ export default function AudioWaveformPlayer({
     };
 
     useEffect(() => {
-        if (!containerRef.current) return;
+        if (!containerRef.current) {
+return;
+}
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -138,7 +143,9 @@ export default function AudioWaveformPlayer({
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (!wavesurferRef.current) return;
+            if (!wavesurferRef.current) {
+return;
+}
 
             const activeElement =
                 document.activeElement as HTMLElement | null;
@@ -148,7 +155,9 @@ export default function AudioWaveformPlayer({
                 activeElement?.tagName === 'TEXTAREA' ||
                 activeElement?.isContentEditable;
 
-            if (isTyping) return;
+            if (isTyping) {
+return;
+}
 
             switch (e.code) {
                 case 'Space':
@@ -190,7 +199,9 @@ export default function AudioWaveformPlayer({
     };
 
     const changePlaybackRate = () => {
-        if (!wavesurferRef.current) return;
+        if (!wavesurferRef.current) {
+return;
+}
 
         const rates = [1, 1.25, 1.5, 2];
 
@@ -205,7 +216,9 @@ export default function AudioWaveformPlayer({
     };
 
     const seekRelative = (seconds: number) => {
-        if (!wavesurferRef.current) return;
+        if (!wavesurferRef.current) {
+return;
+}
 
         const duration =
             wavesurferRef.current.getDuration();
@@ -222,8 +235,15 @@ export default function AudioWaveformPlayer({
     };
     const activeCueIndex = (() => {
         console.log(transcript?.length, transcript?.at(0))
-        if (transcript?.length === 0) return -1;
-        if (!transcript) return -1;
+
+        if (transcript?.length === 0) {
+return -1;
+}
+
+        if (!transcript) {
+return -1;
+}
+
         return transcript.findIndex(
             (cue) =>
                 currentSeconds >= cue.start &&

@@ -1,4 +1,3 @@
-import React, { useState, KeyboardEvent } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,10 +17,17 @@ import {
     Download,
     FileText,
     Mic,
+    Info,
 } from 'lucide-react';
+import React, { useState } from 'react';
+import type { KeyboardEvent } from 'react';
+import { toast } from 'sonner';
 import { Button, Badge } from '@/components/dashboard/ui';
-import AudioWaveformPlayer from '@/components/media/AudioWaveformPlayer';
 import { VoiceRecorder } from '@/components/dashboard/voice-recorder';
+import AudioWaveformPlayer from '@/components/media/AudioWaveformPlayer';
+import { VideoPlayer } from '@/components/media/VideoPlayer';
+import { VideoSocialOverlay } from '@/components/media/VideoSocialOverlay';
+import type { PlayerVideo } from '@/types/video-player';
 
 interface Comment {
     id: number;
@@ -42,6 +48,7 @@ interface StoryViewerProps {
         tags: string[];
         assets: any[];
         fileUrl?: string;
+        sprite?: any;
         transcript?: any;
         comments: Comment[];
     };
@@ -65,9 +72,33 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isAddingAsset, setIsAddingAsset] = useState(false);
     const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+    const [showInfoPanel, setShowInfoPanel] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-    console.log(story?.transcript);
+    const videoPlayerVideo: PlayerVideo = {
+        id: story.id,
+        storyId: story.id,
+        title: story.title,
+        description: story.description,
+        url: story.fileUrl || null,
+        thumbnail: story.thumbnail || null,
+        preview: null,
+        sprite: story.sprite || null,
+        author: story.author,
+        date: story.date,
+    };
+
+    const collectionVideoAsset = (asset: any, idx: number): PlayerVideo => ({
+        id: `story-${story.id}-asset-${idx}`,
+        storyId: story.id,
+        title: asset.title || `${story.title} - Video ${idx + 1}`,
+        description: story.description,
+        url: asset.url || null,
+        thumbnail: story.thumbnail || null,
+        preview: null,
+        sprite: null,
+    });
+
     const handleClose = () => {
         router.get(`/dashboard/rooms/${room.slug}`);
     };
@@ -78,7 +109,10 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
 
     const submitComment = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newComment.trim()) return;
+
+        if (!newComment.trim()) {
+return;
+}
 
         setIsSubmittingComment(true);
         router.post(`/dashboard/stories/${story.id}/comments`, {
@@ -94,7 +128,10 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
 
     const handleAddAsset = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
 
         setIsAddingAsset(true);
         const formData = new FormData();
@@ -142,9 +179,11 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
 
     const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
-            addTag();
-        }
+addTag();
+}
     };
+
+    const isVideo = story.type === 'video';
 
     return (
         <motion.div
@@ -153,13 +192,46 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-100 flex flex-col bg-bg-dark lg:flex-row"
+            className="fixed inset-0 z-100 flex flex-col bg-bg-dark"
         >
             <Head title={story.title} />
 
-            {/* Visual Content Section */}
-            <div className="group relative flex h-[55vh] min-h-0 w-full items-center justify-center overflow-hidden bg-black lg:h-full lg:flex-1">
-                {story.type === 'collection' && story.assets?.length > 0 ? (
+            {/* Visual Content Section — fills available space for video */}
+            <div className={`relative flex w-full items-center justify-center overflow-hidden bg-black ${
+                isVideo ? 'flex-1' : 'h-full min-h-0 lg:flex-1'
+            }`}>
+                {isVideo && videoPlayerVideo.url ? (
+                    <div className="absolute inset-0">
+                        <VideoPlayer
+                            video={videoPlayerVideo}
+                            autoPlay
+                            showControls
+                            showSpeedControl
+                            showPip
+                            showVolumeSlider
+                            showStatusOverlay
+                            className="h-full w-full"
+                            videoClassName="h-full w-full object-contain"
+                            topRight={
+                                <button
+                                    onClick={() => setShowInfoPanel(true)}
+                                    className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white/70 hover:bg-white/20 hover:text-white transition-all backdrop-blur-sm border border-white/10"
+                                    aria-label="Info"
+                                >
+                                    <Info size={16} />
+                                </button>
+                            }
+                        />
+                        <VideoSocialOverlay
+                            likes={likes}
+                            isLiked={isLiked}
+                            commentsCount={story.comments.length}
+                            onLike={toggleLike}
+                            onComment={() => setShowInfoPanel(true)}
+                            onMore={() => setShowInfoPanel(true)}
+                        />
+                    </div>
+                ) : story.type === 'collection' && story.assets?.length > 0 ? (
                     <div className="relative flex h-full w-full items-center justify-center">
                         <AnimatePresence mode="wait">
                             <motion.div
@@ -171,20 +243,20 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
                             >
                                 {(() => {
                                     const asset = story.assets[activeAssetIndex];
-                                    console.log(asset);
+
                                     switch (asset.type) {
                                         case 'video':
                                             return (
-                                                <div className="relative h-full w-full overflow-hidden rounded-2xl bg-black">
-                                                    <video
-                                                        src={asset.url}
-                                                        className="h-full w-full object-contain"
-                                                        controls
-                                                        controlsList="nodownload"
-                                                    />
-
-                                                    <div className="pointer-events-none absolute inset-0 ring-1 ring-white/10" />
-                                                </div>
+                                                <VideoPlayer
+                                                    video={collectionVideoAsset(asset, activeAssetIndex)}
+                                                    autoPlay
+                                                    showControls
+                                                    showSpeedControl={false}
+                                                    showPip
+                                                    showVolumeSlider
+                                                    className="relative h-full w-full overflow-hidden rounded-2xl"
+                                                    videoClassName="h-full w-full object-contain"
+                                                />
                                             );
 
                                         case 'audio':
@@ -293,28 +365,9 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
                     </div>
                 ) : (() => {
                     switch (story.type) {
-                        case 'video':
-                            return (
-                                <div className="relative h-full w-full overflow-hidden bg-black">
-                                    <video
-                                        src={
-                                            story.fileUrl ||
-                                            'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
-                                        }
-                                        className="h-full w-full object-contain"
-                                        controls
-                                        autoPlay
-                                        poster={story.thumbnail}
-                                    />
-
-                                    <div className="pointer-events-none absolute inset-0 ring-1 ring-white/10" />
-                                </div>
-                            );
-
                         case 'audio':
                             return (
                                 <div className="flex h-full w-full items-center justify-center p-6 md:p-12">
-
                                     <AudioWaveformPlayer
                                         src={story.fileUrl!}
                                         title={story.title}
@@ -373,10 +426,12 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
                     }
                 })()}
 
-                {/* Cinematic Overlays */}
-                {story.type === 'photo' && <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />}
+                {/* Cinematic Overlays (non-video) */}
+                {!isVideo && story.type === 'photo' && (
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                )}
 
-                {/* Top Bar (Mobile/Internal) */}
+                {/* Top Bar */}
                 <div className="absolute top-0 right-0 left-0 z-20 flex items-center justify-between p-4 md:p-8">
                     <button
                         onClick={handleClose}
@@ -389,7 +444,7 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
                             variant="secondary"
                             className="px-3 py-2 text-[10px] sm:px-4 md:text-xs"
                             icon={Download}
-                            onClick={() => alert('Collecting the Artifact for preservation...')}
+                            onClick={() => toast.info('Collecting the Artifact for preservation...')}
                         >
                             Collect Artifact
                         </Button>
@@ -400,6 +455,14 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
                         >
                             Share
                         </Button>
+                        {isVideo && (
+                            <button
+                                onClick={() => setShowInfoPanel(true)}
+                                className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle bg-white/10 text-text-primary backdrop-blur-md transition-all hover:bg-white/20 md:h-12 md:w-12 lg:hidden"
+                            >
+                                <Info size={18} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -426,229 +489,258 @@ export default function StoryViewer({ story, room, nextStoryId, prevStoryId }: S
                 )}
             </div>
 
-            {/* Meta/Context Sidebar */}
-            <aside className="relative z-10 flex w-full shrink-0 flex-col overflow-y-auto border-l border-white/5 bg-bg-dark/95 p-6 backdrop-blur-3xl md:p-8 lg:h-full lg:w-[420px] lg:max-w-[420px] lg:p-10">
-                <div className="flex min-h-full flex-col gap-8">
-                    <Badge className="w-fit">{story.type}</Badge>
-
-                    <div>
-                        <h1 className="mb-4 text-3xl leading-tight font-bold text-text-primary md:text-4xl">
-                            {story.title}
-                        </h1>
-                        <div className="flex items-center gap-6 text-sm text-text-muted">
-                            <div className="flex items-center gap-2">
-                                <User size={14} className="text-accent-gold" />
-                                <span>{story.author}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar size={14} className="text-accent-gold" />
-                                <span>{story.date}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="h-px w-full bg-border-subtle" />
-
-                    {/* Engagement */}
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={toggleLike}
-                            className="group flex grow items-center justify-center gap-2 rounded-xl border border-border-subtle bg-surface/50 p-4 transition-all hover:bg-surface"
+            {/* Info Slide-over Panel (for video stories) */}
+            <AnimatePresence>
+                {showInfoPanel && isVideo && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm"
+                            onClick={() => setShowInfoPanel(false)}
+                        />
+                        <motion.aside
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                            className="fixed right-0 top-0 z-40 h-full w-full max-w-md border-l border-white/5 bg-bg-dark/98 backdrop-blur-3xl overflow-y-auto shadow-2xl"
                         >
-                            <Heart
-                                size={20}
-                                className={`transition-all ${isLiked ? 'fill-red-400 text-red-400' : 'text-text-muted group-hover:text-red-400'}`}
-                            />
-                            <span className={`text-sm font-semibold ${isLiked ? 'text-text-primary' : 'text-text-muted'}`}>
-                                {likes}
-                            </span>
-                        </button>
-                        <button className="flex grow items-center justify-center gap-2 rounded-xl border border-border-subtle bg-surface/50 p-4 text-text-muted transition-all hover:bg-surface hover:text-text-primary">
-                            <MessageCircle size={20} />
-                            <span className="text-sm font-semibold text-text-primary">4</span>
-                        </button>
-                        <button className="rounded-xl border border-border-subtle bg-surface/50 p-4 text-text-muted transition-all hover:bg-surface hover:text-text-primary">
-                            <MoreVertical size={20} />
-                        </button>
-                    </div>
-
-                    <div className="flex flex-col gap-6">
-                        <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Archive Details</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            {[
-                                { label: 'Archivist', value: story.author },
-                                { label: 'Preserved', value: story.date },
-                                { label: 'Format', value: story.type.toUpperCase() },
-                                { label: 'Archive ID', value: `HER-${String(story.id).substring(0, 8).toUpperCase()}` },
-                            ].map((item) => (
-                                <div key={item.label} className="rounded-xl border border-border-subtle bg-surface p-3">
-                                    <p className="mb-1 text-[10px] tracking-wider text-text-muted uppercase">{item.label}</p>
-                                    <p className="text-xs font-bold text-text-primary">{item.value}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-6">
-                        <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Narrative</h3>
-                        <p className="border-l-2 border-accent-gold/30 py-2 pl-6 text-sm leading-relaxed text-text-muted italic md:text-base">
-                            "{story.description || 'No narrative description provided for this memory.'}"
-                        </p>
-                    </div>
-
-                    {/* Collection Management */}
-                    <div className="flex flex-col gap-6">
-                        <div className="flex items-center justify-between">
-                            <h3 className="flex items-center gap-2 text-xs font-bold tracking-widest text-accent-gold uppercase">
-                                <Plus size={12} />
-                                Collection
-                            </h3>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleAddAsset}
-                                    className="hidden"
-                                    accept="image/*,video/*,application/pdf"
-                                />
+                            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/5 bg-bg-dark/90 p-4 backdrop-blur-md">
+                                <span className="text-xs font-bold tracking-widest text-accent-gold uppercase">Archival Details</span>
                                 <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isAddingAsset}
-                                    className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold disabled:opacity-50"
+                                    onClick={() => setShowInfoPanel(false)}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
                                 >
-                                    <Plus size={10} />
-                                    {isAddingAsset ? 'Adding...' : 'Add Asset'}
-                                </button>
-                                <button
-                                    onClick={() => setShowVoiceRecorder(true)}
-                                    disabled={isAddingAsset}
-                                    className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold disabled:opacity-50"
-                                >
-                                    <Mic size={10} />
-                                    Record
+                                    <X size={16} />
                                 </button>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Tagging System */}
-                    <div className="flex flex-col gap-6">
-                        <div className="flex items-center justify-between">
-                            <h3 className="flex items-center gap-2 text-xs font-bold tracking-widest text-accent-gold uppercase">
-                                <Tag size={12} />
-                                Tags
-                            </h3>
-                            <button
-                                onClick={() => setShowTagInput(true)}
-                                className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold"
-                            >
-                                <Plus size={10} />
-                                Add Tag
-                            </button>
-                        </div>
+                            <div className="p-6 space-y-8">
+                                <Badge className="w-fit">{story.type}</Badge>
 
-                        <div className="flex flex-wrap gap-2">
-                            <AnimatePresence mode="popLayout">
-                                {tags.map((tag) => (
-                                    <motion.button
-                                        key={tag}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.8 }}
-                                        onClick={() => removeTag(tag)}
-                                        className="group flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5 transition-all hover:border-red-400/30"
-                                    >
-                                        <Hash size={10} className="text-accent-gold transition-colors group-hover:text-red-400" />
-                                        <span className="text-xs text-text-primary transition-colors group-hover:text-red-400">{tag}</span>
-                                    </motion.button>
-                                ))}
-                            </AnimatePresence>
-
-                            <AnimatePresence>
-                                {showTagInput && (
-                                    <motion.div
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -10 }}
-                                        className="flex items-center gap-2 rounded-full border border-accent-gold/30 bg-surface px-3 py-1"
-                                    >
-                                        <Hash size={10} className="text-accent-gold" />
-                                        <input
-                                            autoFocus
-                                            type="text"
-                                            value={newTag}
-                                            onChange={(e) => setNewTag(e.target.value)}
-                                            onKeyDown={handleKeyPress}
-                                            onBlur={() => !newTag && setShowTagInput(false)}
-                                            placeholder="Story tag..."
-                                            className="w-24 border-none bg-transparent text-xs text-text-primary outline-none placeholder:text-text-muted/40"
-                                        />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    </div>
-
-                    {/* Comments Section */}
-                    <div className="flex flex-col gap-6">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Narrative Responses</h3>
-                            <span className="text-[10px] font-bold text-text-muted uppercase">{story.comments.length} Memories</span>
-                        </div>
-                        
-                        <div className="flex flex-col gap-4">
-                            {story.comments.map((comment) => (
-                                <div key={comment.id} className="group relative rounded-2xl border border-border-subtle bg-surface/30 p-4 transition-all hover:bg-surface/50">
-                                    <div className="mb-2 flex items-center justify-between">
-                                        <span className="text-xs font-bold text-accent-gold">{comment.author}</span>
-                                        <span className="text-[10px] text-text-muted">{comment.date}</span>
+                                <div>
+                                    <h1 className="mb-4 text-3xl leading-tight font-bold text-text-primary md:text-4xl">
+                                        {story.title}
+                                    </h1>
+                                    <div className="flex items-center gap-6 text-sm text-text-muted">
+                                        <div className="flex items-center gap-2">
+                                            <User size={14} className="text-accent-gold" />
+                                            <span>{story.author}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Calendar size={14} className="text-accent-gold" />
+                                            <span>{story.date}</span>
+                                        </div>
                                     </div>
-                                    <p className="text-sm leading-relaxed text-text-primary">
-                                        {comment.content}
+                                </div>
+
+                                <div className="h-px w-full bg-border-subtle" />
+
+                                {/* Engagement */}
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={toggleLike}
+                                        className="group flex grow items-center justify-center gap-2 rounded-xl border border-border-subtle bg-surface/50 p-4 transition-all hover:bg-surface"
+                                    >
+                                        <Heart
+                                            size={20}
+                                            className={`transition-all ${isLiked ? 'fill-red-400 text-red-400' : 'text-text-muted group-hover:text-red-400'}`}
+                                        />
+                                        <span className={`text-sm font-semibold ${isLiked ? 'text-text-primary' : 'text-text-muted'}`}>
+                                            {likes}
+                                        </span>
+                                    </button>
+                                    <button className="flex grow items-center justify-center gap-2 rounded-xl border border-border-subtle bg-surface/50 p-4 text-text-muted transition-all hover:bg-surface hover:text-text-primary">
+                                        <MessageCircle size={20} />
+                                        <span className="text-sm font-semibold text-text-primary">{story.comments.length}</span>
+                                    </button>
+                                    <button className="rounded-xl border border-border-subtle bg-surface/50 p-4 text-text-muted transition-all hover:bg-surface hover:text-text-primary">
+                                        <MoreVertical size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="flex flex-col gap-6">
+                                    <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Archive Details</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {[
+                                            { label: 'Archivist', value: story.author },
+                                            { label: 'Preserved', value: story.date },
+                                            { label: 'Format', value: story.type.toUpperCase() },
+                                            { label: 'Archive ID', value: `HER-${String(story.id).substring(0, 8).toUpperCase()}` },
+                                        ].map((item) => (
+                                            <div key={item.label} className="rounded-xl border border-border-subtle bg-surface p-3">
+                                                <p className="mb-1 text-[10px] tracking-wider text-text-muted uppercase">{item.label}</p>
+                                                <p className="text-xs font-bold text-text-primary">{item.value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-6">
+                                    <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Narrative</h3>
+                                    <p className="border-l-2 border-accent-gold/30 py-2 pl-6 text-sm leading-relaxed text-text-muted italic md:text-base">
+                                        "{story.description || 'No narrative description provided for this memory.'}"
                                     </p>
                                 </div>
-                            ))}
 
-                            {story.comments.length === 0 && (
-                                <div className="rounded-2xl border border-dashed border-border-subtle p-8 text-center">
-                                    <MessageCircle size={24} className="mx-auto mb-3 text-text-muted opacity-20" />
-                                    <p className="text-xs text-text-muted italic">No responses shared yet. Be the first to leave a mark on this memory.</p>
+                                {/* Collection Management */}
+                                <div className="flex flex-col gap-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="flex items-center gap-2 text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                            <Plus size={12} />
+                                            Collection
+                                        </h3>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleAddAsset}
+                                                className="hidden"
+                                                accept="image/*,video/*,application/pdf"
+                                            />
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={isAddingAsset}
+                                                className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold disabled:opacity-50"
+                                            >
+                                                <Plus size={10} />
+                                                {isAddingAsset ? 'Adding...' : 'Add Asset'}
+                                            </button>
+                                            <button
+                                                onClick={() => setShowVoiceRecorder(true)}
+                                                disabled={isAddingAsset}
+                                                className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold disabled:opacity-50"
+                                            >
+                                                <Mic size={10} />
+                                                Record
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Comment Form */}
-                        <form onSubmit={submitComment} className="mt-4 flex flex-col gap-3">
-                            <div className="relative">
-                                <textarea
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    placeholder="Share your reflection on this memory..."
-                                    className="min-h-[100px] w-full resize-none rounded-2xl border border-border-subtle bg-surface/50 p-4 text-sm text-text-primary placeholder:text-text-muted/40 focus:border-accent-gold/30 focus:outline-none focus:ring-1 focus:ring-accent-gold/30"
-                                />
+                                {/* Tagging System */}
+                                <div className="flex flex-col gap-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="flex items-center gap-2 text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                            <Tag size={12} />
+                                            Tags
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowTagInput(true)}
+                                            className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold"
+                                        >
+                                            <Plus size={10} />
+                                            Add Tag
+                                        </button>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2">
+                                        <AnimatePresence mode="popLayout">
+                                            {tags.map((tag) => (
+                                                <motion.button
+                                                    key={tag}
+                                                    layout
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 0.8 }}
+                                                    onClick={() => removeTag(tag)}
+                                                    className="group flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5 transition-all hover:border-red-400/30"
+                                                >
+                                                    <Hash size={10} className="text-accent-gold transition-colors group-hover:text-red-400" />
+                                                    <span className="text-xs text-text-primary transition-colors group-hover:text-red-400">{tag}</span>
+                                                </motion.button>
+                                            ))}
+                                        </AnimatePresence>
+
+                                        <AnimatePresence>
+                                            {showTagInput && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    exit={{ opacity: 0, x: -10 }}
+                                                    className="flex items-center gap-2 rounded-full border border-accent-gold/30 bg-surface px-3 py-1"
+                                                >
+                                                    <Hash size={10} className="text-accent-gold" />
+                                                    <input
+                                                        autoFocus
+                                                        type="text"
+                                                        value={newTag}
+                                                        onChange={(e) => setNewTag(e.target.value)}
+                                                        onKeyDown={handleKeyPress}
+                                                        onBlur={() => !newTag && setShowTagInput(false)}
+                                                        placeholder="Story tag..."
+                                                        className="w-24 border-none bg-transparent text-xs text-text-primary outline-none placeholder:text-text-muted/40"
+                                                    />
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                </div>
+
+                                {/* Comments Section */}
+                                <div className="flex flex-col gap-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Narrative Responses</h3>
+                                        <span className="text-[10px] font-bold text-text-muted uppercase">{story.comments.length} Memories</span>
+                                    </div>
+
+                                    <div className="flex flex-col gap-4">
+                                        {story.comments.map((comment) => (
+                                            <div key={comment.id} className="group relative rounded-2xl border border-border-subtle bg-surface/30 p-4 transition-all hover:bg-surface/50">
+                                                <div className="mb-2 flex items-center justify-between">
+                                                    <span className="text-xs font-bold text-accent-gold">{comment.author}</span>
+                                                    <span className="text-[10px] text-text-muted">{comment.date}</span>
+                                                </div>
+                                                <p className="text-sm leading-relaxed text-text-primary">
+                                                    {comment.content}
+                                                </p>
+                                            </div>
+                                        ))}
+
+                                        {story.comments.length === 0 && (
+                                            <div className="rounded-2xl border border-dashed border-border-subtle p-8 text-center">
+                                                <MessageCircle size={24} className="mx-auto mb-3 text-text-muted opacity-20" />
+                                                <p className="text-xs text-text-muted italic">No responses shared yet. Be the first to leave a mark on this memory.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Comment Form */}
+                                    <form onSubmit={submitComment} className="mt-4 flex flex-col gap-3">
+                                        <div className="relative">
+                                            <textarea
+                                                value={newComment}
+                                                onChange={(e) => setNewComment(e.target.value)}
+                                                placeholder="Share your reflection on this memory..."
+                                                className="min-h-[100px] w-full resize-none rounded-2xl border border-border-subtle bg-surface/50 p-4 text-sm text-text-primary placeholder:text-text-muted/40 focus:border-accent-gold/30 focus:outline-none focus:ring-1 focus:ring-accent-gold/30"
+                                            />
+                                        </div>
+                                        <Button
+                                            type="submit"
+                                            disabled={isSubmittingComment || !newComment.trim()}
+                                            className="w-full"
+                                        >
+                                            {isSubmittingComment ? 'Preserving...' : 'Share Reflection'}
+                                        </Button>
+                                    </form>
+                                </div>
+
+                                <div className="pt-8">
+                                    <Button className="w-full" icon={Share2}>Share this memory</Button>
+                                </div>
                             </div>
-                            <Button 
-                                type="submit" 
-                                disabled={isSubmittingComment || !newComment.trim()}
-                                className="w-full"
-                            >
-                                {isSubmittingComment ? 'Preserving...' : 'Share Reflection'}
-                            </Button>
-                        </form>
-                    </div>
-
-                    <div className="mt-auto pt-12">
-                        <Button className="w-full" icon={Share2}>Share this memory</Button>
-                    </div>
-                </div>
-            </aside>
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* Voice Recorder Overlay */}
             <AnimatePresence>
                 {showVoiceRecorder && (
-                    <VoiceRecorder 
-                        onClose={() => setShowVoiceRecorder(false)} 
+                    <VoiceRecorder
+                        onClose={() => setShowVoiceRecorder(false)}
                         onSave={handleSaveVoice}
                     />
                 )}

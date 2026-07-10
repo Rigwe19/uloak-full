@@ -1,6 +1,5 @@
-import React from 'react';
 import { Head } from '@inertiajs/react';
-import AdminLayout from '@/layouts/admin-layout';
+import { motion } from 'framer-motion';
 import { 
     DoorOpen, 
     Users as UsersIcon,
@@ -13,8 +12,9 @@ import {
     Lock,
     Unlock
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React from 'react';
 import { Button } from '@/components/dashboard/ui';
+import AdminLayout from '@/layouts/admin-layout';
 
 interface Room {
     id: number;

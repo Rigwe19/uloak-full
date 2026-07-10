@@ -161,6 +161,7 @@ export default function Contact({ page }: Props) {
                                     <div className="grid gap-12">
                                         {contactInfo.map((info: any, i: number) => {
                                             const IconComponent = iconMap[info.icon as keyof typeof iconMap] || Mail;
+
                                             return (
                                                 <div key={i} className="group flex items-start gap-6">
                                                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/5 bg-surface/30 text-text-muted transition-all group-hover:border-accent-gold/30 group-hover:text-accent-gold">

@@ -1,6 +1,7 @@
 // RealisticCandle.tsx
 import { motion } from 'framer-motion';
-import { CANDLE_THEMES, CandleType, Candle } from './candleThemes';
+import type { Candle } from './candleThemes';
+import { CANDLE_THEMES, CandleType } from './candleThemes';
 
 export default function CandleSVG({ candle, delay }: { candle: Candle; delay: number }) {
     const p = CANDLE_THEMES[candle.candle_type];

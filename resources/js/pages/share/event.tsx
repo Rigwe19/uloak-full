@@ -1,6 +1,6 @@
+import eventsRoutes from '@/routes/share/events';
 import { Head, useForm } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import {
     ArrowLeft,
     Upload,
@@ -32,9 +32,17 @@ import {
     Download,
     File as FileIcon,
 } from 'lucide-react';
-import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Button, Badge } from '@/components/dashboard/ui';
+import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
+import StoryCard from '@/components/feed/StoryCard';
+import StoryFeed from '@/components/feed/StoryFeed';
+import { VideoPlayer } from '@/components/media/VideoPlayer';
 import { ResponsiveModal } from '@/components/responsive-modal';
+import { UploadDropzone } from '@/components/upload/UploadDropzone';
+import type { FeedStory } from '@/types/feed';
+import type { PlayerVideo } from '@/types/video-player';
 
 /* ─── animations ─────────────────────────────────────────── */
 const fadeInUp = {
@@ -57,7 +65,12 @@ interface ShareEventProps {
             avatar?: string;
         };
     };
-    stories: any[];
+    stories: FeedStory[];
+    pagination?: {
+        next_cursor: string | null;
+        path: string;
+        per_page: number;
+    };
     flash?: {
         success?: string;
     };
@@ -72,6 +85,7 @@ function MediaTypeIcon({ type }: { type: string }) {
         document: <FileText size={14} />,
         collection: <Files size={14} />,
     };
+
     return <>{icons[type] || <FileText size={14} />}</>;
 }
 
@@ -82,7 +96,10 @@ function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
     const analyserRef = useRef<AnalyserNode | null>(null);
 
     useEffect(() => {
-        if (!stream) return;
+        if (!stream) {
+return;
+}
+
         const ctx = new AudioContext();
         const src = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
@@ -95,9 +112,17 @@ function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
 
         const draw = () => {
             rafRef.current = requestAnimationFrame(draw);
-            if (!canvas) return;
+
+            if (!canvas) {
+return;
+}
+
             const c = canvas.getContext('2d');
-            if (!c) return;
+
+            if (!c) {
+return;
+}
+
             analyser.getByteFrequencyData(data);
             c.clearRect(0, 0, canvas.width, canvas.height);
             const barW = canvas.width / data.length;
@@ -149,11 +174,20 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
     // Close on escape
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-            if (e.key === 'ArrowLeft' && hasPrev) setCurrentIdx((p) => p - 1);
-            if (e.key === 'ArrowRight' && hasNext) setCurrentIdx((p) => p + 1);
+            if (e.key === 'Escape') {
+onClose();
+}
+
+            if (e.key === 'ArrowLeft' && hasPrev) {
+setCurrentIdx((p) => p - 1);
+}
+
+            if (e.key === 'ArrowRight' && hasNext) {
+setCurrentIdx((p) => p + 1);
+}
         };
         window.addEventListener('keydown', handleKey);
+
         return () => window.removeEventListener('keydown', handleKey);
     }, [onClose, hasPrev, hasNext]);
 
@@ -163,7 +197,10 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
     }, [currentIdx]);
 
     const handlePlayPause = () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current) {
+return;
+}
+
         if (isPlaying) {
             videoRef.current.pause();
             setIsPlaying(false);
@@ -173,20 +210,29 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
     };
 
     const toggleMute = () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current) {
+return;
+}
+
         videoRef.current.muted = !isMuted;
         setIsMuted(!isMuted);
     };
 
     const goNext = () => {
-        if (hasNext) setCurrentIdx((p) => p + 1);
+        if (hasNext) {
+setCurrentIdx((p) => p + 1);
+}
     };
 
     const goPrev = () => {
-        if (hasPrev) setCurrentIdx((p) => p - 1);
+        if (hasPrev) {
+setCurrentIdx((p) => p - 1);
+}
     };
 
-    if (!story) return null;
+    if (!story) {
+return null;
+}
 
     return (
         <AnimatePresence>
@@ -242,16 +288,25 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
                     {/* Media Player */}
                     <div className="w-full flex items-center justify-center">
                         {(story.type === 'video' && mediaUrl) ? (
-                            <div className="relative w-full max-w-4xl">
-                                <video
-                                    ref={videoRef}
-                                    src={mediaUrl}
-                                    className="w-full max-h-[60vh] rounded-2xl bg-black shadow-2xl"
-                                    controls
+                            <div className="relative w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl">
+                                <VideoPlayer
+                                    video={{
+                                        id: story.id,
+                                        storyId: story.id,
+                                        title: story.title,
+                                        url: mediaUrl,
+                                        thumbnail: story.thumbnail || null,
+                                        preview: null,
+                                        sprite: null,
+                                    }}
                                     autoPlay
-                                    playsInline
+                                    showControls
+                                    showSpeedControl
+                                    showPip
+                                    showVolumeSlider
+                                    className="w-full max-h-[60vh]"
+                                    videoClassName="w-full max-h-[60vh] object-contain"
                                     onEnded={() => setIsPlaying(false)}
-                                    onClick={handlePlayPause}
                                 />
                             </div>
                         ) : (story.type === 'audio' && mediaUrl) ? (
@@ -334,7 +389,6 @@ type ContributionMediaType = 'photo' | 'video' | 'audio' | 'document';
 function GuestContributionModal({ isOpen, onClose, eventSlug }: GuestContributionModalProps) {
     const [step, setStep] = useState<ContributionStep>('selection');
     const [mediaType, setMediaType] = useState<ContributionMediaType | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [audioRecState, setAudioRecState] = useState<'idle' | 'recording' | 'preview'>('idle');
     const [audioSeconds, setAudioSeconds] = useState(0);
@@ -363,8 +417,7 @@ function GuestContributionModal({ isOpen, onClose, eventSlug }: GuestContributio
         setStep('upload');
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
+    const handleFileChange = (files: File[]) => {
         if (files.length > 0) {
             setData('files', [...data.files, ...files]);
             files.forEach(file => {
@@ -389,7 +442,10 @@ function GuestContributionModal({ isOpen, onClose, eventSlug }: GuestContributio
         const newPreviews = [...previews];
         newPreviews.splice(index, 1);
         setPreviews(newPreviews);
-        if (newFiles.length === 0) setStep('upload');
+
+        if (newFiles.length === 0) {
+setStep('upload');
+}
     };
 
     const startAudioRecording = useCallback(async () => {
@@ -398,7 +454,11 @@ function GuestContributionModal({ isOpen, onClose, eventSlug }: GuestContributio
             setAudioStream(s);
             const mr = new MediaRecorder(s, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4' });
             chunksRef.current = [];
-            mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+            mr.ondataavailable = (e) => {
+ if (e.data.size > 0) {
+chunksRef.current.push(e.data);
+} 
+};
             mr.onstop = () => {
                 const blob = new Blob(chunksRef.current, { type: mr.mimeType });
                 const url = URL.createObjectURL(blob);
@@ -414,17 +474,23 @@ function GuestContributionModal({ isOpen, onClose, eventSlug }: GuestContributio
             setAudioRecState('recording');
             timerRef.current = setInterval(() => setAudioSeconds((p) => p + 1), 1000);
         } catch {
-            alert('Could not access microphone. Please allow microphone access and try again.');
+            toast.error('Could not access microphone. Please allow microphone access and try again.');
         }
     }, []);
 
     const stopAudioRecording = useCallback(() => {
-        if (timerRef.current) clearInterval(timerRef.current);
+        if (timerRef.current) {
+clearInterval(timerRef.current);
+}
+
         mediaRecorderRef.current?.stop();
     }, []);
 
     const rerecordAudio = useCallback(() => {
-        if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
+        if (audioBlobUrl) {
+URL.revokeObjectURL(audioBlobUrl);
+}
+
         setAudioBlob(null);
         setAudioBlobUrl(null);
         setAudioSeconds(0);
@@ -542,13 +608,13 @@ function GuestContributionModal({ isOpen, onClose, eventSlug }: GuestContributio
                                 <div className="text-center">
                                     <h2 className="mb-2 text-2xl font-bold text-text-primary">Upload {mediaType === 'photo' ? 'a Photo' : mediaType === 'video' ? 'a Video' : 'a Document'}</h2>
                                     <p className="mb-8 text-sm text-text-muted">Select the file you'd like to contribute to this event.</p>
-                                    <div onClick={() => fileInputRef.current?.click()} className="cursor-pointer rounded-3xl border-2 border-dashed border-border-subtle bg-bg-dark/50 p-12 transition-all hover:border-accent-gold/40 hover:bg-accent-gold/5">
-                                        <Upload className="mx-auto mb-4 text-text-muted" size={40} />
-                                        <span className="block text-sm font-medium text-text-primary">Click to browse or drag and drop</span>
-                                        <span className="mt-2 block text-xs text-text-muted">Max file size: 50MB</span>
-                                    </div>
-                                    <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} multiple={mediaType === 'photo' || mediaType === 'document'}
-                                        accept={mediaType === 'photo' ? 'image/*' : mediaType === 'video' ? 'video/*' : mediaType === 'document' ? '.pdf,.doc,.docx,.txt' : '*/*'} />
+                                    <UploadDropzone
+                                        onFilesSelected={handleFileChange}
+                                        accept={mediaType === 'photo' ? 'image/*' : mediaType === 'video' ? 'video/*' : mediaType === 'document' ? '.pdf,.doc,.docx,.txt' : '*/*'}
+                                        multiple={mediaType === 'photo' || mediaType === 'document'}
+                                        maxSizeMB={50}
+                                        label="Click to browse or drag and drop"
+                                    />
                                 </div>
                             )}
                         </div>
@@ -613,44 +679,44 @@ function GuestContributionModal({ isOpen, onClose, eventSlug }: GuestContributio
 }
 
 /* ─── Main Page ──────────────────────────────────────────── */
-export default function ShareEvent({ event, stories = [], flash }: ShareEventProps) {
+export default function ShareEvent({ event, stories: initialStories = [], pagination }: ShareEventProps) {
+    const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [activeTab, setActiveTab] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const [isContributionModalOpen, setIsContributionModalOpen] = useState(false);
     const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
+    // Merge paginated stories & handle reset
+    useEffect(() => {
+        const handleAppended = (e: CustomEvent) => {
+            const { stories: newStories } = e.detail;
+            setAllStories((prev) => {
+                const existingIds = new Set(prev.map((s) => s.id));
+                const unique = newStories.filter((s: FeedStory) => !existingIds.has(s.id));
+
+                return [...prev, ...unique];
+            });
+        };
+        const handleReset = (e: CustomEvent) => {
+            setAllStories(e.detail.stories);
+        };
+        window.addEventListener('feed:appended', handleAppended as EventListener);
+        window.addEventListener('feed:reset', handleReset as EventListener);
+
+        return () => {
+            window.removeEventListener('feed:appended', handleAppended as EventListener);
+            window.removeEventListener('feed:reset', handleReset as EventListener);
+        };
+    }, []);
+
     const allTags = useMemo(() => {
         const tags = new Set<string>();
-        (stories || []).forEach((s) => s.tags?.forEach((t: string) => tags.add(t)));
+        (allStories || []).forEach((s) => s.tags?.forEach((t: string) => tags.add(t)));
+
         return Array.from(tags);
-    }, [stories]);
+    }, [allStories]);
 
-    const filteredStories = useMemo(() => {
-        let result = stories || [];
-        if (activeTab !== 'All') {
-            const typeMap: Record<string, string> = {
-                'Photo Gallery': 'photo',
-                'Cinema Hall': 'video',
-                'Whispering Voices': 'audio',
-                Manuscripts: 'document',
-            };
-            const targetType = typeMap[activeTab] || activeTab.toLowerCase();
-            result = result.filter((s) => s.type.toLowerCase().includes(targetType));
-        }
-        if (selectedTag) {
-            result = result.filter((s) => s.tags?.includes(selectedTag));
-        }
-        return result;
-    }, [stories, activeTab, selectedTag]);
-
-    const getStoryThumbnail = (story: any) => {
-        if (story.thumbnail && story.type === 'photo') return story.thumbnail;
-        return '/logo-stacked.png';
-    };
-
-    const hasStories = stories.length > 0;
-    const hasFilteredStories = filteredStories.length > 0;
     const viewerOpen = viewerIndex !== null;
 
     return (
@@ -670,7 +736,7 @@ export default function ShareEvent({ event, stories = [], flash }: ShareEventPro
 
             {/* Video Playlist Player - full-width hero */}
             <div className="relative z-10">
-                <VideoPlaylistPlayer stories={stories} fullscreen/>
+                <VideoPlaylistPlayer stories={initialStories} fullscreen/>
             </div>
 
             <main className="relative z-10 mx-auto max-w-7xl p-5 pb-32 md:p-8 lg:p-16">
@@ -707,115 +773,91 @@ export default function ShareEvent({ event, stories = [], flash }: ShareEventPro
                         <div className="h-px w-20 bg-accent-gold/30 mx-auto mt-4" />
                     </div>
 
-                    {hasStories && (
-                        <>
-                            <div className="mb-12 flex flex-col justify-between gap-8 border-b border-white/5 pb-8 sm:flex-row sm:items-center">
-                                <div className="no-scrollbar flex items-center gap-8 overflow-x-auto pb-2">
-                                    {['All', 'Photo Gallery', 'Cinema Hall', 'Whispering Voices', 'Manuscripts'].map((tab) => (
-                                        <button key={tab} onClick={() => setActiveTab(tab)}
-                                            className={`relative shrink-0 py-2 text-xs font-bold tracking-[0.2em] uppercase transition-all ${activeTab === tab ? 'text-accent-gold' : 'text-text-muted hover:text-text-primary'}`}>
-                                            {tab}
-                                            {activeTab === tab && <motion.div layoutId="activeTab" className="absolute bottom-[-33px] left-0 right-0 h-0.5 bg-accent-gold" />}
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-1 rounded-2xl border border-white/5 bg-surface/50 p-1 backdrop-blur-sm">
-                                        <button onClick={() => setViewMode('grid')} className={`rounded-xl p-2 transition-all ${viewMode === 'grid' ? 'bg-white/5 text-accent-gold' : 'text-text-muted hover:text-text-primary'}`}><Grid size={18} /></button>
-                                        <button onClick={() => setViewMode('list')} className={`rounded-xl p-2 transition-all ${viewMode === 'list' ? 'bg-white/5 text-accent-gold' : 'text-text-muted hover:text-text-primary'}`}><ListIcon size={18} /></button>
-                                    </div>
-                                </div>
+                    <StoryFeed
+                        stories={allStories}
+                        nextCursor={pagination?.next_cursor ?? null}
+                        routeName="share.events.show"
+                        routeParams={{ slug: event.slug }}
+                        filters={{
+                            tabs: ['All', 'Photo Gallery', 'Cinema Hall', 'Whispering Voices', 'Manuscripts'],
+                            activeTab,
+                            onTabChange: setActiveTab,
+                            tags: allTags.filter(t => t !== 'guest-contribution'),
+                            selectedTag,
+                            onTagChange: setSelectedTag,
+                            viewMode,
+                            onViewModeChange: setViewMode,
+                        }}
+                        emptyLabel='Be the first to contribute a memory to this event. Click the "Contribute" button above to share your photos, videos, voice notes, or documents.'
+                        addCard={
+                            <div onClick={() => setIsContributionModalOpen(true)}
+                                className={`group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 ${viewMode === 'grid' ? 'h-[400px]' : 'h-32 flex-row gap-6'}`}>
+                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold"><Plus size={32} /></div>
+                                <span className="text-xs font-bold tracking-[0.3em] text-text-primary uppercase transition-colors group-hover:text-accent-gold">Contribute Memory</span>
                             </div>
-
-                            {allTags.filter(t => t !== 'guest-contribution').length > 0 && (
-                                <div className="mb-12 flex flex-wrap gap-3">
-                                    <span className="mr-2 flex items-center gap-2 text-[10px] font-bold tracking-widest text-text-muted uppercase"><Filter size={12} /> Filter:</span>
-                                    {allTags.filter(t => t !== 'guest-contribution').map((tag: any) => (
-                                        <button key={tag} onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                                            className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${selectedTag === tag ? 'border-accent-gold bg-accent-gold text-bg-dark' : 'border-white/5 bg-surface/30 text-text-muted hover:border-accent-gold/40'}`}>#{tag}</button>
-                                    ))}
-                                </div>
-                            )}
-                        </>
-                    )}
-
-                    <div className={viewMode === 'grid' ? 'grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-6'}>
-                        <AnimatePresence mode="popLayout">
-                            {hasFilteredStories ? (
-                                filteredStories.map((story, i) => (
-                                    <motion.div key={story.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                                        {viewMode === 'grid' ? (
-                                            <div className="surface-glow flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20 cursor-pointer"
-                                                onClick={() => setViewerIndex(stories.indexOf(story))}>
-                                                <div className="relative aspect-4/3 overflow-hidden group">
-                                                    <img src={getStoryThumbnail(story)} alt={story.title}
-                                                        onError={(e) => { e.currentTarget.src = '/logo-stacked.png'; }}
-                                                        className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/40 opacity-0 transition-opacity group-hover:opacity-100">
-                                                        <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl transition-transform duration-500 group-hover:scale-100">
-                                                            <Play size={24} fill="currentColor" className="ml-1" />
-                                                        </div>
-                                                    </div>
-                                                    <div className="absolute top-6 left-6 flex items-center gap-2">
-                                                        <Badge className="border-white/10 flex bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">
-                                                            <MediaTypeIcon type={story.type} /><span className="ml-1.5">{story.type}</span>
-                                                        </Badge>
-                                                        {story.tags?.includes('guest-contribution') && (
-                                                            <Badge className="border-accent-gold/20 bg-accent-gold/10 text-[9px] text-accent-gold tracking-widest uppercase backdrop-blur-md">Guest</Badge>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex grow flex-col justify-between gap-6 p-8">
-                                                    <div className="space-y-3">
-                                                        <h3 className="text-xl font-bold text-text-primary transition-colors">{story.title}</h3>
-                                                        <p className="line-clamp-2 text-sm font-light text-text-muted italic">"{story.description}"</p>
-                                                    </div>
-                                                    <div className="flex items-center justify-between border-t border-white/5 pt-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
-                                                        <div className="flex items-center gap-2"><UserIcon size={12} className="text-accent-gold" /> {story.author}</div>
-                                                        <div className="flex items-center gap-2"><Clock size={12} className="text-accent-gold" /> {story.date}</div>
-                                                    </div>
+                        }
+                    >
+                        {(story) => (
+                            <div
+                                onClick={() => setViewerIndex(allStories.findIndex(s => s.id === story.id))}
+                                className={`${viewMode === 'grid' ? 'surface-glow flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20 cursor-pointer' : 'surface-glow flex items-center gap-8 rounded-3xl border border-white/5 bg-surface/40 p-6 transition-all hover:border-accent-gold/20 cursor-pointer'}`}
+                            >
+                                {viewMode === 'grid' ? (
+                                    <>
+                                        <div className="relative aspect-4/3 overflow-hidden group">
+                                            <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                onError={(e) => {
+ e.currentTarget.src = '/logo-stacked.png'; 
+}}
+                                                className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl transition-transform duration-500 group-hover:scale-100">
+                                                    <Play size={24} fill="currentColor" className="ml-1" />
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="surface-glow flex items-center gap-8 rounded-3xl border border-white/5 bg-surface/40 p-6 transition-all hover:border-accent-gold/20 cursor-pointer"
-                                                onClick={() => setViewerIndex(stories.indexOf(story))}>
-                                                <div className="relative aspect-video w-48 shrink-0 overflow-hidden rounded-2xl">
-                                                    <img src={getStoryThumbnail(story)} alt={story.title} onError={(e) => { e.currentTarget.src = '/logo-stacked.png'; }} className="h-full w-full object-cover" />
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/20">
-                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md"><Play size={16} fill="white" className="ml-0.5" /></div>
-                                                    </div>
-                                                </div>
-                                                <div className="grow space-y-2">
-                                                    <div className="flex items-center gap-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                                        <Badge className="border-white/10 bg-white/5"><MediaTypeIcon type={story.type} /><span className="ml-1.5">{story.type}</span></Badge>
-                                                        <span className="flex items-center gap-1"><Clock size={12} className="text-accent-gold" /> {story.date}</span>
-                                                    </div>
-                                                    <h3 className="text-2xl font-bold text-text-primary transition-colors">{story.title}</h3>
-                                                    <p className="text-sm text-text-muted italic">"{story.description}"</p>
-                                                </div>
+                                            <div className="absolute top-6 left-6 flex items-center gap-2">
+                                                <Badge className="border-white/10 flex bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">
+                                                    <MediaTypeIcon type={story.type} /><span className="ml-1.5">{story.type}</span>
+                                                </Badge>
+                                                {story.tags?.includes('guest-contribution') && (
+                                                    <Badge className="border-accent-gold/20 bg-accent-gold/10 text-[9px] text-accent-gold tracking-widest uppercase backdrop-blur-md">Guest</Badge>
+                                                )}
                                             </div>
-                                        )}
-                                    </motion.div>
-                                ))
-                            ) : (
-                                <motion.div key="empty" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full">
-                                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                                        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-accent-gold/20 bg-accent-gold/5 text-accent-gold/70"><Sparkles size={36} className="stroke-[1.5]" /></div>
-                                        <h3 className="mb-2 text-2xl font-bold tracking-tight text-text-primary">{hasStories ? 'No Stories Match This Filter' : 'No Memories Yet'}</h3>
-                                        <p className="mx-auto max-w-md text-sm leading-relaxed text-text-muted">
-                                            {hasStories ? 'Try selecting a different media type or clearing the filter.' : 'Be the first to contribute a memory to this event. Click the "Contribute" button above to share your photos, videos, voice notes, or documents.'}
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <motion.div layout onClick={() => setIsContributionModalOpen(true)}
-                            className={`group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 ${viewMode === 'grid' ? 'h-[400px]' : 'h-32 flex-row gap-6'}`}>
-                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold"><Plus size={32} /></div>
-                            <span className="text-xs font-bold tracking-[0.3em] text-text-primary uppercase transition-colors group-hover:text-accent-gold">Contribute Memory</span>
-                        </motion.div>
-                    </div>
+                                        </div>
+                                        <div className="flex grow flex-col justify-between gap-6 p-8">
+                                            <div className="space-y-3">
+                                                <h3 className="text-xl font-bold text-text-primary transition-colors">{story.title}</h3>
+                                                <p className="line-clamp-2 text-sm font-light text-text-muted italic">"{story.description}"</p>
+                                            </div>
+                                            <div className="flex items-center justify-between border-t border-white/5 pt-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
+                                                <div className="flex items-center gap-2"><UserIcon size={12} className="text-accent-gold" /> {story.author}</div>
+                                                <div className="flex items-center gap-2"><Clock size={12} className="text-accent-gold" /> {story.date}</div>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="relative aspect-video w-48 shrink-0 overflow-hidden rounded-2xl">
+                                            <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title} onError={(e) => {
+ e.currentTarget.src = '/logo-stacked.png'; 
+}} className="h-full w-full object-cover" />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/20">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md"><Play size={16} fill="white" className="ml-0.5" /></div>
+                                            </div>
+                                        </div>
+                                        <div className="grow space-y-2">
+                                            <div className="flex items-center gap-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                <Badge className="border-white/10 bg-white/5"><MediaTypeIcon type={story.type} /><span className="ml-1.5">{story.type}</span></Badge>
+                                                <span className="flex items-center gap-1"><Clock size={12} className="text-accent-gold" /> {story.date}</span>
+                                            </div>
+                                            <h3 className="text-2xl font-bold text-text-primary transition-colors">{story.title}</h3>
+                                            <p className="text-sm text-text-muted italic">"{story.description}"</p>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </StoryFeed>
                 </section>
 
                 <section className="mt-20 max-w-4xl mx-auto text-center">
@@ -827,7 +869,7 @@ export default function ShareEvent({ event, stories = [], flash }: ShareEventPro
             {/* Media Viewer Modal */}
             {viewerOpen && (
                 <MediaViewerModal
-                    stories={stories}
+                    stories={allStories}
                     initialIndex={viewerIndex}
                     onClose={() => setViewerIndex(null)}
                 />

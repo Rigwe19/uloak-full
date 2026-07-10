@@ -1,20 +1,4 @@
-import CandleSVG from '@/components/candleSVG';
-import { Candle, CandleType } from '@/components/candleThemes';
-import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
-import { EditRoomModal } from '@/components/dashboard/edit-room-modal';
-import { ShareQRCode } from '@/components/dashboard/share-qr-code';
-import { AvatarGroup, Badge, Button } from '@/components/dashboard/ui';
-import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
-import Hero from '@/components/hero';
-import {
-    ApprovedTributesSection,
-    PendingTributesSection,
-    SubmittedTributesSection,
-} from "@/components/tribute-sections";
-import { dashboard } from '@/routes';
-import { approve } from '@/routes/dashboard/candles';
-import storiesRoutes from '@/routes/dashboard/stories';
-import tributeRoutes from '@/routes/dashboard/tributes';
+import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { Head, Link, router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -22,21 +6,45 @@ import {
     BookOpen,
     Clock,
     Download,
-    Filter,
-    Grid,
+    Film,
+    Headphones,
     Heart,
-    List as ListIcon,
     Loader,
+    Mail,
     MessageCircle,
+    Music,
+    Phone,
     Play,
     Plus,
     Settings,
     Trash2,
     Upload,
-    User as UserIcon
+    User as UserIcon,
+    X,
 } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import CandleSVG from '@/components/candleSVG';
+import type { Candle } from '@/components/candleThemes';
+import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
+import { EditRoomModal } from '@/components/dashboard/edit-room-modal';
+import { ShareQRCode } from '@/components/dashboard/share-qr-code';
+import { AvatarGroup, Badge, Button } from '@/components/dashboard/ui';
+import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
+import StoryFeed from '@/components/feed/StoryFeed';
+import Hero from '@/components/hero';
+import { ResponsiveModal } from '@/components/responsive-modal';
+import {
+    ApprovedTributesSection,
+    PendingTributesSection,
+    SubmittedTributesSection,
+} from "@/components/tribute-sections";
+import { dashboard } from '@/routes';
+import roomsRoutes from '@/routes/dashboard/rooms';
+import { approve } from '@/routes/dashboard/candles';
+import storiesRoutes from '@/routes/dashboard/stories';
+import tributeRoutes from '@/routes/dashboard/tributes';
+import type { FeedStory } from '@/types/feed';
 
 
 interface RoomShowProps {
@@ -54,24 +62,16 @@ interface RoomShowProps {
         enable_candle_lighting: boolean;
         room_type: string | null;
     };
-    stories: any[];
+    stories: FeedStory[];
+    pagination?: {
+        next_cursor: string | null;
+        path: string;
+        per_page: number;
+    };
     pendingTributes: TributeDB[];
     approvedTributes: TributeDB[];
     allTributes: TributeDB[];
     candles: Candle[];
-}
-
-interface Tribute {
-    id: number;
-    name: string;
-    message: string;
-    quote: string;
-    createdAt: string;
-    images: string[];
-    video: string | null;
-    relationship?: string | null;
-    relation?: string | null;
-    is_approved?: boolean;
 }
 
 interface TributeDB {
@@ -93,12 +93,36 @@ interface CondolenceSignature {
     createdAt: string;
 }
 
-export default function RoomShow({ room, candles, stories = [], pendingTributes: initialPending = [], approvedTributes: initialApproved = [], allTributes: tributes }: RoomShowProps) {
+export default function RoomShow({ room, candles, stories: initialStories = [], pagination, pendingTributes: initialPending = [], approvedTributes: initialApproved = [], allTributes: tributes }: RoomShowProps) {
+    const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [pendingTributes, setPendingTributes] = useState<TributeDB[]>(initialPending);
     const [approvedTributes, setApprovedTributes] = useState<TributeDB[]>(initialApproved);
     const [activeTab, setActiveTab] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+    // Merge paginated stories & handle reset
+    useEffect(() => {
+        const handleAppended = (e: CustomEvent) => {
+            const { stories: newStories } = e.detail;
+            setAllStories((prev) => {
+                const existingIds = new Set(prev.map((s) => s.id));
+                const unique = newStories.filter((s: FeedStory) => !existingIds.has(s.id));
+
+                return [...prev, ...unique];
+            });
+        };
+        const handleReset = (e: CustomEvent) => {
+            setAllStories(e.detail.stories);
+        };
+        window.addEventListener('feed:appended', handleAppended as EventListener);
+        window.addEventListener('feed:reset', handleReset as EventListener);
+
+        return () => {
+            window.removeEventListener('feed:appended', handleAppended as EventListener);
+            window.removeEventListener('feed:reset', handleReset as EventListener);
+        };
+    }, []);
 
     const [isAnnexModalOpen, setIsAnnexModalOpen] = useState(false);
     const [isEditRoomModalOpen, setIsEditRoomModalOpen] = useState(false);
@@ -110,12 +134,13 @@ export default function RoomShow({ room, candles, stories = [], pendingTributes:
     const [condolenceSignatures, setCondolenceSignatures] = useState<CondolenceSignature[]>([]);
     const [showCondolenceForm, setShowCondolenceForm] = useState(false);
 
+    // Optional Service modal
+    const [showOptionalService, setShowOptionalService] = useState(false);
+
     // Delete confirmation state
     const [storyToDelete, setStoryToDelete] = useState<any | null>(null);
 
     const canModify = true;
-
-    const relationOptions = ['Friend', 'Family', 'Colleague', 'Mentor', 'Mentee', 'Neighbor', 'Community'];
 
     // ── Story Delete handler ──
     const handleDeleteStory = useCallback((story: any, e: React.MouseEvent) => {
@@ -126,13 +151,26 @@ export default function RoomShow({ room, candles, stories = [], pendingTributes:
     const [deleting, setDeleting] = useState(false);
 
     const confirmDeleteStory = useCallback(() => {
-        if (!storyToDelete) return;
+        if (!storyToDelete) {
+return;
+}
+
         setDeleting(true);
         router.delete(`/dashboard/stories/${storyToDelete.id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setStoryToDelete(null);
-                router.visit(window.location.pathname, { only: ['stories'], preserveScroll: true, preserveState: true });
+                router.visit(window.location.pathname, {
+                    only: ['stories'],
+                    preserveScroll: true,
+                    preserveState: true,
+                    onSuccess: (page) => {
+                        const data = page.props as any;
+                        window.dispatchEvent(new CustomEvent('feed:reset', {
+                            detail: { stories: data.stories ?? [] }
+                        }));
+                    },
+                });
             },
             onFinish: () => setDeleting(false)
         });
@@ -161,30 +199,6 @@ export default function RoomShow({ room, candles, stories = [], pendingTributes:
     }, []);
 
     // ── Filters ──
-
-    const allTags = useMemo(() => {
-        const tags = new Set<string>();
-        (stories || []).forEach((s) => s.tags?.forEach((t: string) => tags.add(t)));
-        return Array.from(tags);
-    }, [stories]);
-
-    const filteredStories = useMemo(() => {
-        let result = stories || [];
-        if (activeTab !== 'All') {
-            const typeMap: Record<string, string> = {
-                'Photo Gallery': 'photo',
-                'Cinema Hall': 'video',
-                'Whispering Voices': 'audio',
-                Manuscripts: 'document',
-            };
-            const targetType = typeMap[activeTab] || activeTab.toLowerCase();
-            result = result.filter((s) => s.type.toLowerCase().includes(targetType));
-        }
-        if (selectedTag) {
-            result = result.filter((s) => s.tags?.includes(selectedTag));
-        }
-        return result;
-    }, [stories, activeTab, selectedTag]);
 
     // ── Candle Approval handler ──
     const handleApproveCandle = (candleId: number) => {
@@ -293,7 +307,7 @@ export default function RoomShow({ room, candles, stories = [], pendingTributes:
 
                 <section className="mb-16">
                    <Hero />
-                    {!room.enable_tributes && <VideoPlaylistPlayer stories={stories} />}
+                    {!room.enable_tributes && <VideoPlaylistPlayer stories={allStories} />}
                 </section>
 
                 {/* ════════════════════════════════════════ */}
@@ -301,65 +315,82 @@ export default function RoomShow({ room, candles, stories = [], pendingTributes:
                 {/* ════════════════════════════════════════ */}
 
                 
-                    <section className="mb-16">
-                        <div className="relative overflow-hidden rounded-3xl border border-white/5 bg-surface/20 p-8 md:p-10">
+                    <div className="mb-16 flex justify-center">
+                        <button
+                            onClick={() => setShowOptionalService(true)}
+                            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-accent-gold text-bg-dark text-sm font-bold tracking-wider uppercase transition-all hover:bg-accent-gold/90"
+                        >
+                            Request Story Editing Support
+                        </button>
+                    </div>
 
-                            {/* ambient glow */}
-                            <div className="absolute top-0 right-0 w-72 h-72 bg-accent-gold/5 blur-[120px] rounded-full pointer-events-none" />
-                            <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent-gold/5 blur-[120px] rounded-full pointer-events-none" />
+                    <ResponsiveModal
+                        isOpen={showOptionalService}
+                        onClose={() => setShowOptionalService(false)}
+                        title="Optional Service"
+                        desktopMaxWidth="max-w-2xl"
+                    >
+                        <div className="relative p-8 md:p-10">
+                            <button
+                                onClick={() => setShowOptionalService(false)}
+                                className="absolute top-6 right-6 text-text-muted transition-colors hover:text-text-primary"
+                            >
+                                <X size={24} />
+                            </button>
 
-                            <div className="relative z-10 max-w-3xl">
-
-                                {/* label */}
-                                <span className="text-[10px] font-mono tracking-[0.25em] text-accent-gold uppercase block mb-3">
+                            <div className="space-y-6">
+                                <span className="text-[10px] font-mono tracking-[0.25em] text-accent-gold uppercase block">
                                     Optional Service
                                 </span>
-
-                                {/* title */}
-                                <h2 className="text-2xl md:text-3xl font-light text-text-primary mb-4">
-                                    Memory Enhancement Before the Event
+                                <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
+                                    Professional Memory Editing & Legacy Support
                                 </h2>
-
-                                {/* description */}
-                                <p className="text-sm leading-relaxed text-text-muted mb-6">
-                                    Families now have the option to request professional enhancement of
-                                    images and video memories before they are presented during the event.
-                                    This includes refinement, restoration, and emotional presentation editing
-                                    to preserve dignity and clarity.
+                                <p className="text-sm leading-relaxed text-text-muted">
+                                    Families can request our professional support to organise, restore,
+                                    enhance, and edit photos, videos, tributes, stories, and other memories
+                                    uploaded into the room.
+                                </p>
+                                <p className="text-sm leading-relaxed text-text-muted">
+                                    This can be done after the event, or at any time when past family media,
+                                    random memories, or legacy content have been added.
+                                </p>
+                                <p className="text-sm leading-relaxed text-text-muted">
+                                    Our team can help turn your uploads into polished slideshows, tribute videos,
+                                    memory edits, story collections, or fuller family legacy pieces, prepared
+                                    with care, dignity, and clarity.
+                                </p>
+                                <p className="text-sm leading-relaxed text-text-muted">
+                                    To request this service for your room, please contact our team directly.
+                                    We will review your content and guide you on the best way to present it.
                                 </p>
 
-                                <p className="text-sm leading-relaxed text-text-muted mb-8">
-                                    If you would like this service for your room, please contact our team directly.
-                                    We will guide you through the process and prepare everything before the memorial begins.
-                                </p>
-
-                                {/* CTA */}
-                                <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-
-                                    {/* WhatsApp */}
+                                <div className="flex flex-wrap gap-4 pt-4">
                                     <a
                                         href="https://wa.me/447830129816"
                                         target="_blank"
-                                        className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
+                                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
                                     >
-                                        Contact on WhatsApp
+                                        <SiWhatsapp size={18} />
+                                        WhatsApp
                                     </a>
-
-                                    {/* Phone */}
                                     <a
                                         href="tel:+447830129816"
-                                        className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-white/10 text-text-primary hover:border-accent-gold/40 text-sm font-medium transition"
+                                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-text-primary hover:border-accent-gold/40 text-sm font-medium transition"
                                     >
-                                        Call Us Directly
+                                        <Phone size={16} />
+                                        Call
                                     </a>
-
-                                    <span className="text-xs text-text-muted">
-                                        Response within 24 hours
-                                    </span>
+                                    <a
+                                        href="mailto:hello@uloakstories.com"
+                                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-text-primary hover:border-accent-gold/40 text-sm font-medium transition"
+                                        >
+                                        <Mail size={16} />
+                                        Email
+                                    </a>
                                 </div>
                             </div>
                         </div>
-                    </section>
+                    </ResponsiveModal>
                 {room.enable_tributes && (
                     <section
                         id="share-tribute"
@@ -506,148 +537,199 @@ export default function RoomShow({ room, candles, stories = [], pendingTributes:
                 {/* ════════════════════════════════════════ */}
                 {/*  STORIES SECTION                         */}
                 {/* ════════════════════════════════════════ */}
-                {!room.enable_tributes && <section>
-                    <div className="mb-12 flex flex-col justify-between md:gap-8 gap-2 border-b border-white/5 md:pb-8 sm:flex-row sm:items-center">
-                        <div className="no-scrollbar flex items-center md:gap-8 gap-4 overflow-x-auto overflow-y-hidden pb-2">
-                            {['All', 'Photo Gallery', 'Cinema Hall', 'Whispering Voices', 'Manuscripts'].map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`relative shrink-0 py-2 text-xs font-bold tracking-[0.2em] uppercase transition-all ${activeTab === tab ? 'text-accent-gold' : 'text-text-muted hover:text-text-primary'}`}
-                                >
-                                    {tab}
-                                    {activeTab === tab && (
-                                        <motion.div layoutId="activeTab" className="absolute bottom-[-33px] left-0 right-0 h-0.5 bg-accent-gold" />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1 rounded-2xl border border-white/5 bg-surface/50 p-1 backdrop-blur-sm">
-                                <button onClick={() => setViewMode('grid')} className={`rounded-xl p-2 transition-all ${viewMode === 'grid' ? 'bg-white/5 text-accent-gold' : 'text-text-muted hover:text-text-primary'}`}>
-                                    <Grid size={18} />
-                                </button>
-                                <button onClick={() => setViewMode('list')} className={`rounded-xl p-2 transition-all ${viewMode === 'list' ? 'bg-white/5 text-accent-gold' : 'text-text-muted hover:text-text-primary'}`}>
-                                    <ListIcon size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {allTags.length > 0 && (
-                        <div className="mb-12 flex flex-wrap gap-3">
-                            <span className="mr-2 flex items-center gap-2 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                <Filter size={12} /> Filter:
-                            </span>
-                            {allTags.map((tag: any) => (
-                                <button
-                                    key={tag}
-                                    onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                                    className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${selectedTag === tag ? 'border-accent-gold bg-accent-gold text-bg-dark' : 'border-white/5 bg-surface/30 text-text-muted hover:border-accent-gold/40'}`}
-                                >
-                                    #{tag}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    <div className={viewMode === 'grid' ? 'grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-6'}>
-                        <AnimatePresence mode="popLayout">
-                            {filteredStories.map((story, i) => (
-                                <motion.div key={story.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                                    <Link href={storiesRoutes.show(story.id).url} className="group block h-full">
-                                        {viewMode === 'grid' ? (
-                                            <div className="surface-glow flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20">
-                                                <div className="relative aspect-4/3 overflow-hidden">
-                                                    <img
-                                                        src={story.thumbnail || '/logo-stacked.png'}
-                                                        alt={story.title}
-                                                        onError={(e) => { e.currentTarget.src = '/logo-stacked.png'; }}
-                                                        className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                                                    />
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/40 opacity-0 transition-opacity group-hover:opacity-100">
-                                                        <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl transition-transform duration-500 group-hover:scale-100">
-                                                            <Play size={24} fill="currentColor" className="ml-1" />
-                                                        </div>
-                                                    </div>
-                                                    <div className="absolute top-6 left-6">
-                                                        <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">{story.type}</Badge>
-                                                    </div>
-                                                </div>
-                                                <div className="flex grow flex-col justify-between gap-6 p-8">
-                                                    <div className="space-y-3">
-                                                        <h3 className="text-xl font-bold text-text-primary transition-colors group-hover:text-accent-gold">{story.title}</h3>
-                                                        <p className="line-clamp-2 text-sm font-light text-text-muted italic">"{story.description}"</p>
-                                                    </div>
-                                                    <div className="flex items-center justify-between border-t border-white/5 pt-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
-                                                        <div className="flex items-center gap-2">
-                                                            <UserIcon size={12} className="text-accent-gold" /> {story.author}
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={(e) => handleDeleteStory(story, e)}
-                                                                className="text-text-muted hover:text-red-400 transition-colors p-1"
-                                                                title="Delete story"
-                                                            >
-                                                                <Trash2 size={12} />
-                                                            </button>
-                                                            <Clock size={12} className="text-accent-gold" /> {story.date}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="surface-glow flex items-center gap-2 md:gap-8 rounded-3xl border border-white/5 bg-surface/40 p-2 md:p-6 transition-all hover:border-accent-gold/20">
-                                                <div className="relative md:aspect-video md:w-48 aspect-square shrink-0 overflow-hidden rounded-2xl">
-                                                    <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title} onError={(e) => { e.currentTarget.src = '/logo-stacked.png'; }} className="md:h-full h-18 md:w-full aspect-square object-cover" />
-                                                    <div className="absolute hidden inset-0 md:flex items-center justify-center bg-bg-dark/20">
-                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
-                                                            <Play size={16} fill="white" className="ml-0.5" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="grow space-y-0.5 md:space-y-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2 md:gap-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                                            <Badge className="border-white/10 bg-white/5 text-2xl">{story.type}</Badge>
-                                                            <span className="flex items-center gap-1"><Clock size={12} className="text-accent-gold" /> {story.date}</span>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => handleDeleteStory(story, e)}
-                                                            className="md:text-text-muted hover:text-red-400 p-1.5 border border-accent-gold/20 text-red-400 transition-colors rounded-full"
-                                                            title="Delete story"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </div>
-                                                    <h3 className="text-lg md:text-2xl font-bold text-text-primary transition-colors group-hover:text-accent-gold">{story.title}</h3>
-                                                    <p className="text-xs md:text-sm text-text-muted italic truncate">"{story.description}"</p>
-                                                    <div className="text-[8px] md:text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase flex items-center gap-2">
-                                                        <UserIcon size={12} className="text-accent-gold" /> {story.author}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </Link>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-
-                        {canModify && (
-                            <motion.div
-                                layout
-                                onClick={() => setIsAnnexModalOpen(true)}
-                                className={`group flex cursor-pointer flex-col items-center justify-center rounded-xl md:rounded-4xl border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 ${viewMode === 'grid' ? 'h-100 gap-4' : 'h-20 md:h-32 flex-row gap-6'}`}
-                            >
+                {!room.enable_tributes && (
+                    <StoryFeed
+                        stories={allStories}
+                        nextCursor={pagination?.next_cursor ?? null}
+                        urlBuilder={(...args) => roomsRoutes.show.url(args[0] as any, args[1] as any)}
+                        routeParams={{ slug: room.slug }}
+                        filters={{
+                            tabs: ['All', 'Photo Gallery', 'Cinema Hall', 'Whispering Voices', 'Manuscripts'],
+                            activeTab,
+                            onTabChange: setActiveTab,
+                            tags: Array.from(new Set(allStories.flatMap((s) => s.tags ?? []))),
+                            selectedTag,
+                            onTagChange: setSelectedTag,
+                            viewMode,
+                            onViewModeChange: setViewMode,
+                        }}
+                        emptyLabel="No memories have been shared yet."
+                        addCard={canModify ? (
+                            <div onClick={() => setIsAnnexModalOpen(true)}
+                                className={`group flex cursor-pointer flex-col items-center justify-center rounded-xl md:rounded-4xl border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 ${viewMode === 'grid' ? 'h-100 gap-4' : 'h-20 md:h-32 flex-row gap-6'}`}>
                                 <div className="flex h-12 md:h-16 aspect-square items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold">
                                     <Plus className='size-6 md:size-8' />
                                 </div>
                                 <span className="text-xs font-bold tracking-[0.3em] text-text-primary uppercase transition-colors group-hover:text-accent-gold">Add Memory</span>
-                            </motion.div>
-                        )}
-                    </div>
-                </section>}
+                            </div>
+                        ) : undefined}
+                    >
+                        {(story) => {
+                            const link = storiesRoutes.show(story.id).url;
+
+                            return (
+                                <Link href={link} className="group block h-full">
+                                    {viewMode === 'grid' ? (
+                                        <div className="surface-glow flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20">
+                                            {story.type === 'audio' ? (
+                                                <div className="relative aspect-4/3 overflow-hidden bg-linear-to-br from-amber-900/60 via-purple-900/40 to-bg-dark">
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Music className="text-accent-gold/20" size={80} strokeWidth={1} />
+                                                    </div>
+                                                    <div className="absolute inset-0 flex items-center justify-center gap-[3px] px-8">
+                                                        {Array.from({ length: 24 }).map((_, j) => (
+                                                            <motion.div
+                                                                key={j}
+                                                                className="w-[3px] rounded-full bg-accent-gold/60"
+                                                                animate={{
+                                                                    height: [8 + Math.random() * 40, 8 + Math.random() * 40, 8 + Math.random() * 40],
+                                                                }}
+                                                                transition={{
+                                                                    duration: 0.8 + Math.random() * 0.6,
+                                                                    repeat: Infinity,
+                                                                    ease: 'easeInOut',
+                                                                    delay: Math.random() * 0.4,
+                                                                }}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                                                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30">
+                                                            <Headphones size={24} fill="currentColor" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-4 left-4">
+                                                        <Badge className="border-amber-500/20 bg-amber-500/15 text-amber-300 text-[10px] tracking-widest uppercase backdrop-blur-md">
+                                                            <Music size={10} className="mr-1 inline" /> Audio
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            ) : story.type === 'video' ? (
+                                                <div className="relative aspect-4/3 overflow-hidden">
+                                                    <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                        onError={(e) => {
+ e.currentTarget.src = '/logo-stacked.png'; 
+}}
+                                                        className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                                    <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-linear-to-b from-bg-dark/60 to-transparent" />
+                                                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-bg-dark/60 to-transparent" />
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
+                                                        <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30 transition-transform duration-500 group-hover:scale-100">
+                                                            <Play size={24} fill="currentColor" className="ml-1" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-4 left-4">
+                                                        <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">
+                                                            <Film size={10} className="mr-1 inline" /> Video
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="absolute top-4 right-4">
+                                                        <Badge className="border-white/10 bg-bg-dark/60 px-3 py-1 text-[9px] font-bold tracking-wider text-text-muted uppercase backdrop-blur-md">HD</Badge>
+                                                    </div>
+                                                </div>
+                                            ) : story.type === 'photo' ? (
+                                                <div className="relative aspect-4/3 overflow-hidden">
+                                                    <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                        onError={(e) => {
+ e.currentTarget.src = '/logo-stacked.png'; 
+}}
+                                                        className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
+                                                        <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30 transition-transform duration-500 group-hover:scale-100">
+                                                            <Play size={24} fill="currentColor" className="ml-1" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute top-4 left-4">
+                                                        <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">{story.type}</Badge>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="relative aspect-4/3 overflow-hidden">
+                                                    <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                        onError={(e) => {
+ e.currentTarget.src = '/logo-stacked.png'; 
+}}
+                                                        className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20" />
+                                                    <div className="absolute top-4 left-4">
+                                                        <Badge className="border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">{story.type}</Badge>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex grow flex-col justify-between gap-6 p-8">
+                                                <div className="space-y-3">
+                                                    <h3 className="text-xl font-bold text-text-primary transition-colors group-hover:text-accent-gold">{story.title}</h3>
+                                                    <p className="line-clamp-2 text-sm font-light text-text-muted italic">"{story.description}"</p>
+                                                </div>
+                                                <div className="flex items-center justify-between border-t border-white/5 pt-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
+                                                    <div className="flex items-center gap-2">
+                                                        <UserIcon size={12} className="text-accent-gold" /> {story.author}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={(e) => handleDeleteStory(story, e)}
+                                                            className="text-text-muted hover:text-red-400 transition-colors p-1" title="Delete story">
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                        <Clock size={12} className="text-accent-gold" /> {story.date}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="surface-glow flex items-center gap-2 md:gap-8 rounded-3xl border border-white/5 bg-surface/40 p-2 md:p-6 transition-all hover:border-accent-gold/20">
+                                            <div className="relative md:aspect-video md:w-48 aspect-square shrink-0 overflow-hidden rounded-2xl">
+                                                {story.type === 'audio' ? (
+                                                    <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-amber-900/60 via-purple-900/40 to-bg-dark p-4">
+                                                        <div className="flex items-end gap-[2px] h-12">
+                                                            {Array.from({ length: 16 }).map((_, j) => (
+                                                                <motion.div key={j} className="w-[3px] rounded-full bg-accent-gold/60"
+                                                                    animate={{ height: [6 + Math.random() * 28, 6 + Math.random() * 28, 6 + Math.random() * 28] }}
+                                                                    transition={{ duration: 0.8 + Math.random() * 0.6, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 0.4 }} />
+                                                            ))}
+                                                        </div>
+                                                        <div className="absolute flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold/20 backdrop-blur-md">
+                                                            <Headphones size={16} className="text-accent-gold" />
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                            onError={(e) => {
+ e.currentTarget.src = '/logo-stacked.png'; 
+}}
+                                                            className="md:h-full h-18 md:w-full aspect-square object-cover" />
+                                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
+                                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold/80 text-bg-dark shadow-lg backdrop-blur-md">
+                                                                <Play size={16} fill="currentColor" className="ml-0.5" />
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <div className="grow space-y-0.5 md:space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 md:gap-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                        <Badge className="border-white/10 bg-white/5">{story.type === 'audio' ? <><Music size={10} className="mr-1 inline" /> Audio</> : story.type === 'video' ? <><Film size={10} className="mr-1 inline" /> Video</> : story.type}</Badge>
+                                                        <span className="flex items-center gap-1"><Clock size={12} className="text-accent-gold" /> {story.date}</span>
+                                                    </div>
+                                                    <button type="button" onClick={(e) => handleDeleteStory(story, e)}
+                                                        className="md:text-text-muted hover:text-red-400 p-1.5 border border-accent-gold/20 text-red-400 transition-colors rounded-full" title="Delete story">
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                                <h3 className="text-lg md:text-2xl font-bold text-text-primary transition-colors group-hover:text-accent-gold">{story.title}</h3>
+                                                <p className="text-xs md:text-sm text-text-muted italic truncate">"{story.description}"</p>
+                                                <div className="text-[8px] md:text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase flex items-center gap-2">
+                                                    <UserIcon size={12} className="text-accent-gold" /> {story.author}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </Link>
+                            );
+                        }}
+                    </StoryFeed>
+                )}
             </main>
 
             {/* Annex Memory Modal */}

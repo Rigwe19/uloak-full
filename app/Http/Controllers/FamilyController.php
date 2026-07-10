@@ -73,14 +73,14 @@ class FamilyController extends Controller
             ->where('room_id', $room->id)
             ->firstOrFail();
 
-        $stories = $room->stories()
+        $paginator = $room->stories()
             ->whereNull('follow_up_to')
             ->with(['comments' => function ($q) {
                 $q->latest();
             }, 'followUpStories'])
             ->latest()
-            ->get()
-            ->map(fn ($story) => [
+            ->cursorPaginate(24)
+            ->through(fn ($story) => [
                 'id' => $story->id,
                 'title' => $story->title,
                 'type' => $story->type,
@@ -118,7 +118,12 @@ class FamilyController extends Controller
                 'thumbnail' => $room->thumbnail,
                 'room_type' => $room->room_type,
             ],
-            'stories' => $stories,
+            'stories' => $paginator->items(),
+            'pagination' => [
+                'next_cursor' => $paginator->nextCursor()?->encode(),
+                'path' => $paginator->path(),
+                'per_page' => $paginator->perPage(),
+            ],
             'member' => [
                 'id' => $member->id,
                 'name' => $member->name,
@@ -147,7 +152,7 @@ class FamilyController extends Controller
             'type' => ['required', 'string', 'in:video,audio,photo'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file', 'max:51200'],
         ]);
 

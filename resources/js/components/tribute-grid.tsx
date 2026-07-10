@@ -1,21 +1,33 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, ChevronLeft, ChevronRight, Heart, Image as ImageIcon, MessageCircle, Mic, User, Video, X } from 'lucide-react';
-import { Key, SetStateAction, useEffect, useMemo, useState } from 'react';
-import { TributeItem } from './tribute-sections';
+import type { SetStateAction} from 'react';
+import { Key, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
     TransformWrapper,
     TransformComponent,
 } from "react-zoom-pan-pinch";
+import { VideoPlayer } from '@/components/media/VideoPlayer';
+import type { PlayerVideo } from '@/types/video-player';
+import type { TributeItem } from './tribute-sections';
 
 const PAGE_SIZE = 12;
 
 // Derive a single type per tribute so filtering/icons don't need to
 // re-check multiple optional fields all over the render tree.
 function getTributeType(tribute: { audio: any; video: any; images: string | any[]; }) {
-    if (tribute.audio) return 'audio';
-    if (tribute.video) return 'video';
-    if (tribute.images && tribute.images.length > 0) return 'photo';
+    if (tribute.audio) {
+return 'audio';
+}
+
+    if (tribute.video) {
+return 'video';
+}
+
+    if (tribute.images && tribute.images.length > 0) {
+return 'photo';
+}
+
     return 'text';
 }
 
@@ -58,6 +70,7 @@ function TributeCard({
     onOpenLightbox: (images: string[], index: number, tributeId: number) => void;
 }) {
     const hasMedia = (tribute.images && tribute.images.length > 0) || !!tribute.video;
+
     return (
         <motion.div
             layout
@@ -153,7 +166,23 @@ function TributeCard({
 
                 {tribute.video && (
                     <div className="border border-white/5 rounded-lg overflow-hidden">
-                        <video src={tribute.video} controls className="w-full aspect-video" />
+                        <VideoPlayer
+                            video={{
+                                id: `tribute-${tribute.id}-video`,
+                                title: 'Tribute Video',
+                                url: tribute.video,
+                                thumbnail: null,
+                                preview: null,
+                                sprite: null,
+                            }}
+                            autoPlay={false}
+                            showControls
+                            showSpeedControl={false}
+                            showPip={false}
+                            showVolumeSlider
+                            className="w-full aspect-video"
+                            videoClassName="w-full h-full object-contain"
+                        />
                     </div>
                 )}
             </div>
@@ -175,7 +204,10 @@ export default function TributesGrid({ tributes, isBirthday }: { tributes: Tribu
 
     const counts = useMemo(() => {
         const c: Record<string, number> = { all: typedTributes.length, audio: 0, video: 0, photo: 0, text: 0 };
-        typedTributes.forEach((t: { _type: string | number; }) => { c[t._type] += 1; });
+        typedTributes.forEach((t: { _type: string | number; }) => {
+ c[t._type] += 1; 
+});
+
         return c;
     }, [typedTributes]);
 
@@ -293,7 +325,9 @@ function ImageLightbox({
         };
     }, []);
     useEffect(() => {
-        if (images.length <= 1) return;
+        if (images.length <= 1) {
+return;
+}
 
         const next =
             images[(index + 1) % images.length];
@@ -311,11 +345,17 @@ function ImageLightbox({
     }, [index, images]);
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
+            if (e.key === "Escape") {
+onClose();
+}
 
-            if (e.key === "ArrowLeft") prev();
+            if (e.key === "ArrowLeft") {
+prev();
+}
 
-            if (e.key === "ArrowRight") next();
+            if (e.key === "ArrowRight") {
+next();
+}
         };
 
         window.addEventListener("keydown", handler);

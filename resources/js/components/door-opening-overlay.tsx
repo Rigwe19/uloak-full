@@ -1,7 +1,7 @@
+import { Key } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
-import { Key } from 'lucide-react';
 
 interface DoorOpeningOverlayProps {
     isActive: boolean;
@@ -16,6 +16,7 @@ export function DoorOpeningOverlay({ isActive, onComplete }: DoorOpeningOverlayP
         if (!isActive) {
             setShowKeyAnimation(false);
             setIsUnlocked(false);
+
             return;
         }
 

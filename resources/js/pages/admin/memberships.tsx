@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import AdminLayout from '@/layouts/admin-layout';
-import { CreditCard, Users, TrendingUp, DollarSign, Settings, ArrowRight, Check, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/dashboard/ui';
-import admin from '@/routes/admin';
+import { CreditCard, Users, TrendingUp, DollarSign, Settings, ArrowRight, Check, Plus } from 'lucide-react';
+import React, { useState } from 'react';
 import PlanPerformanceModal from '@/components/admin/plan-performance-modal';
+import { Button } from '@/components/dashboard/ui';
+import AdminLayout from '@/layouts/admin-layout';
+import admin from '@/routes/admin';
 
 interface Plan {
     name: string;

@@ -1,4 +1,3 @@
-import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Mic,
@@ -11,6 +10,8 @@ import {
     Loader2,
     Volume2,
 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Button } from './ui';
 
 interface VoiceRecorderProps {
@@ -73,6 +74,7 @@ export function VoiceRecorder({ onClose, onSave }: VoiceRecorderProps) {
                     ctx.globalAlpha = 0.3 + (dataArray[i] / 255) * 0.7;
 
                     ctx.beginPath();
+
                     // @ts-ignore - roundRect is relatively new
                     if (ctx.roundRect) {
                         // @ts-ignore
@@ -80,6 +82,7 @@ export function VoiceRecorder({ onClose, onSave }: VoiceRecorderProps) {
                     } else {
                         ctx.rect(x, y, barWidth, barHeight);
                     }
+
                     ctx.fill();
 
                     x += barWidth + spacing;
@@ -89,8 +92,10 @@ export function VoiceRecorder({ onClose, onSave }: VoiceRecorderProps) {
             draw();
 
             return () => {
-                if (animationFrameRef.current)
-                    cancelAnimationFrame(animationFrameRef.current);
+                if (animationFrameRef.current) {
+cancelAnimationFrame(animationFrameRef.current);
+}
+
                 audioContext.close();
             };
         }
@@ -132,14 +137,17 @@ export function VoiceRecorder({ onClose, onSave }: VoiceRecorderProps) {
             }, 1000);
         } catch (err) {
             console.error('Error accessing microphone:', err);
-            alert('Could not access microphone. Please check permissions.');
+            toast.error('Could not access microphone. Please check permissions.');
         }
     };
 
     const stopRecording = () => {
         if (mediaRecorderRef.current && state === 'recording') {
             mediaRecorderRef.current.stop();
-            if (timerRef.current) clearInterval(timerRef.current);
+
+            if (timerRef.current) {
+clearInterval(timerRef.current);
+}
         }
     };
 
@@ -160,6 +168,7 @@ export function VoiceRecorder({ onClose, onSave }: VoiceRecorderProps) {
         setAudioUrl(null);
         setRecordingTime(0);
         setState('idle');
+
         if (audioRef.current) {
             audioRef.current.pause();
             audioRef.current.src = '';
@@ -169,6 +178,7 @@ export function VoiceRecorder({ onClose, onSave }: VoiceRecorderProps) {
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
+
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
@@ -179,6 +189,7 @@ export function VoiceRecorder({ onClose, onSave }: VoiceRecorderProps) {
             } else {
                 audioRef.current.play();
             }
+
             setIsPlaying(!isPlaying);
         }
     };

@@ -13,7 +13,10 @@ class DashboardService
     public function getDashboardData(User $user): array
     {
         $userRooms = $this->getRoomsWithCounts(
-            $user->rooms()->with(['members'])
+            Room::where(function ($query) use ($user) {
+                $query->whereIn('id', $user->rooms()->select('rooms.id'))
+                    ->orWhere('created_by', $user->id);
+            })->with(['members'])
         );
 
         $adminRooms = $this->getRoomsWithCounts(
@@ -24,6 +27,20 @@ class DashboardService
 
         // Merge user rooms with admin rooms, deduplicating by id
         $rooms = $userRooms->merge($adminRooms)->unique('id')->values();
+
+        $houseMembers = $user->houseMembers()->latest()->get();
+
+        $houseMemberData = $houseMembers->map(fn ($m) => [
+            'id' => $m->id,
+            'name' => $m->name,
+            'avatar' => $m->avatar,
+        ]);
+
+        $rooms->each(function ($room) use ($houseMemberData) {
+            $existingIds = $room->members->pluck('id')->toArray();
+            $membersToAdd = $houseMemberData->reject(fn ($hm) => in_array($hm['id'], $existingIds));
+            $room->setRelation('members', $room->members->concat($membersToAdd));
+        });
 
         $recentStories = Story::whereIn('room_id', $rooms->pluck('id'))
             ->with(['user', 'room'])
@@ -50,6 +67,7 @@ class DashboardService
                 'date' => $story->created_at->format('M d, Y'),
             ]),
             'stats' => $stats,
+            'house_members' => $houseMemberData,
             'notifications' => [], // $user->notifications()->take(5)->get(),
         ];
     }

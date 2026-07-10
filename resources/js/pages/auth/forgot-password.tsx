@@ -1,6 +1,6 @@
-import React from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { Mail, AlertCircle, ArrowLeft } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { login } from '@/routes';

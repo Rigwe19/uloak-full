@@ -1,6 +1,6 @@
-import { motion } from 'motion/react';
-import { Shield, Lock, Eye, FileText, Globe, Users, BookOpen, Heart, Film, Zap, Database, Microscope, Key, LayoutGrid, Camera, Mic, Book, Briefcase, Coffee } from 'lucide-react';
 import { Head } from '@inertiajs/react';
+import { Shield, Lock, Eye, FileText, Globe, Users, BookOpen, Heart, Film, Zap, Database, Microscope, Key, LayoutGrid, Camera, Mic, Book, Briefcase, Coffee } from 'lucide-react';
+import { motion } from 'motion/react';
 import GuestLayout from '@/layouts/guest-layout';
 
 interface Props {
@@ -106,6 +106,7 @@ export default function Privacy({ page }: Props) {
                         <div className="grid gap-8">
                             {sections.map((section: any, i: number) => {
                                 const IconComponent = iconMap[section.icon as keyof typeof iconMap] || Shield;
+
                                 return (
                                     <motion.div
                                         key={i}

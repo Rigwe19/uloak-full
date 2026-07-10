@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:send-media-upload-reminders')->dailyAt('07:00');
+Schedule::command('analytics:aggregate')->dailyAt('03:00');

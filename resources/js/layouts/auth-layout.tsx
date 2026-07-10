@@ -1,12 +1,16 @@
+import { Link, usePage } from '@inertiajs/react';
+import { AnimatePresence } from 'framer-motion';
 import { motion } from 'motion/react';
+import { PageTransition } from '@/components/page-transition';
 import { home } from '@/routes';
-import { Link } from '@inertiajs/react';
 
 export default function AuthLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const { url } = usePage();
+
     return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg-dark md:p-8 p-4">
             {/* Background Ambience */}
@@ -27,7 +31,11 @@ export default function AuthLayout({
                             className="mx-auto mb-8 h-16"
                         />
                     </Link>
-                    {children}
+                    <AnimatePresence mode="wait" initial={false}>
+                        <PageTransition key={url} type="subtle">
+                            {children}
+                        </PageTransition>
+                    </AnimatePresence>
                 </div>
             </motion.div>
         </div>

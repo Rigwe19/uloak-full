@@ -1,7 +1,5 @@
 import { Head, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { storeGuestSubscription } from '@/actions/App/Http/Controllers/ShareController';
-import React from 'react';
 import {
     ArrowLeft,
     Camera,
@@ -29,10 +27,22 @@ import {
     Video,
     X,
 } from 'lucide-react';
+import React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Hero from '@/components/hero';
 import { createPortal } from 'react-dom';
+import { toast } from 'sonner';
+import { storeGuestSubscription } from '@/actions/App/Http/Controllers/ShareController';
+import StoryCard from '@/components/feed/StoryCard';
+import StoryFeed from '@/components/feed/StoryFeed';
+import Hero from '@/components/hero';
+import { VideoCard } from '@/components/media/VideoCard';
+import { VideoPlayer } from '@/components/media/VideoPlayer';
+import { VideoSocialOverlay } from '@/components/media/VideoSocialOverlay';
 import { ResponsiveModal } from '@/components/responsive-modal';
+import { UploadDropzone } from '@/components/upload/UploadDropzone';
+import { usePlayerStore } from '@/stores/video-player-store';
+import type { FeedStory } from '@/types/feed';
+import type { PlayerVideo } from '@/types/video-player';
 
 /* ─── Animations ─────────────────────────────────────────── */
 const fadeInUp = {
@@ -56,27 +66,15 @@ interface ShareRoomProps {
         enable_candle_lighting: boolean;
         tribute_name: string | null;
     };
-    stories: StoryData[];
+    stories: FeedStory[];
+    pagination?: {
+        next_cursor: string | null;
+        path: string;
+        per_page: number;
+    };
     flash?: {
         success?: string;
     };
-}
-
-interface StoryData {
-    id: number;
-    title: string;
-    type: string;
-    description: string;
-    author: string;
-    email?: string;
-    thumbnail: string | null;
-    file_url: string | null;
-    assets: { url: string; type: string; title: string }[];
-    comments: CommentData[];
-    comments_count: number;
-    follow_ups: FollowUpData[];
-    date: string;
-    tags: string[];
 }
 
 interface CommentData {
@@ -86,22 +84,16 @@ interface CommentData {
     date: string;
 }
 
-interface FollowUpData {
-    id: number;
-    type: string;
-    file_url: string | null;
-    thumbnail: string | null;
-    author: string;
-    created_at: string;
-}
-
 /* ─── Live Waveform ──────────────────────────────────────── */
 function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const rafRef = useRef<number>(0);
 
     useEffect(() => {
-        if (!stream) return;
+        if (!stream) {
+return;
+}
+
         const ctx = new AudioContext();
         const src = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
@@ -112,9 +104,17 @@ function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
 
         const draw = () => {
             rafRef.current = requestAnimationFrame(draw);
-            if (!canvas) return;
+
+            if (!canvas) {
+return;
+}
+
             const c = canvas.getContext('2d');
-            if (!c) return;
+
+            if (!c) {
+return;
+}
+
             analyser.getByteFrequencyData(data);
             c.clearRect(0, 0, canvas.width, canvas.height);
             const barW = canvas.width / data.length;
@@ -219,72 +219,21 @@ function MediaViewerModal({
     story,
     onClose,
 }: {
-    story: StoryData | null;
+    story: FeedStory | null;
     onClose: () => void;
 }) {
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [isPlaying, setIsPlaying] = useState(true);
-    const [showControls, setShowControls] = useState(true);
-    const [progress, setProgress] = useState(0);
-    const [duration, setDuration] = useState(0);
-    const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const overlayVisible = usePlayerStore((s) => s.overlayVisible);
+    const showOverlay = usePlayerStore((s) => s.showOverlay);
 
-    if (!story) return null;
+    if (!story) {
+return null;
+}
 
     const mediaUrl = story.file_url || story.assets?.[0]?.url || null;
 
-    useEffect(() => {
-        const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
-    }, [onClose]);
-
-    const togglePlay = useCallback(() => {
-        if (!videoRef.current) return;
-        if (videoRef.current.paused) {
-            videoRef.current.play();
-            setIsPlaying(true);
-        } else {
-            videoRef.current.pause();
-            setIsPlaying(false);
-        }
-    }, []);
-
-    const handleTimeUpdate = useCallback(() => {
-        if (!videoRef.current || !videoRef.current.duration) return;
-        setProgress((videoRef.current.currentTime / videoRef.current.duration) * 100);
-    }, []);
-
-    const handleLoadedMetadata = useCallback(() => {
-        if (videoRef.current) {
-            setDuration(videoRef.current.duration);
-        }
-    }, []);
-
-    const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        if (!videoRef.current || !videoRef.current.duration) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const pct = x / rect.width;
-        videoRef.current.currentTime = pct * videoRef.current.duration;
-        setProgress(pct * 100);
-    }, []);
-
-    const showControlsTemporarily = useCallback(() => {
-        setShowControls(true);
-        if (controlsTimer.current) clearTimeout(controlsTimer.current);
-        controlsTimer.current = setTimeout(() => setShowControls(false), 3000);
-    }, []);
-
-    const fmtDuration = (s: number) => {
-        const m = Math.floor(s / 60);
-        const sec = Math.floor(s % 60);
-        return `${m}:${sec.toString().padStart(2, '0')}`;
-    };
-
-    const initialProgress = progress;
+    const handleContainerClick = useCallback(() => {
+        showOverlay();
+    }, [showOverlay]);
 
     return (
         <AnimatePresence>
@@ -293,17 +242,19 @@ function MediaViewerModal({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[120] bg-black flex flex-col"
-                onClick={showControlsTemporarily}
+                onClick={handleContainerClick}
             >
                 {/* Close button */}
-                <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-6 right-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white/80 hover:bg-white/20 hover:text-white transition-all backdrop-blur-sm">
+                <button onClick={(e) => {
+ e.stopPropagation(); onClose(); 
+}} className="absolute top-6 right-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white/80 hover:bg-white/20 hover:text-white transition-all backdrop-blur-sm">
                     <X size={22} />
                 </button>
 
                 {/* Top info bar */}
                 <motion.div
                     initial={false}
-                    animate={{ opacity: showControls ? 1 : 0 }}
+                    animate={{ opacity: overlayVisible ? 1 : 0 }}
                     transition={{ duration: 0.2 }}
                     className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-6 pb-12"
                 >
@@ -324,33 +275,30 @@ function MediaViewerModal({
                     {(story.type === 'video' || story.type === 'photo') && mediaUrl && (
                         <div className="absolute inset-0 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                             {story.type === 'video' ? (
-                                <video
-                                    ref={videoRef}
-                                    src={mediaUrl}
-                                    className="w-full h-full object-contain"
+                                <VideoPlayer
+                                    video={{
+                                        id: `modal-${story.id}`,
+                                        storyId: story.id,
+                                        title: story.title,
+                                        url: mediaUrl,
+                                        thumbnail: story.thumbnail || null,
+                                        preview: null,
+                                        sprite: null,
+                                        author: story.author,
+                                        date: story.date,
+                                    }}
                                     autoPlay
-                                    playsInline
-                                    loop
-                                    onClick={togglePlay}
-                                    onTimeUpdate={handleTimeUpdate}
-                                    onLoadedMetadata={handleLoadedMetadata}
+                                    showControls
+                                    showSpeedControl
+                                    showPip
+                                    showVolumeSlider
+                                    className="w-full h-full"
+                                    videoClassName="w-full h-full object-contain"
+                                    onClose={onClose}
                                 />
                             ) : (
                                 <img src={mediaUrl} alt={story.title} className="w-full h-full object-contain" />
                             )}
-
-                            {/* Play/Pause overlay */}
-                            <motion.button
-                                initial={false}
-                                animate={{ opacity: showControls && !isPlaying ? 1 : 0, scale: showControls && !isPlaying ? 1 : 0.8 }}
-                                transition={{ duration: 0.2 }}
-                                onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-                                className="absolute inset-0 flex items-center justify-center"
-                            >
-                                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                                    <Play size={32} fill="white" className="ml-1 text-white" />
-                                </div>
-                            </motion.button>
                         </div>
                     )}
 
@@ -373,7 +321,7 @@ function MediaViewerModal({
                     )}
 
                     {/* Description overlay on video (shown over bottom of video) */}
-                    {story.description && showControls && (
+                    {story.description && overlayVisible && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -385,36 +333,8 @@ function MediaViewerModal({
                     )}
                 </div>
 
-                {/* Bottom: controls bar + scrollable comments */}
+                {/* Bottom: scrollable comments */}
                 <div className="relative z-10 bg-black" onClick={(e) => e.stopPropagation()}>
-                    {/* Video controls */}
-                    {story.type === 'video' && (
-                        <motion.div
-                            initial={false}
-                            animate={{ opacity: showControls ? 1 : 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="bg-gradient-to-t from-black/90 to-black/60 px-6 pt-4 pb-2"
-                        >
-                            {/* Progress bar */}
-                            <div className="mb-3">
-                                <div className="h-1 bg-white/20 rounded-full cursor-pointer group relative" onClick={handleSeek}>
-                                    <div className="h-full bg-accent-gold rounded-full transition-all" style={{ width: `${progress}%` }} />
-                                    <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-accent-gold shadow-lg" style={{ left: `calc(${progress}% - 6px)` }} />
-                                </div>
-                                <div className="flex justify-between mt-1 text-[10px] font-mono text-white/50">
-                                    <span>{fmtDuration((progress / 100) * (duration || 1))}</span>
-                                    <span>{fmtDuration(duration)}</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <button onClick={togglePlay} className="text-white hover:text-accent-gold transition-colors">
-                                    {isPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" />}
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {/* Scrollable comments section at bottom */}
                     <div className="max-h-[30vh] overflow-y-auto px-6 py-3 space-y-2 border-t border-white/5">
                         {story.comments.length > 0 ? (
                             story.comments.map((c) => (
@@ -471,9 +391,11 @@ function CommentsModal({
             onSuccess: (page) => {
                 const data = page.props as unknown as ShareRoomProps;
                 const story = data.stories.find(s => s.id === storyId);
+
                 if (story) {
                     setLocalComments(story.comments);
                 }
+
                 setIsLoading(false);
             },
             onError: () => setIsLoading(false),
@@ -482,7 +404,11 @@ function CommentsModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!commentText.trim()) return;
+
+        if (!commentText.trim()) {
+return;
+}
+
         setIsSubmitting(true);
         router.post(
             `/share/rooms/${roomSlug}/comments`,
@@ -506,7 +432,10 @@ function CommentsModal({
                         onSuccess: (page) => {
                             const data = page.props as unknown as ShareRoomProps;
                             const story = data.stories.find(s => s.id === storyId);
-                            if (story) setLocalComments(story.comments);
+
+                            if (story) {
+setLocalComments(story.comments);
+}
                         },
                     });
                 },
@@ -606,7 +535,11 @@ function CommentSection({
 
     const handleSubmitComment = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!commentText.trim()) return;
+
+        if (!commentText.trim()) {
+return;
+}
+
         setIsSubmitting(true);
         router.post(
             `/share/rooms/${roomSlug}/comments`,
@@ -702,8 +635,13 @@ function GuestIdentityGate({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+
+        if (!name.trim()) {
+return;
+}
+
         onComplete(name.trim(), email.trim());
+
         // Save to database for upload reminders
         if (email.trim()) {
             router.post(storeGuestSubscription.url(roomSlug), { name: name.trim(), email: email.trim() }, {
@@ -851,10 +789,12 @@ function MediaCaptureHub({
             streamRef.current.getTracks().forEach((t) => t.stop());
             streamRef.current = null;
         }
+
         if (audioStream) {
             audioStream.getTracks().forEach((t) => t.stop());
             setAudioStream(null);
         }
+
         // Clean up video preview URL to prevent memory leaks
         if (videoPreviewUrl) {
             URL.revokeObjectURL(videoPreviewUrl);
@@ -884,18 +824,22 @@ function MediaCaptureHub({
             setCameraActive(true);
             setMode('camera');
         } catch {
-            alert('Could not access camera. Please allow camera access and try again.');
+            toast.error('Could not access camera. Please allow camera access and try again.');
         }
     }, []);
 
     const capturePhoto = useCallback(() => {
-        if (!videoRef.current || !canvasRef.current || !streamRef.current) return;
+        if (!videoRef.current || !canvasRef.current || !streamRef.current) {
+return;
+}
+
         const video = videoRef.current;
         const canvas = canvasRef.current;
 
         // If video dimensions aren't ready, retry on next frame
         if (video.videoWidth === 0 || video.videoHeight === 0) {
             requestAnimationFrame(capturePhoto);
+
             return;
         }
 
@@ -933,7 +877,9 @@ function MediaCaptureHub({
             videoChunksRef.current = [];
 
             mr.ondataavailable = (e) => {
-                if (e.data.size > 0) videoChunksRef.current.push(e.data);
+                if (e.data.size > 0) {
+videoChunksRef.current.push(e.data);
+}
             };
 
             mr.onstop = () => {
@@ -956,22 +902,29 @@ function MediaCaptureHub({
             setMode('video');
         } catch (err) {
             console.error('Video recording error:', err);
-            alert('Could not access camera. Please allow access and try again.');
+            toast.error('Could not access camera. Please allow access and try again.');
         }
     }, []);
 
     const stopVideoRecording = useCallback(() => {
-        if (videoTimerRef.current) clearInterval(videoTimerRef.current);
+        if (videoTimerRef.current) {
+clearInterval(videoTimerRef.current);
+}
+
         mediaRecorderRef.current?.stop();
         setCameraActive(false);
     }, []);
 
     const rerecordVideo = useCallback(() => {
-        if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+        if (videoPreviewUrl) {
+URL.revokeObjectURL(videoPreviewUrl);
+}
+
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => t.stop());
             streamRef.current = null;
         }
+
         setVideoBlob(null);
         setVideoPreviewUrl(null);
         setVideoSeconds(0);
@@ -986,7 +939,11 @@ function MediaCaptureHub({
             setAudioStream(s);
             const mr = new MediaRecorder(s, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4' });
             audioChunksRef.current = [];
-            mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+            mr.ondataavailable = (e) => {
+ if (e.data.size > 0) {
+audioChunksRef.current.push(e.data);
+} 
+};
             mr.onstop = () => {
                 const blob = new Blob(audioChunksRef.current, { type: mr.mimeType });
                 const url = URL.createObjectURL(blob);
@@ -1003,17 +960,23 @@ function MediaCaptureHub({
             setMode('audio');
             audioTimerRef.current = setInterval(() => setAudioSeconds((p) => p + 1), 1000);
         } catch {
-            alert('Could not access microphone. Please allow microphone access and try again.');
+            toast.error('Could not access microphone. Please allow microphone access and try again.');
         }
     }, []);
 
     const stopAudioRecording = useCallback(() => {
-        if (audioTimerRef.current) clearInterval(audioTimerRef.current);
+        if (audioTimerRef.current) {
+clearInterval(audioTimerRef.current);
+}
+
         audioRecorderRef.current?.stop();
     }, []);
 
     const rerecordAudio = useCallback(() => {
-        if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
+        if (audioBlobUrl) {
+URL.revokeObjectURL(audioBlobUrl);
+}
+
         setAudioBlob(null);
         setAudioBlobUrl(null);
         setAudioSeconds(0);
@@ -1023,6 +986,7 @@ function MediaCaptureHub({
 
     const handleUploadFiles = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
+
         if (files.length > 0) {
             setUploadFiles((prev) => [...prev, ...files]);
             files.forEach((file) => {
@@ -1034,6 +998,7 @@ function MediaCaptureHub({
             });
             setMode('upload');
         }
+
         e.target.value = '';
     }, []);
 
@@ -1082,11 +1047,13 @@ function MediaCaptureHub({
             const firstFile = uploadFiles[0];
             const mime = firstFile.type;
             let detectedType = 'photo';
+
             if (mime.startsWith('video/')) {
                 detectedType = 'video';
             } else if (mime.startsWith('audio/')) {
                 detectedType = 'audio';
             }
+
             formData.append('type', detectedType);
         } else {
             return;
@@ -1106,7 +1073,7 @@ function MediaCaptureHub({
             },
             onError: () => {
                 setIsSubmittingMedia(false);
-                alert('Something went wrong sharing your memory. Please try again.');
+                toast.error('Something went wrong sharing your memory. Please try again.');
             },
         });
     };
@@ -1118,7 +1085,11 @@ function MediaCaptureHub({
         const bstr = atob(arr[1]);
         let n = bstr.length;
         const u8arr = new Uint8Array(n);
-        while (n--) u8arr[n] = bstr.charCodeAt(n);
+
+        while (n--) {
+u8arr[n] = bstr.charCodeAt(n);
+}
+
         return new Blob([u8arr], { type: mime });
     };
 
@@ -1145,10 +1116,15 @@ function MediaCaptureHub({
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
                             onClick={() => {
-                                if (item.key === 'camera') startCamera();
-                                else if (item.key === 'video') startVideoRecording();
-                                else if (item.key === 'audio') startAudioRecording();
-                                else { setMode('upload'); fileInputRef.current?.click(); }
+                                if (item.key === 'camera') {
+startCamera();
+} else if (item.key === 'video') {
+startVideoRecording();
+} else if (item.key === 'audio') {
+startAudioRecording();
+} else {
+ setMode('upload'); fileInputRef.current?.click(); 
+}
                             }}
                             className="flex flex-col items-center gap-3 rounded-2xl md:border md:border-border-subtle bg-surface/30 md:p-5 transition-all hover:border-accent-gold/40 hover:bg-surface/60"
                         >
@@ -1400,13 +1376,24 @@ function MediaCaptureHub({
                                     <div className="relative flex h-full flex-col">
                                         <CaptureTopBar label="Upload" onBack={closeFullscreen} />
                                         <div className="flex flex-1 flex-col items-center justify-center px-6">
-                                            <div
-                                                onClick={() => fileInputRef.current?.click()}
-                                                className="w-full max-w-sm cursor-pointer rounded-3xl border-2 border-dashed border-white/15 bg-white/[0.03] p-10 text-center transition-all active:scale-[0.98] hover:border-accent-gold/40 hover:bg-accent-gold/5"
-                                            >
-                                                <Upload className="mx-auto mb-4 text-white/40" size={36} />
-                                                <span className="block text-sm font-medium text-white">Tap to browse files</span>
-                                                <span className="mt-1.5 block text-xs text-white/40">Images, Videos, Audio · Max 50MB each</span>
+                                            <div className="w-full max-w-sm">
+                                                <UploadDropzone
+                                                    onFilesSelected={(files) => {
+                                                        setUploadFiles((prev) => [...prev, ...files]);
+                                                        files.forEach((file) => {
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setUploadPreviews((prev) => [...prev, reader.result as string]);
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        });
+                                                        setMode('upload');
+                                                    }}
+                                                    multiple
+                                                    accept="image/*,video/*,audio/*"
+                                                    maxSizeMB={50}
+                                                    label="Tap to browse files"
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -1426,13 +1413,36 @@ function MediaCaptureHub({
 }
 
 /* ─── Main Page ──────────────────────────────────────────── */
-export default function RoomShare({ room, stories, flash }: ShareRoomProps) {
-    // const [stories, setStories] = useState(initialStories);
+export default function RoomShare({ room, stories: initialStories, pagination, flash }: ShareRoomProps) {
+    const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [guestName, setGuestName] = useState(() => localStorage.getItem('room-share-name') || '');
     const [guestEmail, setGuestEmail] = useState(() => localStorage.getItem('room-share-email') || '');
     const [isIdentified, setIsIdentified] = useState(() => !!localStorage.getItem('room-share-name'));
-    const [viewerStory, setViewerStory] = useState<StoryData | null>(null);
+    const [viewerStory, setViewerStory] = useState<FeedStory | null>(null);
     const [commentsStoryId, setCommentsStoryId] = useState<number | null>(null);
+
+    // Merge paginated stories & handle reset
+    useEffect(() => {
+        const handleAppended = (e: CustomEvent) => {
+            const { stories: newStories } = e.detail;
+            setAllStories((prev) => {
+                const existingIds = new Set(prev.map((s) => s.id));
+                const unique = newStories.filter((s: FeedStory) => !existingIds.has(s.id));
+
+                return [...prev, ...unique];
+            });
+        };
+        const handleReset = (e: CustomEvent) => {
+            setAllStories(e.detail.stories);
+        };
+        window.addEventListener('feed:appended', handleAppended as EventListener);
+        window.addEventListener('feed:reset', handleReset as EventListener);
+
+        return () => {
+            window.removeEventListener('feed:appended', handleAppended as EventListener);
+            window.removeEventListener('feed:reset', handleReset as EventListener);
+        };
+    }, []);
 
     // Tribute song player state
     const [isPlayingSong, setIsPlayingSong] = useState(false);
@@ -1453,12 +1463,20 @@ export default function RoomShare({ room, stories, flash }: ShareRoomProps) {
             only: ['stories'],
             preserveScroll: true,
             preserveState: true,
+            onSuccess: (page) => {
+                const data = page.props as any;
+                window.dispatchEvent(new CustomEvent('feed:reset', {
+                    detail: { stories: data.stories ?? [] }
+                }));
+            },
         });
     }, []);
 
     // Tribute song toggle
     const toggleTributeSong = useCallback(() => {
-        if (!room.tribute_song) return;
+        if (!room.tribute_song) {
+return;
+}
 
         if (!audioRef.current) {
             audioRef.current = new Audio(room.tribute_song);
@@ -1470,6 +1488,7 @@ export default function RoomShare({ room, stories, flash }: ShareRoomProps) {
         } else {
             audioRef.current.play().catch(() => { });
         }
+
         setIsPlayingSong(!isPlayingSong);
     }, [isPlayingSong, room.tribute_song]);
     const clearSession = useCallback(() => {
@@ -1561,111 +1580,50 @@ export default function RoomShare({ room, stories, flash }: ShareRoomProps) {
                         <div className="h-px w-20 bg-accent-gold/30 mx-auto mt-4" />
                     </div>
 
-                    <AnimatePresence mode="popLayout">
-                        {stories.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {stories.map((story, i) => (
-                                    <motion.div
-                                        key={story.id}
-                                        layout
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.05 }}
-                                        className="bg-surface/30 border border-white/5 rounded-2xl overflow-hidden transition-all duration-300 hover:border-accent-gold/20 hover:bg-surface/50"
-                                    >
-                                        {/* Media thumbnail */}
-                                        <div
-                                            className="relative aspect-video overflow-hidden bg-bg-dark cursor-pointer group"
-                                            onClick={() => setViewerStory(story)}
-                                        >
-                                            {story.type === 'video' && story.file_url ? (
-                                                <>
-                                                    <video src={story.file_url} className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <div className="w-14 h-14 rounded-full bg-accent-gold/90 flex items-center justify-center">
-                                                            <Play size={22} fill="white" className="ml-1 text-white" />
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            ) : story.type === 'audio' ? (
-                                                <div className="flex items-center justify-center h-full bg-gradient-to-br from-accent-gold/5 to-surface">
-                                                    <div className="text-center">
-                                                        <Music size={40} className="text-accent-gold/60 mx-auto mb-2" />
-                                                        <span className="text-[10px] font-mono tracking-wider text-accent-gold uppercase block">Voice Recording</span>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <img
-                                                    src={story.thumbnail || story.file_url || '/logo-stacked.png'}
-                                                    alt={story.title}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                                    onError={(e) => { e.currentTarget.src = '/logo-stacked.png'; }}
-                                                />
-                                            )}
-                                            {/* Type badge */}
-                                            <div className="absolute top-3 left-3">
-                                                <span className="text-[9px] font-mono tracking-wider uppercase bg-bg-dark/70 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-text-muted flex items-center gap-1.5">
-                                                    {story.type === 'video' ? <Video size={10} /> : story.type === 'audio' ? <Mic size={10} /> : <ImageIcon size={10} />}
-                                                    {story.type}
-                                                </span>
-                                            </div>
+                    <StoryFeed
+                        stories={allStories}
+                        nextCursor={pagination?.next_cursor ?? null}
+                        routeName="share.rooms.show"
+                        routeParams={{ slug: room.slug }}
+                        emptyLabel="Be the first to share a memory! Introduce yourself above and capture a photo, record a video, or upload media."
+                    >
+                        {(story) => (
+                            <div className="bg-surface/30 border border-white/5 rounded-2xl overflow-hidden transition-all duration-300 hover:border-accent-gold/20 hover:bg-surface/50">
+                                <StoryCard story={story} onClick={() => setViewerStory(story)} />
+                                <div className="p-5 space-y-3">
+                                    <h3 className="text-sm font-bold text-text-primary leading-snug">{story.title}</h3>
+                                    <p className="text-xs text-text-muted italic line-clamp-2">{story.description || 'No description'}</p>
+                                    <div className="flex items-center justify-between text-[10px] font-mono tracking-wider text-text-muted uppercase">
+                                        <span className="flex items-center gap-1.5">
+                                            <User size={10} className="text-accent-gold" /> {story.author}
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <Clock size={10} className="text-accent-gold" /> {story.date}
+                                        </span>
+                                    </div>
+                                    {story.follow_ups && story.follow_ups.length > 0 && (
+                                        <div className="flex items-center gap-2 text-[10px] text-accent-gold font-mono tracking-wider">
+                                            <Plus size={10} />
+                                            <span>{story.follow_ups.length} follow-up{story.follow_ups.length > 1 ? 's' : ''}</span>
                                         </div>
-
-                                        {/* Content */}
-                                        <div className="p-5 space-y-3">
-                                            <h3 className="text-sm font-bold text-text-primary leading-snug">{story.title}</h3>
-                                            <p className="text-xs text-text-muted italic line-clamp-2">{story.description || 'No description'}</p>
-
-                                            {/* Author & date */}
-                                            <div className="flex items-center justify-between text-[10px] font-mono tracking-wider text-text-muted uppercase">
-                                                <span className="flex items-center gap-1.5">
-                                                    <User size={10} className="text-accent-gold" /> {story.author}
-                                                </span>
-                                                <span className="flex items-center gap-1.5">
-                                                    <Clock size={10} className="text-accent-gold" /> {story.date}
-                                                </span>
-                                            </div>
-
-                                            {/* Follow-up media */}
-                                            {story.follow_ups && story.follow_ups.length > 0 && (
-                                                <div className="flex items-center gap-2 text-[10px] text-accent-gold font-mono tracking-wider">
-                                                    <Plus size={10} />
-                                                    <span>{story.follow_ups.length} follow-up{story.follow_ups.length > 1 ? 's' : ''}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Actions row */}
-                                            <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                                                {/* Comments */}
-                                                {isIdentified && (
-                                                    <CommentSection
-                                                        storyId={story.id}
-                                                        comments={story.comments}
-                                                        commentsCount={story.comments_count}
-                                                        roomSlug={room.slug}
-                                                        guestName={guestName}
-                                                        guestEmail={guestEmail}
-                                                        onViewAll={(id) => setCommentsStoryId(id)}
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        ) : (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                className="flex flex-col items-center justify-center py-20 text-center">
-                                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-accent-gold/20 bg-accent-gold/5 text-accent-gold/70">
-                                    <Sparkles size={36} className="stroke-[1.5]" />
+                                    )}
+                                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                        {isIdentified && (
+                                            <CommentSection
+                                                storyId={story.id}
+                                                comments={story.comments}
+                                                commentsCount={story.comments_count}
+                                                roomSlug={room.slug}
+                                                guestName={guestName}
+                                                guestEmail={guestEmail}
+                                                onViewAll={(id) => setCommentsStoryId(id)}
+                                            />
+                                        )}
+                                    </div>
                                 </div>
-                                <h3 className="mb-2 text-2xl font-bold tracking-tight text-text-primary">No Moments Yet</h3>
-                                <p className="mx-auto max-w-md text-sm leading-relaxed text-text-muted">
-                                    Be the first to share a memory! Introduce yourself above and capture a photo, record a video, or upload media.
-                                </p>
-                            </motion.div>
+                            </div>
                         )}
-                    </AnimatePresence>
+                    </StoryFeed>
                 </section>
 
                 {/* Footer */}

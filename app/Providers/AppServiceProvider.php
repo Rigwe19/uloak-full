@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Listeners\TrackMediaEvent;
+use App\Models\Person;
+use App\Policies\PersonPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use SocialiteProviders\Apple\AppleExtendSocialite;
@@ -28,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        Gate::policy(Person::class, PersonPolicy::class);
+
+        $this->configureSubscribers();
+
         $this->configureSocialite();
     }
 
@@ -37,6 +45,11 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Configure Socialite providers.
      */
+    protected function configureSubscribers(): void
+    {
+        Event::subscribe(TrackMediaEvent::class);
+    }
+
     protected function configureSocialite(): void
     {
         Event::listen(

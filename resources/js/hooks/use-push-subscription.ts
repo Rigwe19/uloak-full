@@ -5,22 +5,33 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
     const rawData = window.atob(base64);
     const output = new Uint8Array(rawData.length);
+
     for (let i = 0; i < rawData.length; ++i) {
         output[i] = rawData.charCodeAt(i);
     }
+
     return output;
 }
 
 async function doSubscribe(): Promise<boolean> {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+return false;
+}
+
     try {
         const registration = await navigator.serviceWorker.ready;
         const existing = await registration.pushManager.getSubscription();
-        if (existing) return true;
+
+        if (existing) {
+return true;
+}
 
         const resp = await fetch('/push-public-key');
         const { publicKey } = await resp.json() as { publicKey: string };
-        if (!publicKey) return false;
+
+        if (!publicKey) {
+return false;
+}
 
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
@@ -40,6 +51,7 @@ async function doSubscribe(): Promise<boolean> {
                 auth: subData.keys?.auth,
             }),
         });
+
         return true;
     } catch {
         return false;
@@ -53,10 +65,16 @@ export function usePushSubscription() {
     const subscribed = useRef(false);
 
     const trySubscribe = useCallback(async () => {
-        if (subscribed.current) return;
+        if (subscribed.current) {
+return;
+}
+
         if (Notification.permission === 'granted') {
             const ok = await doSubscribe();
-            if (ok) subscribed.current = true;
+
+            if (ok) {
+subscribed.current = true;
+}
         }
     }, []);
 
@@ -97,16 +115,25 @@ export function usePushSubscription() {
     }, [trySubscribe]);
 
     const enableNotifications = useCallback(async (): Promise<boolean> => {
-        if (subscribed.current) return true;
+        if (subscribed.current) {
+return true;
+}
 
         if (Notification.permission === 'default') {
             const permission = await Notification.requestPermission();
-            if (permission !== 'granted') return false;
+
+            if (permission !== 'granted') {
+return false;
+}
         }
 
         if (Notification.permission === 'granted') {
             const ok = await doSubscribe();
-            if (ok) subscribed.current = true;
+
+            if (ok) {
+subscribed.current = true;
+}
+
             return ok;
         }
 

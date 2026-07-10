@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import AdminLayout from '@/layouts/admin-layout';
+import { motion } from 'framer-motion';
 import { 
     FileText, 
     Edit3,
@@ -8,9 +8,9 @@ import {
     Clock,
     Plus,
 } from 'lucide-react';
-import admin from '@/routes/admin';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/dashboard/ui';
+import AdminLayout from '@/layouts/admin-layout';
+import admin from '@/routes/admin';
 
 interface Page {
     id: number;

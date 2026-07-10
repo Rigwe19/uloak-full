@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,7 +30,7 @@ class ActivityLogController extends Controller
         }
 
         if ($request->filled('action')) {
-            $query->where('description', 'like', '%' . $request->action . '%');
+            $query->where('description', 'like', '%'.$request->action.'%');
         }
 
         if ($from = $request->input('from')) {

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import SettingsLayout from '@/layouts/settings/layout';
 import { ShieldCheck, Globe, Lock, User, Check } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/dashboard/ui';
+import SettingsLayout from '@/layouts/settings/layout';
 
 export default function Privacy() {
     const [settings, setSettings] = useState([

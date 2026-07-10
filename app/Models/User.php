@@ -8,15 +8,19 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Passkeys\Contracts\PasskeyUser;
 use Laravel\Passkeys\Passkey;
 use Laravel\Passkeys\PasskeyAuthenticatable;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'email', 'avatar', 'password', 'is_admin'])]
+#[Fillable(['name', 'email', 'avatar', 'password', 'is_admin', 'house_thumbnail', 'house_pattern', 'house_pattern_upload'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -24,8 +28,9 @@ class User extends Authenticatable implements PasskeyUser
     use HasPushSubscriptions;
     use Notifiable;
     use PasskeyAuthenticatable;
+    use TwoFactorAuthenticatable;
 
-    protected $appends = ['avatar_url'];
+    protected $appends = ['avatar_url', 'house_thumbnail_url', 'house_pattern_upload_url'];
 
     public function getAvatarUrlAttribute(): string
     {
@@ -36,6 +41,42 @@ class User extends Authenticatable implements PasskeyUser
         }
 
         return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=C0A060&background=1A1A1A';
+    }
+
+    public function getHouseThumbnailUrlAttribute(): ?string
+    {
+        if ($this->house_thumbnail) {
+            $path = $this->house_thumbnail;
+            $storageUrl = Storage::url('');
+
+            if (str_starts_with($path, $storageUrl)) {
+                $path = substr($path, strlen($storageUrl));
+            }
+
+            return str_starts_with($path, 'http')
+                ? $path
+                : Storage::url($path);
+        }
+
+        return null;
+    }
+
+    public function getHousePatternUploadUrlAttribute(): ?string
+    {
+        if ($this->house_pattern_upload) {
+            $path = $this->house_pattern_upload;
+            $storageUrl = Storage::url('');
+
+            if (str_starts_with($path, $storageUrl)) {
+                $path = substr($path, strlen($storageUrl));
+            }
+
+            return str_starts_with($path, 'http')
+                ? $path
+                : Storage::url($path);
+        }
+
+        return null;
     }
 
     public function socialAccounts(): HasMany
@@ -51,6 +92,11 @@ class User extends Authenticatable implements PasskeyUser
     public function rooms(): BelongsToMany
     {
         return $this->belongsToMany(Room::class);
+    }
+
+    public function houseMembers(): HasMany
+    {
+        return $this->hasMany(HouseMember::class, 'owner_id');
     }
 
     public function createdRooms(): HasMany
@@ -108,9 +154,14 @@ class User extends Authenticatable implements PasskeyUser
         return $this->passkeys()->exists();
     }
 
-    public function notifications(): HasMany
+    public function person(): HasOne
     {
-        return $this->hasMany(Notification::class);
+        return $this->hasOne(Person::class);
+    }
+
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(DatabaseNotification::class, 'notifiable');
     }
 
     public function markAllAsRead()

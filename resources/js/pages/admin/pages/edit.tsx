@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
-import AdminLayout from '@/layouts/admin-layout';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ChevronLeft,
     Save,
@@ -17,8 +16,9 @@ import {
     CheckCircle2,
     Upload
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
 import { Button } from '@/components/dashboard/ui';
+import AdminLayout from '@/layouts/admin-layout';
 import admin from '@/routes/admin';
 
 interface Page {
@@ -57,7 +57,10 @@ export default function EditPage({ page }: Props) {
     }, [data.content]);
 
     const handleSave = (e?: React.BaseSyntheticEvent) => {
-        if (e) e.preventDefault();
+        if (e) {
+e.preventDefault();
+}
+
         patch(admin.pages.update(page.id).url);
     };
 
@@ -99,9 +102,11 @@ export default function EditPage({ page }: Props) {
     const addListItem = (path: string[], template: any) => {
         const newContent = JSON.parse(JSON.stringify(data.content));
         let current = newContent;
+
         for (let i = 0; i < path.length - 1; i++) {
             current = current[path[i]];
         }
+
         const list = [...(current[path[path.length - 1]] || [])];
         list.push({ ...template, id: Math.random().toString(36).substr(2, 9) });
         current[path[path.length - 1]] = list;
@@ -111,9 +116,11 @@ export default function EditPage({ page }: Props) {
     const removeListItem = (path: string[], index: number) => {
         const newContent = JSON.parse(JSON.stringify(data.content));
         let current = newContent;
+
         for (let i = 0; i < path.length - 1; i++) {
             current = current[path[i]];
         }
+
         const list = [...current[path[path.length - 1]]];
         list.splice(index, 1);
         current[path[path.length - 1]] = list;
@@ -124,6 +131,7 @@ export default function EditPage({ page }: Props) {
         // Handle Arrays (Lists)
         if (Array.isArray(value)) {
             const fieldLabel = label?.replace(/_/g, ' ') || 'List';
+
             return (
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
@@ -234,7 +242,10 @@ export default function EditPage({ page }: Props) {
                                             accept="image/*"
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
-                                                if (file) handleImageUpload(path, file);
+
+                                                if (file) {
+handleImageUpload(path, file);
+}
                                             }}
                                         />
                                         <label 

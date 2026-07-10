@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\ProcessTributeAudioTranscription;
+use App\Media\MediaManager;
 use App\Models\Candle;
 use App\Models\Room;
 use App\Models\Tribute;
@@ -16,9 +17,10 @@ use ZipArchive;
 
 class TributeController extends Controller
 {
-    public function __construct(protected ActivityLogger $activityLogger)
-    {
-    }
+    public function __construct(
+        protected ActivityLogger $activityLogger,
+        protected MediaManager $mediaManager,
+    ) {}
 
     public function index(Room $room)
     {
@@ -54,16 +56,16 @@ class TributeController extends Controller
         $savedImagePaths = [];
         if (! empty($validated['images'])) {
             foreach ($validated['images'] as $image) {
-                $path = $image->store('tributes/'.$room->id.'/images', 'public');
-                $savedImagePaths[] = '/'.$path;
+                $media = $this->mediaManager->uploadImage($image);
+                $savedImagePaths[] = $media->url();
             }
         }
 
         // Save uploaded video to storage
         $savedVideoPath = null;
         if (! empty($validated['video'])) {
-            $path = $validated['video']->store('tributes/'.$room->id.'/videos', 'public');
-            $savedVideoPath = '/'.$path;
+            $media = $this->mediaManager->uploadVideo($validated['video']);
+            $savedVideoPath = $media->url();
         }
 
         // Save base64 audio to storage (audio is still recorded in browser as base64)
@@ -213,7 +215,7 @@ class TributeController extends Controller
         // Collect images
         if (! empty($tribute->images)) {
             foreach ($tribute->images as $image) {
-                $relativePath = ltrim($image, '/');
+                $relativePath = preg_replace('#^storage/#', '', ltrim($image, '/'));
                 $absolutePath = Storage::disk('public')->path($relativePath);
                 if (file_exists($absolutePath)) {
                     $files[] = [
@@ -226,7 +228,7 @@ class TributeController extends Controller
 
         // Collect video
         if (! empty($tribute->video)) {
-            $relativePath = ltrim($tribute->video, '/');
+            $relativePath = preg_replace('#^storage/#', '', ltrim($tribute->video, '/'));
             $absolutePath = Storage::disk('public')->path($relativePath);
             if (file_exists($absolutePath)) {
                 $files[] = [

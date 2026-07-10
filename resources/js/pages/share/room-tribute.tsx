@@ -1,10 +1,3 @@
-import { lightCandle } from '@/actions/App/Http/Controllers/TributeController';
-import CandleSVG from '@/components/candleSVG';
-import { Candle, CandleType } from '@/components/candleThemes';
-import Hero from '@/components/hero';
-import AudioWaveformPlayer from '@/components/media/AudioWaveformPlayer';
-import TributesGrid from '@/components/tribute-grid';
-import { store as storeTribute } from '@/routes/share/rooms/tributes';
 import { Head, router } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -23,6 +16,14 @@ import {
     X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { lightCandle } from '@/actions/App/Http/Controllers/TributeController';
+import CandleSVG from '@/components/candleSVG';
+import type { Candle, CandleType } from '@/components/candleThemes';
+import Hero from '@/components/hero';
+import AudioWaveformPlayer from '@/components/media/AudioWaveformPlayer';
+import TributesGrid from '@/components/tribute-grid';
+import { store as storeTribute } from '@/routes/share/rooms/tributes';
 
 interface RoomTributeProps {
     room: {
@@ -69,11 +70,13 @@ function Confetti() {
         const update = () => setHeight(window.innerHeight);
         update();
         window.addEventListener('resize', update);
+
         return () => window.removeEventListener('resize', update);
     }, []);
 
     const particles = useMemo(() => {
         const colors = ['#FFD700', '#FF6B6B', '#48DBFB', '#FF9FF3', '#54A0FF', '#5F27CD', '#FF8A3D'];
+
         return Array.from({ length: 40 }, (_, i) => ({
             id: i,
             x: Math.random() * 100,
@@ -106,7 +109,10 @@ function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
     const analyserRef = useRef<AnalyserNode | null>(null);
 
     useEffect(() => {
-        if (!stream) return;
+        if (!stream) {
+return;
+}
+
         const ctx = new AudioContext();
         const src = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
@@ -119,9 +125,17 @@ function RecordingWaveform({ stream }: { stream: MediaStream | null }) {
 
         const draw = () => {
             rafRef.current = requestAnimationFrame(draw);
-            if (!canvas) return;
+
+            if (!canvas) {
+return;
+}
+
             const c = canvas.getContext('2d');
-            if (!c) return;
+
+            if (!c) {
+return;
+}
+
             analyser.getByteFrequencyData(data);
             c.clearRect(0, 0, canvas.width, canvas.height);
             const barW = canvas.width / data.length;
@@ -170,7 +184,11 @@ function AudioRecorder({ onAudioReady, onCancel }: AudioRecorderProps) {
             setStream(s);
             const mr = new MediaRecorder(s, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4' });
             chunksRef.current = [];
-            mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+            mr.ondataavailable = (e) => {
+ if (e.data.size > 0) {
+chunksRef.current.push(e.data);
+} 
+};
             mr.onstop = () => {
                 const blob = new Blob(chunksRef.current, { type: mr.mimeType });
                 const url = URL.createObjectURL(blob);
@@ -189,17 +207,23 @@ function AudioRecorder({ onAudioReady, onCancel }: AudioRecorderProps) {
             setState('recording');
             timerRef.current = setInterval(() => setSeconds((p) => p + 1), 1000);
         } catch {
-            alert('Could not access microphone. Please allow microphone access and try again.');
+            toast.error('Could not access microphone. Please allow microphone access and try again.');
         }
     }, [onAudioReady]);
 
     const stopRecording = useCallback(() => {
-        if (timerRef.current) clearInterval(timerRef.current);
+        if (timerRef.current) {
+clearInterval(timerRef.current);
+}
+
         mediaRecorderRef.current?.stop();
     }, []);
 
     const reRecord = useCallback(() => {
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
+        if (blobUrl) {
+URL.revokeObjectURL(blobUrl);
+}
+
         setBlobUrl(null);
         setSeconds(0);
         setState('idle');
@@ -208,7 +232,10 @@ function AudioRecorder({ onAudioReady, onCancel }: AudioRecorderProps) {
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
+            if (timerRef.current) {
+clearInterval(timerRef.current);
+}
+
             stream?.getTracks().forEach((t) => t.stop());
         };
     }, [stream]);
@@ -346,11 +373,13 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
             audioRef.current = new Audio(room.tribute_song || '');
             audioRef.current.loop = true;
         }
+
         if (isPlaying) {
             audioRef.current.pause();
         } else {
             audioRef.current.play().catch(() => { });
         }
+
         setIsPlaying(!isPlaying);
     }, [isPlaying, room.tribute_song]);
 
@@ -358,7 +387,11 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
     const handleSubmit = useCallback(
         (e: React.FormEvent) => {
             e.preventDefault();
-            if (!formName.trim() || !formMessage.trim()) return;
+
+            if (!formName.trim() || !formMessage.trim()) {
+return;
+}
+
             setIsSubmitting(true);
             setSubmittedName(formName);
 
@@ -369,7 +402,10 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
             formData.append('quote', formQuote);
             formData.append('is_audio_mode', '0');
             formImageFiles.forEach((file) => formData.append('images[]', file));
-            if (formVideoFile) formData.append('video', formVideoFile);
+
+            if (formVideoFile) {
+formData.append('video', formVideoFile);
+}
 
             router.post(
                 storeTribute(room).url,
@@ -404,7 +440,11 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
     const handleAudioSubmit = useCallback(
         (e: React.FormEvent) => {
             e.preventDefault();
-            if (!audioName.trim() || !audioBase64) return;
+
+            if (!audioName.trim() || !audioBase64) {
+return;
+}
+
             setIsSubmitting(true);
             setSubmittedName(audioName);
 
@@ -442,7 +482,11 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
 
     const handleFormImagesChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (!files) return;
+
+        if (!files) {
+return;
+}
+
         const newFiles = Array.from(files);
         setFormImageFiles((prev) => [...prev, ...newFiles]);
         setFormImageUrls((prev) => [...prev, ...newFiles.map(makeBlobUrl)]);
@@ -456,7 +500,11 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
 
     const handleFormVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
+
         setFormVideoFile(file);
         setFormVideoName(file.name);
         setFormVideoUrl(makeBlobUrl(file));
@@ -555,13 +603,17 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
                                             /* Birthday: two CTA buttons */
                                             <div className="flex flex-col sm:flex-row items-center gap-3">
                                                 <button
-                                                    onClick={() => { setTributeMode('text'); setShowForm(true); }}
+                                                    onClick={() => {
+ setTributeMode('text'); setShowForm(true); 
+}}
                                                     className="bg-accent-gold hover:bg-accent-gold/80 text-bg-dark font-mono text-xs font-bold py-3 px-6 rounded-xl uppercase tracking-widest transition-all inline-flex items-center gap-2"
                                                 >
                                                     <Feather size={14} /> Write a Wish
                                                 </button>
                                                 <button
-                                                    onClick={() => { setTributeMode('audio'); setShowForm(true); }}
+                                                    onClick={() => {
+ setTributeMode('audio'); setShowForm(true); 
+}}
                                                     className="bg-surface border border-accent-gold/40 hover:border-accent-gold text-accent-gold font-mono text-xs font-bold py-3 px-6 rounded-xl uppercase tracking-widest transition-all inline-flex items-center gap-2"
                                                 >
                                                     <Mic size={14} /> Record Audio Wish
@@ -569,7 +621,9 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
                                             </div>
                                         ) : (
                                             <button
-                                                onClick={() => { setTributeMode('text'); setShowForm(true); }}
+                                                onClick={() => {
+ setTributeMode('text'); setShowForm(true); 
+}}
                                                 className="bg-accent-gold hover:bg-accent-gold/80 text-bg-dark font-mono text-xs font-bold py-3 px-6 rounded-xl uppercase tracking-widest transition-all inline-flex items-center gap-2"
                                             >
                                                 <Feather size={14} /> Write a Tribute
@@ -929,7 +983,11 @@ export default function RoomTribute({ room, tributes: initialTributes, candles }
                                             <form
                                                 onSubmit={(e) => {
                                                     e.preventDefault();
-                                                    if (!candleName.trim()) return;
+
+                                                    if (!candleName.trim()) {
+return;
+}
+
                                                     router.post(
                                                         lightCandle(room).url,
                                                         { name: candleName, message: candleMessage, candle_type: candleType },

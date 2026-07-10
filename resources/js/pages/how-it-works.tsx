@@ -24,8 +24,8 @@ import { motion } from 'motion/react';
 import React from 'react';
 
 import { Button } from '@/components/ui-elements';
-import { login } from '@/routes';
 import GuestLayout from '@/layouts/guest-layout';
+import { login } from '@/routes';
 
 interface Props {
     page?: {

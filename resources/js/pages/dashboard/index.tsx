@@ -1,11 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Badge, AvatarGroup } from '@/components/dashboard/ui';
-import { RoomCard } from '@/components/dashboard/room-card';
-import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
-import { store as storeRoom } from '@/routes/dashboard/rooms';
-import { store as storeEvent } from '@/routes/dashboard/events';
 import {
     Plus,
     Camera,
@@ -24,7 +18,13 @@ import {
     Music,
     Image,
 } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
+import { RoomCard } from '@/components/dashboard/room-card';
+import { Button, Badge, AvatarGroup } from '@/components/dashboard/ui';
 import { Portal } from '@/components/portal';
+import { store as storeEvent } from '@/routes/dashboard/events';
+import { store as storeRoom } from '@/routes/dashboard/rooms';
 
 interface DashboardProps {
     dashboardData: {
@@ -35,6 +35,11 @@ interface DashboardProps {
             icon: string;
             count: number;
         }[];
+        house_members?: {
+            id: number;
+            name: string;
+            avatar: string | null;
+        }[];
         notifications: any[];
     };
     auth: {
@@ -43,7 +48,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ dashboardData, auth }: DashboardProps) {
-    const { rooms, stats, recentStories, notifications } = dashboardData;
+    const { rooms, stats, recentStories, notifications, house_members } = dashboardData;
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
@@ -70,7 +75,9 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isCreateRoomOpen) return;
+        if (!isCreateRoomOpen) {
+return;
+}
 
         const original = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
@@ -82,6 +89,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
 
     const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+
         if (file) {
             setData('thumbnail', file);
             const reader = new FileReader();
@@ -99,6 +107,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
 
         // If room doesn't need tributes, reset tribute flags
         const tributeTypes = ['birthday', 'burial', 'wedding', 'anniversary', 'memorial'];
+
         if (createMode === 'room' && !tributeTypes.includes(data.room_type)) {
             setData('enable_tributes', false);
             setData('enable_condolence_attendance', false);
@@ -162,7 +171,10 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                 </div>
                 <div className="flex flex-col items-stretch gap-4 md:flex-row md:items-center">
                     <div className="hidden items-center gap-2 lg:flex">
-                        <AvatarGroup users={[{ name: auth.user.name, avatar: auth.user.avatar }]} />
+                        <AvatarGroup users={[
+                            { name: auth.user.name, avatar: auth.user.avatar },
+                            ...(house_members ?? []).map((m: any) => ({ name: m.name, avatar: m.avatar })),
+                        ]} />
                         <div className="mx-2 h-8 w-px bg-border-subtle" />
                     </div>
                     <div className="group relative grow">
@@ -190,9 +202,9 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                         variant="primary"
                         icon={Plus}
                         className="py-4 text-sm md:py-3"
-                        onClick={() => setIsNewStoryOpen(true)}
+                        onClick={() => setIsCreateRoomOpen(true)}
                     >
-                        New Story
+                        Add Room
                     </Button>
                 </div>
             </header>
@@ -461,6 +473,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                                                 ].map((type) => {
                                                     const Icon = type.icon;
                                                     const isSelected = data.room_type === type.value;
+
                                                     return (
                                                         <button
                                                             key={type.value}
@@ -632,6 +645,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                                                     accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.webm"
                                                     onChange={(e) => {
                                                         const files = e.target.files;
+
                                                         if (files) {
                                                             setData('media_items', [...data.media_items, ...Array.from(files)]);
                                                         }

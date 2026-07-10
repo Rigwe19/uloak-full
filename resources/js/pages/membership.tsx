@@ -1,9 +1,9 @@
-import GuestLayout from '@/layouts/guest-layout';
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui-elements';
+import GuestLayout from '@/layouts/guest-layout';
 import { register } from '@/routes';
 
 interface Plan {
@@ -39,17 +39,54 @@ export default function Membership({
     page,
     subscriptions_enabled,
 }: MembershipPageProps & { subscriptions_enabled: boolean }) {
-    const { hero, plans, faqs } = page.content;
+    const { hero, plans, faqs } = page?.content ?? { hero: { title: '', subtitle: '' }, faqs: [], plans: [] };
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     return (
         <>
-            <Head title={page.title} />
+            <Head title={page?.title} />
 
             {/* HERO */}
-            <section className="relative overflow-hidden pt-32 pb-20 lg:pt-48 lg:pb-32">
-                <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(212,175,55,0.05),transparent_40%)]" />
+            <section className="relative min-h-[60vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-linear-to-b from-bg-dark via-bg-dark/95 to-bg-dark/90" />
+                    <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]" />
+                    <div className="absolute bottom-48 -left-24 h-125 w-125 rounded-full bg-accent-gold/5 blur-[150px]" />
+                </div>
 
+                <div className="relative z-10 mx-auto max-w-7xl">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                        <span className="mb-6 inline-block text-[10px] font-bold text-accent-gold uppercase tracking-[0.4em]">Live product — subscriptions coming soon</span>
+                        <h1 className="text-5xl leading-[1.1] font-bold tracking-tight text-text-primary md:text-7xl">
+                            {subscriptions_enabled ? hero.title : 'Membership is not active yet'}
+                        </h1>
+                        <div className="mt-8 max-w-2xl text-xl leading-relaxed text-text-muted">
+                            {subscriptions_enabled ? hero.subtitle : <>
+                                <p>
+                                    Uloak is already fully functional today — you can create memorials,
+                                    share stories, and use the platform without any payment.
+                                </p>
+
+                                <p>
+                                    We are currently building the subscription system that will unlock
+                                    optional premium features in the future.
+                                </p>
+
+                                <p>
+                                    When it launches, nothing you currently use will be taken away.
+                                    It will simply add new capabilities on top of what already exists.
+                                </p>
+                            </>}
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+            {/* <section className={`relative overflow-hidden pt-32 pb-20 ${subscriptions_enabled ? 'lg:pt-48 lg:pb-32' : ''}`}>
+                <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(212,175,55,0.05),transparent_40%)]" />
                 <div className="mx-auto max-w-7xl px-8">
                     <div className="max-w-3xl">
                         <motion.h1
@@ -57,7 +94,7 @@ export default function Membership({
                             animate={{ opacity: 1, y: 0 }}
                             className="mb-6 text-5xl font-light tracking-tight text-text-primary md:text-7xl"
                         >
-                            {hero.title}
+
                         </motion.h1>
 
                         <motion.p
@@ -66,10 +103,8 @@ export default function Membership({
                             animate={{ opacity: 1, y: 0 }}
                             className="text-xl leading-relaxed text-text-muted"
                         >
-                            {hero.subtitle}
+                            {hero.subtitle ?? ''}
                         </motion.p>
-
-                        {/* STATUS BADGE */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -92,13 +127,13 @@ export default function Membership({
                         </motion.div>
                     </div>
                 </div>
-            </section>
+            </section> */}
 
             {/* ========================= */}
             {/* CONDITIONAL RENDERING */}
             {/* ========================= */}
 
-            {subscriptions_enabled ? (
+            {subscriptions_enabled && (
                 <>
                     {/* ORIGINAL PRICING UI (UNCHANGED) */}
                     <section className="py-20 lg:py-32">
@@ -175,45 +210,10 @@ export default function Membership({
                         </div>
                     </section>
                 </>
-            ) : (
-                <>
-                    {/* COMING SOON (SAFE, NON-GENERIC) */}
-                    <section className="py-20 lg:py-32">
-                        <div className="mx-auto max-w-4xl px-8">
-                            <div className="rounded-3xl border border-border-subtle bg-surface/30 p-10 lg:p-14">
-                                <h2 className="mb-6 text-2xl font-light text-text-primary">
-                                    Membership is not active yet
-                                </h2>
-
-                                <div className="space-y-4 text-text-muted leading-relaxed">
-                                    <p>
-                                        Uloak is already fully functional today — you can create memorials,
-                                        share stories, and use the platform without any payment.
-                                    </p>
-
-                                    <p>
-                                        We are currently building the subscription system that will unlock
-                                        optional premium features in the future.
-                                    </p>
-
-                                    <p>
-                                        When it launches, nothing you currently use will be taken away.
-                                        It will simply add new capabilities on top of what already exists.
-                                    </p>
-                                </div>
-
-                                <div className="mt-10 flex items-center gap-3 text-sm text-text-muted">
-                                    <span className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
-                                    No billing • No paywall • Full access active
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </>
             )}
 
             {/* FAQ stays ALWAYS (important trust anchor) */}
-            <section className="bg-surface/10 py-20 lg:py-32">
+            {subscriptions_enabled && <section className="bg-surface/10 py-20 lg:py-32">
                 <div className="mx-auto max-w-3xl px-8">
                     <div className="mb-16 text-center">
                         <h2 className="mb-4 text-3xl font-light text-text-primary md:text-4xl">
@@ -257,7 +257,7 @@ export default function Membership({
                         ))}
                     </div>
                 </div>
-            </section>
+            </section>}
         </>
     );
 }

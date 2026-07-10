@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Media;
 use App\Models\Room;
 use App\Models\Story;
 use App\Services\ActivityLogger;
+use App\Services\AnalyticsService;
 use App\Services\StoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +18,8 @@ class StoryController extends Controller
 {
     public function __construct(
         protected StoryService $storyService,
-        protected ActivityLogger $activityLogger
+        protected ActivityLogger $activityLogger,
+        protected AnalyticsService $analytics
     ) {}
 
     /**
@@ -30,9 +33,11 @@ class StoryController extends Controller
             'type' => ['required', 'string', 'in:video,audio,photo,document'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file'],
             'duration' => ['nullable', 'string'],
+            'media_uuids' => ['nullable', 'array'],
+            'media_uuids.*' => ['string', 'uuid'],
         ]);
 
         if ($request->hasFile('thumbnail')) {
@@ -41,6 +46,8 @@ class StoryController extends Controller
         }
 
         $story = $this->storyService->createStory($request->user(), $room, $validated);
+
+        $this->analytics->track('story.created', story: $story);
 
         if ($request->user()) {
             $this->activityLogger->log(
@@ -79,6 +86,17 @@ class StoryController extends Controller
             ->orderBy('id', 'desc')
             ->first();
 
+        $sprite = null;
+        foreach ($story->assets ?? [] as $asset) {
+            if (isset($asset['media_uuid'])) {
+                $media = Media::where('uuid', $asset['media_uuid'])->first();
+                if ($media && $media->sprite) {
+                    $sprite = $media->sprite;
+                    break;
+                }
+            }
+        }
+
         return Inertia::render('dashboard/stories/show', [
             'title' => $story->title.' - Uloak',
             'meta_description' => $story->description ?? 'A memory preserved on Uloak.',
@@ -93,6 +111,7 @@ class StoryController extends Controller
                 'tags' => $story->tags ?? [],
                 'assets' => $story->assets ?? [],
                 'fileUrl' => $story->file_url,
+                'sprite' => $sprite,
                 'transcript' => $story->transcript ?? [],
                 'comments' => $story->comments()->with('user')->latest()->get()->map(fn ($comment) => [
                     'id' => $comment->id,
@@ -164,6 +183,8 @@ class StoryController extends Controller
     public function destroy(Story $story): RedirectResponse
     {
         $story->delete();
+
+        $this->analytics->track('story.deleted', story: $story);
 
         $this->activityLogger->log(
             "Deleted story: {$story->title}",

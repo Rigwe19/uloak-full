@@ -1,3 +1,4 @@
+import { Link, router } from '@inertiajs/react';
 import {
     motion,
     useMotionValue,
@@ -5,14 +6,13 @@ import {
     useTransform,
     AnimatePresence,
 } from 'framer-motion';
-import React, { useState } from 'react';
-import { Link, router } from '@inertiajs/react';
-import { Badge, AvatarGroup, Button } from './ui';
 import { X, Play, Share2, Info, ArrowRight } from 'lucide-react';
-import { show } from '@/routes/dashboard/rooms';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ResponsiveModal } from '@/components/responsive-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { show as dashboardShow } from '@/routes/dashboard/rooms';
+import { Badge, AvatarGroup, Button } from './ui';
 
 interface User {
     id: number;
@@ -32,7 +32,7 @@ interface Room {
     members: User[];
 }
 
-export function RoomCard({ room }: { room: Room }) {
+export function RoomCard({ room, roomUrl }: { room: Room; roomUrl?: string }) {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
     
@@ -48,7 +48,10 @@ export function RoomCard({ room }: { room: Room }) {
     const [isEntering, setIsEntering] = useState(false);
 
     function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-        if (isEntering) return;
+        if (isEntering) {
+return;
+}
+
         const rect = e.currentTarget.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
@@ -62,8 +65,8 @@ export function RoomCard({ room }: { room: Room }) {
 
     const handleEnterRoom = () => {
         setIsEntering(true);
-        // Use Inertia visit
-        router.visit(show(room.slug).url, {
+        const url = roomUrl ?? dashboardShow(room.slug).url;
+        router.visit(url, {
             onFinish: () => setIsEntering(false),
         });
     };
@@ -226,9 +229,9 @@ export function RoomCard({ room }: { room: Room }) {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-3 pb-4">
-                                <Link href={show(room.slug).url}>
-                                    <Button className="w-full rounded-2xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">Step Inside Room <ArrowRight /></Button>
-                                </Link>
+                            <Link href={roomUrl ?? dashboardShow(room.slug).url}>
+                                <Button className="w-full rounded-2xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">Step Inside Room <ArrowRight /></Button>
+                            </Link>
                                 <Button variant="secondary" icon={Share2} className="w-full rounded-2xl font-bold border-border-subtle">Invite Kin</Button>
                             </div>
                         </div>
@@ -361,7 +364,7 @@ export function RoomCard({ room }: { room: Room }) {
 
                                     <div className="flex flex-wrap gap-2 md:gap-5 pt-4">
                                         <Link
-                                            href={show(room.slug).url}
+                                            href={roomUrl ?? dashboardShow(room.slug).url}
                                             className="md:min-w-60 flex-1"
                                         >
                                             <Button className="group w-full rounded-2xl md:py-5 text-sm md:text-xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">

@@ -1,12 +1,15 @@
-import React, { useState, useRef, ChangeEvent } from 'react';
+import { useForm } from '@inertiajs/react';
 import {
     X, Camera, Video, MessageSquare, Files,
-    Upload, ArrowLeft, Check, Loader2, Plus
+    ArrowLeft, Check, Loader2
 } from 'lucide-react';
-import { useForm } from '@inertiajs/react';
+import React, { useState, useCallback } from 'react';
+import { ResponsiveModal } from '@/components/responsive-modal';
+import { UploadDropzone } from '@/components/upload/UploadDropzone';
+import { UploadQueue } from '@/components/upload/UploadQueue';
+import { useUploadQueue } from '@/hooks/use-upload-queue';
 import { Button } from './ui';
 import { VoiceRecorder } from './voice-recorder';
-import { ResponsiveModal } from '@/components/responsive-modal';
 
 interface EventType {
     id: string | number;
@@ -29,24 +32,26 @@ type MediaType = 'photo' | 'video' | 'audio' | 'document';
 export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: AnnexEventMemoryModalProps) {
     const [step, setStep] = useState<AnnexStep>('selection');
     const [mediaType, setMediaType] = useState<MediaType | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const { addToQueue, removeFromQueue, cancelUpload, retryUpload, uploads } = useUploadQueue();
+    const completedUploads = uploads.filter((u) => u.status === 'ready')
+    const hasReadyUploads = completedUploads.length > 0
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         description: '',
         type: '' as MediaType | '',
-        files: [] as File[],
         thumbnail: null as File | null,
         recording: null as File | null,
         duration: '',
     });
 
-    const [previews, setPreviews] = useState<{ url: string, type: string, name: string }[]>([]);
     const [customThumbnailPreview, setCustomThumbnailPreview] = useState<string | null>(null);
 
     const handleMediaTypeSelect = (type: MediaType) => {
         setMediaType(type);
         setData('type', type);
+
         if (type === 'audio') {
             setStep('voice');
         } else {
@@ -54,43 +59,16 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
         }
     };
 
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length > 0) {
-            setData('files', [...data.files, ...files]);
+    const handleFilesSelected = useCallback((files: File[]) => {
+        files.forEach((file) => {
+            addToQueue(file, mediaType || 'photo');
+        });
+        setStep('details');
+    }, [addToQueue, mediaType]);
 
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setPreviews(prev => [...prev, {
-                        url: reader.result as string,
-                        type: file.type,
-                        name: file.name
-                    }]);
-                };
-                reader.readAsDataURL(file);
-            });
-
-            setStep('details');
-        }
-    };
-
-    const removeFile = (index: number) => {
-        const newFiles = [...data.files];
-        newFiles.splice(index, 1);
-        setData('files', newFiles);
-
-        const newPreviews = [...previews];
-        newPreviews.splice(index, 1);
-        setPreviews(newPreviews);
-
-        if (newFiles.length === 0) {
-            setStep('upload');
-        }
-    };
-
-    const handleThumbnailChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+
         if (file) {
             setData('thumbnail', file);
             const reader = new FileReader();
@@ -115,6 +93,41 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
 
+        const uuids = uploads
+            .filter((u) => u.status === 'ready' || u.status === 'processing')
+            .map((u) => u.mediaUuid)
+            .filter(Boolean) as string[];
+
+        if (uuids.length === 0 && !data.recording) {
+return;
+}
+
+        const formData = new FormData();
+
+        if (data.title) {
+formData.append('title', data.title);
+}
+
+        if (data.description) {
+formData.append('description', data.description);
+}
+
+        formData.append('type', data.type || 'photo');
+
+        if (data.thumbnail) {
+formData.append('thumbnail', data.thumbnail);
+}
+
+        if (data.recording) {
+formData.append('recording', data.recording);
+}
+
+        if (data.duration) {
+formData.append('duration', data.duration);
+}
+
+        uuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
+
         post(`/dashboard/events/${event.slug}/stories`, {
             forceFormData: true,
             onSuccess: () => {
@@ -130,7 +143,6 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
             setStep('selection');
             setMediaType(null);
             setCustomThumbnailPreview(null);
-            setPreviews([]);
             reset();
         }, 300);
     };
@@ -202,30 +214,27 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
                                     Select the file you'd like to preserve in this event.
                                 </p>
 
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="cursor-pointer rounded-3xl border-2 border-dashed border-border-subtle bg-bg-dark/50 p-12 transition-all hover:border-accent-gold/40 hover:bg-accent-gold/5"
-                                >
-                                    <Upload className="mx-auto mb-4 text-text-muted" size={40} />
-                                    <span className="block text-sm font-medium text-text-primary">
-                                        Click to browse or drag and drop
-                                    </span>
-                                    <span className="mt-2 block text-xs text-text-muted">
-                                        Max file size: 50MB
-                                    </span>
-                                </div>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    onChange={handleFileChange}
-                                    multiple={mediaType === 'photo' || mediaType === 'video'}
+                                <UploadDropzone
+                                    onFilesSelected={handleFilesSelected}
                                     accept={
                                         mediaType === 'photo' ? 'image/*' :
                                         mediaType === 'video' ? 'video/*' :
                                         '*/*'
                                     }
+                                    multiple={mediaType === 'photo' || mediaType === 'video'}
+                                    maxSizeMB={50}
                                 />
+
+                                {uploads.length > 0 && (
+                                    <div className="mt-6">
+                                        <UploadQueue
+                                            uploads={uploads}
+                                            onCancel={cancelUpload}
+                                            onRetry={(id) => retryUpload(id, mediaType || 'photo')}
+                                            onRemove={removeFromQueue}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -275,40 +284,18 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
                                     />
                                 </div>
 
-                                {previews.length > 0 && (
+                                {uploads.length > 0 && (
                                     <div className="space-y-3">
                                         <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                            Collection Previews ({previews.length})
+                                            Uploads ({completedUploads.length}/{uploads.length} ready)
                                         </label>
-                                        <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
-                                            {previews.map((preview, index) => (
-                                                <div key={index} className="relative aspect-square h-24 shrink-0 overflow-hidden rounded-xl border border-border-subtle bg-bg-dark">
-                                                    {preview.type.startsWith('image/') ? (
-                                                        <img src={preview.url} className="h-full w-full object-cover" alt="" />
-                                                    ) : (
-                                                        <div className="flex h-full flex-col items-center justify-center gap-1 p-2 text-center text-text-muted">
-                                                            {preview.type.startsWith('video/') ? <Video size={16} /> : <Files size={16} />}
-                                                            <span className="truncate text-[8px]">{preview.name}</span>
-                                                        </div>
-                                                    )}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeFile(index)}
-                                                        className="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white hover:bg-red-500"
-                                                    >
-                                                        <X size={10} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            <button
-                                                type="button"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                className="flex aspect-square h-24 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border-subtle bg-bg-dark text-text-muted transition-all hover:border-accent-gold/40 hover:text-accent-gold"
-                                            >
-                                                <Plus size={16} />
-                                                <span className="text-[8px] font-bold">Add More</span>
-                                            </button>
-                                        </div>
+                                        <UploadQueue
+                                            uploads={uploads}
+                                            onCancel={cancelUpload}
+                                            onRetry={(id) => retryUpload(id, mediaType || 'photo')}
+                                            onRemove={removeFromQueue}
+                                            emptyMessage="No files uploaded yet."
+                                        />
                                     </div>
                                 )}
 
@@ -365,7 +352,7 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
                                 variant="primary"
                                 className="w-full"
                                 type="submit"
-                                disabled={processing || !data.title || (data.files.length === 0 && !data.recording)}
+                                disabled={processing || !data.title || (!hasReadyUploads && !data.recording)}
                             >
                                 {processing ? (
                                     <div className="flex items-center gap-2">

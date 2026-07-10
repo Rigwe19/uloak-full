@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FamilyController;
+use App\Http\Controllers\HouseAccessController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PushSubscriptionController;
@@ -49,6 +52,27 @@ Route::get('/rooms/{room}/download-media', [RoomController::class, 'downloadMedi
 // Family Member Access Routes (token-based, no password)
 Route::get('/family/access/{token}', [FamilyController::class, 'accessViaToken'])->name('family.access');
 Route::get('/family/logout', [FamilyController::class, 'logout'])->name('family.logout');
+
+// House Member Access Routes (token-based, no password)
+Route::get('/house/access/{token}', [HouseAccessController::class, 'accessViaToken'])->name('house.access');
+Route::get('/house/logout', [HouseAccessController::class, 'logout'])->name('house.logout');
+
+// House Member Routes (middleware: house-member)
+Route::middleware(['house-member'])->prefix('house')->name('house.')->group(function () {
+    Route::get('/dashboard', [HouseAccessController::class, 'dashboard'])->name('dashboard');
+    Route::get('/settings', [HouseAccessController::class, 'settings'])->name('settings');
+    Route::post('/settings', [HouseAccessController::class, 'updateProfile'])->name('settings.update');
+    Route::post('/settings/preferences', [HouseAccessController::class, 'updatePreferences'])->name('settings.preferences');
+    Route::post('/settings/leave', [HouseAccessController::class, 'leaveHouse'])->name('settings.leave');
+    Route::get('/rooms/{room}', [HouseAccessController::class, 'showRoom'])->name('rooms.show');
+    Route::post('/rooms', [HouseAccessController::class, 'storeRoom'])->name('rooms.store');
+    Route::post('/rooms/{room}', [HouseAccessController::class, 'updateRoom'])->name('rooms.update');
+    Route::post('/rooms/{room}/stories', [HouseAccessController::class, 'storeStory'])->name('rooms.stories.store');
+    Route::delete('/rooms/{room}', [HouseAccessController::class, 'destroyRoom'])->name('rooms.destroy');
+    Route::patch('/tributes/{tribute}/approve', [TributeController::class, 'approve'])->name('tributes.approve');
+    Route::patch('/candles/{candle}/approve', [TributeController::class, 'approveCandle'])->name('candles.approve');
+    Route::delete('/tributes/{tribute}', [TributeController::class, 'destroy'])->name('tributes.destroy');
+});
 
 Route::middleware(['family-member'])->prefix('family')->name('family.')->group(function () {
     Route::get('/dashboard', [FamilyController::class, 'dashboard'])->name('dashboard');
@@ -106,6 +130,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('search', [SearchController::class, 'index'])->name('search');
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications');
         Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+        Route::get('analytics', [DashboardController::class, 'analytics'])->name('analytics');
     });
 
     Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -119,8 +145,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/upload-image', [AdminController::class, 'uploadImage'])->name('upload-image');
         Route::get('/memberships', [AdminController::class, 'memberships'])->name('memberships');
         Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
-        Route::get('/activity-logs', [App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs');
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs');
+
+        Route::get('/analytics', [AdminAnalyticsController::class, 'index'])->name('analytics');
+        Route::get('/analytics/data', [AdminAnalyticsController::class, 'data'])->name('analytics.data');
+        Route::get('/analytics/platform', [AdminAnalyticsController::class, 'platform'])->name('analytics.platform');
+        Route::get('/analytics/cloudinary', [AdminAnalyticsController::class, 'cloudinary'])->name('analytics.cloudinary');
+        Route::get('/analytics/realtime', [AdminAnalyticsController::class, 'realtime'])->name('analytics.realtime');
+        Route::get('/analytics/export', [AdminAnalyticsController::class, 'export'])->name('analytics.export');
     });
 });
 
+require __DIR__.'/people.php';
 require __DIR__.'/settings.php';

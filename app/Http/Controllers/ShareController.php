@@ -23,9 +23,7 @@ use Inertia\Response as InertiaResponse;
 
 class ShareController extends Controller
 {
-    public function __construct(protected ActivityLogger $activityLogger)
-    {
-    }
+    public function __construct(protected ActivityLogger $activityLogger) {}
 
     public function showRoom(string $slug): InertiaResponse
     {
@@ -61,41 +59,42 @@ class ShareController extends Controller
 
     private function showRoomShare(Room $room): InertiaResponse
     {
-        $stories = $room->stories()
+        $paginator = $room->stories()
             ->whereNull('follow_up_to')
             ->with(['comments' => function ($q) {
                 $q->latest();
             }, 'followUpStories'])
             ->latest()
-            ->get()
-            ->map(fn ($story) => [
-                'id' => $story->id,
-                'title' => $story->title,
-                'type' => $story->type,
-                'description' => $story->description,
-                'author' => $story->user?->name ?? $story->getGuestName() ?? 'Anonymous',
-                'email' => $story->guest_email,
-                'thumbnail' => $story->thumbnail,
-                'file_url' => $story->file_url,
-                'assets' => $story->assets ?? [],
-                'comments' => $story->comments->map(fn ($c) => [
-                    'id' => $c->id,
-                    'content' => $c->content,
-                    'author' => $c->authorName(),
-                    'date' => $c->created_at->diffForHumans(),
-                ]),
-                'comments_count' => $story->comments()->count(),
-                'follow_ups' => $story->followUpStories->map(fn ($fs) => [
-                    'id' => $fs->id,
-                    'type' => $fs->type,
-                    'file_url' => $fs->file_url,
-                    'thumbnail' => $fs->thumbnail,
-                    'author' => $fs->user?->name ?? $fs->getGuestName() ?? 'Anonymous',
-                    'created_at' => $fs->created_at->format('M d, Y'),
-                ]),
-                'date' => $story->created_at->format('M d, Y'),
-                'tags' => $story->tags ?? [],
-            ]);
+            ->cursorPaginate(24);
+
+        $stories = $paginator->through(fn ($story) => [
+            'id' => $story->id,
+            'title' => $story->title,
+            'type' => $story->type,
+            'description' => $story->description,
+            'author' => $story->user?->name ?? $story->getGuestName() ?? 'Anonymous',
+            'email' => $story->guest_email,
+            'thumbnail' => $story->thumbnail,
+            'file_url' => $story->file_url,
+            'assets' => $story->assets ?? [],
+            'comments' => $story->comments->map(fn ($c) => [
+                'id' => $c->id,
+                'content' => $c->content,
+                'author' => $c->authorName(),
+                'date' => $c->created_at->diffForHumans(),
+            ]),
+            'comments_count' => $story->comments()->count(),
+            'follow_ups' => $story->followUpStories->map(fn ($fs) => [
+                'id' => $fs->id,
+                'type' => $fs->type,
+                'file_url' => $fs->file_url,
+                'thumbnail' => $fs->thumbnail,
+                'author' => $fs->user?->name ?? $fs->getGuestName() ?? 'Anonymous',
+                'created_at' => $fs->created_at->format('M d, Y'),
+            ]),
+            'date' => $story->created_at->format('M d, Y'),
+            'tags' => $story->tags ?? [],
+        ]);
 
         $thumbnail = $room->thumbnail;
 
@@ -110,7 +109,12 @@ class ShareController extends Controller
                 'room_type' => $room->room_type,
                 'tribute_song' => $room->tribute_song,
             ],
-            'stories' => $stories,
+            'stories' => $stories->items(),
+            'pagination' => [
+                'next_cursor' => $paginator->nextCursor()?->encode(),
+                'path' => $paginator->path(),
+                'per_page' => $paginator->perPage(),
+            ],
             'title' => $room->name.' - Uloak, House of Stories',
             'meta_description' => $room->description
                 ? Str::limit($room->description, 155)
@@ -126,7 +130,9 @@ class ShareController extends Controller
         $event = Event::where('slug', $slug)->firstOrFail();
         $event->loadCount('stories');
 
-        $stories = $event->stories()->with('user')->latest()->get()->map(fn ($story) => [
+        $paginator = $event->stories()->with('user')->latest()->cursorPaginate(24);
+
+        $stories = $paginator->through(fn ($story) => [
             'id' => $story->id,
             'title' => $story->title,
             'thumbnail' => $story->thumbnail,
@@ -141,7 +147,12 @@ class ShareController extends Controller
 
         return Inertia::render('share/event', [
             'event' => $event,
-            'stories' => $stories,
+            'stories' => $stories->items(),
+            'pagination' => [
+                'next_cursor' => $paginator->nextCursor()?->encode(),
+                'path' => $paginator->path(),
+                'per_page' => $paginator->perPage(),
+            ],
             'title' => $event->name.' - Uloak, House of Stories',
             'meta_description' => $event->description
                 ? Str::limit($event->description, 155)
@@ -164,7 +175,7 @@ class ShareController extends Controller
             'type' => ['required', 'string', 'in:video,audio,photo'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file', 'max:51200'],
         ]);
 
@@ -322,7 +333,7 @@ class ShareController extends Controller
             'email' => ['required', 'email', 'max:255'],
         ]);
         $exists = RoomGuestSubscription::where('room_id', $room->id)->where('email', $validated['email'])->exists();
-        if($exists){
+        if ($exists) {
             return redirect()->back()->with('success', 'You\'ve been registered!');
         }
 
@@ -371,7 +382,7 @@ class ShareController extends Controller
             'type' => ['required', 'string', 'in:video,audio,photo,document'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $fileUrl = null;

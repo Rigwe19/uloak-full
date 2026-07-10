@@ -1,3 +1,6 @@
+import { Form, Head } from '@inertiajs/react';
+import { Check, Fingerprint, Lock, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import { Button } from '@/components/dashboard/ui';
 import InputError from '@/components/input-error';
@@ -6,17 +9,16 @@ import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import { disable, enable } from '@/routes/two-factor';
-import { Form, Head } from '@inertiajs/react';
-import { Check, Fingerprint, Lock, Plus, ShieldCheck, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
 function base64urlToArrayBuffer(base64url: string): ArrayBuffer {
     const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
+
     for (let i = 0; i < binary.length; i++) {
         bytes[i] = binary.charCodeAt(i);
     }
+
     return bytes.buffer;
 }
 
@@ -98,6 +100,7 @@ export default function Security({
     const fetchPasskeys = useCallback(async () => {
         try {
             const response = await fetch('/user/passkeys');
+
             if (response.ok) {
                 const data = await response.json();
                 setPasskeys(data.passkeys ?? []);
@@ -116,7 +119,9 @@ export default function Security({
     }, [twoFactorEnabled, clearTwoFactorAuthData]);
 
     const handleRegisterPasskey = async () => {
-        if (!isPasskeySupported || isRegisteringPasskey) return;
+        if (!isPasskeySupported || isRegisteringPasskey) {
+return;
+}
 
         setIsRegisteringPasskey(true);
 
@@ -128,6 +133,7 @@ export default function Security({
 
             if (!optionsResponse.ok) {
                 const errorText = await optionsResponse.text();
+
                 throw new Error(`Failed to get registration options: ${errorText}`);
             }
 
@@ -173,6 +179,7 @@ export default function Security({
                 await fetchPasskeys();
             } else {
                 const errorData = await storeResponse.json();
+
                 throw new Error(errorData.message || 'Failed to register passkey');
             }
         } catch (error) {

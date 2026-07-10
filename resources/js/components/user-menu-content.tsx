@@ -1,6 +1,5 @@
-import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings, ShieldCheck } from 'lucide-react';
-import admin from '@/routes/admin';
+import { Link, router, usePage } from '@inertiajs/react';
+import { LogOut, Settings, ShieldCheck, User, UserPlus } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -10,7 +9,9 @@ import {
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
+import admin from '@/routes/admin';
 import { edit } from '@/routes/profile';
+import { show as peopleShow } from '@/routes/people';
 import type { User } from '@/types';
 
 type Props = {
@@ -19,6 +20,8 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
+    const { props } = usePage();
+    const authPerson = (props as any).auth?.person as { id: number; uuid: string; name: string } | null;
 
     const handleLogout = () => {
         cleanup();
@@ -44,6 +47,19 @@ export function UserMenuContent({ user }: Props) {
                         >
                             <ShieldCheck className="mr-2" />
                             Admin Dashboard
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                {authPerson && (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href={peopleShow(authPerson.uuid).url + '/about'}
+                            prefetch
+                            onClick={cleanup}
+                        >
+                            <User className="mr-2" />
+                            Profile
                         </Link>
                     </DropdownMenuItem>
                 )}

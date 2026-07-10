@@ -17,6 +17,7 @@ class Room extends Model
 
     protected $fillable = [
         'name', 'slug', 'thumbnail', 'description', 'privacy', 'created_by',
+        'created_by_house_member_id',
         'room_type', 'enable_tributes', 'enable_condolence_attendance', 'enable_candle_lighting',
         'tribute_song', 'media_items', 'tribute_name',
         'start_date',
@@ -40,6 +41,11 @@ class Room extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function createdByHouseMember(): BelongsTo
+    {
+        return $this->belongsTo(HouseMember::class, 'created_by_house_member_id');
     }
 
     public function members(): BelongsToMany

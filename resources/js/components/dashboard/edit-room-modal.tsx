@@ -2,6 +2,7 @@ import { router } from '@inertiajs/react';
 import { Copy, ImagePlus, Link as LinkIcon, Music, Trash2, UserPlus, Users, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ResponsiveModal } from '@/components/responsive-modal';
+import { useConfirm } from '@/hooks/use-confirm';
 
 interface MediaItem {
     url: string;
@@ -79,6 +80,8 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
     const mediaInputRef = useRef<HTMLInputElement>(null);
     const songInputRef = useRef<HTMLInputElement>(null);
 
+    const confirm = useConfirm();
+
     // Family member state
     const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
     const [membersLoading, setMembersLoading] = useState(false);
@@ -89,14 +92,17 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
     const [copiedId, setCopiedId] = useState<number | null>(null);
 
     const loadFamilyMembers = useCallback(() => {
-        if (!room) return;
+        if (!room) {
+            return;
+        }
+
         setMembersLoading(true);
         fetch(`/dashboard/rooms/${room.slug}/members`)
             .then(res => res.json())
             .then(data => {
                 setFamilyMembers(data.members ?? []);
             })
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setMembersLoading(false));
     }, [room]);
 
@@ -124,7 +130,11 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
 
     const handleThumbnailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+            return;
+        }
+
         setThumbnailFile(file);
         const reader = new FileReader();
         reader.onload = (ev) => setThumbnailPreview(ev.target?.result as string);
@@ -139,7 +149,11 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
 
     const handleTributeSongChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+            return;
+        }
+
         setTributeSongFile(file);
         setTributeSongName(file.name);
         e.target.value = '';
@@ -152,12 +166,17 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
 
     const handleMediaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (!files) return;
+
+        if (!files) {
+            return;
+        }
+
         setMediaFiles(prev => [...prev, ...Array.from(files)]);
         Array.from(files).forEach((file) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
                 const dataUrl = ev.target?.result as string;
+
                 if (dataUrl) {
                     setMediaItems(prev => [...prev, {
                         url: dataUrl,
@@ -177,7 +196,10 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!room) return;
+
+        if (!room) {
+            return;
+        }
 
         setSubmitting(true);
 
@@ -190,10 +212,23 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
         formData.append('enable_condolence_attendance', enableCondolenceAttendance ? '1' : '0');
         formData.append('enable_candle_lighting', enableCandleLighting ? '1' : '0');
         formData.append('tribute_name', tributeName || '');
-        if (startDate) formData.append('start_date', startDate);
-        if (endDate) formData.append('end_date', endDate);
-        if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
-        if (tributeSongFile) formData.append('tribute_song', tributeSongFile);
+
+        if (startDate) {
+            formData.append('start_date', startDate);
+        }
+
+        if (endDate) {
+            formData.append('end_date', endDate);
+        }
+
+        if (thumbnailFile) {
+            formData.append('thumbnail', thumbnailFile);
+        }
+
+        if (tributeSongFile) {
+            formData.append('tribute_song', tributeSongFile);
+        }
+
         const retainedExistingUrls = mediaItems
             .filter((item) => item.url.startsWith('/storage/'))
             .map((item) => item.url);
@@ -228,13 +263,19 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
 
     const handleAddMember = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!room || !newMemberName || !newMemberEmail) return;
+
+        if (!room || !newMemberName || !newMemberEmail) {
+            return;
+        }
 
         setAddingMember(true);
         const formData = new FormData();
         formData.append('name', newMemberName);
         formData.append('email', newMemberEmail);
-        if (newMemberRelationship) formData.append('relationship', newMemberRelationship);
+
+        if (newMemberRelationship) {
+            formData.append('relationship', newMemberRelationship);
+        }
 
         router.post(`/dashboard/rooms/${room.slug}/members`, formData, {
             preserveScroll: true,
@@ -251,9 +292,16 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
         });
     }, [room, newMemberName, newMemberEmail, newMemberRelationship, loadFamilyMembers]);
 
-    const handleRemoveMember = useCallback((memberId: number) => {
-        if (!room) return;
-        if (!confirm('Remove this family member? They will lose access to this room.')) return;
+    const handleRemoveMember = useCallback(async (memberId: number) => {
+        if (!room) {
+            return;
+        }
+
+        const ok = await confirm('Remove this family member? They will lose access to this room.');
+
+        if (!ok) {
+            return;
+        }
 
         router.delete(`/dashboard/rooms/${room.slug}/members/${memberId}`, {
             preserveScroll: true,
@@ -261,11 +309,18 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
                 loadFamilyMembers();
             },
         });
-    }, [room, loadFamilyMembers]);
+    }, [room, loadFamilyMembers, confirm]);
 
-    const handleRegenerateToken = useCallback((memberId: number) => {
-        if (!room) return;
-        if (!confirm('Generate a new access link? The old link will stop working.')) return;
+    const handleRegenerateToken = useCallback(async (memberId: number) => {
+        if (!room) {
+            return;
+        }
+
+        const ok = await confirm('Generate a new access link? The old link will stop working.');
+
+        if (!ok) {
+            return;
+        }
 
         router.post(`/dashboard/rooms/${room.slug}/members/${memberId}/regenerate-token`, {}, {
             preserveScroll: true,
@@ -273,9 +328,11 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
                 loadFamilyMembers();
             },
         });
-    }, [room, loadFamilyMembers]);
+    }, [room, loadFamilyMembers, confirm]);
 
-    if (!room) return null;
+    if (!room) {
+        return null;
+    }
 
     return (
         <ResponsiveModal
@@ -286,7 +343,7 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
             desktopMaxWidth="max-w-2xl"
             fullHeight
         >
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full overflow-auto">
                 <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/5 bg-surface px-6 py-4 shrink-0">
                     <h2 className="text-lg font-semibold">{activeTab === 'members' ? 'Family Members' : 'Edit Room'}</h2>
                     <button onClick={onClose} className="rounded-full p-2 text-text-muted transition-colors hover:bg-white/5 hover:text-text-primary">
@@ -298,21 +355,19 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
                 <div className="flex border-b border-white/5 px-6">
                     <button
                         onClick={() => setActiveTab('settings')}
-                        className={`px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${
-                            activeTab === 'settings'
+                        className={`px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${activeTab === 'settings'
                                 ? 'text-accent-gold border-b-2 border-accent-gold'
                                 : 'text-text-muted hover:text-text-primary'
-                        }`}
+                            }`}
                     >
                         Room Settings
                     </button>
                     <button
                         onClick={() => setActiveTab('members')}
-                        className={`flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${
-                            activeTab === 'members'
+                        className={`flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${activeTab === 'members'
                                 ? 'text-accent-gold border-b-2 border-accent-gold'
                                 : 'text-text-muted hover:text-text-primary'
-                        }`}
+                            }`}
                     >
                         <Users size={14} />
                         Family Members
@@ -633,11 +688,10 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
                                                 <button
                                                     type="button"
                                                     onClick={() => copyToClipboard(member.access_url, member.id)}
-                                                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-bold tracking-wider uppercase transition-all ${
-                                                        copiedId === member.id
+                                                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[10px] font-bold tracking-wider uppercase transition-all ${copiedId === member.id
                                                             ? 'border-green-500/30 bg-green-500/10 text-green-400'
                                                             : 'border-white/10 text-text-muted hover:border-accent-gold/40 hover:text-accent-gold'
-                                                    }`}
+                                                        }`}
                                                     title="Copy access link"
                                                 >
                                                     <Copy size={12} />
