@@ -111,7 +111,7 @@ class MediaWebhookService
 
         if ($hasEager) {
             foreach ($payload['eager'] as $eager) {
-                $transformation = $eager['transformation'] ?? $eager['secure_url'] && '';
+                $transformation = $eager['transformation'] ?? $eager['secure_url'] ?? '';
 
                 // Optimized original (common)
                 if (str_contains($transformation, 'w_auto') && str_contains($transformation, 'q_auto')) {
@@ -133,7 +133,7 @@ class MediaWebhookService
                 }
 
                 // Video-specific
-                if (str_contains($transformation, 'sprit')) {
+                if (str_contains($transformation, 'fl_sprite')) {
                     $updateData['sprite'] = [
                         'url' => $eager['secure_url'],
                         'frame_width' => $eager['width'] ?? 160,
