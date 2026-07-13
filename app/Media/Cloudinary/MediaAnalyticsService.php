@@ -70,6 +70,7 @@ class MediaAnalyticsService
             'request_id' => $this->requestId,
             'public_id' => $payload['public_id'] ?? null,
             'notification_type' => $payload['notification_type'] ?? 'unknown',
+            'payload' => $payload,
         ]);
     }
 

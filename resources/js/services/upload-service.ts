@@ -2,12 +2,22 @@ import type { SignedUpload, MediaStatus } from '@/types/media';
 
 const API_BASE = '/api';
 
+const RESOURCE_TYPE_MAP: Record<string, string> = {
+    photo: 'image',
+    video: 'video',
+    audio: 'video',
+    document: 'raw',
+};
+
 export async function requestSignedUpload(
     mimeType: string,
     size: number,
     originalName: string,
+    mediaType?: string,
 ): Promise<SignedUpload> {
-    const response = await fetch(`${API_BASE}/media/video/sign`, {
+    const resourceType = mediaType ? RESOURCE_TYPE_MAP[mediaType] ?? 'auto' : 'video';
+
+    const response = await fetch(`${API_BASE}/media/sign`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -19,6 +29,7 @@ export async function requestSignedUpload(
             mime_type: mimeType,
             size,
             original_name: originalName,
+            resource_type: resourceType,
         }),
     });
 

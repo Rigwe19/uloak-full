@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import {
     X, Plus, Camera, Video, MessageSquare, Files,
     ArrowLeft, Check, Loader2
@@ -106,7 +106,7 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
         }
 
         const uuids = uploads
-            .filter((u) => u.status === 'ready' || u.status === 'processing')
+            .filter((u) => u.status === 'ready')
             .map((u) => u.mediaUuid)
             .filter(Boolean) as string[];
 
@@ -140,13 +140,28 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
 
         uuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
 
-        post(postUrl || `/dashboard/rooms/${selectedRoom.slug}/stories`, {
-            forceFormData: true,
-            onSuccess: () => {
-                setStep('success');
-                onSuccess?.();
+        router.post(
+            postUrl || `/dashboard/rooms/${selectedRoom.slug}/stories`,
+            formData,
+            {
+                onSuccess: () => {
+                    setStep('success');
+
+                    router.visit(window.location.pathname, {
+                        only: ['stories', 'pagination'],
+                        preserveScroll: true,
+                        preserveState: true,
+                        onSuccess: (page) => {
+                            window.dispatchEvent(new CustomEvent('feed:reset', {
+                                detail: { stories: (page.props as any).stories ?? [] },
+                            }));
+                        },
+                    });
+
+                    onSuccess?.();
+                },
             },
-        });
+        );
     };
 
     const handleClose = () => {

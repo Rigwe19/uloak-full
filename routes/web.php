@@ -107,6 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
         Route::resource('rooms', RoomController::class)->only(['show', 'store', 'update']);
+        Route::get('rooms/{room}/feed', [RoomController::class, 'feed'])->name('rooms.feed');
 
         // Family member management
         Route::get('rooms/{room}/members', [RoomController::class, 'members'])->name('rooms.members');

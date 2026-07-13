@@ -31,6 +31,7 @@ createInertiaApp({
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name === 'dashboard/stories/show':
+            case name === 'dashboard/rooms/feed':
                 return null;
             case name.startsWith('dashboard/'):
                 return DashboardLayout;

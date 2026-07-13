@@ -4,10 +4,13 @@ namespace App\Media\Cloudinary;
 
 use App\Events\MediaProcessingCompleted;
 use App\Events\MediaProcessingFailed;
+use App\Jobs\CheckMediaProcessingTimeout;
+use App\Media\Enums\MediaType;
 use App\Media\Enums\ProcessingState;
 use App\Media\Exceptions\MediaProcessingException;
 use App\Media\Repositories\MediaRepository;
 use App\Models\Media;
+use App\Models\Story;
 use Illuminate\Support\Facades\Log;
 
 class MediaWebhookService
@@ -52,14 +55,22 @@ class MediaWebhookService
     protected function handleSuccess(Media $media, array $payload): Media
     {
 
+        $hasEager = isset($payload['eager']) && count($payload['eager']) > 0;
+
         $updateData = [
-            'status' => 'processing',
+            'status' => $hasEager ? ProcessingState::Ready->value : 'processing',
             'width' => $payload['width'] ?? $media->width,
             'height' => $payload['height'] ?? $media->height,
             'size' => $payload['bytes'] ?? $media->size,
             'provider_id' => $payload['asset_id'] ?? null,
             'path' => $payload['secure_url'] ?? $media->path,
         ];
+
+        if ($hasEager) {
+            $updateData['processing_completed_at'] = now();
+            $updateData['eager'] = true;
+            $updateData['eager_response'] = $payload['eager'];
+        }
 
         $metadata = array_merge($media->metadata ?? [], [
             'cloudinary_asset_id' => $payload['asset_id'] ?? null,
@@ -98,10 +109,30 @@ class MediaWebhookService
             $updateData['aspect_ratio'] = round($payload['width'] / $payload['height'], 4);
         }
 
-        if (isset($payload['eager'])) {
+        if ($hasEager) {
             foreach ($payload['eager'] as $eager) {
-                $transformation = $eager['transformation'] ?? '';
+                $transformation = $eager['transformation'] ?? $eager['secure_url'] && '';
 
+                // Optimized original (common)
+                if (str_contains($transformation, 'w_auto') && str_contains($transformation, 'q_auto')) {
+                    $updateData['preview'] = $eager['secure_url'];
+                    if (($updateData['thumbnail'] ?? null) === null) {
+                        $updateData['thumbnail'] = $eager['secure_url'];
+                    }
+
+                    continue;
+                }
+
+                // Image-responsive sizes
+                if ($media->type === MediaType::Image->value) {
+                    if (($updateData['thumbnail'] ?? null) === null) {
+                        $updateData['thumbnail'] = $eager['secure_url'];
+                    }
+
+                    continue;
+                }
+
+                // Video-specific
                 if (str_contains($transformation, 'sprit')) {
                     $updateData['sprite'] = [
                         'url' => $eager['secure_url'],
@@ -112,7 +143,8 @@ class MediaWebhookService
                     ];
                 } elseif (str_contains($transformation, 'so_')) {
                     $updateData['preview'] = $eager['secure_url'];
-                } elseif ($updateData['thumbnail'] ?? null === null) {
+                    $updateData['thumbnail'] = $eager['secure_url'];
+                } elseif (($updateData['thumbnail'] ?? null) === null) {
                     $updateData['thumbnail'] = $eager['secure_url'];
                 }
             }
@@ -123,6 +155,12 @@ class MediaWebhookService
         $this->repository->update($media, $updateData);
 
         $media->refresh();
+
+        if (! $hasEager) {
+            CheckMediaProcessingTimeout::dispatch($media)->delay(now()->addMinutes(5));
+        }
+
+        $this->updateStoriesWithMediaUrl($media);
 
         MediaProcessingCompleted::dispatch($media);
 
@@ -139,13 +177,16 @@ class MediaWebhookService
         $update = [
             'status' => ProcessingState::Ready->value,
             'processing_completed_at' => now(),
+            'eager' => true,
+            'eager_response' => $payload['eager'] ?? [],
         ];
 
         $metadata = $media->metadata ?? [];
 
         foreach ($payload['eager'] ?? [] as $item) {
             $transformation = $item['transformation'] ?? '';
-            logger()->info('transformation', ['transformation' => $transformation]);
+
+            // Optimized original — common to all types
             if (
                 str_contains($transformation, 'w_auto') &&
                 str_contains($transformation, 'q_auto')
@@ -157,9 +198,33 @@ class MediaWebhookService
                     'bytes' => $item['bytes'],
                 ];
 
+                if (($update['thumbnail'] ?? null) === null) {
+                    $update['thumbnail'] = $item['secure_url'];
+                }
+
                 continue;
             }
 
+            // Image-responsive sizes
+            if ($media->type === MediaType::Image->value) {
+                if (preg_match('/w_(\d+)/', $transformation, $matches)) {
+                    $size = $matches[1];
+                    $metadata['responsive'][$size] = [
+                        'url' => $item['secure_url'],
+                        'width' => $item['width'],
+                        'height' => $item['height'],
+                        'bytes' => $item['bytes'] ?? null,
+                    ];
+
+                    if (($update['thumbnail'] ?? null) === null) {
+                        $update['thumbnail'] = $item['secure_url'];
+                    }
+                }
+
+                continue;
+            }
+
+            // Video-specific transformations
             if (
                 str_contains($transformation, 'w_640') &&
                 str_contains($transformation, 'h_360') &&
@@ -193,6 +258,8 @@ class MediaWebhookService
         $this->repository->update($media, $update);
         $media->refresh();
 
+        $this->updateStoriesWithMediaUrl($media);
+
         MediaProcessingCompleted::dispatch($media);
 
         return $media;
@@ -222,5 +289,21 @@ class MediaWebhookService
         ]);
 
         return $media;
+    }
+
+    protected function updateStoriesWithMediaUrl(Media $media): void
+    {
+        if (! $media->path) {
+            return;
+        }
+
+        $update = ['file_url' => $media->path];
+
+        if ($media->thumbnail) {
+            $update['thumbnail'] = $media->thumbnail;
+        }
+
+        Story::whereJsonContains('assets', ['media_uuid' => $media->uuid])
+            ->update($update);
     }
 }

@@ -97,8 +97,8 @@ class StoryController extends Controller
             }
         }
 
-        $thumbnail = $story->thumbnail ?? $media?->thumbnail ?? $media?->url ?? null;
-        $fileUrl = $story->file_url ?? $media?->url ?? null;
+        $thumbnail = $story->thumbnail ?? $media?->thumbnail ?? $media?->url() ?? null;
+        $fileUrl = $story->file_url ?? $media?->url() ?? null;
         $sprite = $media?->sprite ?? null;
 
         if (! $story->thumbnail && ! $story->file_url && $media) {
@@ -182,8 +182,8 @@ class StoryController extends Controller
             }
         }
 
-        $thumbnail = $story->thumbnail ?? $media?->thumbnail ?? $media?->url ?? null;
-        $fileUrl = $story->file_url ?? $media?->url ?? null;
+        $thumbnail = $story->thumbnail ?? $media?->thumbnail ?? $media?->url() ?? null;
+        $fileUrl = $story->file_url ?? $media?->url() ?? null;
         $sprite = $media?->sprite ?? null;
 
         if (! $story->thumbnail && ! $story->file_url && $media) {

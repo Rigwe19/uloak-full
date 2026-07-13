@@ -103,7 +103,14 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
         set({ ...INITIAL_STATE });
     },
 
-    reset: () => set({ ...INITIAL_STATE }),
+    reset: () => {
+        if (activeVideoElement) {
+            activeVideoElement.pause();
+            activeVideoElement = null;
+        }
+
+        set({ ...INITIAL_STATE });
+    },
 }));
 
 export function setActiveVideoElement(el: HTMLVideoElement | null) {

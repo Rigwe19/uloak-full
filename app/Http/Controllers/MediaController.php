@@ -96,10 +96,14 @@ class MediaController extends Controller
 
         $thumbnail = null;
         if ($media->isImage()) {
-            try {
-                $thumbnail = $media->thumbnail(300, 300);
-            } catch (\RuntimeException) {
-                $thumbnail = null;
+            if ($media->provider === 'cloudinary') {
+                $thumbnail = $media->thumbnail;
+            } else {
+                try {
+                    $thumbnail = $media->thumbnail(300, 300);
+                } catch (\RuntimeException) {
+                    $thumbnail = null;
+                }
             }
         }
 

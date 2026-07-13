@@ -16,21 +16,40 @@ class MediaUploadController extends Controller
 
     public function signVideo(Request $request): JsonResponse
     {
+        return $this->sign($request);
+    }
+
+    public function sign(Request $request): JsonResponse
+    {
         $request->validate([
             'mime_type' => ['required', 'string', 'max:255'],
             'size' => ['required', 'integer', 'min:1', 'max:1073741824'],
             'original_name' => ['required', 'string', 'max:255'],
+            'resource_type' => ['nullable', 'string', 'in:image,video,raw'],
         ]);
 
         $mimeType = $request->input('mime_type');
         $size = (int) $request->input('size');
         $originalName = $request->input('original_name');
+        $resourceType = $request->input('resource_type');
 
-        $allowedMimes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/webm', 'application/mp4'];
+        if ($resourceType === null) {
+            $resourceType = match (true) {
+                str_starts_with($mimeType, 'image/') => 'image',
+                str_starts_with($mimeType, 'video/'), str_starts_with($mimeType, 'audio/') => 'video',
+                default => 'raw',
+            };
+        }
 
-        if (! in_array($mimeType, $allowedMimes, true)) {
+        if ($resourceType === 'image' && ! str_starts_with($mimeType, 'image/')) {
             return response()->json([
-                'message' => "Unsupported format: {$mimeType}.",
+                'message' => "Invalid mime type [{$mimeType}] for image resource.",
+            ], 415);
+        }
+
+        if ($resourceType === 'video' && ! str_starts_with($mimeType, 'video/') && ! str_starts_with($mimeType, 'audio/')) {
+            return response()->json([
+                'message' => "Invalid mime type [{$mimeType}] for video resource.",
             ], 415);
         }
 
@@ -42,9 +61,9 @@ class MediaUploadController extends Controller
             ], 413);
         }
 
-        $media = $this->uploadService->createPendingVideo($mimeType, $size, $originalName);
+        $media = $this->uploadService->createPendingMedia($mimeType, $size, $originalName, $resourceType);
 
-        $signed = $this->uploadService->generateSignedUpload($media);
+        $signed = $this->uploadService->generateSignedUpload($media, $resourceType);
 
         return response()->json([
             'data' => [

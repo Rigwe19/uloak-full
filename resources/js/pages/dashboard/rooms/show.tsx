@@ -565,7 +565,9 @@ return;
                         ) : undefined}
                     >
                         {(story) => {
-                            const link = storiesRoutes.show(story.uuid).url;
+                            const link = story.type === 'video'
+                                ? roomsRoutes.feed(room.slug).url
+                                : storiesRoutes.show(story.uuid).url;
 
                             return (
                                 <Link href={link} className="group block h-full">

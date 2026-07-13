@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import {
     X, Camera, Video, MessageSquare, Files,
     ArrowLeft, Check, Loader2
@@ -94,7 +94,7 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
         e?.preventDefault();
 
         const uuids = uploads
-            .filter((u) => u.status === 'ready' || u.status === 'processing')
+            .filter((u) => u.status === 'ready')
             .map((u) => u.mediaUuid)
             .filter(Boolean) as string[];
 
@@ -128,13 +128,28 @@ formData.append('duration', data.duration);
 
         uuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
 
-        post(`/dashboard/events/${event.slug}/stories`, {
-            forceFormData: true,
-            onSuccess: () => {
-                setStep('success');
-                onSuccess?.();
+        router.post(
+            `/dashboard/events/${event.slug}/stories`,
+            formData,
+            {
+                onSuccess: () => {
+                    setStep('success');
+
+                    router.visit(window.location.pathname, {
+                        only: ['stories', 'pagination'],
+                        preserveScroll: true,
+                        preserveState: true,
+                        onSuccess: (page) => {
+                            window.dispatchEvent(new CustomEvent('feed:reset', {
+                                detail: { stories: (page.props as any).stories ?? [] },
+                            }));
+                        },
+                    });
+
+                    onSuccess?.();
+                },
             },
-        });
+        );
     };
 
     const handleClose = () => {

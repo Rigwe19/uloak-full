@@ -13,6 +13,7 @@ import { VideoSurface } from './VideoSurface';
 interface VideoPlayerProps {
     video: PlayerVideo;
     autoPlay?: boolean;
+    preload?: 'none' | 'metadata' | 'auto';
     showControls?: boolean;
     showSpeedControl?: boolean;
     showPip?: boolean;
@@ -30,6 +31,7 @@ interface VideoPlayerProps {
 export function VideoPlayer({
     video,
     autoPlay = true,
+    preload = 'metadata',
     showControls = true,
     showSpeedControl = true,
     showPip = true,
@@ -89,6 +91,7 @@ export function VideoPlayer({
                 onTimeUpdate={onTimeUpdate}
                 onEnded={onEnded}
                 className={videoClassName}
+                preload={preload}
             />
 
             <VideoLoading visible={isLoading} />

@@ -8,9 +8,10 @@ interface VideoSurfaceProps {
     onTimeUpdate?: (time: number) => void;
     onEnded?: () => void;
     className?: string;
+    preload?: 'none' | 'metadata' | 'auto';
 }
 
-export function VideoSurface({ videoId, src, poster, onTimeUpdate, onEnded, className = '' }: VideoSurfaceProps) {
+export function VideoSurface({ videoId, src, poster, onTimeUpdate, onEnded, className = '', preload = 'metadata' }: VideoSurfaceProps) {
     const { videoRef, retry } = useVideoControls({ videoId, src, onTimeUpdate, onEnded });
 
     return (
@@ -20,7 +21,7 @@ export function VideoSurface({ videoId, src, poster, onTimeUpdate, onEnded, clas
             poster={poster || undefined}
             className={className}
             playsInline
-            preload="metadata"
+            preload={preload}
             onClick={retry}
         />
     );

@@ -18,6 +18,10 @@ Route::post('/api/media/video/sign', [MediaUploadController::class, 'signVideo']
     ->middleware(['web', 'auth:sanctum'])
     ->name('api.media.video.sign');
 
+Route::post('/api/media/sign', [MediaUploadController::class, 'sign'])
+    ->middleware(['web', 'auth:sanctum'])
+    ->name('api.media.sign');
+
 Route::get('/media/image/{uuid}/{size}.{format}', [MediaController::class, 'serveImage'])
     ->where('size', '\d+x\d+')
     ->where('format', 'webp|jpeg|jpg|png')

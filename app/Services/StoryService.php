@@ -21,6 +21,7 @@ class StoryService
     public function createStory(User $user, Room|Event $space, array $data): Story
     {
         $fileUrl = null;
+        $storyThumbnail = null;
         $assets = [];
 
         if (isset($data['files']) && is_array($data['files'])) {
@@ -78,6 +79,14 @@ class StoryService
                 if (! $fileUrl) {
                     $fileUrl = $media->url();
                 }
+                logger()->info('Story thumbnail', [
+                    'thumb' => $media->thumbnail,
+                    'story' => $storyThumbnail,
+                ]);
+
+                if ($media->thumbnail) {
+                    $storyThumbnail = $media->thumbnail;
+                }
             }
         }
 
@@ -91,7 +100,14 @@ class StoryService
         if (isset($data['recording']) && $data['recording'] instanceof UploadedFile) {
             $media = $this->mediaManager->uploadAudio($data['recording']);
             $fileUrl = $media->url();
-            $fullPath = Storage::disk($media->disk)->path($media->path);
+
+            if (filter_var($media->path, FILTER_VALIDATE_URL)) {
+                $tempFile = tempnam(sys_get_temp_dir(), 'audio_');
+                file_put_contents($tempFile, file_get_contents($media->path));
+                $fullPath = $tempFile;
+            } else {
+                $fullPath = Storage::disk($media->disk)->path($media->path);
+            }
 
             $storyData = [
                 'user_id' => $user->id,
@@ -114,6 +130,11 @@ class StoryService
             $story = Story::create($storyData);
 
             $audioUrl = $this->assemblyAIService->uploadFile($fullPath);
+
+            if (isset($tempFile)) {
+                @unlink($tempFile);
+            }
+
             $transcriptId = $this->assemblyAIService->createTranscript(
                 $audioUrl,
                 url('/api/webhooks/assemblyai')
@@ -128,6 +149,14 @@ class StoryService
         if (count($assets) > 1) {
             $type = 'collection';
         }
+        logger()->info('Creating story', [
+            'type' => $type,
+            'assets_count' => count($assets),
+            'data' => $data['thumbnail'] ?? null,
+            'story' => $storyThumbnail,
+            'fileUrl' => $fileUrl,
+            'thumbnail' => $data['thumbnail'] ?? $storyThumbnail ?? $fileUrl,
+        ]);
 
         $storyData = [
             'user_id' => $user->id,
@@ -136,7 +165,7 @@ class StoryService
             'description' => $data['description'] ?? '',
             'file_url' => $fileUrl,
             'duration' => $data['duration'] ?? null,
-            'thumbnail' => $data['thumbnail'] ?? $fileUrl,
+            'thumbnail' => $data['thumbnail'] ?? $storyThumbnail ?? $fileUrl,
             'assets' => $assets,
         ];
 

@@ -83,6 +83,20 @@ return;
     }, [videoId, src]);
 
     useEffect(() => {
+        return () => {
+            const el = videoRef.current;
+
+            if (el) {
+                el.pause();
+                el.src = '';
+                el.load();
+            }
+
+            setActiveVideoElement(null);
+        };
+    }, []);
+
+    useEffect(() => {
         const el = videoRef.current;
 
         if (!el || !src) {

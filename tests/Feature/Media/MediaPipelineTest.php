@@ -318,7 +318,9 @@ test('repository throws on missing media', function () {
 
 test('media type enum has expected values', function () {
     expect(MediaType::Image->value)->toBe('image')
-        ->and(MediaType::Video->value)->toBe('video');
+        ->and(MediaType::Video->value)->toBe('video')
+        ->and(MediaType::Audio->value)->toBe('audio')
+        ->and(MediaType::Document->value)->toBe('document');
 });
 
 // ─── Queue Job ─────────────────────────────────────────────────

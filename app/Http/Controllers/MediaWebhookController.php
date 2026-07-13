@@ -45,7 +45,8 @@ class MediaWebhookController extends Controller
                 $e->getMessage(),
             );
 
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json(['message' => 'OK']);
+            // return response()->json(['message' => $e->getMessage()], 422);
         }
 
         return response()->json(['message' => 'OK']);

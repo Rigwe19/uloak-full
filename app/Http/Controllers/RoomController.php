@@ -6,6 +6,7 @@ use App\Media\MediaManager;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\RoomMember;
+use App\Models\Story;
 use App\Services\ActivityLogger;
 use App\Services\RoomService;
 use Illuminate\Http\JsonResponse;
@@ -73,6 +74,47 @@ class RoomController extends Controller
                 'per_page' => $storiesPaginator->perPage(),
             ],
             'candles' => $candles,
+        ]);
+    }
+
+    public function feed(Room $room): Response
+    {
+        $stories = Story::where('room_id', $room->id)
+            ->where('type', 'video')
+            ->with('user')
+            ->orderBy('id', 'desc')
+            ->take(10)
+            ->get();
+
+        return Inertia::render('dashboard/rooms/feed', [
+            'title' => $room->name.' - Reels - Uloak',
+            'meta_description' => 'Browse video memories in '.$room->name,
+            'room' => [
+                'id' => $room->id,
+                'slug' => $room->slug,
+                'name' => $room->name,
+            ],
+            'initialVideos' => $stories->map(fn (Story $story) => [
+                'id' => $story->id,
+                'uuid' => $story->uuid,
+                'title' => $story->title,
+                'description' => $story->description,
+                'type' => $story->type,
+                'file_url' => $story->file_url,
+                'thumbnail' => $story->thumbnail,
+                'duration' => $story->duration,
+                'author' => $story->user?->name ?? $story->guest_name,
+                'date' => $story->created_at->format('M d, Y'),
+                'tags' => $story->tags ?? [],
+                'comments_count' => $story->comments()->count(),
+                'user' => $story->relationLoaded('user') && $story->user ? [
+                    'id' => $story->user->id,
+                    'name' => $story->user->name,
+                    'avatar' => $story->user->profile_photo_url,
+                ] : null,
+            ])->values()->all(),
+            'nextCursor' => $stories->last()?->id,
+            'hasMore' => $stories->count() === 10,
         ]);
     }
 

@@ -36,3 +36,28 @@ export interface PaginatedResponse {
     path: string;
     per_page: number;
 }
+
+export interface FeedVideoData {
+    id: number;
+    uuid: string;
+    title: string;
+    description?: string;
+    type: string;
+    file_url?: string;
+    thumbnail?: string;
+    duration?: string;
+    author: string;
+    date: string;
+    tags: string[];
+    user?: {
+        id: number;
+        name: string;
+        avatar?: string;
+    };
+    room?: {
+        id: number;
+        slug: string;
+        name: string;
+    };
+    comments_count: number;
+}

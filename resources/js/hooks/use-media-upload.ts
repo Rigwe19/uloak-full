@@ -42,6 +42,7 @@ export function useMediaUpload() {
           file.type,
           file.size,
           file.name,
+          mediaType,
         );
 
         updateMediaRef(id, signed.media_uuid, signed.media_id);

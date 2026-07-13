@@ -73,6 +73,8 @@ test('signed upload dto is readonly', function () {
         apiKey: 'test_api_key',
         mediaId: 1,
         mediaUuid: 'some-uuid',
+        eager: 'w_auto,c_limit,q_auto,f_auto',
+        eager_notification_url: 'https://uloak.test/api/webhooks/cloudinary',
     );
 
     expect($dto->url)->toBe('https://api.cloudinary.com/v1_1/test/video/upload')
@@ -225,9 +227,9 @@ test('upload service creates pending media with cloudinary', function () {
 test('webhook service verifies signature', function () {
     $service = app(MediaWebhookService::class);
 
-    $result = $service->verify('test body', 'invalid', null);
+    $result = $service->verify('test body', 'invalid', 0);
 
-    expect($result)->toBeTrue(); // no secret configured = skip verification
+    expect($result)->toBeFalse(); // signature invalid with configured secret
 });
 
 test('webhook service throws on missing public_id', function () {
@@ -247,7 +249,9 @@ test('webhook service throws on unknown media', function () {
 });
 
 test('webhook service handles upload notification', function () {
-    $media = Media::factory()->cloudinary()->create();
+    $media = Media::factory()->cloudinary()->create([
+        'type' => 'video',
+    ]);
     $service = app(MediaWebhookService::class);
 
     $result = $service->handle([
@@ -256,23 +260,21 @@ test('webhook service handles upload notification', function () {
         'status' => 'success',
         'secure_url' => 'https://res.cloudinary.com/test/video.mp4',
         'asset_id' => 'asset_123',
+        'width' => 1920,
+        'height' => 1080,
+        'bytes' => 2097152,
         'format' => 'mp4',
         'version' => 1,
         'resource_type' => 'video',
         'tags' => [],
         'signature' => 'sig',
-        'info' => [
-            'width' => 1920,
-            'height' => 1080,
-            'bytes' => 2097152,
-            'duration' => 120.5,
-            'bitrate' => 2500000,
-            'video_codec' => 'h264',
-            'audio_codec' => 'aac',
-            'frame_rate' => 30.0,
-            'pixel_format' => 'yuv420p',
-            'is_audio' => false,
-        ],
+        'duration' => 120.5,
+        'bit_rate' => 2500000,
+        'video' => ['codec' => 'h264'],
+        'audio' => ['codec' => 'aac'],
+        'frame_rate' => 30.0,
+        'pix_format' => 'yuv420p',
+        'is_audio' => false,
     ]);
 
     expect($result->status)->toBe('processing')
@@ -285,6 +287,7 @@ test('webhook service handles upload notification', function () {
 test('webhook service handles eager notification with sprite', function () {
     $media = Media::factory()->cloudinary()->create([
         'status' => 'processing',
+        'type' => 'video',
     ]);
     $service = app(MediaWebhookService::class);
 
@@ -293,30 +296,45 @@ test('webhook service handles eager notification with sprite', function () {
         'notification_type' => 'eager',
         'eager' => [
             [
-                'transformation' => 'sprite',
-                'secure_url' => 'https://res.cloudinary.com/sprite.jpg',
+                'transformation' => 'w_auto,c_limit,q_auto,f_auto',
+                'secure_url' => 'https://res.cloudinary.com/original.mp4',
+                'width' => 1920,
+                'height' => 1080,
+                'bytes' => 1048576,
+            ],
+            [
+                'transformation' => 'w_640,h_360,c_fill,q_auto,f_auto',
+                'secure_url' => 'https://res.cloudinary.com/mobile.mp4',
+                'width' => 640,
+                'height' => 360,
+                'bytes' => 524288,
+            ],
+            [
+                'transformation' => 'so_3,w_640,h_360,c_fill,f_jpg',
+                'secure_url' => 'https://res.cloudinary.com/thumb.jpg',
+                'width' => 640,
+                'height' => 360,
+                'bytes' => 65536,
+            ],
+            [
+                'transformation' => 'w_160,h_90,c_fill,fl_sprite,f_vtt',
+                'secure_url' => 'https://res.cloudinary.com/sprite.vtt',
                 'width' => 160,
                 'height' => 90,
                 'sprite_image_count' => 10,
-            ],
-            [
-                'transformation' => 'so_1',
-                'secure_url' => 'https://res.cloudinary.com/preview.webp',
-            ],
-            [
-                'transformation' => 'w_640',
-                'secure_url' => 'https://res.cloudinary.com/thumb.jpg',
             ],
         ],
     ]);
 
     expect($result->status)->toBe('ready')
         ->and($result->thumbnail)->toContain('thumb.jpg')
-        ->and($result->preview)->toContain('preview.webp')
+        ->and($result->metadata['preview']['url'])->toContain('original.mp4')
         ->and($result->sprite)->not->toBeNull()
-        ->and($result->sprite['url'])->toContain('sprite.jpg')
-        ->and($result->sprite['frame_width'])->toBe(160)
-        ->and($result->sprite['columns'])->toBe(10);
+        ->and($result->sprite['vtt'])->toContain('sprite.vtt')
+        ->and($result->sprite['image'])->toContain('sprite.jpg')
+        ->and($result->eager)->toBeTrue()
+        ->and($result->eager_response)->toBeArray()
+        ->and($result->eager_response[0]['transformation'])->toContain('w_auto');
 });
 
 test('webhook service handles failure notification', function () {

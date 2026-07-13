@@ -51,27 +51,44 @@ class CloudinaryService
         }
     }
 
-    public function buildEagerTransformations(): string
+    public function buildVideoEagerTransformations(): string
     {
         return implode('|', [
-            // Optimized/original video
             'w_auto,c_limit,q_auto,f_auto',
-
-            // Mobile rendition
             'w_640,h_360,c_fill,q_auto,f_auto',
-
-            // Poster image
             'so_3,w_640,h_360,c_fill,f_jpg',
-
-            // Sprite sheet
             'w_160,h_90,c_fill,fl_sprite,f_vtt',
         ]);
     }
 
-    public function uploadUrl(): string
+    public function buildImageEagerTransformations(): string
     {
-        return $this->config['upload_url']
-            ?? 'https://api.cloudinary.com/v1_1/'.$this->cloudId().'/video/upload';
+        return implode('|', [
+            'w_auto,c_limit,q_auto,f_auto',
+            'w_150,h_150,c_fill,q_auto,f_auto',
+            'w_640,h_640,c_limit,q_auto,f_auto',
+            'w_1200,h_1200,c_limit,q_auto,f_auto',
+        ]);
+    }
+
+    public function buildEagerTransformations(): string
+    {
+        return $this->buildVideoEagerTransformations();
+    }
+
+    public function uploadUrl(?string $resourceType = 'video'): string
+    {
+        if ($this->config['upload_url'] ?? null) {
+            return $this->config['upload_url'];
+        }
+
+        $base = 'https://api.cloudinary.com/v1_1/'.$this->cloudId();
+
+        return match ($resourceType) {
+            'image' => $base.'/image/upload',
+            'raw' => $base.'/raw/upload',
+            default => $base.'/video/upload',
+        };
     }
 
     public function cloudId(): string
