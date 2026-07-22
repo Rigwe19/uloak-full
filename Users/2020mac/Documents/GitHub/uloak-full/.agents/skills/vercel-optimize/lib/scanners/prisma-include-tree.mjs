@@ -22,10 +22,15 @@ const RE = /include\s*:\s*\{[\s\S]*?include\s*:\s*\{[\s\S]*?include\s*:/g;
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (/\.test\.|\.spec\./.test(path)) continue;
+    if (/\.test\.|\.spec\./.test(path)) {
+continue;
+}
+
     let m;
     RE.lastIndex = 0;
+
     while ((m = RE.exec(content)) !== null) {
       out.push({
         pattern: metadata.id,
@@ -38,5 +43,6 @@ export function scan({ files }) {
       break;
     }
   }
+
   return out;
 }

@@ -32,13 +32,23 @@ export const metadata = {
 // Walks public/ directly because collectFiles only emits text-readable
 // extensions — binary assets never reach the shared `files` array.
 export async function scan({ rootDir }) {
-  if (!rootDir) return [];
+  if (!rootDir) {
+return [];
+}
+
   const root = join(rootDir, 'public');
   const out = [];
+
   try {
     for await (const entry of walk(root)) {
-      if (shouldSkip(entry.relPath)) continue;
-      if (entry.size < THRESHOLD_BYTES) continue;
+      if (shouldSkip(entry.relPath)) {
+continue;
+}
+
+      if (entry.size < THRESHOLD_BYTES) {
+continue;
+}
+
       out.push({
         pattern: metadata.id,
         file: join('public', entry.relPath),
@@ -51,25 +61,34 @@ export async function scan({ rootDir }) {
   } catch {
     return [];
   }
+
   out.sort((a, b) => b.sizeBytes - a.sizeBytes);
+
   return out.slice(0, TOP_N);
 }
 
 async function* walk(dir, base = '') {
   let entries;
+
   try {
     entries = await readdir(dir, { withFileTypes: true });
   } catch {
     return;
   }
+
   for (const e of entries) {
     const full = join(dir, e.name);
     const rel = base ? `${base}/${e.name}` : e.name;
+
     if (e.isDirectory()) {
       yield* walk(full, rel);
       continue;
     }
-    if (!e.isFile()) continue;
+
+    if (!e.isFile()) {
+continue;
+}
+
     try {
       const s = await stat(full);
       yield { relPath: rel, size: s.size };
@@ -78,15 +97,31 @@ async function* walk(dir, base = '') {
 }
 
 function shouldSkip(relPath) {
-  if (SKIP_PATH_PREFIXES.some((p) => relPath.startsWith(p))) return true;
+  if (SKIP_PATH_PREFIXES.some((p) => relPath.startsWith(p))) {
+return true;
+}
+
   const ext = extname(relPath).toLowerCase();
-  if (SKIP_EXTENSIONS.has(ext)) return true;
+
+  if (SKIP_EXTENSIONS.has(ext)) {
+return true;
+}
+
   return false;
 }
 
 function formatBytes(b) {
-  if (b >= 1e9) return (b / 1e9).toFixed(2) + ' GB';
-  if (b >= 1e6) return (b / 1e6).toFixed(2) + ' MB';
-  if (b >= 1e3) return (b / 1e3).toFixed(1) + ' KB';
+  if (b >= 1e9) {
+return (b / 1e9).toFixed(2) + ' GB';
+}
+
+  if (b >= 1e6) {
+return (b / 1e6).toFixed(2) + ' MB';
+}
+
+  if (b >= 1e3) {
+return (b / 1e3).toFixed(1) + ' KB';
+}
+
   return b + ' B';
 }

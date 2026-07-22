@@ -12,20 +12,37 @@ const COUNT_CLAIM_TYPES = new Set(['pattern_count', 'repo_count', 'cited_count_l
 
 export function apply(rec, ctx = {}) {
   const results = ctx.verifyResults ?? rec.verifyResults ?? rec.verification?.failed ?? null;
-  if (!Array.isArray(results) || results.length === 0) return {};
+
+  if (!Array.isArray(results) || results.length === 0) {
+return {};
+}
 
   const tags = [];
 
   for (const r of results) {
-    if (!r) continue;
+    if (!r) {
+continue;
+}
+
     const type = r.type ?? r.claimType;
-    if (!COUNT_CLAIM_TYPES.has(type)) continue;
+
+    if (!COUNT_CLAIM_TYPES.has(type)) {
+continue;
+}
+
     const disp = r.disposition ?? (r.actual !== r.expected ? 'failed' : 'verified');
-    if (disp !== 'failed') continue;
+
+    if (disp !== 'failed') {
+continue;
+}
+
     const expected = r.expected;
     const actual = r.actual;
     const token = r.token ?? r.text ?? expected;
-    if (expected == null || token == null) continue;
+
+    if (expected == null || token == null) {
+continue;
+}
 
     if (typeof actual === 'number' && Number.isFinite(actual)) {
       rewriteCount(rec, token, expected, `~${actual}`);
@@ -36,7 +53,10 @@ export function apply(rec, ctx = {}) {
     }
   }
 
-  if (tags.length === 0) return {};
+  if (tags.length === 0) {
+return {};
+}
+
   return { tags };
 }
 
@@ -45,8 +65,12 @@ function rewriteCount(rec, token, oldCount, replacement) {
   // Matches "60", "~60", and "60+" — LLM commonly writes "60+ icons".
   const oldEsc = escapeRegex(String(oldCount));
   const re = new RegExp(`\\b~?${oldEsc}\\+?\\s+${escapeRegex(token)}\\b`, 'g');
+
   for (const f of fields) {
-    if (typeof rec[f] !== 'string') continue;
+    if (typeof rec[f] !== 'string') {
+continue;
+}
+
     rec[f] = rec[f].replace(re, `${replacement} ${token}`);
   }
 }

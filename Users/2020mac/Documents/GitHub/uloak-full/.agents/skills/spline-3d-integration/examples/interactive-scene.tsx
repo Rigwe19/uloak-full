@@ -4,9 +4,9 @@
 //
 // Usage: drop this into a React/Next.js project and replace the scene URL
 
-import { useRef, useState, useCallback } from 'react';
 import Spline from '@splinetool/react-spline';
 import type { Application } from '@splinetool/runtime';
+import { useRef, useState, useCallback } from 'react';
 
 const SCENE_URL = 'https://prod.spline.design/REPLACE_ME/scene.splinecode';
 
@@ -34,32 +34,48 @@ export default function InteractiveScene() {
 
   // --- Programmatically move an object ---
   const moveObject = useCallback(() => {
-    if (!splineApp.current) return;
+    if (!splineApp.current) {
+return;
+}
 
     const obj = splineApp.current.findObjectByName('Cube');
-    if (!obj) return console.warn('Object "Cube" not found — check the name in Spline editor');
+
+    if (!obj) {
+return console.warn('Object "Cube" not found — check the name in Spline editor');
+}
 
     obj.position.x += 50; // move right
   }, []);
 
   // --- Trigger an animation event ---
   const triggerAnimation = useCallback(() => {
-    if (!splineApp.current) return;
+    if (!splineApp.current) {
+return;
+}
+
     splineApp.current.emitEvent('mouseHover', 'Cube'); // triggers the mouseHover event on 'Cube'
   }, []);
 
   // --- Trigger animation in reverse (useful for toggle effects) ---
   const reverseAnimation = useCallback(() => {
-    if (!splineApp.current) return;
+    if (!splineApp.current) {
+return;
+}
+
     splineApp.current.emitEventReverse('mouseHover', 'Cube');
   }, []);
 
   // --- Rotate object (RADIANS not degrees!) ---
   const rotateObject = useCallback(() => {
-    if (!splineApp.current) return;
+    if (!splineApp.current) {
+return;
+}
 
     const obj = splineApp.current.findObjectByName('Cube');
-    if (!obj) return;
+
+    if (!obj) {
+return;
+}
 
     // 90 degrees = Math.PI / 2
     obj.rotation.y += Math.PI / 2;
@@ -67,10 +83,15 @@ export default function InteractiveScene() {
 
   // --- Change object scale ---
   const scaleObject = useCallback((factor: number) => {
-    if (!splineApp.current) return;
+    if (!splineApp.current) {
+return;
+}
 
     const obj = splineApp.current.findObjectByName('Cube');
-    if (!obj) return;
+
+    if (!obj) {
+return;
+}
 
     obj.scale.x = factor;
     obj.scale.y = factor;
@@ -79,7 +100,9 @@ export default function InteractiveScene() {
 
   // --- Read/write Spline variables ---
   const updateVariable = useCallback(() => {
-    if (!splineApp.current) return;
+    if (!splineApp.current) {
+return;
+}
 
     // Get a variable defined in the Spline editor
     const score = splineApp.current.getVariable('score');

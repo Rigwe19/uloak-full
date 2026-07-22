@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
+import * as Collapsible from '@radix-ui/react-collapsible';
 import { motion } from 'framer-motion';
 import { User, Shield, Palette, Home, Lock, ChevronDown, AlertTriangle, Users, Clock, BookOpen, Image, Globe, Heart, FileText } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import * as Collapsible from '@radix-ui/react-collapsible';
 import type { PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';

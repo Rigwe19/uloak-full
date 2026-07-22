@@ -22,6 +22,7 @@ class Room extends Model
         'tribute_song', 'media_items', 'tribute_name',
         'start_date',
         'end_date',
+        'allow_download',
     ];
 
     protected static function booted(): void
@@ -62,6 +63,7 @@ class Room extends Model
             'media_items' => 'array',
             'start_date' => 'date',
             'end_date' => 'date',
+            'allow_download' => 'boolean',
         ];
     }
 
@@ -93,5 +95,10 @@ class Room extends Model
     public function familyMembers(): HasMany
     {
         return $this->hasMany(RoomMember::class);
+    }
+
+    public function clients(): BelongsToMany
+    {
+        return $this->belongsToMany(Client::class);
     }
 }

@@ -27,6 +27,7 @@ function collectReferencedSkillIds(messages, index) {
   for (const msg of messages) {
     for (const match of msg.content.matchAll(SKILL_ID_REGEX)) {
       const id = match[1];
+
       if (index.has(id)) {
         referencedSkillIds.add(id);
       }
@@ -61,11 +62,14 @@ export function resolveSkillsFromMessages(messages, index, maxSkills) {
   const referencedSkillIds = collectReferencedSkillIds(messages, index);
 
   const metas = [];
+
   for (const id of referencedSkillIds) {
     const meta = index.get(id);
+
     if (meta) {
       metas.push(meta);
     }
+
     if (metas.length >= skillLimit) {
       break;
     }
@@ -88,6 +92,7 @@ export async function loadSkillBodies(skillsRoot, metas) {
     }
 
     const skillDirStat = await fs.promises.lstat(skillDirPath);
+
     if (!skillDirStat.isDirectory() || skillDirStat.isSymbolicLink()) {
       throw new Error(
         `Skill directory must be a regular directory inside the skills root: ${meta.id}`,
@@ -96,6 +101,7 @@ export async function loadSkillBodies(skillsRoot, metas) {
 
     const fullPath = path.join(skillDirPath, "SKILL.md");
     const skillFileStat = await fs.promises.lstat(fullPath);
+
     if (!skillFileStat.isFile() || skillFileStat.isSymbolicLink()) {
       throw new Error(
         `SKILL.md must be a regular file inside the skills root: ${meta.id}`,
@@ -104,6 +110,7 @@ export async function loadSkillBodies(skillsRoot, metas) {
 
     const realPath = await fs.promises.realpath(fullPath);
     const realRelativePath = path.relative(rootRealPath, realPath);
+
     if (realRelativePath.startsWith("..") || path.isAbsolute(realRelativePath)) {
       throw new Error(`SKILL.md resolves outside the skills root: ${meta.id}`);
     }

@@ -22,16 +22,27 @@ function normalizeColdStart(metricId, aggregation) {
   return (resp) => {
     const rows = normalizeSummary(resp, metricId, aggregation, ['route', 'function_start_type']);
     const byRoute = new Map();
+
     for (const r of rows) {
-      if (!r.route) continue;
+      if (!r.route) {
+continue;
+}
+
       const prior = byRoute.get(r.route) ?? { route: r.route, total: 0, coldCount: 0, warmCount: 0, prewarmedCount: 0 };
       const v = r.value ?? 0;
       prior.total += v;
-      if (r.function_start_type === 'cold') prior.coldCount += v;
-      else if (r.function_start_type === 'hot') prior.warmCount += v;
-      else if (r.function_start_type === 'prewarmed') prior.prewarmedCount += v;
+
+      if (r.function_start_type === 'cold') {
+prior.coldCount += v;
+} else if (r.function_start_type === 'hot') {
+prior.warmCount += v;
+} else if (r.function_start_type === 'prewarmed') {
+prior.prewarmedCount += v;
+}
+
       byRoute.set(r.route, prior);
     }
+
     return {
       rows: [...byRoute.values()].map((r) => ({
         ...r,
@@ -310,6 +321,9 @@ export const QUERIES = [
 ];
 
 export function normalizerFor(entry) {
-  if (entry.normalizer) return entry.normalizer;
+  if (entry.normalizer) {
+return entry.normalizer;
+}
+
   return defaultNormalize(entry.metricId, entry.aggregation, entry.groupBy);
 }

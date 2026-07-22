@@ -10,9 +10,9 @@
  * Ensures proper module resolution by running from skill directory.
  */
 
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 const sanitizeFilename = require('sanitize-filename');
 
 // Change to skill directory for proper module resolution
@@ -22,16 +22,20 @@ function safeUserPath(pathValue, baseDir = process.cwd()) {
   const root = path.resolve(baseDir);
   const segments = String(pathValue ?? '').split(/[\\/]+/).filter(Boolean).map((segment) => {
     const sanitized = sanitizeFilename(segment);
+
     if (sanitized !== segment || !sanitized) {
       throw new Error(`Unsafe path segment: ${segment}`);
     }
+
     return sanitized;
   });
   const target = path.resolve(root, ...segments);
   const rel = path.relative(root, target);
+
   if (rel.startsWith('..') || path.isAbsolute(rel)) {
     throw new Error(`Path escapes allowed directory: ${pathValue}`);
   }
+
   return target;
 }
 
@@ -41,6 +45,7 @@ function safeUserPath(pathValue, baseDir = process.cwd()) {
 function checkPlaywrightInstalled() {
   try {
     require.resolve('playwright');
+
     return true;
   } catch (e) {
     return false;
@@ -52,14 +57,17 @@ function checkPlaywrightInstalled() {
  */
 function installPlaywright() {
   console.log('📦 Playwright not found. Installing...');
+
   try {
     execSync('npm install', { stdio: 'inherit', cwd: __dirname });
     execSync('npx playwright install chromium', { stdio: 'inherit', cwd: __dirname });
     console.log('✅ Playwright installed successfully');
+
     return true;
   } catch (e) {
     console.error('❌ Failed to install Playwright:', e.message);
     console.error('Please run manually: cd', __dirname, '&& npm run setup');
+
     return false;
   }
 }
@@ -74,18 +82,21 @@ function getCodeToExecute() {
   if (args.length > 0 && fs.existsSync(args[0])) {
     const filePath = safeUserPath(args[0]);
     console.log(`📄 Executing file: ${filePath}`);
+
     return fs.readFileSync(filePath, 'utf8');
   }
 
   // Case 2: Inline code provided as argument
   if (args.length > 0) {
     console.log('⚡ Executing inline code');
+
     return args.join(' ');
   }
 
   // Case 3: Code from stdin
   if (!process.stdin.isTTY) {
     console.log('📥 Reading from stdin');
+
     return fs.readFileSync(0, 'utf8');
   }
 
@@ -109,6 +120,7 @@ function cleanupOldTempFiles() {
     if (tempFiles.length > 0) {
       tempFiles.forEach(file => {
         const filePath = path.join(__dirname, file);
+
         try {
           fs.unlinkSync(filePath);
         } catch (e) {
@@ -206,6 +218,7 @@ async function main() {
   // Check Playwright installation
   if (!checkPlaywrightInstalled()) {
     const installed = installPlaywright();
+
     if (!installed) {
       process.exit(1);
     }
@@ -231,10 +244,12 @@ async function main() {
 
   } catch (error) {
     console.error('❌ Execution failed:', error.message);
+
     if (error.stack) {
       console.error('\n📋 Stack trace:');
       console.error(error.stack);
     }
+
     process.exit(1);
   }
 }

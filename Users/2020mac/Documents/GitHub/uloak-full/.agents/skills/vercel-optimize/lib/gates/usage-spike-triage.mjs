@@ -18,11 +18,17 @@ const MIN_BILLED_FLOOR = 5; // skip spikes whose absolute value is too small to 
 
 export function gate(signals) {
   const days = signals?.usage?.breakdown?.data;
-  if (!Array.isArray(days) || days.length < 3) return [];
+
+  if (!Array.isArray(days) || days.length < 3) {
+return [];
+}
 
   const dayTotals = days.map(dayTotal);
   const mean = dayTotals.reduce((a, b) => a + b, 0) / dayTotals.length;
-  if (mean <= MIN_BILLED_FLOOR) return [];
+
+  if (mean <= MIN_BILLED_FLOOR) {
+return [];
+}
 
   const totalSpikeDays = dayTotals
     .map((value, idx) => ({ idx, value }))
@@ -30,8 +36,12 @@ export function gate(signals) {
 
   const skuStats = aggregateSkuStats(days);
   const skuSpikes = [];
+
   for (const stat of skuStats) {
-    if (stat.mean <= MIN_BILLED_FLOOR) continue;
+    if (stat.mean <= MIN_BILLED_FLOOR) {
+continue;
+}
+
     for (const sample of stat.samples) {
       if (sample.value > stat.mean * SKU_MULTIPLIER && sample.value > MIN_BILLED_FLOOR) {
         skuSpikes.push({
@@ -45,9 +55,12 @@ export function gate(signals) {
     }
   }
 
-  if (totalSpikeDays.length === 0 && skuSpikes.length === 0) return [];
+  if (totalSpikeDays.length === 0 && skuSpikes.length === 0) {
+return [];
+}
 
   const candidates = [];
+
   if (totalSpikeDays.length > 0) {
     const peak = totalSpikeDays.reduce((a, b) => (a.value > b.value ? a : b));
     candidates.push({
@@ -69,8 +82,10 @@ export function gate(signals) {
       },
     });
   }
+
   // Up to 3 SKU-specific candidates; the rest fold into 'multiple SKUs spiking' framing.
   const orderedSkuSpikes = skuSpikes.sort((a, b) => b.dayValue - a.dayValue).slice(0, 3);
+
   for (const spike of orderedSkuSpikes) {
     candidates.push({
       kind: metadata.id,
@@ -91,6 +106,7 @@ export function gate(signals) {
       },
     });
   }
+
   return candidates;
 }
 
@@ -98,6 +114,7 @@ function dayTotal(day) {
   if (Array.isArray(day?.services)) {
     return day.services.reduce((a, s) => a + Number(s.billedCost ?? s.cost ?? 0), 0);
   }
+
   return Number(day?.billedCost ?? day?.cost ?? 0);
 }
 
@@ -105,17 +122,28 @@ function aggregateSkuStats(days) {
   const byName = new Map();
   days.forEach((day, idx) => {
     const services = Array.isArray(day?.services) ? day.services : [];
+
     for (const svc of services) {
       const name = String(svc?.name ?? '').trim();
-      if (!name) continue;
+
+      if (!name) {
+continue;
+}
+
       const value = Number(svc.billedCost ?? svc.cost ?? 0);
-      if (!byName.has(name)) byName.set(name, { name, samples: [] });
+
+      if (!byName.has(name)) {
+byName.set(name, { name, samples: [] });
+}
+
       byName.get(name).samples.push({ idx, value });
     }
   });
+
   for (const stat of byName.values()) {
     const sum = stat.samples.reduce((a, s) => a + s.value, 0);
     stat.mean = stat.samples.length > 0 ? sum / stat.samples.length : 0;
   }
+
   return [...byName.values()];
 }

@@ -4,11 +4,14 @@ use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FamilyController;
 use App\Http\Controllers\HouseAccessController;
+use App\Http\Controllers\LikeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PushSubscriptionController;
@@ -93,6 +96,10 @@ Route::prefix('auth')->name('auth.')->group(function () {
     Route::get('/{provider}/callback', [SocialiteController::class, 'callback'])->name('socialite.callback');
 });
 
+// Like routes - accessible to both authenticated and guest users (via magic link)
+Route::post('stories/{story}/likes', [LikeController::class, 'toggle'])->name('stories.likes.toggle');
+Route::get('stories/{story}/likes/status', [LikeController::class, 'status'])->name('stories.likes.status');
+
 // Passkeys listing for settings page
 Route::middleware(['auth'])->group(function () {
     Route::get('/user/passkeys', function (Request $request) {
@@ -157,6 +164,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/analytics/export', [AdminAnalyticsController::class, 'export'])->name('analytics.export');
     });
 });
+
+// Client Access Routes (token-based, no password)
+Route::get('/client/access/{token}', [ClientController::class, 'accessViaToken'])->name('client.access');
+Route::post('/client/logout', [ClientController::class, 'logout'])->name('client.logout');
+
+// Client Dashboard (session-based, middleware: client)
+Route::middleware(['client'])->prefix('client')->name('client.')->group(function () {
+    Route::get('/dashboard', [ClientController::class, 'dashboard'])->name('dashboard');
+    Route::get('/rooms/{room}', [ClientController::class, 'showRoom'])->name('rooms.show');
+    Route::get('/events/{event}', [ClientController::class, 'showEvent'])->name('events.show');
+});
+
+// Business Admin Client Management
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+    Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+    Route::post('/clients/{client}/send-access', [ClientController::class, 'sendAccessLink'])->name('clients.send-access');
+});
+
+// Download Routes
+Route::post('/downloads/request', [DownloadController::class, 'requestDownload'])->name('downloads.request');
+Route::get('/downloads/{token}', [DownloadController::class, 'download'])->name('downloads.download');
 
 require __DIR__.'/people.php';
 require __DIR__.'/settings.php';

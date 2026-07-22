@@ -27,96 +27,159 @@ class CronError extends Error {
 
 // ---- Name resolution ----
 function resolveName(token, names) {
-  if (!names) return null;
+  if (!names) {
+return null;
+}
+
   const up = token.toUpperCase();
   const idx = names.indexOf(up);
+
   return idx === -1 ? null : idx;
 }
 
 // ---- Field parsing ----
 function parseField(raw, fieldDef, fieldIndex) {
   const trimmed = String(raw).trim();
-  if (trimmed === '') throw new CronError(`Field ${fieldIndex + 1} (${fieldDef.name}) is empty`, fieldIndex);
+
+  if (trimmed === '') {
+throw new CronError(`Field ${fieldIndex + 1} (${fieldDef.name}) is empty`, fieldIndex);
+}
 
   const out = { raw: trimmed, values: null, special: null };
 
   // Special: day-of-week "#" (nth weekday)
   if (fieldDef.key === 'dow' && trimmed.includes('#')) {
     const m = trimmed.match(/^([0-7A-Za-z]+)#([1-5])$/);
-    if (!m) throw new CronError(`Invalid "#" syntax in day-of-week: "${trimmed}"`, fieldIndex);
+
+    if (!m) {
+throw new CronError(`Invalid "#" syntax in day-of-week: "${trimmed}"`, fieldIndex);
+}
+
     let dowNum = parseSingleNum(m[1], fieldDef, fieldIndex);
-    if (dowNum === 7) dowNum = 0;
+
+    if (dowNum === 7) {
+dowNum = 0;
+}
+
     out.special = { kind: 'hash', dow: dowNum, nth: parseInt(m[2], 10) };
+
     return out;
   }
 
   // Special: day-of-week "L" (last weekday)
   if (fieldDef.key === 'dow' && /L$/i.test(trimmed)) {
     const m = trimmed.match(/^([0-7A-Za-z]+)L$/i);
-    if (!m) throw new CronError(`Invalid "L" syntax in day-of-week: "${trimmed}"`, fieldIndex);
+
+    if (!m) {
+throw new CronError(`Invalid "L" syntax in day-of-week: "${trimmed}"`, fieldIndex);
+}
+
     let dowNum = parseSingleNum(m[1], fieldDef, fieldIndex);
-    if (dowNum === 7) dowNum = 0;
+
+    if (dowNum === 7) {
+dowNum = 0;
+}
+
     out.special = { kind: 'dowLast', dow: dowNum };
+
     return out;
   }
 
   // Special: day-of-month "L" (last day)
   if (fieldDef.key === 'dom' && /^L/i.test(trimmed)) {
     const m = trimmed.match(/^L(?:-(\d+))?$/i);
-    if (!m) throw new CronError(`Invalid "L" syntax in day-of-month: "${trimmed}"`, fieldIndex);
+
+    if (!m) {
+throw new CronError(`Invalid "L" syntax in day-of-month: "${trimmed}"`, fieldIndex);
+}
+
     out.special = { kind: 'domLast', offset: m[1] ? parseInt(m[1], 10) : 0 };
+
     return out;
   }
 
   // Special: day-of-month "W" (nearest weekday)
   if (fieldDef.key === 'dom' && /W$/i.test(trimmed)) {
     const m = trimmed.match(/^(\d+)W$/i);
-    if (!m) throw new CronError(`Invalid "W" syntax in day-of-month: "${trimmed}"`, fieldIndex);
+
+    if (!m) {
+throw new CronError(`Invalid "W" syntax in day-of-month: "${trimmed}"`, fieldIndex);
+}
+
     const day = parseInt(m[1], 10);
+
     if (day < fieldDef.min || day > fieldDef.max) {
       throw new CronError(`Day-of-month "${day}W" out of range (${fieldDef.min}-${fieldDef.max})`, fieldIndex);
     }
+
     out.special = { kind: 'weekday', day: day };
+
     return out;
   }
 
   // Standard parsing
   const values = new Set();
   const items = trimmed.split(',');
+
   for (const item of items) {
     parseItem(item, fieldDef, fieldIndex, values);
   }
+
   out.values = values;
+
   return out;
 }
 
 function parseSingleNum(token, fieldDef, fieldIndex) {
   const value = String(token).trim();
-  if (/^\d+$/.test(value)) return Number(value);
+
+  if (/^\d+$/.test(value)) {
+return Number(value);
+}
+
   const named = resolveName(value, fieldDef.named);
+
   if (named !== null) {
     return fieldDef.key === 'month' ? named + 1 : named;
   }
+
   throw new CronError(`Invalid value "${value}" in ${fieldDef.name}`, fieldIndex);
 }
 
 function parseItem(item, fieldDef, fieldIndex, values) {
   const t = item.trim();
-  if (t === '') throw new CronError(`Empty item in ${fieldDef.name}`, fieldIndex);
+
+  if (t === '') {
+throw new CronError(`Empty item in ${fieldDef.name}`, fieldIndex);
+}
 
   if (t === '*') {
     addRange(values, fieldDef.min, fieldDef.max, fieldDef);
+
     return;
   }
 
   if (t.includes('/')) {
     const stepParts = t.split('/');
-    if (stepParts.length !== 2) throw new CronError(`Invalid step syntax "${t}" in ${fieldDef.name}`, fieldIndex);
+
+    if (stepParts.length !== 2) {
+throw new CronError(`Invalid step syntax "${t}" in ${fieldDef.name}`, fieldIndex);
+}
+
     const [base, stepStr] = stepParts;
-    if (!/^\d+$/.test(stepStr)) throw new CronError(`Invalid step "${stepStr}" in ${fieldDef.name}`, fieldIndex);
+
+    if (!/^\d+$/.test(stepStr)) {
+throw new CronError(`Invalid step "${stepStr}" in ${fieldDef.name}`, fieldIndex);
+}
+
     const step = Number(stepStr);
-    if (step < 1) throw new CronError(`Invalid step "${stepStr}" in ${fieldDef.name}`, fieldIndex);
+
+    if (step < 1) {
+throw new CronError(`Invalid step "${stepStr}" in ${fieldDef.name}`, fieldIndex);
+}
+
     let lo, hi;
+
     if (base === '*' || base === '') {
       lo = fieldDef.min; hi = fieldDef.max;
     } else if (base.includes('-')) {
@@ -127,17 +190,29 @@ function parseItem(item, fieldDef, fieldIndex, values) {
       lo = parseSingleNum(base.trim(), fieldDef, fieldIndex);
       hi = fieldDef.max;
     }
-    if (lo > hi) [lo, hi] = [hi, lo];
-    for (let v = lo; v <= hi; v += step) addOne(values, v, fieldDef, fieldIndex);
+
+    if (lo > hi) {
+[lo, hi] = [hi, lo];
+}
+
+    for (let v = lo; v <= hi; v += step) {
+addOne(values, v, fieldDef, fieldIndex);
+}
+
     return;
   }
 
   if (t.includes('-')) {
     const parts = t.split('-');
-    if (parts.length !== 2) throw new CronError(`Invalid range "${t}" in ${fieldDef.name}`, fieldIndex);
+
+    if (parts.length !== 2) {
+throw new CronError(`Invalid range "${t}" in ${fieldDef.name}`, fieldIndex);
+}
+
     const a = parseSingleNum(parts[0].trim(), fieldDef, fieldIndex);
     const b = parseSingleNum(parts[1].trim(), fieldDef, fieldIndex);
     addRange(values, a, b, fieldDef);
+
     return;
   }
 
@@ -146,20 +221,33 @@ function parseItem(item, fieldDef, fieldIndex, values) {
 }
 
 function addOne(values, v, fieldDef, fieldIndex) {
-  if (fieldDef.key === 'dow' && v === 7) { values.add(0); return; }
+  if (fieldDef.key === 'dow' && v === 7) {
+ values.add(0);
+
+ return; 
+}
+
   if (v < fieldDef.min || v > fieldDef.max) {
     throw new CronError(`Value ${v} out of range for ${fieldDef.name} (${fieldDef.min}-${fieldDef.max})`, fieldIndex);
   }
+
   values.add(v);
 }
 
 function addRange(values, lo, hi, fieldDef) {
-  if (lo > hi) [lo, hi] = [hi, lo];
+  if (lo > hi) {
+[lo, hi] = [hi, lo];
+}
+
   if (lo < fieldDef.min || hi > fieldDef.max) {
     throw new CronError(`Range ${lo}-${hi} out of bounds for ${fieldDef.name} (${fieldDef.min}-${fieldDef.max})`, -1);
   }
+
   for (let v = lo; v <= hi; v++) {
-    if (fieldDef.key === 'dow' && v === 7) { values.add(0); continue; }
+    if (fieldDef.key === 'dow' && v === 7) {
+ values.add(0); continue; 
+}
+
     values.add(v);
   }
 }
@@ -167,23 +255,34 @@ function addRange(values, lo, hi, fieldDef) {
 // ---- Full expression parser ----
 function parseCron(expr) {
   const parts = String(expr).trim().split(/\s+/);
+
   if (parts.length !== 5) {
     throw new CronError(`Expected 5 fields (got ${parts.length}). Format: minute hour day-of-month month day-of-week`, -1);
   }
+
   const parsed = {};
+
   for (let i = 0; i < 5; i++) {
     parsed[FIELDS[i].key] = parseField(parts[i], FIELDS[i], i);
   }
+
   parsed.domRestricted = !/^\s*\*\s*$/.test(parts[2]);
   parsed.dowRestricted = !/^\s*\*\s*$/.test(parts[4]);
   parsed.parts = parts;
+
   return parsed;
 }
 
 // ---- Human-readable description ----
 function describe(expr) {
   let parsed;
-  try { parsed = parseCron(expr); } catch (e) { return { text: e.message, error: true }; }
+
+  try {
+ parsed = parseCron(expr); 
+} catch (e) {
+ return { text: e.message, error: true }; 
+}
+
   return { text: describeParsed(parsed), error: false, parsed };
 }
 
@@ -196,10 +295,12 @@ function describeParsed(p) {
   const isEveryHour = p.parts[1] === '*';
 
   let timePart = '';
+
   if (isEveryMin && isEveryHour) {
     timePart = 'At every minute';
   } else if (isEveryMin && !isEveryHour) {
     const hours = [...(p.hour.values || [])].sort((a, b) => a - b);
+
     if (hours.length > 0) {
       timePart = 'Every minute during the ' + hours.map(h => pad2(h)).join(', ') + ' hour' + (hours.length > 1 ? 's' : '');
     } else {
@@ -221,13 +322,22 @@ function describeParsed(p) {
     }
   } else if (!domAny && dowAny) {
     dayPart = ', on ' + domDesc.text;
-    if (monthDesc.restricted) dayPart += ' in ' + monthDesc.text;
+
+    if (monthDesc.restricted) {
+dayPart += ' in ' + monthDesc.text;
+}
   } else if (domAny && !dowAny) {
     dayPart = ', on ' + dowDesc.text;
-    if (monthDesc.restricted) dayPart += ' in ' + monthDesc.text;
+
+    if (monthDesc.restricted) {
+dayPart += ' in ' + monthDesc.text;
+}
   } else {
     dayPart = ', on ' + domDesc.text + ' and on ' + dowDesc.text;
-    if (monthDesc.restricted) dayPart += ' in ' + monthDesc.text;
+
+    if (monthDesc.restricted) {
+dayPart += ' in ' + monthDesc.text;
+}
   }
 
   return capitalize(timePart + dayPart);
@@ -238,59 +348,85 @@ function describeTimes(minuteField, hourField) {
   const hours = [...(hourField.values || [])].sort((a, b) => a - b);
 
   if (pIsWildcard(hourField) && !pIsWildcard(minuteField)) {
-    if (mins.length === 1) return `minute ${mins[0]} of every hour`;
+    if (mins.length === 1) {
+return `minute ${mins[0]} of every hour`;
+}
+
     return `minutes ${listJoin(mins)} of every hour`;
   }
-  if (pIsWildcard(minuteField) && pIsWildcard(hourField)) return 'every minute of every hour';
+
+  if (pIsWildcard(minuteField) && pIsWildcard(hourField)) {
+return 'every minute of every hour';
+}
 
   if (pIsWildcard(minuteField)) {
     return `every minute during the ${hours.map(h => pad2(h)).join(', ')} hour${hours.length > 1 ? 's' : ''}`;
   }
 
   const combos = [];
+
   for (const h of hours) {
     for (const m of mins) {
       combos.push(formatHM(h, m));
     }
   }
+
   return listJoin(combos);
 }
 
 function describeFieldMonth(field) {
-  if (pIsWildcard(field)) return { restricted: false, text: 'every month' };
+  if (pIsWildcard(field)) {
+return { restricted: false, text: 'every month' };
+}
+
   const vals = [...(field.values || [])].sort((a, b) => a - b);
+
   return { restricted: true, text: 'in ' + listJoin(vals.map(v => capitalize(MONTH_NAMES[v - 1]))) };
 }
 
 function describeFieldDom(field) {
-  if (pIsWildcard(field)) return { text: 'every day-of-month' };
+  if (pIsWildcard(field)) {
+return { text: 'every day-of-month' };
+}
+
   if (field.special) {
     if (field.special.kind === 'domLast') {
       return { text: field.special.offset === 0 ? 'the last day of the month' : `the last day of the month minus ${field.special.offset} days` };
     }
+
     if (field.special.kind === 'weekday') {
       return { text: `the nearest weekday to day ${field.special.day}` };
     }
   }
+
   const vals = [...(field.values || [])].sort((a, b) => a - b);
+
   return { text: `day-of-month ${listJoin(vals)}` };
 }
 
 function describeFieldDow(field) {
-  if (pIsWildcard(field)) return { text: 'every day-of-week' };
+  if (pIsWildcard(field)) {
+return { text: 'every day-of-week' };
+}
+
   if (field.special) {
     if (field.special.kind === 'hash') {
       return { text: `the ${ordinal(field.special.nth)} ${capitalize(DAY_NAMES[field.special.dow])} of the month` };
     }
+
     if (field.special.kind === 'dowLast') {
       return { text: `the last ${capitalize(DAY_NAMES[field.special.dow])} of the month` };
     }
   }
+
   const vals = [...(field.values || [])].sort((a, b) => a - b);
+
   return { text: listJoin(vals.map(v => capitalize(DAY_NAMES[v]))) };
 }
 
-function pIsWildcard(field) { return field.raw === '*'; }
+function pIsWildcard(field) {
+ return field.raw === '*'; 
+}
 
 // ---- Next run calculator ----
 function nextRuns(expr, fromDate, count) {
@@ -302,24 +438,36 @@ function nextRuns(expr, fromDate, count) {
   d = new Date(d.getTime() + 60000);
 
   let maxScan = 600000; // ~416 days ceiling
+
   while (runs.length < count && maxScan-- > 0) {
     if (matches(d, p)) {
       runs.push(new Date(d.getTime()));
     }
+
     d = new Date(d.getTime() + 60000);
   }
+
   return runs;
 }
 
 function matches(d, p) {
-  if (!p.minute.values || !p.minute.values.has(d.getMinutes())) return false;
-  if (!p.hour.values || !p.hour.values.has(d.getHours())) return false;
-  if (!p.month.values || !p.month.values.has(d.getMonth() + 1)) return false;
+  if (!p.minute.values || !p.minute.values.has(d.getMinutes())) {
+return false;
+}
+
+  if (!p.hour.values || !p.hour.values.has(d.getHours())) {
+return false;
+}
+
+  if (!p.month.values || !p.month.values.has(d.getMonth() + 1)) {
+return false;
+}
 
   const domAny = !p.domRestricted;
   const dowAny = !p.dowRestricted;
 
   let domMatch = false, dowMatch = false;
+
   if (domAny) {
     domMatch = true;
   } else if (p.dom.special) {
@@ -327,6 +475,7 @@ function matches(d, p) {
   } else if (p.dom.values && p.dom.values.has(d.getDate())) {
     domMatch = true;
   }
+
   if (dowAny) {
     dowMatch = true;
   } else if (p.dow.special) {
@@ -335,8 +484,14 @@ function matches(d, p) {
     dowMatch = p.dow.values.has(d.getDay());
   }
 
-  if (domAny && dowAny) return true;
-  if (!domAny && !dowAny) return domMatch || dowMatch; // OR semantics
+  if (domAny && dowAny) {
+return true;
+}
+
+  if (!domAny && !dowAny) {
+return domMatch || dowMatch;
+} // OR semantics
+
   return domMatch && dowMatch;
 }
 
@@ -344,11 +499,14 @@ function matchDomSpecial(d, special) {
   if (special.kind === 'domLast') {
     const lastDay = lastDayOfMonth(d.getFullYear(), d.getMonth());
     const target = special.offset === 0 ? lastDay : lastDay - special.offset;
+
     return d.getDate() === target;
   }
+
   if (special.kind === 'weekday') {
     return d.getDate() === nearestWeekday(d.getFullYear(), d.getMonth(), special.day);
   }
+
   return false;
 }
 
@@ -356,22 +514,32 @@ function matchDowSpecial(d, special) {
   if (special.kind === 'hash') {
     return nthWeekdayMatches(d, special.dow, special.nth);
   }
+
   if (special.kind === 'dowLast') {
     return lastWeekdayMatches(d, special.dow);
   }
+
   return false;
 }
 
 function nthWeekdayMatches(d, dow, nth) {
-  if (d.getDay() !== dow) return false;
+  if (d.getDay() !== dow) {
+return false;
+}
+
   const dayOfMonth = d.getDate();
   const occurrence = Math.ceil(dayOfMonth / 7);
+
   return occurrence === nth;
 }
 
 function lastWeekdayMatches(d, dow) {
-  if (d.getDay() !== dow) return false;
+  if (d.getDay() !== dow) {
+return false;
+}
+
   const lastDay = lastDayOfMonth(d.getFullYear(), d.getMonth());
+
   return d.getDate() + 7 > lastDay;
 }
 
@@ -385,13 +553,21 @@ function nearestWeekday(year, month, day) {
   const dt = new Date(year, month, target);
   const wd = dt.getDay();
   let result = target;
+
   if (wd === 0) {
-    if (target + 1 <= lastDay) result = target + 1;
-    else result = target - 2;
+    if (target + 1 <= lastDay) {
+result = target + 1;
+} else {
+result = target - 2;
+}
   } else if (wd === 6) {
-    if (target - 1 >= 1) result = target - 1;
-    else result = target + 2;
+    if (target - 1 >= 1) {
+result = target - 1;
+} else {
+result = target + 2;
+}
   }
+
   return result;
 }
 
@@ -402,6 +578,7 @@ function nearestWeekday(year, month, day) {
 
 function validate(expr) {
   let parsed;
+
   try {
     parsed = parseCron(expr);
   } catch (e) {
@@ -431,14 +608,17 @@ function validate(expr) {
 
   // Check: impossible day-of-month values (e.g., 31 in Feb)
   const domValues = [...(parsed.dom.values || [])];
+
   if (!parsed.domRestricted && parsed.month.values && ![...parsed.month.values].every(m => m === 2)) {
     // skip
   } else if (parsed.domRestricted && !parsed.dom.special && domValues.includes(31)) {
     const monthsWith31 = [1, 3, 5, 7, 8, 10, 12]; // Jan, Mar, May, Jul, Aug, Oct, Dec
     const monthValues = parsed.month.values ? [...parsed.month.values] : [];
     const restrictedMonths = parsed.parts[3] !== '*';
+
     if (restrictedMonths) {
       const problemMonths = monthValues.filter(m => !monthsWith31.includes(m));
+
       if (problemMonths.length > 0) {
         warnings.push({
           level: 'medium',
@@ -464,9 +644,11 @@ function validate(expr) {
   // Check: step values that don't divide evenly
   for (let i = 0; i < 2; i++) {
     const part = parsed.parts[i];
+
     if (part.startsWith('*/')) {
       const step = parseInt(part.slice(2), 10);
       const range = i === 0 ? 60 : 24;
+
       if (range % step !== 0) {
         observations.push({
           level: 'info',
@@ -480,6 +662,7 @@ function validate(expr) {
   if (parsed.domRestricted && !parsed.dom.special) {
     const domVals = [...(parsed.dom.values || [])];
     const monthVals = parsed.month.values ? [...parsed.month.values] : [];
+
     if (domVals.includes(29) && monthVals.length === 1 && monthVals[0] === 2) {
       warnings.push({
         level: 'medium',
@@ -506,6 +689,7 @@ function validate(expr) {
 
   // Compute frequency estimate
   const freq = estimateFrequency(parsed);
+
   if (freq) {
     observations.push({
       level: 'info',
@@ -531,20 +715,34 @@ function estimateFrequency(parsed) {
     let count = 0;
     let d = new Date(start.getTime());
     let maxScan = 540000; // ~375 days
+
     while (d < end && maxScan-- > 0) {
-      if (matches(d, parsed)) count++;
+      if (matches(d, parsed)) {
+count++;
+}
+
       d = new Date(d.getTime() + 60000);
     }
 
     let description = '';
-    if (count >= 525600) description = 'every minute';
-    else if (count >= 500000) description = 'multiple times per minute';
-    else if (count >= 8000) description = 'hourly or more';
-    else if (count >= 300) description = 'daily or more';
-    else if (count >= 40) description = 'weekly or more';
-    else if (count >= 8) description = 'monthly or more';
-    else if (count >= 1) description = 'yearly or less';
-    else description = 'never (impossible schedule)';
+
+    if (count >= 525600) {
+description = 'every minute';
+} else if (count >= 500000) {
+description = 'multiple times per minute';
+} else if (count >= 8000) {
+description = 'hourly or more';
+} else if (count >= 300) {
+description = 'daily or more';
+} else if (count >= 40) {
+description = 'weekly or more';
+} else if (count >= 8) {
+description = 'monthly or more';
+} else if (count >= 1) {
+description = 'yearly or less';
+} else {
+description = 'never (impossible schedule)';
+}
 
     return { description, runsPerYear: count };
   } catch (e) {
@@ -588,18 +786,34 @@ const COMMON = [
 ];
 
 // ---- Helpers ----
-function pad2(n) { return String(n).padStart(2, '0'); }
-function formatHM(h, m) { return `${pad2(h)}:${pad2(m)}`; }
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function pad2(n) {
+ return String(n).padStart(2, '0'); 
+}
+function formatHM(h, m) {
+ return `${pad2(h)}:${pad2(m)}`; 
+}
+function capitalize(s) {
+ return s.charAt(0).toUpperCase() + s.slice(1); 
+}
 function ordinal(n) {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
+
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 function listJoin(arr) {
-  if (arr.length === 0) return '';
-  if (arr.length === 1) return String(arr[0]);
-  if (arr.length === 2) return `${arr[0]} and ${arr[1]}`;
+  if (arr.length === 0) {
+return '';
+}
+
+  if (arr.length === 1) {
+return String(arr[0]);
+}
+
+  if (arr.length === 2) {
+return `${arr[0]} and ${arr[1]}`;
+}
+
   return arr.slice(0, -1).join(', ') + ', and ' + arr[arr.length - 1];
 }
 
@@ -608,9 +822,15 @@ function formatNextRuns(runs, fromDate) {
     const diff = r.getTime() - fromDate.getTime();
     const mins = Math.round(diff / 60000);
     let rel;
-    if (mins < 60) rel = `+${mins}m`;
-    else if (mins < 2880) rel = `+${Math.round(mins / 60)}h`;
-    else rel = `+${Math.round(mins / 1440)}d`;
+
+    if (mins < 60) {
+rel = `+${mins}m`;
+} else if (mins < 2880) {
+rel = `+${Math.round(mins / 60)}h`;
+} else {
+rel = `+${Math.round(mins / 1440)}d`;
+}
+
     return { date: r, relative: rel, formatted: r.toISOString() };
   });
 }

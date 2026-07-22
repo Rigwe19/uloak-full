@@ -1,5 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
-import { WhatsAppConfig, TemplateInfo } from './types';
+import type { AxiosInstance } from 'axios';
+import axios from 'axios';
+import type { WhatsAppConfig, TemplateInfo } from './types';
 
 export class TemplateManager {
   private client: AxiosInstance;
@@ -20,9 +21,13 @@ export class TemplateManager {
 
   async listTemplates(status?: string): Promise<TemplateInfo[]> {
     const params: Record<string, any> = { limit: 100 };
-    if (status) params.status = status;
+
+    if (status) {
+params.status = status;
+}
 
     const response = await this.client.get(`/${this.wabaId}/message_templates`, { params });
+
     return response.data.data;
   }
 
@@ -44,6 +49,7 @@ export class TemplateManager {
       language,
       components,
     });
+
     return response.data;
   }
 

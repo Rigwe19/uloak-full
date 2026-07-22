@@ -86,7 +86,9 @@ function MiniList<T>({ items, setItems, createBlank, renderItem, title }: {
                             className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500/15 text-red-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-500/30">
                             <Trash2 size={10} />
                         </button>
-                        {renderItem(item, i, (v) => { const u = [...items]; u[i] = v; setItems(u); })}
+                        {renderItem(item, i, (v) => {
+ const u = [...items]; u[i] = v; setItems(u); 
+})}
                     </div>
                 ))}
             </div>
@@ -141,7 +143,9 @@ export default function Edit({
         tags: itg?.length ? itg.map((t: any) => t.tag) : [],
     });
 
-    const submit = (e: React.FormEvent) => { e.preventDefault(); put(peopleShow(person.uuid).url, { preserveScroll: true }); };
+    const submit = (e: React.FormEvent) => {
+ e.preventDefault(); put(peopleShow(person.uuid).url, { preserveScroll: true }); 
+};
 
     const sections = [
         { id: 'identity', label: 'Identity', count: [data.legal_name, data.display_name, data.gender].filter(Boolean).length, total: 3 },

@@ -19,7 +19,9 @@ interface SplineBackgroundProps {
 }
 
 function shouldLoadSpline(mobileBreakpoint: number): boolean {
-  if (typeof window === 'undefined') return false; // SSR guard
+  if (typeof window === 'undefined') {
+return false;
+} // SSR guard
 
   const isMobile = window.innerWidth < mobileBreakpoint;
   const isLowEnd = navigator.hardwareConcurrency <= 2;
@@ -50,7 +52,9 @@ export default function SplineBackground({
   }, [mobileBreakpoint]);
 
   useEffect(() => {
-    if (!canLoad) return;
+    if (!canLoad) {
+return;
+}
 
     // If Spline hasn't loaded after 8 seconds, show fallback
     timeoutRef.current = setTimeout(() => {

@@ -23,18 +23,31 @@ const SCANNER_PATTERN = 'region-pin-in-config';
 
 export function gate(signals) {
   const findings = (signals?.codebase?.findings ?? []).filter((f) => f.pattern === SCANNER_PATTERN);
-  if (findings.length === 0) return [];
+
+  if (findings.length === 0) {
+return [];
+}
 
   const routes = signals?.codebase?.routes ?? [];
-  if (routes.length < ROUTE_FLOOR) return [];
+
+  if (routes.length < ROUTE_FLOOR) {
+return [];
+}
 
   const singleRegionFindings = findings.filter((f) => Array.isArray(f.regions) && f.regions.length === 1);
-  if (singleRegionFindings.length === 0) return [];
+
+  if (singleRegionFindings.length === 0) {
+return [];
+}
 
   const allPinned = new Set();
+
   for (const f of singleRegionFindings) {
-    for (const r of f.regions ?? []) allPinned.add(r);
+    for (const r of f.regions ?? []) {
+allPinned.add(r);
+}
   }
+
   const regionList = [...allPinned];
 
   // If multiple distinct single-region pins exist across files, the surface is partly

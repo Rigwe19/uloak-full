@@ -27,9 +27,16 @@ const CONFIG_RE = /export\s+const\s+config\s*=\s*\{[^}]*\b(isr|prerender|runtime
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (!path.includes('/routes/')) continue;
-    if (PRERENDER_RE.test(content) || SSR_RE.test(content) || CONFIG_RE.test(content)) continue;
+    if (!path.includes('/routes/')) {
+continue;
+}
+
+    if (PRERENDER_RE.test(content) || SSR_RE.test(content) || CONFIG_RE.test(content)) {
+continue;
+}
+
     out.push({
       pattern: metadata.id,
       file: path,
@@ -39,5 +46,6 @@ export function scan({ files }) {
       trafficIndependent: metadata.trafficIndependent,
     });
   }
+
   return out;
 }

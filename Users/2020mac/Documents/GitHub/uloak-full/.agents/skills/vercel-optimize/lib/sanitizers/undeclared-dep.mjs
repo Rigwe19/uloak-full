@@ -20,7 +20,10 @@ export const metadata = {
 
 export function apply(rec, ctx = {}) {
   const pkg = ctx?.package ?? ctx?.signals?.package ?? null;
-  if (!pkg) return {};
+
+  if (!pkg) {
+return {};
+}
 
   const known = new Set([
     ...Object.keys(pkg.dependencies ?? {}),
@@ -34,14 +37,22 @@ export function apply(rec, ctx = {}) {
     .join('\n');
   const codeBlocks = extractCodeBlocks(text);
   const importedRoots = new Set();
+
   for (const block of codeBlocks) {
     for (const m of block.matchAll(IMPORT_RE)) {
       const root = pkgRoot(m[1]);
-      if (root) importedRoots.add(root);
+
+      if (root) {
+importedRoots.add(root);
+}
     }
+
     for (const m of block.matchAll(REQUIRE_RE)) {
       const root = pkgRoot(m[1]);
-      if (root) importedRoots.add(root);
+
+      if (root) {
+importedRoots.add(root);
+}
     }
   }
 
@@ -51,19 +62,33 @@ export function apply(rec, ctx = {}) {
     .filter((r) => !r.startsWith('node:'))
     .filter((r) => !known.has(r));
 
-  if (undeclared.length === 0) return {};
+  if (undeclared.length === 0) {
+return {};
+}
 
   const installLines = undeclared.map((p) => `\`npm i ${p}\``).join(', ');
   const prepend = `**Add dependency first**: ${installLines}\n\n`;
-  if (typeof rec.fix === 'string') rec.fix = prepend + rec.fix;
-  else rec.fix = prepend.trim();
+
+  if (typeof rec.fix === 'string') {
+rec.fix = prepend + rec.fix;
+} else {
+rec.fix = prepend.trim();
+}
+
   return { tags: undeclared.map((p) => `undeclared-dep:${p}`), needsReview: true };
 }
 
 function pkgRoot(specifier) {
-  if (!specifier) return null;
-  if (specifier.startsWith('.')) return specifier;
+  if (!specifier) {
+return null;
+}
+
+  if (specifier.startsWith('.')) {
+return specifier;
+}
+
   const m = specifier.match(PKG_ROOT_RE);
+
   return m ? m[1] : null;
 }
 
@@ -71,8 +96,13 @@ function extractCodeBlocks(text) {
   const out = [];
   const re = /```[\w-]*\n?([\s\S]*?)```/g;
   let m;
-  while ((m = re.exec(text)) !== null) out.push(m[1]);
+
+  while ((m = re.exec(text)) !== null) {
+out.push(m[1]);
+}
+
   // Also scan raw text for rare inline imports outside code blocks.
   out.push(text);
+
   return out;
 }

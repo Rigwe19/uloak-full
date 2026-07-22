@@ -17,21 +17,29 @@ export const metadata = {
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (!isApplicable(path)) continue;
+    if (!isApplicable(path)) {
+continue;
+}
 
     const exportsMiddleware = /export\s+(default\s+)?(async\s+)?function\s+middleware/.test(content)
       || /export\s+const\s+middleware\s*=/.test(content);
-    if (!exportsMiddleware) continue;
+
+    if (!exportsMiddleware) {
+continue;
+}
 
     const configBlock = content.match(/export\s+const\s+config\s*=\s*\{([\s\S]*?)\}/);
     const matcherStr = configBlock && configBlock[1].match(/matcher\s*:\s*([^,}]+)/);
 
     let problem = null;
+
     if (!configBlock || !matcherStr) {
       problem = 'no config.matcher (runs on every request)';
     } else {
       const m = matcherStr[1];
+
       if (/['"`]\s*\/\s*['"`]/.test(m) || /['"`]\/\(\.\*\)['"`]/.test(m)) {
         problem = 'matcher = "/" or "/(.*)" (still covers everything)';
       }
@@ -47,6 +55,7 @@ export function scan({ files }) {
       });
     }
   }
+
   return out;
 }
 

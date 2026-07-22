@@ -46,17 +46,31 @@ export const metadata = {
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (!isEdgeRuntimeFile(path, content)) continue;
+    if (!isEdgeRuntimeFile(path, content)) {
+continue;
+}
+
     const lines = content.split('\n');
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+
       // Type-only imports are erased at compile, never reach runtime.
-      if (TYPE_IMPORT_RE.test(line)) continue;
+      if (TYPE_IMPORT_RE.test(line)) {
+continue;
+}
+
       const specifiers = extractSpecifiers(line);
+
       for (const spec of specifiers) {
         const match = HEAVY_PATTERNS.find((re) => re.test(spec));
-        if (!match) continue;
+
+        if (!match) {
+continue;
+}
+
         out.push({
           pattern: metadata.id,
           file: path,
@@ -69,6 +83,7 @@ export function scan({ files }) {
       }
     }
   }
+
   return out;
 }
 
@@ -85,10 +100,22 @@ function extractSpecifiers(line) {
   // IMPORT_RE has `gm` flag — reset lastIndex per call.
   IMPORT_RE.lastIndex = 0;
   let m;
-  while ((m = IMPORT_RE.exec(line)) !== null) out.add(m[1]);
+
+  while ((m = IMPORT_RE.exec(line)) !== null) {
+out.add(m[1]);
+}
+
   DYNAMIC_IMPORT_RE.lastIndex = 0;
-  while ((m = DYNAMIC_IMPORT_RE.exec(line)) !== null) out.add(m[1]);
+
+  while ((m = DYNAMIC_IMPORT_RE.exec(line)) !== null) {
+out.add(m[1]);
+}
+
   REQUIRE_RE.lastIndex = 0;
-  while ((m = REQUIRE_RE.exec(line)) !== null) out.add(m[1]);
+
+  while ((m = REQUIRE_RE.exec(line)) !== null) {
+out.add(m[1]);
+}
+
   return [...out];
 }

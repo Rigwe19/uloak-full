@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Event;
 use App\Models\Story;
 use App\Services\ActivityLogger;
@@ -65,6 +66,7 @@ class EventController extends Controller
             'privacy' => ['required', 'string', 'in:public,private'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'event_date' => ['nullable', 'date'],
+            'allow_download' => ['nullable', 'boolean'],
         ]);
 
         if ($request->hasFile('thumbnail')) {
@@ -73,6 +75,14 @@ class EventController extends Controller
         }
 
         $event = $request->user()->events()->create($validated);
+
+        // Attach client if specified (business admin)
+        if ($request->filled('client_id')) {
+            $client = Client::find($request->input('client_id'));
+            if ($client && $client->business_user_id === $request->user()->id) {
+                $event->clients()->syncWithoutDetaching([$client->id]);
+            }
+        }
 
         $this->activityLogger->log(
             "Created event: {$event->name}",

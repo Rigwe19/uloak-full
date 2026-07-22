@@ -7,6 +7,7 @@ export function dedupeRecommendations(recommendations = []) {
 
   const byKey = new Map();
   const order = [];
+
   for (const rec of recommendations) {
     if (!rec || typeof rec !== 'object' || rec.abstain === true) {
       order.push(rec);
@@ -14,6 +15,7 @@ export function dedupeRecommendations(recommendations = []) {
     }
 
     const key = recommendationKey(rec);
+
     if (!byKey.has(key)) {
       const normalized = withDedupMetadata(rec);
       byKey.set(key, normalized);
@@ -34,6 +36,7 @@ export function recommendationKey(rec) {
   const bucket = intent === 'cache-control:s-maxage'
     ? NO_VALUE
     : String(rec?.bucket ?? NO_VALUE);
+
   return JSON.stringify([
     bucket,
     dedupEditTarget(rec),
@@ -43,7 +46,10 @@ export function recommendationKey(rec) {
 }
 
 export function normalizePath(path) {
-  if (typeof path !== 'string' || path.trim() === '') return NO_VALUE;
+  if (typeof path !== 'string' || path.trim() === '') {
+return NO_VALUE;
+}
+
   return path
     .trim()
     .replace(/\\/g, '/')
@@ -54,6 +60,7 @@ export function normalizePath(path) {
 
 export function primarySkillRule(rec) {
   const citations = Array.isArray(rec?.citations) ? rec.citations : [];
+
   return citations.find((c) => typeof c === 'string' && /^[A-Za-z][\w-]*:[A-Za-z][\w-]*$/.test(c)) ?? NO_VALUE;
 }
 
@@ -61,18 +68,30 @@ export function fixShape(rec) {
   if (typeof rec?.fixShape === 'string' && rec.fixShape.trim()) {
     return normalizeFixText(rec.fixShape);
   }
+
   const primaryText = [rec?.fix, rec?.desiredBehavior]
     .filter((v) => typeof v === 'string' && v.trim())
     .join('\n');
   const text = primaryText || rec?.what;
+
   return normalizeFixText(text);
 }
 
 export function dedupIntent(rec) {
-  if (isSMaxageCacheHeaderRec(rec)) return 'cache-control:s-maxage';
-  if (isCacheLifeRec(rec)) return cacheLifeIntent(rec);
+  if (isSMaxageCacheHeaderRec(rec)) {
+return 'cache-control:s-maxage';
+}
+
+  if (isCacheLifeRec(rec)) {
+return cacheLifeIntent(rec);
+}
+
   const sharedFunction = sharedFunctionTarget(rec);
-  if (sharedFunction) return `parallel-shared-helper:${sharedFunction}`;
+
+  if (sharedFunction) {
+return `parallel-shared-helper:${sharedFunction}`;
+}
+
   return fixShape(rec);
 }
 
@@ -83,10 +102,18 @@ export function dedupEditTarget(rec) {
 function firstAffectedFile(rec) {
   const direct = affectedFiles(rec);
   const editTarget = referencedCodeFiles(rec, ['fix', 'desiredBehavior', 'currentBehavior'])[0];
-  if (editTarget) return editTarget;
+
+  if (editTarget) {
+return editTarget;
+}
+
   const referenced = referencedCodeFiles(rec)
     .find((file) => direct.includes(file));
-  if (referenced) return referenced;
+
+  if (referenced) {
+return referenced;
+}
+
   return Array.isArray(rec?.affectedFiles) ? rec.affectedFiles[0] : null;
 }
 
@@ -102,6 +129,7 @@ function referencedCodeFiles(rec, fields = ['what', 'why', 'fix', 'currentBehavi
     .filter((v) => typeof v === 'string' && v.trim())
     .join('\n');
   const matches = text.match(/(?:^|[\s`'"(])((?:\.{1,2}\/|[A-Za-z0-9_.@-]+\/)[A-Za-z0-9_./@[\]()-]+\.(?:mjs|cjs|js|jsx|ts|tsx))/g) ?? [];
+
   return unique(matches.map((m) =>
     normalizePath(m.replace(/^[\s`'"(]+/, ''))
   ).filter((file) => file !== NO_VALUE));
@@ -115,6 +143,7 @@ function isSMaxageCacheHeaderRec(rec) {
     rec?.desiredBehavior,
     ...(Array.isArray(rec?.citations) ? rec.citations : []),
   ].filter(Boolean).join('\n');
+
   return /\bs-maxage\b/i.test(text) &&
     /\b(?:Cache-Control|CDN cache|cdn-cache|caching\/cdn-cache)\b/i.test(text);
 }
@@ -128,15 +157,18 @@ function isCacheLifeRec(rec) {
     rec?.desiredBehavior,
     ...(Array.isArray(rec?.citations) ? rec.citations : []),
   ].filter(Boolean).join('\n');
+
   return /^isr_overrevalidation:/.test(String(rec?.candidateRef ?? '')) &&
     /\bcacheLife\s*\(|\bcacheLife\b/i.test(text);
 }
 
 function sharedFunctionTarget(rec) {
   const rule = primarySkillRule(rec);
+
   if (!/(?:^|:)async-parallel$|(?:^|:)server-parallel-fetching$|(?:^|:)async-suspense-boundaries$/.test(rule)) {
     return null;
   }
+
   const text = [
     rec?.what,
     rec?.why,
@@ -157,11 +189,17 @@ function sharedFunctionTarget(rec) {
     'NextResponse',
   ]);
   const candidates = names.filter((name) => !stop.has(name));
-  if (candidates.length === 0) return null;
+
+  if (candidates.length === 0) {
+return null;
+}
+
   const score = new Map();
+
   for (const name of candidates) {
     score.set(name, (score.get(name) ?? 0) + 1);
   }
+
   return [...score.entries()]
     .sort((a, b) => b[1] - a[1] || text.indexOf(a[0]) - text.indexOf(b[0]))
     .map(([name]) => `function:${name}`)[0] ?? null;
@@ -182,6 +220,7 @@ function cacheLifeIntent(rec) {
   const tags = unique([
     ...[...text.matchAll(/\bcacheTag\s*\(([^)]*)\)/gs)].flatMap((m) => {
       const args = m[1] ?? '';
+
       return [
         ...[...args.matchAll(/['"]([^'"]+)['"]/g)].map((x) => x[1]),
         ...[...args.matchAll(/`([^`]+)`/g)].map((x) => x[1].includes('${') ? `${x[1].split('${')[0]}*` : x[1]),
@@ -189,6 +228,7 @@ function cacheLifeIntent(rec) {
     }),
   ]);
   const invalidation = /\b(?:revalidateTag|updateTag)\s*\(/.test(text) ? 'with-invalidation-api' : 'no-invalidation-api';
+
   return [
     'next-cache:cache-life',
     profiles.join('|') || NO_VALUE,
@@ -202,7 +242,10 @@ function unique(values) {
 }
 
 function normalizeFixText(text) {
-  if (typeof text !== 'string' || text.trim() === '') return NO_VALUE;
+  if (typeof text !== 'string' || text.trim() === '') {
+return NO_VALUE;
+}
+
   return text
     .toLowerCase()
     .replace(/```[\s\S]*?```/g, ' codeblock ')
@@ -221,6 +264,7 @@ function withDedupMetadata(rec) {
     numericCount(rec.corroborationCount),
     1 + existing.length,
   );
+
   return existing.length > 0 || count > 1
     ? { ...rec, appliesAlsoTo: existing, corroborationCount: count }
     : { ...rec };
@@ -240,6 +284,7 @@ function mergeDuplicateRecs(a, b) {
   ]);
   const corroborationCount =
     numericCount(winner.corroborationCount) + numericCount(loser.corroborationCount);
+
   return {
     ...winner,
     appliesAlsoTo,
@@ -250,6 +295,7 @@ function mergeDuplicateRecs(a, b) {
 function recScore(rec) {
   const priority = typeof rec?.priority === 'number' ? rec.priority : 0;
   const quality = typeof rec?.quality?.overall === 'number' ? rec.quality.overall : 0;
+
   return (priority * 1_000_000_000_000) + signalMagnitude(rec) + quality;
 }
 
@@ -265,17 +311,35 @@ function signalMagnitude(rec) {
   const errors = parseNumber(text, /(?:errs|errors?)[:=]\s*([\d,]+)/i);
   const writes = parseNumber(text, /writes[:=]\s*([\d,]+)/i);
   const reads = parseNumber(text, /reads[:=]\s*([\d,]+)/i);
-  if (inv != null && p95 != null) return inv * p95;
-  if (errors != null) return errors;
-  if (writes != null && reads != null) return writes + reads;
-  if (inv != null) return inv;
+
+  if (inv != null && p95 != null) {
+return inv * p95;
+}
+
+  if (errors != null) {
+return errors;
+}
+
+  if (writes != null && reads != null) {
+return writes + reads;
+}
+
+  if (inv != null) {
+return inv;
+}
+
   return 0;
 }
 
 function parseNumber(text, re) {
   const match = re.exec(text);
-  if (!match) return null;
+
+  if (!match) {
+return null;
+}
+
   const value = Number(String(match[1]).replace(/,/g, ''));
+
   return Number.isFinite(value) ? value : null;
 }
 
@@ -295,7 +359,10 @@ function appliesAlsoEntry(rec) {
 }
 
 function normalizedAppliesAlsoTo(entries) {
-  if (!Array.isArray(entries)) return [];
+  if (!Array.isArray(entries)) {
+return [];
+}
+
   return entries
     .filter((e) => e && typeof e === 'object')
     .map((e) => ({
@@ -311,15 +378,21 @@ function normalizedAppliesAlsoTo(entries) {
 function uniqueAppliesAlsoTo(entries) {
   const seen = new Set();
   const out = [];
+
   for (const entry of entries) {
     const key = JSON.stringify([
       entry.candidateRef ?? NO_VALUE,
       entry.affectedFiles?.join(',') ?? NO_VALUE,
       entry.what ?? NO_VALUE,
     ]);
-    if (seen.has(key)) continue;
+
+    if (seen.has(key)) {
+continue;
+}
+
     seen.add(key);
     out.push(entry);
   }
+
   return out;
 }

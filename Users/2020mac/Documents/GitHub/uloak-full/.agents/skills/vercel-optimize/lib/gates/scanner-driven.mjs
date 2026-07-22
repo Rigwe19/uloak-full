@@ -27,24 +27,45 @@ export const metadata = {
 
 export function gate(signals) {
   const findings = signals.codebase?.findings ?? [];
-  if (findings.length === 0) return [];
+
+  if (findings.length === 0) {
+return [];
+}
 
   const candidates = [];
 
   for (const cfg of SCANNER_GATES) {
     const matched = findings.filter((f) => {
-      if (!cfg.patterns.includes(f.pattern)) return false;
+      if (!cfg.patterns.includes(f.pattern)) {
+return false;
+}
+
       if (!f.trafficIndependent) {
-        if (!f.o11ySignal || f.o11ySignal === 'scanner-only') return false;
-        if (f.o11ySignal === 'COLD-PATH') return false;
-        if (f.o11ySignal === 'NO-ROUTE-MAPPING') return false;
+        if (!f.o11ySignal || f.o11ySignal === 'scanner-only') {
+return false;
+}
+
+        if (f.o11ySignal === 'COLD-PATH') {
+return false;
+}
+
+        if (f.o11ySignal === 'NO-ROUTE-MAPPING') {
+return false;
+}
       }
-      if (cfg.id === 'cache_header_gap' && observedCacheHitRate(f.o11ySignal) >= 90) return false;
+
+      if (cfg.id === 'cache_header_gap' && observedCacheHitRate(f.o11ySignal) >= 90) {
+return false;
+}
+
       return true;
     });
 
     for (const group of groupFindings(cfg, matched)) {
-      if (group.findings.length < cfg.threshold) continue;
+      if (group.findings.length < cfg.threshold) {
+continue;
+}
+
       candidates.push(candidateForGroup(cfg, group));
     }
   }
@@ -54,20 +75,31 @@ export function gate(signals) {
 
 function groupFindings(cfg, findings) {
   const groups = new Map();
+
   for (const finding of findings) {
     const scope = finding.route ? 'route' : 'file';
     const target = scope === 'route' ? finding.route : finding.file;
-    if (!target) continue;
+
+    if (!target) {
+continue;
+}
+
     const key = `${cfg.id}:${scope}:${target}`;
-    if (!groups.has(key)) groups.set(key, { scope, target, findings: [] });
+
+    if (!groups.has(key)) {
+groups.set(key, { scope, target, findings: [] });
+}
+
     groups.get(key).findings.push(finding);
   }
+
   return [...groups.values()];
 }
 
 function candidateForGroup(cfg, group) {
   const matched = group.findings;
   const route = group.scope === 'route' ? group.target : null;
+
   return {
     kind: cfg.id,
     scope: group.scope,
@@ -93,6 +125,7 @@ function candidateForGroup(cfg, group) {
 
 function questionFor(kindId, matched) {
   const sample = matched.slice(0, 3).map((m) => m.file).join(', ');
+
   switch (kindId) {
     case 'image_optimization':
       return `Which raw <img> tags in ${sample} should move to next/image (or the framework's image component)?`;
@@ -114,9 +147,17 @@ function uniqueStrings(values) {
 }
 
 function observedCacheHitRate(signal) {
-  if (typeof signal !== 'string') return null;
+  if (typeof signal !== 'string') {
+return null;
+}
+
   const m = /\bcache=([\d.]+)%/.exec(signal);
-  if (!m) return null;
+
+  if (!m) {
+return null;
+}
+
   const n = Number(m[1]);
+
   return Number.isFinite(n) ? n : null;
 }

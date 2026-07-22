@@ -92,9 +92,11 @@ export default function SettingsFamilyTree({ person, graph }: SettingsFamilyTree
 }
 
 function TreeView({ nodes, baseUrl, depth = 0 }: { nodes: TreeNode[]; baseUrl: string; depth?: number }) {
-    if (!nodes || nodes.length === 0) return (
+    if (!nodes || nodes.length === 0) {
+return (
         <p className="text-xs italic text-text-muted">None recorded</p>
     );
+}
 
     return (
         <div className="space-y-2" style={{ paddingLeft: depth > 0 ? 16 : 0 }}>

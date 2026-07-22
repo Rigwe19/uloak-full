@@ -12,6 +12,7 @@ const log = (...a) => console.error('[reconcile-candidates]', ...a);
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
   if (!args.investigationPath) {
     console.error('usage: node scripts/reconcile-candidates.mjs <investigation-evidence.json> [--gate gate.json] [--out reconciled-investigation.json]');
     process.exit(1);
@@ -37,21 +38,35 @@ async function main() {
   }
 
   const dropped = reconciled.reconciliation?.droppedBeforeInvestigation ?? 0;
-  if (dropped > 0) log(`dropped ${dropped} candidate(s) before investigation`);
+
+  if (dropped > 0) {
+log(`dropped ${dropped} candidate(s) before investigation`);
+}
 }
 
 function parseArgs(argv) {
   const out = { positional: [] };
+
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--gate') out.gatePath = resolve(argv[++i]);
-    else if (a.startsWith('--gate=')) out.gatePath = resolve(a.slice('--gate='.length));
-    else if (a === '--out') out.outPath = resolve(argv[++i]);
-    else if (a.startsWith('--out=')) out.outPath = resolve(a.slice('--out='.length));
-    else if (a === '--no-timestamp') out.noTimestamp = true;
-    else out.positional.push(a);
+
+    if (a === '--gate') {
+out.gatePath = resolve(argv[++i]);
+} else if (a.startsWith('--gate=')) {
+out.gatePath = resolve(a.slice('--gate='.length));
+} else if (a === '--out') {
+out.outPath = resolve(argv[++i]);
+} else if (a.startsWith('--out=')) {
+out.outPath = resolve(a.slice('--out='.length));
+} else if (a === '--no-timestamp') {
+out.noTimestamp = true;
+} else {
+out.positional.push(a);
+}
   }
+
   out.investigationPath = out.positional[0] ? resolve(out.positional[0]) : null;
+
   return out;
 }
 

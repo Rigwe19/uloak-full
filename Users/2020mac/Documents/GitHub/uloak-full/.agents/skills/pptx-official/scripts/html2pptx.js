@@ -25,8 +25,8 @@
  *   { slide, placeholders } where placeholders is an array of { id, x, y, w, h }
  */
 
-const { chromium } = require('playwright');
 const path = require('path');
+const { chromium } = require('playwright');
 const sharp = require('sharp');
 
 const PT_PER_PX = 0.75;
@@ -56,8 +56,15 @@ async function getBodyDimensions(page) {
 
   if (widthOverflowPt > 0 || heightOverflowPt > 0) {
     const directions = [];
-    if (widthOverflowPt > 0) directions.push(`${widthOverflowPt.toFixed(1)}pt horizontally`);
-    if (heightOverflowPt > 0) directions.push(`${heightOverflowPt.toFixed(1)}pt vertically`);
+
+    if (widthOverflowPt > 0) {
+directions.push(`${widthOverflowPt.toFixed(1)}pt horizontally`);
+}
+
+    if (heightOverflowPt > 0) {
+directions.push(`${heightOverflowPt.toFixed(1)}pt vertically`);
+}
+
     const reminder = heightOverflowPt > 0 ? ' (Remember: leave 0.5" margin at bottom of slide)' : '';
     errors.push(`HTML content overflows body by ${directions.join(' and ')}${reminder}`);
   }
@@ -82,6 +89,7 @@ function validateDimensions(bodyDimensions, pres) {
       );
     }
   }
+
   return errors;
 }
 
@@ -99,9 +107,18 @@ function validateTextBoxPosition(slideData, bodyDimensions) {
 
       if (fontSize > 12 && distanceFromBottom < minBottomMargin) {
         const getText = () => {
-          if (typeof el.text === 'string') return el.text;
-          if (Array.isArray(el.text)) return el.text.find(t => t.text)?.text || '';
-          if (Array.isArray(el.items)) return el.items.find(item => item.text)?.text || '';
+          if (typeof el.text === 'string') {
+return el.text;
+}
+
+          if (Array.isArray(el.text)) {
+return el.text.find(t => t.text)?.text || '';
+}
+
+          if (Array.isArray(el.items)) {
+return el.items.find(item => item.text)?.text || '';
+}
+
           return '';
         };
         const textPrefix = getText().substring(0, 50) + (getText().length > 50 ? '...' : '');
@@ -160,11 +177,23 @@ function addElements(slideData, targetSlide, pres) {
 
       if (el.shape.fill) {
         shapeOptions.fill = { color: el.shape.fill };
-        if (el.shape.transparency != null) shapeOptions.fill.transparency = el.shape.transparency;
+
+        if (el.shape.transparency != null) {
+shapeOptions.fill.transparency = el.shape.transparency;
+}
       }
-      if (el.shape.line) shapeOptions.line = el.shape.line;
-      if (el.shape.rectRadius > 0) shapeOptions.rectRadius = el.shape.rectRadius;
-      if (el.shape.shadow) shapeOptions.shadow = el.shape.shadow;
+
+      if (el.shape.line) {
+shapeOptions.line = el.shape.line;
+}
+
+      if (el.shape.rectRadius > 0) {
+shapeOptions.rectRadius = el.shape.rectRadius;
+}
+
+      if (el.shape.shadow) {
+shapeOptions.shadow = el.shape.shadow;
+}
 
       targetSlide.addText(el.text || '', shapeOptions);
     } else if (el.type === 'list') {
@@ -183,7 +212,11 @@ function addElements(slideData, targetSlide, pres) {
         paraSpaceAfter: el.style.paraSpaceAfter,
         margin: el.style.margin
       };
-      if (el.style.margin) listOptions.margin = el.style.margin;
+
+      if (el.style.margin) {
+listOptions.margin = el.style.margin;
+}
+
       targetSlide.addText(el.items, listOptions);
     } else {
       // Check if text is single-line (height suggests one line)
@@ -230,10 +263,21 @@ function addElements(slideData, targetSlide, pres) {
         inset: 0  // Remove default PowerPoint internal padding
       };
 
-      if (el.style.align) textOptions.align = el.style.align;
-      if (el.style.margin) textOptions.margin = el.style.margin;
-      if (el.style.rotate !== undefined) textOptions.rotate = el.style.rotate;
-      if (el.style.transparency !== null && el.style.transparency !== undefined) textOptions.transparency = el.style.transparency;
+      if (el.style.align) {
+textOptions.align = el.style.align;
+}
+
+      if (el.style.margin) {
+textOptions.margin = el.style.margin;
+}
+
+      if (el.style.rotate !== undefined) {
+textOptions.rotate = el.style.rotate;
+}
+
+      if (el.style.transparency !== null && el.style.transparency !== undefined) {
+textOptions.transparency = el.style.transparency;
+}
 
       targetSlide.addText(el.text, textOptions);
     }
@@ -252,8 +296,12 @@ async function extractSlideData(page) {
 
     // Helper: Check if a font should skip bold formatting
     const shouldSkipBold = (fontFamily) => {
-      if (!fontFamily) return false;
+      if (!fontFamily) {
+return false;
+}
+
       const normalizedFont = fontFamily.toLowerCase().replace(/['"]/g, '').split(',')[0].trim();
+
       return SINGLE_WEIGHT_FONTS.includes(normalizedFont);
     };
 
@@ -262,26 +310,44 @@ async function extractSlideData(page) {
     const pxToPoints = (pxStr) => parseFloat(pxStr) * PT_PER_PX;
     const rgbToHex = (rgbStr) => {
       // Handle transparent backgrounds by defaulting to white
-      if (rgbStr === 'rgba(0, 0, 0, 0)' || rgbStr === 'transparent') return 'FFFFFF';
+      if (rgbStr === 'rgba(0, 0, 0, 0)' || rgbStr === 'transparent') {
+return 'FFFFFF';
+}
 
       const match = rgbStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-      if (!match) return 'FFFFFF';
+
+      if (!match) {
+return 'FFFFFF';
+}
+
       return match.slice(1).map(n => parseInt(n).toString(16).padStart(2, '0')).join('');
     };
 
     const extractAlpha = (rgbStr) => {
       const match = rgbStr.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
-      if (!match || !match[4]) return null;
+
+      if (!match || !match[4]) {
+return null;
+}
+
       const alpha = parseFloat(match[4]);
+
       return Math.round((1 - alpha) * 100);
     };
 
     const applyTextTransform = (text, textTransform) => {
-      if (textTransform === 'uppercase') return text.toUpperCase();
-      if (textTransform === 'lowercase') return text.toLowerCase();
+      if (textTransform === 'uppercase') {
+return text.toUpperCase();
+}
+
+      if (textTransform === 'lowercase') {
+return text.toLowerCase();
+}
+
       if (textTransform === 'capitalize') {
         return text.replace(/\b\w/g, c => c.toUpperCase());
       }
+
       return text;
     };
 
@@ -304,11 +370,13 @@ async function extractSlideData(page) {
       if (transform && transform !== 'none') {
         // Try to match rotate() function
         const rotateMatch = transform.match(/rotate\((-?\d+(?:\.\d+)?)deg\)/);
+
         if (rotateMatch) {
           angle += parseFloat(rotateMatch[1]);
         } else {
           // Browser may compute as matrix - extract rotation from matrix
           const matrixMatch = transform.match(/matrix\(([^)]+)\)/);
+
           if (matrixMatch) {
             const values = matrixMatch[1].split(',').map(parseFloat);
             // matrix(a, b, c, d, e, f) where rotation = atan2(b, a)
@@ -320,7 +388,10 @@ async function extractSlideData(page) {
 
       // Normalize to 0-359 range
       angle = angle % 360;
-      if (angle < 0) angle += 360;
+
+      if (angle < 0) {
+angle += 360;
+}
 
       return angle === 0 ? null : angle;
     };
@@ -353,6 +424,7 @@ async function extractSlideData(page) {
       // For other rotations, use element's offset dimensions
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
+
       return {
         x: centerX - el.offsetWidth / 2,
         y: centerY - el.offsetHeight / 2,
@@ -363,7 +435,9 @@ async function extractSlideData(page) {
 
     // Parse CSS box-shadow into PptxGenJS shadow properties
     const parseBoxShadow = (boxShadow) => {
-      if (!boxShadow || boxShadow === 'none') return null;
+      if (!boxShadow || boxShadow === 'none') {
+return null;
+}
 
       // Browser computed style format: "rgba(0, 0, 0, 0.3) 2px 2px 8px 0px [inset]"
       // CSS format: "[inset] 2px 2px 8px 0px rgba(0, 0, 0, 0.3)"
@@ -372,7 +446,9 @@ async function extractSlideData(page) {
 
       // IMPORTANT: PptxGenJS/PowerPoint doesn't properly support inset shadows
       // Only process outer shadows to avoid file corruption
-      if (insetMatch) return null;
+      if (insetMatch) {
+return null;
+}
 
       // Extract color first (rgba or rgb at start)
       const colorMatch = boxShadow.match(/rgba?\([^)]+\)/);
@@ -380,7 +456,9 @@ async function extractSlideData(page) {
       // Extract numeric values (handles both px and pt units)
       const parts = boxShadow.match(/([-\d.]+)(px|pt)/g);
 
-      if (!parts || parts.length < 2) return null;
+      if (!parts || parts.length < 2) {
+return null;
+}
 
       const offsetX = parseFloat(parts[0]);
       const offsetY = parseFloat(parts[1]);
@@ -388,9 +466,13 @@ async function extractSlideData(page) {
 
       // Calculate angle from offsets (in degrees, 0 = right, 90 = down)
       let angle = 0;
+
       if (offsetX !== 0 || offsetY !== 0) {
         angle = Math.atan2(offsetY, offsetX) * (180 / Math.PI);
-        if (angle < 0) angle += 360;
+
+        if (angle < 0) {
+angle += 360;
+}
       }
 
       // Calculate offset distance (hypotenuse)
@@ -398,8 +480,10 @@ async function extractSlideData(page) {
 
       // Extract opacity from rgba
       let opacity = 0.5;
+
       if (colorMatch) {
         const opacityMatch = colorMatch[0].match(/[\d.]+\)$/);
+
         if (opacityMatch) {
           opacity = parseFloat(opacityMatch[0].replace(')', ''));
         }
@@ -423,9 +507,11 @@ async function extractSlideData(page) {
         let textTransform = baseTextTransform;
 
         const isText = node.nodeType === Node.TEXT_NODE || node.tagName === 'BR';
+
         if (isText) {
           const text = node.tagName === 'BR' ? '\n' : textTransform(node.textContent.replace(/\s+/g, ' '));
           const prevRun = runs[runs.length - 1];
+
           if (prevNodeIsText && prevRun) {
             prevRun.text += text;
           } else {
@@ -439,15 +525,31 @@ async function extractSlideData(page) {
           // Handle inline elements with computed styles
           if (node.tagName === 'SPAN' || node.tagName === 'B' || node.tagName === 'STRONG' || node.tagName === 'I' || node.tagName === 'EM' || node.tagName === 'U') {
             const isBold = computed.fontWeight === 'bold' || parseInt(computed.fontWeight) >= 600;
-            if (isBold && !shouldSkipBold(computed.fontFamily)) options.bold = true;
-            if (computed.fontStyle === 'italic') options.italic = true;
-            if (computed.textDecoration && computed.textDecoration.includes('underline')) options.underline = true;
+
+            if (isBold && !shouldSkipBold(computed.fontFamily)) {
+options.bold = true;
+}
+
+            if (computed.fontStyle === 'italic') {
+options.italic = true;
+}
+
+            if (computed.textDecoration && computed.textDecoration.includes('underline')) {
+options.underline = true;
+}
+
             if (computed.color && computed.color !== 'rgb(0, 0, 0)') {
               options.color = rgbToHex(computed.color);
               const transparency = extractAlpha(computed.color);
-              if (transparency !== null) options.transparency = transparency;
+
+              if (transparency !== null) {
+options.transparency = transparency;
+}
             }
-            if (computed.fontSize) options.fontSize = pxToPoints(computed.fontSize);
+
+            if (computed.fontSize) {
+options.fontSize = pxToPoints(computed.fontSize);
+}
 
             // Apply text-transform on the span element itself
             if (computed.textTransform && computed.textTransform !== 'none') {
@@ -459,12 +561,15 @@ async function extractSlideData(page) {
             if (computed.marginLeft && parseFloat(computed.marginLeft) > 0) {
               errors.push(`Inline element <${node.tagName.toLowerCase()}> has margin-left which is not supported in PowerPoint. Remove margin from inline elements.`);
             }
+
             if (computed.marginRight && parseFloat(computed.marginRight) > 0) {
               errors.push(`Inline element <${node.tagName.toLowerCase()}> has margin-right which is not supported in PowerPoint. Remove margin from inline elements.`);
             }
+
             if (computed.marginTop && parseFloat(computed.marginTop) > 0) {
               errors.push(`Inline element <${node.tagName.toLowerCase()}> has margin-top which is not supported in PowerPoint. Remove margin from inline elements.`);
             }
+
             if (computed.marginBottom && parseFloat(computed.marginBottom) > 0) {
               errors.push(`Inline element <${node.tagName.toLowerCase()}> has margin-bottom which is not supported in PowerPoint. Remove margin from inline elements.`);
             }
@@ -504,9 +609,11 @@ async function extractSlideData(page) {
     }
 
     let background;
+
     if (bgImage && bgImage !== 'none') {
       // Extract URL from url("...") or url(...)
       const urlMatch = bgImage.match(/url\(["']?([^"')]+)["']?\)/);
+
       if (urlMatch) {
         background = {
           type: 'image',
@@ -532,7 +639,9 @@ async function extractSlideData(page) {
     const processed = new Set();
 
     document.querySelectorAll('*').forEach((el) => {
-      if (processed.has(el)) return;
+      if (processed.has(el)) {
+return;
+}
 
       // Validate text elements don't have backgrounds, borders, or shadows
       if (textTags.includes(el.tagName)) {
@@ -550,6 +659,7 @@ async function extractSlideData(page) {
             `Text element <${el.tagName.toLowerCase()}> has ${hasBg ? 'background' : hasBorder ? 'border' : 'shadow'}. ` +
             'Backgrounds, borders, and shadows are only supported on <div> elements, not text elements.'
           );
+
           return;
         }
       }
@@ -557,6 +667,7 @@ async function extractSlideData(page) {
       // Extract placeholder elements (for charts, etc.)
       if (el.className && el.className.includes('placeholder')) {
         const rect = el.getBoundingClientRect();
+
         if (rect.width === 0 || rect.height === 0) {
           errors.push(
             `Placeholder "${el.id || 'unnamed'}" has ${rect.width === 0 ? 'width: 0' : 'height: 0'}. Check the layout CSS.`
@@ -570,13 +681,16 @@ async function extractSlideData(page) {
             h: pxToInch(rect.height)
           });
         }
+
         processed.add(el);
+
         return;
       }
 
       // Extract images
       if (el.tagName === 'IMG') {
         const rect = el.getBoundingClientRect();
+
         if (rect.width > 0 && rect.height > 0) {
           elements.push({
             type: 'image',
@@ -589,12 +703,14 @@ async function extractSlideData(page) {
             }
           });
           processed.add(el);
+
           return;
         }
       }
 
       // Extract DIVs with backgrounds/borders as shapes
       const isContainer = el.tagName === 'DIV' && !textTags.includes(el.tagName);
+
       if (isContainer) {
         const computed = window.getComputedStyle(el);
         const hasBg = computed.backgroundColor && computed.backgroundColor !== 'rgba(0, 0, 0, 0)';
@@ -603,6 +719,7 @@ async function extractSlideData(page) {
         for (const node of el.childNodes) {
           if (node.nodeType === Node.TEXT_NODE) {
             const text = node.textContent.trim();
+
             if (text) {
               errors.push(
                 `DIV element contains unwrapped text "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}". ` +
@@ -614,11 +731,13 @@ async function extractSlideData(page) {
 
         // Check for background images on shapes
         const bgImage = computed.backgroundImage;
+
         if (bgImage && bgImage !== 'none') {
           errors.push(
             'Background images on DIV elements are not supported. ' +
             'Use solid colors or borders for shapes, or use slide.addImage() in PptxGenJS to layer images.'
           );
+
           return;
         }
 
@@ -650,6 +769,7 @@ async function extractSlideData(page) {
               color: rgbToHex(computed.borderTopColor)
             });
           }
+
           if (parseFloat(borderRight) > 0) {
             const widthPt = pxToPoints(borderRight);
             const inset = (widthPt / 72) / 2;
@@ -660,6 +780,7 @@ async function extractSlideData(page) {
               color: rgbToHex(computed.borderRightColor)
             });
           }
+
           if (parseFloat(borderBottom) > 0) {
             const widthPt = pxToPoints(borderBottom);
             const inset = (widthPt / 72) / 2;
@@ -670,6 +791,7 @@ async function extractSlideData(page) {
               color: rgbToHex(computed.borderBottomColor)
             });
           }
+
           if (parseFloat(borderLeft) > 0) {
             const widthPt = pxToPoints(borderLeft);
             const inset = (widthPt / 72) / 2;
@@ -684,6 +806,7 @@ async function extractSlideData(page) {
 
         if (hasBg || hasBorder) {
           const rect = el.getBoundingClientRect();
+
           if (rect.width > 0 && rect.height > 0) {
             const shadow = parseBoxShadow(computed.boxShadow);
 
@@ -712,16 +835,26 @@ async function extractSlideData(page) {
                   rectRadius: (() => {
                     const radius = computed.borderRadius;
                     const radiusValue = parseFloat(radius);
-                    if (radiusValue === 0) return 0;
+
+                    if (radiusValue === 0) {
+return 0;
+}
 
                     if (radius.includes('%')) {
-                      if (radiusValue >= 50) return 1;
+                      if (radiusValue >= 50) {
+return 1;
+}
+
                       // Calculate percentage of smaller dimension
                       const minDim = Math.min(rect.width, rect.height);
+
                       return (radiusValue / 100) * pxToInch(minDim);
                     }
 
-                    if (radius.includes('pt')) return radiusValue / 72;
+                    if (radius.includes('pt')) {
+return radiusValue / 72;
+}
+
                     return radiusValue / PX_PER_IN;
                   })(),
                   shadow: shadow
@@ -733,6 +866,7 @@ async function extractSlideData(page) {
             elements.push(...borderLines);
 
             processed.add(el);
+
             return;
           }
         }
@@ -741,7 +875,10 @@ async function extractSlideData(page) {
       // Extract bullet lists as single text block
       if (el.tagName === 'UL' || el.tagName === 'OL') {
         const rect = el.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
+
+        if (rect.width === 0 || rect.height === 0) {
+return;
+}
 
         const liElements = Array.from(el.querySelectorAll('li'));
         const items = [];
@@ -756,15 +893,18 @@ async function extractSlideData(page) {
         liElements.forEach((li, idx) => {
           const isLast = idx === liElements.length - 1;
           const runs = parseInlineFormatting(li, { breakLine: false });
+
           // Clean manual bullets from first run
           if (runs.length > 0) {
             runs[0].text = runs[0].text.replace(/^[•\-\*▪▸]\s*/, '');
             runs[0].options.bullet = { indent: textIndent };
           }
+
           // Set breakLine on last run
           if (runs.length > 0 && !isLast) {
             runs[runs.length - 1].options.breakLine = true;
           }
+
           items.push(...runs);
         });
 
@@ -795,15 +935,21 @@ async function extractSlideData(page) {
 
         liElements.forEach(li => processed.add(li));
         processed.add(el);
+
         return;
       }
 
       // Extract text elements (P, H1, H2, etc.)
-      if (!textTags.includes(el.tagName)) return;
+      if (!textTags.includes(el.tagName)) {
+return;
+}
 
       const rect = el.getBoundingClientRect();
       const text = el.textContent.trim();
-      if (rect.width === 0 || rect.height === 0 || !text) return;
+
+      if (rect.width === 0 || rect.height === 0 || !text) {
+return;
+}
 
       // Validate: Check for manual bullet symbols in text elements (not in lists)
       if (el.tagName !== 'LI' && /^[•\-\*▪▸○●◆◇■□]\s/.test(text.trimStart())) {
@@ -811,6 +957,7 @@ async function extractSlideData(page) {
           `Text element <${el.tagName.toLowerCase()}> starts with bullet symbol "${text.substring(0, 20)}...". ` +
           'Use <ul> or <ol> lists instead of manual bullet symbols.'
         );
+
         return;
       }
 
@@ -836,9 +983,14 @@ async function extractSlideData(page) {
       };
 
       const transparency = extractAlpha(computed.color);
-      if (transparency !== null) baseStyle.transparency = transparency;
 
-      if (rotation !== null) baseStyle.rotate = rotation;
+      if (transparency !== null) {
+baseStyle.transparency = transparency;
+}
+
+      if (rotation !== null) {
+baseStyle.rotate = rotation;
+}
 
       const hasFormatting = el.querySelector('b, i, u, strong, em, span, br');
 
@@ -849,11 +1001,13 @@ async function extractSlideData(page) {
 
         // Adjust lineSpacing based on largest fontSize in runs
         const adjustedStyle = { ...baseStyle };
+
         if (adjustedStyle.lineSpacing) {
           const maxFontSize = Math.max(
             adjustedStyle.fontSize,
             ...runs.map(r => r.options?.fontSize || 0)
           );
+
           if (maxFontSize > adjustedStyle.fontSize) {
             const lineHeightMultiplier = adjustedStyle.lineSpacing / adjustedStyle.fontSize;
             adjustedStyle.lineSpacing = maxFontSize * lineHeightMultiplier;
@@ -902,6 +1056,7 @@ async function html2pptx(htmlFile, pres, options = {}) {
   try {
     // Use Chrome on macOS, default Chromium on Unix
     const launchOptions = { env: { TMPDIR: tmpDir } };
+
     if (process.platform === 'darwin') {
       launchOptions.channel = 'chrome';
     }
@@ -941,11 +1096,13 @@ async function html2pptx(htmlFile, pres, options = {}) {
     }
 
     const dimensionErrors = validateDimensions(bodyDimensions, pres);
+
     if (dimensionErrors.length > 0) {
       validationErrors.push(...dimensionErrors);
     }
 
     const textBoxPositionErrors = validateTextBoxPosition(slideData, bodyDimensions);
+
     if (textBoxPositionErrors.length > 0) {
       validationErrors.push(...textBoxPositionErrors);
     }
@@ -959,6 +1116,7 @@ async function html2pptx(htmlFile, pres, options = {}) {
       const errorMessage = validationErrors.length === 1
         ? validationErrors[0]
         : `Multiple validation errors found:\n${validationErrors.map((e, i) => `  ${i + 1}. ${e}`).join('\n')}`;
+
       throw new Error(errorMessage);
     }
 
@@ -972,6 +1130,7 @@ async function html2pptx(htmlFile, pres, options = {}) {
     if (!error.message.startsWith(htmlFile)) {
       throw new Error(`${htmlFile}: ${error.message}`);
     }
+
     throw error;
   }
 }

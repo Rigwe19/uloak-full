@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\ClientMiddleware;
 use App\Http\Middleware\FamilyMemberMiddleware;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'client' => ClientMiddleware::class,
             'family-member' => FamilyMemberMiddleware::class,
             'house-member' => HouseMemberMiddleware::class,
         ]);

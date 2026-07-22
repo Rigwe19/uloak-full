@@ -98,19 +98,29 @@ export default function StoryViewer({ story: initialStory, room, prevStory: init
     const story = currentStory;
 
     const preloadStory = async (uuid: string) => {
-        if (storyCache.current.has(uuid)) return;
+        if (storyCache.current.has(uuid)) {
+return;
+}
+
         try {
             const res = await fetch(`/dashboard/stories/${uuid}/data`, {
                 headers: { Accept: 'application/json' },
             });
-            if (!res.ok) return;
+
+            if (!res.ok) {
+return;
+}
+
             const data = await res.json();
+
             if (data.story) {
                 storyCache.current.set(uuid, data.story);
             }
+
             if (data.prevStory) {
                 setPrev(data.prevStory);
             }
+
             if (data.nextStory) {
                 setNext(data.nextStory);
             }
@@ -123,6 +133,7 @@ export default function StoryViewer({ story: initialStory, room, prevStory: init
         setTransitioning(true);
 
         const cached = storyCache.current.get(uuid);
+
         if (cached) {
             setCurrentStory(cached);
         } else {
@@ -144,9 +155,11 @@ export default function StoryViewer({ story: initialStory, room, prevStory: init
             });
             preloadStory(uuid).then(() => {
                 const loaded = storyCache.current.get(uuid);
+
                 if (loaded) {
                     setCurrentStory(loaded);
                 }
+
                 setTransitioning(false);
             });
         }
@@ -166,8 +179,14 @@ export default function StoryViewer({ story: initialStory, room, prevStory: init
 
     useEffect(() => {
         storyCache.current.set(initialStory.uuid, initialStory);
-        if (initialNext?.uuid) preloadStory(initialNext.uuid);
-        if (initialPrev?.uuid) preloadStory(initialPrev.uuid);
+
+        if (initialNext?.uuid) {
+preloadStory(initialNext.uuid);
+}
+
+        if (initialPrev?.uuid) {
+preloadStory(initialPrev.uuid);
+}
     }, []);
 
     const handleClose = () => {
@@ -186,6 +205,7 @@ export default function StoryViewer({ story: initialStory, room, prevStory: init
         };
 
         window.addEventListener('keydown', handleKeyDown);
+
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [prev?.uuid, next?.uuid]);
 

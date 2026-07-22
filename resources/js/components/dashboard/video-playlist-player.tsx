@@ -202,7 +202,7 @@ return;
                     Cinema Hall is Quiet
                 </h3>
                 <p className="mx-auto max-w-md text-sm leading-relaxed text-text-muted">
-                    No video memories have been preserved in this homestead yet. Click the "Annex Memory" button below to add your first legacy film.
+                    No video memories have been preserved in this homestead yet. Click the "Upload" button below to add your first legacy film.
                 </p>
                 <div className="absolute inset-x-0 bottom-0 h-1 bg-linear-to-r from-transparent via-accent-gold/10 to-transparent" />
             </motion.div>

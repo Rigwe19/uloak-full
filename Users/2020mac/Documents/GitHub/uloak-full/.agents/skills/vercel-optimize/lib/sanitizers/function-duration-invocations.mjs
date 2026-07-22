@@ -23,16 +23,25 @@ const SAFE_REPLACEMENT =
   '95th percentile duration should drop; function invocation count may stay flat unless a separate CDN or static-rendering change is made.';
 
 export function apply(rec) {
-  if (!String(rec?.candidateRef ?? '').startsWith('slow_route:')) return {};
+  if (!String(rec?.candidateRef ?? '').startsWith('slow_route:')) {
+return {};
+}
+
   const tags = [];
+
   for (const field of STRING_FIELDS) {
-    if (typeof rec?.[field] !== 'string') continue;
+    if (typeof rec?.[field] !== 'string') {
+continue;
+}
+
     const before = rec[field];
     const after = before.replace(BAD_INVOCATION_CLAIM, SAFE_REPLACEMENT);
+
     if (after !== before) {
       rec[field] = after;
       tags.push(`function-duration-invocations:${field}`);
     }
   }
+
   return tags.length > 0 ? { tags } : {};
 }

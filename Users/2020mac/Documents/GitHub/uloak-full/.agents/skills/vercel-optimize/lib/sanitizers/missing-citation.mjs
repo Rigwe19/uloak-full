@@ -9,8 +9,10 @@ export const metadata = {
 
 export function apply(rec, _ctx = {}) {
   const cites = Array.isArray(rec.citations) ? rec.citations : [];
+
   if (cites.length === 0) {
     return { dropped: true, tag: 'missing-citation' };
   }
+
   return {};
 }

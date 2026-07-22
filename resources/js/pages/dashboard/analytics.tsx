@@ -1,4 +1,13 @@
 import { Head, usePage, usePoll } from '@inertiajs/react';
+import { LineChart, BarChart } from 'echarts/charts';
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+} from 'echarts/components';
+import * as echarts from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import ReactEChartsCore from 'echarts-for-react';
 import { motion } from 'framer-motion';
 import {
   Eye,
@@ -9,15 +18,6 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React from 'react';
-import ReactEChartsCore from 'echarts-for-react';
-import * as echarts from 'echarts/core';
-import { LineChart, BarChart } from 'echarts/charts';
-import {
-  GridComponent,
-  TooltipComponent,
-  LegendComponent,
-} from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import DashboardLayout from '@/layouts/dashboard-layout';
@@ -249,13 +249,26 @@ function StatCard({
 }
 
 function formatDuration(seconds: number): string {
-  if (!seconds || seconds < 0) return '0s';
+  if (!seconds || seconds < 0) {
+return '0s';
+}
+
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   const parts: string[] = [];
-  if (h > 0) parts.push(`${h}h`);
-  if (m > 0) parts.push(`${m}m`);
-  if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+
+  if (h > 0) {
+parts.push(`${h}h`);
+}
+
+  if (m > 0) {
+parts.push(`${m}m`);
+}
+
+  if (s > 0 || parts.length === 0) {
+parts.push(`${s}s`);
+}
+
   return parts.join(' ');
 }

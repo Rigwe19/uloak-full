@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('app:send-media-upload-reminders')->dailyAt('07:00');
 Schedule::command('analytics:aggregate')->dailyAt('03:00');
+Schedule::command('downloads:clean-expired')->dailyAt('02:00');

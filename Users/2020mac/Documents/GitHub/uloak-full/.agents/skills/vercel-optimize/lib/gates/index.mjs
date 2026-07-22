@@ -1,17 +1,17 @@
-import * as uncachedRoute from './uncached-route.mjs';
-import * as slowRoute from './slow-route.mjs';
-import * as routeErrors from './route-errors.mjs';
+import * as buildMinutesFanout from './build-minutes-fanout.mjs';
 import * as coldStart from './cold-start.mjs';
-import * as isrOverrevalidation from './isr-overrevalidation.mjs';
 import * as cwvPoor from './cwv-poor.mjs';
-import * as platformFluidCompute from './platform-fluid-compute.mjs';
-import * as platformBotProtection from './platform-bot-protection.mjs';
-import * as middlewareHeavy from './middleware-heavy.mjs';
 import * as externalApiSlow from './external-api-slow.mjs';
+import * as isrOverrevalidation from './isr-overrevalidation.mjs';
+import * as middlewareHeavy from './middleware-heavy.mjs';
+import * as platformBotProtection from './platform-bot-protection.mjs';
+import * as platformFluidCompute from './platform-fluid-compute.mjs';
+import * as routeErrors from './route-errors.mjs';
+import * as slowRoute from './slow-route.mjs';
+import * as uncachedRoute from './uncached-route.mjs';
 import * as scannerDriven from './scanner-driven.mjs';
 import * as observabilityEventsAttribution from './observability-events-attribution.mjs';
 import * as usageSpikeTriage from './usage-spike-triage.mjs';
-import * as buildMinutesFanout from './build-minutes-fanout.mjs';
 import * as regionMisconfig from './region-misconfig.mjs';
 
 // Intentionally NOT registered:

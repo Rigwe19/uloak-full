@@ -15,16 +15,26 @@ const SAFE_REPLACEMENT =
 
 export function apply(rec) {
   const text = STRING_FIELDS.map((field) => rec?.[field]).filter((s) => typeof s === 'string').join('\n');
-  if (!/\bcache(?:Life|Tag)\b/.test(text)) return {};
+
+  if (!/\bcache(?:Life|Tag)\b/.test(text)) {
+return {};
+}
+
   const tags = [];
+
   for (const field of STRING_FIELDS) {
-    if (typeof rec?.[field] !== 'string') continue;
+    if (typeof rec?.[field] !== 'string') {
+continue;
+}
+
     const before = rec[field];
     const after = before.replace(UNSUPPORTED_TAG_CERTAINTY, SAFE_REPLACEMENT);
+
     if (after !== before) {
       rec[field] = after;
       tags.push(`cache-tag-invalidation-certainty:${field}`);
     }
   }
+
   return tags.length > 0 ? { tags, needsReview: true } : {};
 }

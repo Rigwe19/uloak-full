@@ -2,8 +2,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Users, Clock, BookOpen, Image, Globe, Shield, Activity, ChevronLeft, User, Pencil, Heart, FileText } from 'lucide-react';
 import React from 'react';
-import type { Person, PersonStats } from '@/types/person';
 import { show as peopleShow } from '@/routes/people';
+import type { Person, PersonStats } from '@/types/person';
 
 interface Tab {
     name: string;

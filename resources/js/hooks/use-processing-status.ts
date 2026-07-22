@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { fetchMediaStatus } from '@/services/upload-service';
-import type { MediaStatus, ProcessingState } from '@/types/media';
 import { useUploadStore } from '@/stores/upload-store';
+import type { MediaStatus, ProcessingState } from '@/types/media';
 
 interface UseProcessingStatusOptions {
     interval?: number;

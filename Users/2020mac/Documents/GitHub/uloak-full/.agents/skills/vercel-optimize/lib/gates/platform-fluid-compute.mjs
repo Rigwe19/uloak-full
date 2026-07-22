@@ -13,16 +13,24 @@ export const metadata = {
 export function gate(signals) {
   // If project config failed to load we can't tell if Fluid is on; recommending it when already-on
   // erodes trust badly, so stay silent and let Strengths note the gap.
-  if (signals.project?.error) return [];
+  if (signals.project?.error) {
+return [];
+}
 
   const fluidEnabled =
     signals.project?.resourceConfig?.fluid === true
     || signals.project?.defaultResourceConfig?.fluid === true;
-  if (fluidEnabled) return [];
+
+  if (fluidEnabled) {
+return [];
+}
 
   const cold = extractHighColdRoutes(signals);
   const slow = extractSlowHotRoutes(signals);
-  if (cold.length === 0 && slow.length === 0) return [];
+
+  if (cold.length === 0 && slow.length === 0) {
+return [];
+}
 
   return [{
     kind: metadata.id,
@@ -43,38 +51,53 @@ export function gate(signals) {
 
 function extractHighColdRoutes(signals) {
   const live = signals.metrics?.fnStartTypeByRoute?.rows;
+
   if (Array.isArray(live) && live.some((r) => 'coldCount' in r || 'coldPct' in r)) {
     return live.filter((r) => r.route && (r.coldPct ?? 0) > 0.3 && (r.total ?? 0) > 100);
   }
+
   // Legacy pre-derived fixture shape.
   const direct = signals.metrics?.coldStartByRoute?.rows;
+
   if (Array.isArray(direct)) {
     return direct.filter((r) => r.route && (r.coldPct ?? 0) > 0.3 && (r.total ?? 0) > 100);
   }
+
   const legacy = signals.metrics?.coldStarts?.series;
+
   if (Array.isArray(legacy)) {
     return legacy
       .map((s) => {
         const total = s.summary?.count ?? 0;
         const coldCount = s.summary?.coldCount ?? s.summary?.sum ?? 0;
+
         return { route: s.groupValues?.route, total, coldPct: total > 0 ? coldCount / total : 0 };
       })
       .filter((r) => r.route && r.coldPct > 0.3 && r.total > 100);
   }
+
   return [];
 }
 
 function extractSlowHotRoutes(signals) {
   const dur = signals.metrics?.fnDurationP95ByRoute?.rows;
   const cache = signals.metrics?.requestsByRouteCache?.rows;
-  if (!Array.isArray(dur)) return [];
+
+  if (!Array.isArray(dur)) {
+return [];
+}
 
   // Sum requests per route across cache_result.
   const inv = new Map();
+
   for (const r of (cache ?? [])) {
-    if (!r.route) continue;
+    if (!r.route) {
+continue;
+}
+
     inv.set(r.route, (inv.get(r.route) ?? 0) + (r.value ?? 0));
   }
+
   return dur
     .filter((r) => r.route)
     .map((r) => ({ route: r.route, p95Ms: Math.round(r.value ?? 0), invocations: inv.get(r.route) ?? 0 }))

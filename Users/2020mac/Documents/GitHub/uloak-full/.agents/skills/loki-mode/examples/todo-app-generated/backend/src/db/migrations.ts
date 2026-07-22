@@ -1,6 +1,6 @@
-import { getDatabase } from './database';
 import fs from 'fs';
 import path from 'path';
+import { getDatabase } from './database';
 
 function resolveSchemaPath(): string {
   const candidates = [
@@ -28,6 +28,7 @@ export function runMigrations(): void {
     console.log('Database migrations completed successfully');
   } catch (error) {
     console.error('Error running migrations:', error);
+
     throw error;
   }
 }
@@ -38,6 +39,7 @@ export function initializeDatabase(): void {
     console.log('Database initialized and ready for use');
   } catch (error) {
     console.error('Failed to initialize database:', error);
+
     throw error;
   }
 }

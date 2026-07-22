@@ -1,5 +1,5 @@
-import Database from 'better-sqlite3';
 import path from 'path';
+import Database from 'better-sqlite3';
 
 const dbPath = path.join(__dirname, '../../todos.db');
 
@@ -12,6 +12,7 @@ export function getDatabase(): Database.Database {
     db.pragma('journal_mode = WAL');
     console.log(`Connected to SQLite database at ${dbPath}`);
   }
+
   return db;
 }
 

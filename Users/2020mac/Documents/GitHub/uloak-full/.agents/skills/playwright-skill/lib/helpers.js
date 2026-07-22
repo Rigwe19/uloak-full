@@ -20,12 +20,15 @@ function getExtraHeadersFromEnv() {
   }
 
   const headersJson = process.env.PW_EXTRA_HEADERS;
+
   if (headersJson) {
     try {
       const parsed = JSON.parse(headersJson);
+
       if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
         return parsed;
       }
+
       console.warn('PW_EXTRA_HEADERS must be a JSON object, ignoring...');
     } catch (e) {
       console.warn('Failed to parse PW_EXTRA_HEADERS as JSON:', e.message);
@@ -128,12 +131,15 @@ async function safeClick(page, selector, options = {}) {
         force: options.force || false,
         timeout: options.timeout || 5000
       });
+
       return true;
     } catch (e) {
       if (i === maxRetries - 1) {
         console.error(`Failed to click ${selector} after ${maxRetries} attempts`);
+
         throw e;
       }
+
       console.log(`Retry ${i + 1}/${maxRetries} for clicking ${selector}`);
       await page.waitForTimeout(retryDelay);
     }
@@ -171,6 +177,7 @@ async function safeType(page, selector, text, options = {}) {
  */
 async function extractTexts(page, selector) {
   await page.waitForSelector(selector, { timeout: 10000 });
+
   return await page.$$eval(selector, elements => 
     elements.map(el => el.textContent?.trim()).filter(Boolean)
   );
@@ -193,6 +200,7 @@ async function takeScreenshot(page, name, options = {}) {
   });
   
   console.log(`Screenshot saved: ${filename}`);
+
   return filename;
 }
 
@@ -246,6 +254,7 @@ async function scrollPage(page, direction = 'down', distance = 500) {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       break;
   }
+
   await page.waitForTimeout(500); // Wait for scroll animation
 }
 
@@ -259,7 +268,10 @@ async function extractTableData(page, tableSelector) {
   
   return await page.evaluate((selector) => {
     const table = document.querySelector(selector);
-    if (!table) return null;
+
+    if (!table) {
+return null;
+}
     
     const headers = Array.from(table.querySelectorAll('thead th')).map(th => 
       th.textContent?.trim()
@@ -267,9 +279,11 @@ async function extractTableData(page, tableSelector) {
     
     const rows = Array.from(table.querySelectorAll('tbody tr')).map(tr => {
       const cells = Array.from(tr.querySelectorAll('td'));
+
       if (headers.length > 0) {
         return cells.reduce((obj, cell, index) => {
           obj[headers[index] || `column_${index}`] = cell.textContent?.trim();
+
           return obj;
         }, {});
       } else {
@@ -304,9 +318,11 @@ async function handleCookieBanner(page, timeout = 3000) {
         timeout: timeout / commonSelectors.length,
         state: 'visible'
       });
+
       if (element) {
         await element.click();
         console.log('Cookie banner dismissed');
+
         return true;
       }
     } catch (e) {
@@ -398,6 +414,7 @@ async function detectDevServers(customPorts = []) {
             detectedServers.push(`http://localhost:${port}`);
             console.log(`  ✅ Found server on port ${port}`);
           }
+
           socket.destroy();
           resolve();
         });

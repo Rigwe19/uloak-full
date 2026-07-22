@@ -1,4 +1,5 @@
-import { useState, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 
 interface TodoFormProps {
   onAddTodo: (title: string) => Promise<void>;
@@ -12,7 +13,10 @@ export const TodoForm = ({ onAddTodo }: TodoFormProps) => {
     e.preventDefault();
 
     const trimmedTitle = title.trim();
-    if (!trimmedTitle) return;
+
+    if (!trimmedTitle) {
+return;
+}
 
     try {
       setIsSubmitting(true);

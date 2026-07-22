@@ -17,7 +17,10 @@ const MIN_PER_ROUTE_SAMPLES = 50;
 
 export function gate(signals) {
   const totalSamples = sumRows(signals.metrics?.cwvCount?.rows);
-  if (totalSamples === 0) return [];
+
+  if (totalSamples === 0) {
+return [];
+}
 
   const countByRoute = byRoute(signals.metrics?.cwvCountByRoute?.rows);
   const lcpBy = byRoute(signals.metrics?.cwvLcpByRoute?.rows);
@@ -26,17 +29,34 @@ export function gate(signals) {
 
   const routes = new Set([...lcpBy.keys(), ...inpBy.keys(), ...clsBy.keys()]);
   const out = [];
+
   for (const route of routes) {
     const routeSamples = countByRoute.get(route) ?? 0;
-    if (routeSamples < MIN_PER_ROUTE_SAMPLES) continue;
+
+    if (routeSamples < MIN_PER_ROUTE_SAMPLES) {
+continue;
+}
+
     const lcp = lcpBy.get(route);
     const inp = inpBy.get(route);
     const cls = clsBy.get(route);
     const issues = [];
-    if (lcp != null && lcp > 2500) issues.push({ metric: 'LCP', value: Math.round(lcp), threshold: 2500, unit: 'ms' });
-    if (inp != null && inp > 200) issues.push({ metric: 'INP', value: Math.round(inp), threshold: 200, unit: 'ms' });
-    if (cls != null && cls > 0.1) issues.push({ metric: 'CLS', value: round2(cls), threshold: 0.1, unit: '' });
-    if (issues.length === 0) continue;
+
+    if (lcp != null && lcp > 2500) {
+issues.push({ metric: 'LCP', value: Math.round(lcp), threshold: 2500, unit: 'ms' });
+}
+
+    if (inp != null && inp > 200) {
+issues.push({ metric: 'INP', value: Math.round(inp), threshold: 200, unit: 'ms' });
+}
+
+    if (cls != null && cls > 0.1) {
+issues.push({ metric: 'CLS', value: round2(cls), threshold: 0.1, unit: '' });
+}
+
+    if (issues.length === 0) {
+continue;
+}
 
     const summary = issues.map((i) => `${i.metric}=${i.value}${i.unit}`).join(',');
     out.push(withRouteShapeWarnings({
@@ -61,20 +81,29 @@ export function gate(signals) {
       },
     }, signals));
   }
+
   return out;
 }
 
 function byRoute(rows) {
   const m = new Map();
+
   for (const r of rows ?? []) {
-    if (!r.route || r.value == null) continue;
+    if (!r.route || r.value == null) {
+continue;
+}
+
     m.set(r.route, r.value);
   }
+
   return m;
 }
 
 function sumRows(rows) {
-  if (!Array.isArray(rows)) return 0;
+  if (!Array.isArray(rows)) {
+return 0;
+}
+
   return rows.reduce((s, r) => s + (r.value ?? 0), 0);
 }
 

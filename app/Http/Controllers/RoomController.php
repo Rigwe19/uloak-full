@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Media\MediaManager;
+use App\Models\Client;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\RoomMember;
@@ -82,9 +83,14 @@ class RoomController extends Controller
         $stories = Story::where('room_id', $room->id)
             ->where('type', 'video')
             ->with('user')
+            ->withCount('likes')
             ->orderBy('id', 'desc')
             ->take(10)
             ->get();
+
+        $user = auth()->user();
+        $guestEmail = request()->cookie('uloak_guest_email');
+        $guestIdentifier = $guestEmail ? hash('sha256', strtolower($guestEmail)) : null;
 
         return Inertia::render('dashboard/rooms/feed', [
             'title' => $room->name.' - Reels - Uloak',
@@ -107,6 +113,10 @@ class RoomController extends Controller
                 'date' => $story->created_at->format('M d, Y'),
                 'tags' => $story->tags ?? [],
                 'comments_count' => $story->comments()->count(),
+                'likes_count' => $story->likes_count,
+                'is_liked' => $user
+                    ? $story->likes()->where('user_id', $user->id)->exists()
+                    : ($guestIdentifier ? $story->likes()->where('guest_identifier', $guestIdentifier)->exists() : false),
                 'user' => $story->relationLoaded('user') && $story->user ? [
                     'id' => $story->user->id,
                     'name' => $story->user->name,
@@ -229,6 +239,14 @@ class RoomController extends Controller
         }
 
         $room = $this->roomService->createRoom($request->user(), $validated);
+
+        // Attach client if specified (business admin)
+        if ($request->filled('client_id')) {
+            $client = Client::find($request->input('client_id'));
+            if ($client && $client->business_user_id === $request->user()->id) {
+                $room->clients()->syncWithoutDetaching([$client->id]);
+            }
+        }
 
         $this->activityLogger->log(
             "Created room: {$room->name}",

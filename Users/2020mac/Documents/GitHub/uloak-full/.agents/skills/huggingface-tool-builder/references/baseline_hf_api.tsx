@@ -26,12 +26,14 @@ Examples:
 };
 
 const arg = process.argv[2];
+
 if (arg === "--help") {
   showHelp();
   process.exit(0);
 }
 
 const limit = arg ?? "3";
+
 if (!/^\d+$/.test(limit)) {
   console.error("Error: limit must be a number");
   process.exit(1);

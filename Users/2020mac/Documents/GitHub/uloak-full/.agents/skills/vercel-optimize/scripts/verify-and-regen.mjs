@@ -5,14 +5,14 @@
 // below (REGEN_*, QUALITY_FLOOR) — read those constants for the live values.
 
 import { readFile, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
 import { mkdir } from 'node:fs/promises';
-import { verifyClaim } from '../lib/verify-claim.mjs';
+import { dirname, resolve } from 'node:path';
 import { extractClaims, summarizeClaimResults } from '../lib/extract-claims.mjs';
 import { gradeRecommendation, applyQualityFloor } from '../lib/grade-recommendation.mjs';
 import { deriveProjectFacts } from '../lib/project-facts.mjs';
 import { resolveRepoRoot } from '../lib/repo-root.mjs';
 import { applySanitizers } from '../lib/sanitizers/index.mjs';
+import { verifyClaim } from '../lib/verify-claim.mjs';
 
 const SCHEMA_VERSION = '1.0';
 const REGEN_PASS_RATE_THRESHOLD = 0.8;
@@ -25,18 +25,21 @@ const log = (...a) => console.error('[verify-and-regen]', ...a);
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
   if (!args.recsPath) {
     console.error('usage: node scripts/verify-and-regen.mjs <recommendations.json> [--signals merged.json] [--repo-root DIR] [--out FILE]');
     process.exit(1);
   }
 
   const recs = JSON.parse(await readFile(args.recsPath, 'utf-8'));
+
   if (!Array.isArray(recs)) {
     console.error('[verify-and-regen] FATAL: recommendations.json must be an array of rec objects');
     process.exit(2);
   }
 
   let framework, version, cacheComponents, knownFindings = [], projectFacts = [], signals = null;
+
   if (args.signalsPath) {
     signals = JSON.parse(await readFile(args.signalsPath, 'utf-8'));
     const stack = signals.stack ?? signals.codebase?.stack ?? {};
@@ -47,6 +50,7 @@ async function main() {
       .filter((f) => f.file && (f.line != null))
       .map((f) => ({ file: f.file, line: f.line }));
     projectFacts = deriveProjectFacts(signals);
+
     if (projectFacts.length > 0) {
       log(`project facts in play: ${projectFacts.map((f) => f.id).join(', ')}`);
     }
@@ -57,6 +61,7 @@ async function main() {
   // filesystem probing), (2) supplied --repo-root, (3) walk-up from cwd.
   const rootResult = await resolveRepoRoot(recs, args.repoRoot, process.cwd(), signals);
   const repoRoot = rootResult.root;
+
   if (rootResult.source === 'api') {
     log(`repo-root from Vercel API: '${repoRoot}' (rootDirectory='${rootResult.apiOffset}')`);
   } else if (rootResult.source === 'auto-detected') {
@@ -64,6 +69,7 @@ async function main() {
   } else if (rootResult.source === 'corrected') {
     log(`repo-root auto-corrected: '${args.repoRoot}' → '${repoRoot}' (sub-agent paths resolve there)`);
   }
+
   log(`verifying ${recs.length} rec(s) — framework=${framework ?? '?'}@${version ?? '?'} repoRoot=${repoRoot}`);
 
   // knownFindings MUST combine scanner findings + sub-agent's verified
@@ -74,6 +80,7 @@ async function main() {
   const abstentions = [];
   const observations = [];
   const sanitizerDropped = [];
+
   for (let i = 0; i < recs.length; i++) {
     const rec = recs[i];
 
@@ -83,6 +90,7 @@ async function main() {
         candidateRef: rec.candidateRef ?? null,
         reason: rec.reason ?? '(no reason recorded)',
       });
+
       // Observation: real non-perf signal worth surfacing (regression, error storm).
       if (rec.observation && typeof rec.observation === 'object' && rec.observation.summary) {
         observations.push({
@@ -94,6 +102,7 @@ async function main() {
           kind: rec.observation.kind ?? 'other',
         });
       }
+
       continue;
     }
 
@@ -120,6 +129,7 @@ async function main() {
       signals,
       verifyResults: initialClaimsWithResults,
     });
+
     if (!sanitizerResult.kept) {
       sanitizerDropped.push({
         index: i,
@@ -137,18 +147,28 @@ async function main() {
 
     // A findingRef whose file_exists claim verified counts as grounding evidence.
     const verifiedRefs = [];
+
     for (let j = 0; j < claims.length; j++) {
       const c = claims[j];
       const r = verifyResults[j];
-      if (r?.disposition !== 'verified') continue;
+
+      if (r?.disposition !== 'verified') {
+continue;
+}
+
       if (c.sourceField === 'findingRefs' && c.type === 'file_exists') {
         const ref = (rec.findingRefs ?? []).find((x) => String(x).startsWith(c.file + ':'));
+
         if (ref) {
           const m = String(ref).match(/^(.+?):(\d+)$/);
-          if (m) verifiedRefs.push({ file: m[1], line: Number(m[2]) });
+
+          if (m) {
+verifiedRefs.push({ file: m[1], line: Number(m[2]) });
+}
         }
       }
     }
+
     const recKnownFindings = [...knownFindings, ...verifiedRefs];
     const quality = gradeRecommendation(sanitizedRec, { knownFindings: recKnownFindings });
 
@@ -166,6 +186,7 @@ async function main() {
   // a project where Fluid is already on passes 8/9 claims but is the wrong rec.
   // passRate alone won't catch this.
   const regenPlan = [];
+
   for (const g of recsGraded) {
     const { passRate, verifiable } = g.verification;
     const claimsWithResults = g.verifyResults.map((r, j) => ({ ...r, claim: g.claims[j] }));
@@ -209,7 +230,10 @@ async function main() {
     const triggeredByContradiction = contradictions.length > 0;
     const triggeredByCacheSafety = cacheSafetyFailures.length > 0;
     const triggeredBySemanticSafety = semanticSafetyFailures.length > 0;
-    if (!triggeredByPassRate && !triggeredByContradiction && !triggeredByCacheSafety && !triggeredBySemanticSafety) continue;
+
+    if (!triggeredByPassRate && !triggeredByContradiction && !triggeredByCacheSafety && !triggeredBySemanticSafety) {
+continue;
+}
 
     const failures = claimsWithResults
       .filter((r) => r.disposition === 'failed')
@@ -311,6 +335,7 @@ async function main() {
   };
 
   const serialized = JSON.stringify(output, null, 2) + '\n';
+
   if (args.outPath) {
     await mkdir(dirname(args.outPath), { recursive: true });
     await writeFile(args.outPath, serialized, 'utf-8');
@@ -318,26 +343,41 @@ async function main() {
   } else {
     process.stdout.write(serialized);
   }
+
   log(`done: ${summary.totalRecs} records checked; ${summary.verifiedRecommendations} ready, ${summary.withheldRecommendations} held back, ${summary.abstentions} found no supported change, ${summary.sanitizerDropped} dropped by safety checks`);
 }
 
 function parseArgs(argv) {
   const out = { positional: [] };
+
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--signals') out.signalsPath = argv[++i];
-    else if (a.startsWith('--signals=')) out.signalsPath = a.slice('--signals='.length);
-    else if (a === '--repo-root') out.repoRoot = argv[++i];
-    else if (a.startsWith('--repo-root=')) out.repoRoot = a.slice('--repo-root='.length);
-    else if (a === '--out') out.outPath = resolve(argv[++i]);
-    else if (a.startsWith('--out=')) out.outPath = resolve(a.slice('--out='.length));
-    else out.positional.push(a);
+
+    if (a === '--signals') {
+out.signalsPath = argv[++i];
+} else if (a.startsWith('--signals=')) {
+out.signalsPath = a.slice('--signals='.length);
+} else if (a === '--repo-root') {
+out.repoRoot = argv[++i];
+} else if (a.startsWith('--repo-root=')) {
+out.repoRoot = a.slice('--repo-root='.length);
+} else if (a === '--out') {
+out.outPath = resolve(argv[++i]);
+} else if (a.startsWith('--out=')) {
+out.outPath = resolve(a.slice('--out='.length));
+} else {
+out.positional.push(a);
+}
   }
+
   out.recsPath = out.positional[0];
+
   return out;
 }
 
-function round4(n) { return Math.round(n * 10000) / 10000; }
+function round4(n) {
+ return Math.round(n * 10000) / 10000; 
+}
 
 main().catch((err) => {
   console.error('[verify-and-regen] FAILED:', err.message);

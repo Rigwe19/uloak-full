@@ -60,7 +60,10 @@ function Pill({ children, className = '' }: { children: React.ReactNode; classNa
 }
 
 function Detail({ icon: Icon, label, value, className = '' }: { icon?: any; label: string; value: string; className?: string }) {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
+
     return (
         <div className={`flex items-start gap-3 ${className}`}>
             {Icon && (

@@ -1,11 +1,12 @@
-import { Telegraf } from 'telegraf';
 import express from 'express';
+import { Telegraf } from 'telegraf';
 
 export class TelegramBotClient {
   public bot: Telegraf;
 
   constructor(token: string, webhookMode: boolean = false) {
     this.bot = new Telegraf(token);
+
     if (webhookMode) {
       this.bot.telegram.deleteWebhook({ drop_pending_updates: true }).catch(() => undefined);
     }
@@ -25,12 +26,14 @@ export class TelegramBotClient {
     app.post('/webhook', async (req, res) => {
       if (secret) {
         const headerSecret = req.headers['x-telegram-bot-api-secret-token'];
+
         if (headerSecret !== secret) {
           return res.sendStatus(403);
         }
       }
 
       await this.bot.handleUpdate(req.body, res);
+
       if (!res.headersSent) {
         res.sendStatus(200);
       }
@@ -68,6 +71,7 @@ export class TelegramBotClient {
     options?: Record<string, unknown>
   ): Promise<unknown | null> {
     const maxRetries = 3;
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         return await this.bot.telegram.sendMessage(chatId, text, options as any);
@@ -78,13 +82,17 @@ export class TelegramBotClient {
           await new Promise((r) => setTimeout(r, retryAfter * 1000));
           continue;
         }
+
         if (error?.response?.error_code === 403) {
           console.warn(`Bot blocked by user ${chatId}`);
+
           return null;
         }
+
         throw error;
       }
     }
+
     return null;
   }
 }

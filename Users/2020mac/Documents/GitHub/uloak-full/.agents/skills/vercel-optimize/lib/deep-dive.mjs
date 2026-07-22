@@ -19,7 +19,10 @@ const CALLER_LIMIT = 20;
 
 // OData escapes a literal `'` inside a string by doubling it (`it's` → `it''s`).
 export function escapeODataString(s) {
-  if (typeof s !== 'string') return '';
+  if (typeof s !== 'string') {
+return '';
+}
+
   return s.replace(/'/g, "''");
 }
 
@@ -34,8 +37,13 @@ export function odataAnd(...conds) {
 export const SPEC_GENERATORS = {
   slow_route(c) {
     const route = c.route;
-    if (!route) return [];
+
+    if (!route) {
+return [];
+}
+
     const f = odataEq('route', route);
+
     // cacheBreakdown/bandwidthByCache let sub-agent see miss-path cost on static routes (dynamic='error' can still show p95=900ms over millions of requests).
     return [
       ...latencyPercentiles('latency', 'vercel.function_invocation.function_duration_ms', f),
@@ -86,8 +94,13 @@ export const SPEC_GENERATORS = {
 
   uncached_route(c) {
     const route = c.route;
-    if (!route) return [];
+
+    if (!route) {
+return [];
+}
+
     const f = odataEq('route', route);
+
     return [
       {
         id: 'cacheBreakdown',
@@ -124,8 +137,13 @@ export const SPEC_GENERATORS = {
 
   cold_start(c) {
     const route = c.route;
-    if (!route) return [];
+
+    if (!route) {
+return [];
+}
+
     const f = odataEq('route', route);
+
     return [
       {
         id: 'startTypeSplit',
@@ -154,8 +172,13 @@ export const SPEC_GENERATORS = {
 
   route_errors(c) {
     const route = c.route;
-    if (!route) return [];
+
+    if (!route) {
+return [];
+}
+
     const f = odataEq('route', route);
+
     return [
       {
         id: 'errorStatusPattern',
@@ -185,8 +208,13 @@ export const SPEC_GENERATORS = {
 
   external_api_slow(c) {
     const host = c.hostname;
-    if (!host) return [];
+
+    if (!host) {
+return [];
+}
+
     const f = odataEq('origin_hostname', host);
+
     return [
       ...latencyPercentiles('latency', 'vercel.external_api_request.request_duration_ms', f),
       {
@@ -210,8 +238,13 @@ export const SPEC_GENERATORS = {
 
   isr_overrevalidation(c) {
     const route = c.route;
-    if (!route) return [];
+
+    if (!route) {
+return [];
+}
+
     const f = odataEq('route', route);
+
     return [
       {
         id: 'writePattern',
@@ -232,8 +265,13 @@ export const SPEC_GENERATORS = {
 
   cwv_poor(c) {
     const route = c.route;
-    if (!route) return [];
+
+    if (!route) {
+return [];
+}
+
     const f = odataEq('route', route);
+
     return [
       ...latencyPercentiles('lcp', 'vercel.speed_insights_metric.lcp', f, ['p50', 'p75', 'p95']),
       ...latencyPercentiles('inp', 'vercel.speed_insights_metric.inp', f, ['p50', 'p75', 'p95']),
@@ -303,10 +341,21 @@ export const SCANNER_KINDS = new Set([
 
 export function specsForCandidate(candidate) {
   const kind = candidate?.kind;
-  if (!kind) return [];
-  if (SCANNER_KINDS.has(kind)) return [];
+
+  if (!kind) {
+return [];
+}
+
+  if (SCANNER_KINDS.has(kind)) {
+return [];
+}
+
   const gen = SPEC_GENERATORS[kind];
-  if (!gen) return [];
+
+  if (!gen) {
+return [];
+}
+
   return gen(candidate).map((s) => ({ since: TIME_WINDOW, ...s }));
 }
 
@@ -324,27 +373,47 @@ function latencyPercentiles(idPrefix, metricId, filter, percentiles = ['p50', 'p
 // Dot-notation spec ids (`latency.p95`) nest under their group prefix.
 export function mergeIntoEvidence(results) {
   const out = {};
+
   for (const r of results) {
     const id = r?.spec?.id;
-    if (!id) continue;
+
+    if (!id) {
+continue;
+}
+
     const dot = id.indexOf('.');
+
     if (dot > -1) {
       const head = id.slice(0, dot);
       const leaf = id.slice(dot + 1);
-      if (!out[head]) out[head] = {};
+
+      if (!out[head]) {
+out[head] = {};
+}
+
       out[head][leaf] = simplify(r);
     } else {
       out[id] = simplify(r);
     }
   }
+
   return out;
 }
 
 // Avoid leaking raw CLI payload / candidate+spec wrapper into evidence — keep summary-only.
 function simplify(r) {
-  if (!r || r.ok === false) return { error: r?.error ?? 'unknown' };
+  if (!r || r.ok === false) {
+return { error: r?.error ?? 'unknown' };
+}
+
   // Check rows before value so tabular results with both stay tabular.
-  if (Array.isArray(r.rows)) return r.rows;
-  if ('value' in r) return r.value;
+  if (Array.isArray(r.rows)) {
+return r.rows;
+}
+
+  if ('value' in r) {
+return r.value;
+}
+
   return null;
 }

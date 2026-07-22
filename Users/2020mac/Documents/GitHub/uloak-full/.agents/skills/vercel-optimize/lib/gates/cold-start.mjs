@@ -13,6 +13,7 @@ export const metadata = {
 
 export function gate(signals) {
   const cs = extractColdStarts(signals);
+
   return cs
     .filter((r) => r.coldPct > 0.4 && r.total >= 1000)
     .map((r) => ({
@@ -31,6 +32,7 @@ export function gate(signals) {
 
 function extractColdStarts(signals) {
   const live = signals.metrics?.fnStartTypeByRoute;
+
   if (Array.isArray(live?.rows) && live.rows.some((r) => 'coldCount' in r || 'coldPct' in r)) {
     return live.rows
       .filter((r) => r.route)
@@ -44,6 +46,7 @@ function extractColdStarts(signals) {
 
   // Legacy fixture: pre-derived coldStartByRoute rows.
   const direct = signals.metrics?.coldStartByRoute;
+
   if (Array.isArray(direct?.rows)) {
     return direct.rows
       .filter((r) => r.route)
@@ -52,11 +55,13 @@ function extractColdStarts(signals) {
 
   // Older legacy fixture: series + summary shape.
   const legacy = signals.metrics?.coldStarts;
+
   if (Array.isArray(legacy?.series)) {
     return legacy.series
       .map((s) => {
         const total = s.summary?.count ?? 0;
         const coldCount = s.summary?.coldCount ?? s.summary?.sum ?? 0;
+
         return { route: s.groupValues?.route, total, coldPct: total > 0 ? coldCount / total : 0 };
       })
       .filter((r) => r.route);

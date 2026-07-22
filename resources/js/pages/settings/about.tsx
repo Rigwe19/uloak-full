@@ -1,8 +1,8 @@
 import { useForm, Head, usePage } from '@inertiajs/react';
 import { Camera, Pencil, X, Save, MapPin, Calendar, Star, Heart, Users, Globe, BookOpen, Map, Flag, Church, TreePine, Sparkles, Languages, Quote, Crosshair, Award } from 'lucide-react';
 import React, { useState } from 'react';
-import type { Person } from '@/types/person';
 import InputError from '@/components/input-error';
+import type { Person } from '@/types/person';
 
 interface AboutProps {
     person: Person | null;
@@ -34,7 +34,10 @@ function SectionCard({ icon: Icon, title, children, className = '' }: { icon: an
 }
 
 function Detail({ icon: Icon, label, value }: { icon?: any; label: string; value?: string | null }) {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
+
     return (
         <div className="flex items-start gap-3">
             {Icon && (
@@ -100,6 +103,7 @@ export default function SettingsAbout({ person, identity, heritage, languages, r
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+
         if (file) {
             setAccountData('avatar', file);
             setPreview(URL.createObjectURL(file));

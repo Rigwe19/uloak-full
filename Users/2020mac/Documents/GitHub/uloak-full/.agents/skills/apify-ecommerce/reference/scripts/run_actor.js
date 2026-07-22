@@ -10,8 +10,8 @@
  *   node --env-file=.env scripts/run_actor.js --actor ACTOR_ID --input '{}' --output data.csv --format csv
  */
 
-import { parseArgs } from 'node:util';
 import { writeFileSync, statSync } from 'node:fs';
+import { parseArgs } from 'node:util';
 
 // User-Agent for tracking skill usage in Apify analytics
 const USER_AGENT = 'apify-agent-skills/apify-ecommerce-1.0.0';
@@ -105,6 +105,7 @@ async function startActor(token, actorId, inputJson) {
     const url = `https://api.apify.com/v2/acts/${apiActorId}/runs?token=${encodeURIComponent(token)}`;
 
     let data;
+
     try {
         data = JSON.parse(inputJson);
     } catch (e) {
@@ -133,6 +134,7 @@ async function startActor(token, actorId, inputJson) {
     }
 
     const result = await response.json();
+
     return {
         runId: result.data.id,
         datasetId: result.data.defaultDatasetId,
@@ -147,6 +149,7 @@ async function pollUntilComplete(token, runId, timeout, interval) {
 
     while (true) {
         const response = await fetch(url);
+
         if (!response.ok) {
             const text = await response.text();
             console.error(`Error: Failed to get run status: ${text}`);
@@ -167,8 +170,10 @@ async function pollUntilComplete(token, runId, timeout, interval) {
         }
 
         const elapsed = (Date.now() - startTime) / 1000;
+
         if (elapsed > timeout) {
             console.error(`Warning: Timeout after ${timeout}s, actor still running`);
+
             return 'TIMED-OUT';
         }
 
@@ -217,10 +222,13 @@ async function downloadResults(token, datasetId, outputPath, format) {
                     if (value === null || value === undefined) {
                         return '';
                     }
+
                     const strValue = String(value);
+
                     if (strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
                         return `"${strValue.replace(/"/g, '""')}"`;
                     }
+
                     return strValue;
                 });
                 csvLines.push(values.join(','));
@@ -256,6 +264,7 @@ async function displayQuickAnswer(token, datasetId) {
 
     if (total === 0) {
         console.log('\nNo results found.');
+
         return;
     }
 
@@ -284,9 +293,11 @@ async function displayQuickAnswer(token, datasetId) {
     }
 
     console.log(`\n${'='.repeat(60)}`);
+
     if (total > 5) {
         console.log(`Showing 5 of ${total} results.`);
     }
+
     console.log(`Full data available at: https://console.apify.com/storage/datasets/${datasetId}`);
     console.log('='.repeat(60));
 }
@@ -297,8 +308,10 @@ function reportSummary(outputPath, format) {
     const size = stats.size;
 
     let count;
+
     try {
         const content = require('fs').readFileSync(outputPath, 'utf-8');
+
         if (format === 'json') {
             const data = JSON.parse(content);
             count = Array.isArray(data) ? data.length : 1;
@@ -327,6 +340,7 @@ async function main() {
 
     // Check for APIFY_TOKEN
     const token = process.env.APIFY_TOKEN;
+
     if (!token) {
         console.error('Error: APIFY_TOKEN not found in .env file');
         console.error('');

@@ -27,10 +27,12 @@ const NEXT_IMAGE_IMPORT_RE = /from\s+['"]next\/image['"]/;
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
     if (isJsxLike(path)) {
       let m;
       IMG_RE.lastIndex = 0;
+
       while ((m = IMG_RE.exec(content)) !== null) {
         out.push({
           pattern: metadata.id,
@@ -45,6 +47,7 @@ export function scan({ files }) {
 
     if (isNextConfig(path)) {
       const match = GLOBAL_UNOPT_RE.exec(content);
+
       if (match) {
         out.push({
           pattern: metadata.id,
@@ -63,10 +66,12 @@ export function scan({ files }) {
     if (isJsxLike(path) && NEXT_IMAGE_IMPORT_RE.test(content)) {
       let m;
       IMAGE_TAG_RE.lastIndex = 0;
+
       while ((m = IMAGE_TAG_RE.exec(content)) !== null) {
         const tag = m[0];
         const hasFill = /\bfill\b/.test(tag);
         const hasSizes = /\bsizes\s*=/.test(tag);
+
         if (hasFill && !hasSizes) {
           out.push({
             pattern: metadata.id,
@@ -77,10 +82,13 @@ export function scan({ files }) {
             trafficIndependent: metadata.trafficIndependent,
           });
         }
+
         // Inline data: URLs never round-trip through the optimizer.
         const srcMatch = /\bsrc\s*=\s*["']([^"']+)["']/.exec(tag);
+
         if (srcMatch) {
           const src = srcMatch[1];
+
           if (/\.svg(\?|$)/i.test(src) && !src.startsWith('data:') && !/\bunoptimized\b/.test(tag)) {
             out.push({
               pattern: metadata.id,
@@ -95,6 +103,7 @@ export function scan({ files }) {
       }
     }
   }
+
   return out;
 }
 
@@ -109,5 +118,6 @@ function isNextConfig(path) {
 function snippet(text, idx) {
   const start = text.lastIndexOf('\n', idx) + 1;
   const end = text.indexOf('\n', idx);
+
   return text.slice(start, end === -1 ? text.length : end).trim().slice(0, 160);
 }

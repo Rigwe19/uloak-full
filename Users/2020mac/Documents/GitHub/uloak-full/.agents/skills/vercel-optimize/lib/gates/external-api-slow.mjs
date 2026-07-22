@@ -14,6 +14,7 @@ export const metadata = {
 export function gate(signals) {
   const apis = extractExternalApis(signals);
   const calls = extractCallCounts(signals);
+
   return apis
     .map((a) => ({ ...a, callCount: calls.get(a.hostname) ?? 0 }))
     .filter((a) => a.p75Ms > 2000 && a.callCount >= MIN_CALL_COUNT)
@@ -35,7 +36,11 @@ export function gate(signals) {
 
 function extractExternalApis(signals) {
   const m = signals.metrics?.externalApiP75;
-  if (!m?.ok && !Array.isArray(m?.rows)) return [];
+
+  if (!m?.ok && !Array.isArray(m?.rows)) {
+return [];
+}
+
   return (m?.rows ?? [])
     .map((r) => ({
       hostname: r.origin_hostname,
@@ -47,9 +52,16 @@ function extractExternalApis(signals) {
 function extractCallCounts(signals) {
   const m = signals.metrics?.externalApiCount;
   const out = new Map();
-  if (!m) return out;
+
+  if (!m) {
+return out;
+}
+
   for (const r of m.rows ?? []) {
-    if (r?.origin_hostname) out.set(r.origin_hostname, r.value ?? 0);
+    if (r?.origin_hostname) {
+out.set(r.origin_hostname, r.value ?? 0);
+}
   }
+
   return out;
 }

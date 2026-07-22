@@ -22,10 +22,15 @@ const RE = /\b(cookies|headers|draftMode)\s*\(\s*\)/g;
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (!isApplicable(path)) continue;
+    if (!isApplicable(path)) {
+continue;
+}
+
     let m;
     RE.lastIndex = 0;
+
     while ((m = RE.exec(content)) !== null) {
       out.push({
         pattern: metadata.id,
@@ -36,6 +41,7 @@ export function scan({ files }) {
       });
     }
   }
+
   return out;
 }
 

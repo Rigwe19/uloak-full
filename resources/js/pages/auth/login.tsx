@@ -400,7 +400,7 @@ return;
                                         href={register().url}
                                         className="text-accent-gold hover:underline"
                                     >
-                                        Request access
+                                        Sign up
                                     </Link>
                                 </p>
                             )}

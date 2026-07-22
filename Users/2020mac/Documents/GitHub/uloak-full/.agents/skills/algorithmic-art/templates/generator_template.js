@@ -131,6 +131,7 @@ class Entity {
 // Color utilities
 function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+
     return result ? {
         r: parseInt(result[1], 16),
         g: parseInt(result[2], 16),
@@ -153,8 +154,14 @@ function easeInOutCubic(t) {
 
 // Constrain to bounds
 function wrapAround(value, max) {
-    if (value < 0) return max;
-    if (value > max) return 0;
+    if (value < 0) {
+return max;
+}
+
+    if (value > max) {
+return 0;
+}
+
     return value;
 }
 

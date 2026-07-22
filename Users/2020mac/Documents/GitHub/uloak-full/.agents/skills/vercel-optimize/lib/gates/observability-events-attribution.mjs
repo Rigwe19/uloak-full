@@ -15,18 +15,30 @@ const EVENTS_RE = /^Observability Events$/i;
 
 export function gate(signals) {
   const services = signals?.usage?.services;
-  if (!Array.isArray(services) || services.length === 0) return [];
+
+  if (!Array.isArray(services) || services.length === 0) {
+return [];
+}
 
   const total = sumBilled(services);
-  if (total <= 0) return [];
+
+  if (total <= 0) {
+return [];
+}
 
   const eventsBilled = services
     .filter((s) => EVENTS_RE.test(String(s?.name ?? '')))
     .reduce((acc, s) => acc + Number(s.billedCost ?? s.cost ?? 0), 0);
-  if (eventsBilled <= 0) return [];
+
+  if (eventsBilled <= 0) {
+return [];
+}
 
   const share = eventsBilled / total;
-  if (share <= 0.20) return [];
+
+  if (share <= 0.20) {
+return [];
+}
 
   const critical = share > 0.30;
 

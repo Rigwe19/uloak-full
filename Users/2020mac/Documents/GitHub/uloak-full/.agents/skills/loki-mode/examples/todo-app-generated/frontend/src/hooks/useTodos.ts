@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Todo, fetchTodos, createTodo, updateTodo, deleteTodo } from '../api/todos';
+import type { Todo} from '../api/todos';
+import { fetchTodos, createTodo, updateTodo, deleteTodo } from '../api/todos';
 
 interface UseTodosReturn {
   todos: Todo[];
@@ -41,13 +42,17 @@ export const useTodos = (): UseTodosReturn => {
     } catch (err) {
       setError('Failed to create todo');
       console.error(err);
+
       throw err;
     }
   };
 
   const toggleTodo = async (id: number) => {
     const todo = todos.find(t => t.id === id);
-    if (!todo) return;
+
+    if (!todo) {
+return;
+}
 
     try {
       const updatedTodo = await updateTodo(id, !todo.completed);
@@ -55,6 +60,7 @@ export const useTodos = (): UseTodosReturn => {
     } catch (err) {
       setError('Failed to update todo');
       console.error(err);
+
       throw err;
     }
   };
@@ -66,6 +72,7 @@ export const useTodos = (): UseTodosReturn => {
     } catch (err) {
       setError('Failed to delete todo');
       console.error(err);
+
       throw err;
     }
   };

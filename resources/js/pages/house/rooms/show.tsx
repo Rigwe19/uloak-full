@@ -38,8 +38,8 @@ import {
 } from '@/components/tribute-sections';
 import { useConfirm } from '@/hooks/use-confirm';
 import { dashboard } from '@/routes/house';
-import roomsRoutes from '@/routes/house/rooms';
 import { approve as approveCandle } from '@/routes/house/candles';
+import roomsRoutes from '@/routes/house/rooms';
 import { store as storeStory } from '@/routes/house/rooms/stories';
 import { approve as approveTribute, destroy as destroyTribute } from '@/routes/house/tributes';
 import type { FeedStory } from '@/types/feed';

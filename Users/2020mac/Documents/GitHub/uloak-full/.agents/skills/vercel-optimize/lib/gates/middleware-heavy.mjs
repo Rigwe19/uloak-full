@@ -12,13 +12,22 @@ export const metadata = {
 
 export function gate(signals) {
   const middlewareInv = sumRows(signals.metrics?.middlewareCount?.rows);
-  if (middlewareInv < 1000) return [];
+
+  if (middlewareInv < 1000) {
+return [];
+}
 
   const totalInv = sumRows(signals.metrics?.requestsByRouteCache?.rows);
-  if (totalInv === 0) return [];
+
+  if (totalInv === 0) {
+return [];
+}
 
   const ratio = middlewareInv / totalInv;
-  if (ratio <= 0.5) return [];
+
+  if (ratio <= 0.5) {
+return [];
+}
 
   const top = [...(signals.metrics?.middlewareCount?.rows ?? [])]
     .filter((r) => r.request_path)
@@ -46,6 +55,9 @@ export function gate(signals) {
 }
 
 function sumRows(rows) {
-  if (!Array.isArray(rows)) return 0;
+  if (!Array.isArray(rows)) {
+return 0;
+}
+
   return rows.reduce((s, r) => s + (r.value ?? 0), 0);
 }

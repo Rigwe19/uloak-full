@@ -90,9 +90,11 @@ const REPORT_SCHEMA = {
 // ─── Phase 0: Scope — decompose question into search angles ───
 phase("Scope")
 const QUESTION = (typeof args === "string" ? args.trim() : args?.query?.trim()) || ""
+
 if (!QUESTION) {
   return { error: "No research question provided. Pass it as args: Workflow({name: 'go-in-depth', args: '<question>'})." }
 }
+
 const scope = await agent(
   "Decompose this research question into complementary search angles.\n\n" +
   "## Question\n" + QUESTION + "\n\n" +
@@ -105,9 +107,11 @@ const scope = await agent(
   "Return: the question (verbatim or lightly normalized), a 1-2 sentence decomposition strategy, and the angles.\n\nStructured output only.",
   { label: "scope", schema: SCOPE_SCHEMA }
 )
+
 if (!scope) {
   return { error: "Scope agent returned no result — cannot decompose the research question." }
 }
+
 log("Q: " + QUESTION.slice(0, 80) + (QUESTION.length > 80 ? "…" : ""))
 log("Decomposed into " + scope.angles.length + " angles: " + scope.angles.map(a => a.label).join(", "))
 
@@ -115,8 +119,11 @@ log("Decomposed into " + scope.angles.length + " angles: " + scope.angles.map(a 
 const normURL = u => {
   try {
     const p = new URL(u)
+
     return (p.hostname.replace(/^www\./, "") + p.pathname.replace(/\/$/, "")).toLowerCase()
-  } catch { return u.toLowerCase() }
+  } catch {
+ return u.toLowerCase() 
+}
 }
 const seen = new Map()
 const dupes = []
@@ -172,8 +179,12 @@ const searchResults = await pipeline(
   angle => agent(SEARCH_PROMPT(angle), {
     label: "search:" + angle.label, phase: "Search", schema: SEARCH_SCHEMA
   }).then(r => {
-    if (!r) return null
+    if (!r) {
+return null
+}
+
     log(angle.label + ": " + r.results.length + " results")
+
     return { angle: angle.label, results: r.results }
   }),
 
@@ -181,25 +192,37 @@ const searchResults = await pipeline(
     const sorted = [...searchResult.results].sort((a, b) => relRank[a.relevance] - relRank[b.relevance])
     const novel = sorted.filter(r => {
       const key = normURL(r.url)
+
       if (seen.has(key)) {
         dupes.push({ ...r, angle: searchResult.angle, dupOf: seen.get(key) })
+
         return false
       }
+
       if (fetchSlots <= 0) {
         budgetDropped.push({ ...r, angle: searchResult.angle })
+
         return false
       }
+
       seen.set(key, { angle: searchResult.angle, title: r.title })
       fetchSlots--
+
       return true
     })
+
     if (novel.length < searchResult.results.length) {
       log(searchResult.angle + ": " + novel.length + " novel (" + (searchResult.results.length - novel.length) + " filtered)")
     }
+
     return parallel(
       novel.map(source => () => {
         let host = "unknown"
-        try { host = new URL(source.url).hostname.replace(/^www\./, "") } catch {}
+
+        try {
+ host = new URL(source.url).hostname.replace(/^www\./, "") 
+} catch {}
+
         return agent(FETCH_PROMPT(source, searchResult.angle), {
           label: "fetch:" + host,
           phase: "Fetch",
@@ -207,7 +230,10 @@ const searchResults = await pipeline(
         }).then(ext => {
           // User-skip → null; drop it (filtered by searchResults.flat().filter(Boolean))
           // rather than throwing into .catch() and mislabeling it "unreliable".
-          if (!ext) return null
+          if (!ext) {
+return null
+}
+
           return {
             url: source.url, title: source.title, angle: searchResult.angle,
             sourceQuality: ext.sourceQuality, publishDate: ext.publishDate,
@@ -215,6 +241,7 @@ const searchResults = await pipeline(
           }
         }).catch(e => {
           log("fetch failed: " + source.url + " — " + (e.message || e))
+
           return { url: source.url, title: source.title, angle: searchResult.angle, sourceQuality: "unreliable", claims: [] }
         })
       })
@@ -266,6 +293,7 @@ const voted = (await parallel(
       const abstained = VOTES_PER_CLAIM - valid.length
       const survives = valid.length >= REFUTATIONS_REQUIRED && refuted < REFUTATIONS_REQUIRED
       log("\"" + claim.claim.slice(0, 50) + "…\": " + (valid.length - refuted) + "-" + refuted + (abstained > 0 ? " (" + abstained + " abstain)" : "") + " " + (survives ? "✓" : "✗"))
+
       return { ...claim, verdicts: valid, refutedVotes: refuted, survives }
     })
   )
@@ -291,6 +319,7 @@ phase("Synthesize")
 const confRank = { high: 0, medium: 1, low: 2 }
 const block = confirmed.map((c, i) => {
   const best = c.verdicts.filter(v => !v.refuted).sort((a, b) => confRank[a.confidence] - confRank[b.confidence])[0]
+
   return "### [" + i + "] " + c.claim + "\n" +
     "Vote: " + (c.verdicts.length - c.refutedVotes) + "-" + c.refutedVotes + " · Source: " + c.sourceUrl + " (" + c.sourceQuality + ")\n" +
     "Quote: \"" + c.quote + "\"\nVerifier evidence (" + best.confidence + "): " + best.evidence + "\n"

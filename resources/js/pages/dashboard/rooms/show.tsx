@@ -40,8 +40,8 @@ import {
     SubmittedTributesSection,
 } from "@/components/tribute-sections";
 import { dashboard } from '@/routes';
-import roomsRoutes from '@/routes/dashboard/rooms';
 import { approve } from '@/routes/dashboard/candles';
+import roomsRoutes from '@/routes/dashboard/rooms';
 import storiesRoutes from '@/routes/dashboard/stories';
 import tributeRoutes from '@/routes/dashboard/tributes';
 import type { FeedStory } from '@/types/feed';

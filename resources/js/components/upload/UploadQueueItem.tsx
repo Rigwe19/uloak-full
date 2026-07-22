@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { X, RotateCcw, FileVideo, FileImage, FileAudio, FileText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useProcessingStatus } from '@/hooks/use-processing-status';
 import type { UploadItem } from '@/types/media';
 import { formatSize } from '@/utils/media-validation';
 import { UploadProgress } from './UploadProgress';
 import { UploadStatusBadge } from './UploadStatusBadge';
-import { useProcessingStatus } from '@/hooks/use-processing-status';
 
 interface UploadQueueItemProps {
   item: UploadItem

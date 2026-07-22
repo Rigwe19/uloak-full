@@ -21,9 +21,11 @@ const SAFE_SLUG_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 function sanitizePathSegments(pathValue) {
   return String(pathValue ?? '').split(/[\\/]+/).filter(Boolean).map((segment) => {
     const sanitized = sanitizeFilename(segment);
+
     if (sanitized !== segment || !sanitized) {
       throw new Error(`Unsafe path segment: ${segment}`);
     }
+
     return sanitized;
   });
 }
@@ -32,9 +34,11 @@ function safeJoin(base, ...parts) {
   const root = resolve(base);
   const target = resolve(root, ...parts.flatMap(sanitizePathSegments));
   const rel = relative(root, target);
+
   if (rel.startsWith('..') || rel.startsWith('/')) {
     throw new Error(`Path escapes research directory: ${parts.join('/')}`);
   }
+
   return target;
 }
 
@@ -42,12 +46,15 @@ function safeResearchDir(rawDir) {
   if (typeof rawDir !== 'string' || !rawDir.trim() || rawDir.includes('\0')) {
     throw new Error('Research directory is required');
   }
+
   const root = resolve(process.cwd());
   const target = safeJoin(root, rawDir);
   const rel = relative(root, target);
+
   if ((rel.startsWith('..') || rel.startsWith('/')) && process.env.COMPETITOR_ANALYSIS_ALLOW_EXTERNAL_DIR !== '1') {
     throw new Error('Research directory must stay under the current working directory');
   }
+
   return target;
 }
 
@@ -55,10 +62,13 @@ function safeTemplatePath(researchDir, rawPath) {
   if (typeof rawPath !== 'string' || !rawPath.trim() || rawPath.includes('\0')) {
     throw new Error('Template path is required');
   }
+
   const candidate = safeJoin(researchDir, rawPath);
+
   if (!candidate.endsWith('.html')) {
     throw new Error('Template path must point to an .html file inside the research directory');
   }
+
   return candidate;
 }
 
@@ -66,20 +76,34 @@ function safeSlug(slug) {
   if (!SAFE_SLUG_RE.test(slug) || slug.includes('..')) {
     throw new Error(`Unsafe competitor slug: ${slug}`);
   }
+
   return slug;
 }
 
 function selfTest() {
   const root = resolve('/tmp/research');
+
   if (safeJoin(root, 'competitors', 'acme.html') !== resolve(root, 'competitors', 'acme.html')) {
     throw new Error('safeJoin failed valid path');
   }
+
   for (const bad of ['../x', 'competitors/../../x']) {
-    try { safeJoin(root, bad); } catch { continue; }
+    try {
+ safeJoin(root, bad); 
+} catch {
+ continue; 
+}
+
     throw new Error(`safeJoin accepted ${bad}`);
   }
+
   for (const bad of ['../acme', 'bad/name', '..']) {
-    try { safeSlug(bad); } catch { continue; }
+    try {
+ safeSlug(bad); 
+} catch {
+ continue; 
+}
+
     throw new Error(`safeSlug accepted ${bad}`);
   }
 }
@@ -120,6 +144,7 @@ if (!templatePath) {
     join(__dirname, 'report-template.html'),
   ];
   templatePath = candidates.find(p => existsSync(p));
+
   if (!templatePath) {
     console.error('Error: Could not find report-template.html. Use --template to specify path.');
     process.exit(1);
@@ -129,6 +154,7 @@ if (!templatePath) {
 const template = readFileSync(templatePath, 'utf-8');
 
 let files;
+
 try {
   files = readdirSync(dir).filter(f => f.endsWith('.md')).sort();
 } catch (err) {
@@ -151,13 +177,20 @@ if (files.length === 0) {
 // guarantee styled rendering (catch-all). Also handles free-text leaking into the bracket
 // slot (e.g. "Browsaur Blog — ..." — sourceType becomes "Blog" if we can find that token).
 function normalizeSourceType(raw) {
-  if (!raw) return 'Blog';
+  if (!raw) {
+return 'Blog';
+}
+
   const t = raw.trim();
   const canonical = new Set([
     'Benchmark','Comparison','News','Reddit','HN','LinkedIn','YouTube',
     'Review','Podcast','X','DevTo','Hashnode','Substack','Blog'
   ]);
-  if (canonical.has(t)) return t;
+
+  if (canonical.has(t)) {
+return t;
+}
+
   // Alias table for common drifts
   const aliases = {
     'Hacker News': 'HN', 'HackerNews': 'HN', 'Show HN': 'HN', 'Ask HN': 'HN',
@@ -168,42 +201,67 @@ function normalizeSourceType(raw) {
     'Documentation': 'Blog', 'Docs': 'Blog',
     'Medium': 'Blog', 'Substack Post': 'Substack',
   };
-  if (aliases[t]) return aliases[t];
+
+  if (aliases[t]) {
+return aliases[t];
+}
+
   // Keyword scan — if the raw contains a canonical token anywhere, use that.
   for (const c of canonical) {
-    if (new RegExp(`\\b${c}\\b`, 'i').test(t)) return c;
+    if (new RegExp(`\\b${c}\\b`, 'i').test(t)) {
+return c;
+}
   }
+
   return 'Blog'; // catch-all for fully unknown types (styled via .src-Blog)
 }
 
 // Parse Mentions section into structured entries.
 // Format: `- **[SourceType]** Title | Snippet (source: URL, YYYY-MM-DD)`
 function parseMentions(sectionText) {
-  if (!sectionText) return [];
+  if (!sectionText) {
+return [];
+}
+
   const out = [];
+
   for (const raw of sectionText.split('\n')) {
     const line = raw.trim();
-    if (!line.startsWith('- ')) continue;
+
+    if (!line.startsWith('- ')) {
+continue;
+}
+
     const typeM = line.match(/^-\s*\*\*\[([^\]]+)\]\*\*\s*(.*)$/);
-    if (!typeM) continue;
+
+    if (!typeM) {
+continue;
+}
+
     const sourceType = normalizeSourceType(typeM[1].trim());
     let rest = typeM[2];
 
     let url = '';
     let date = '';
     const sourceM = rest.match(/\(source:\s*([^)]+)\)\s*$/);
+
     if (sourceM) {
       const sourceBlock = sourceM[1];
       const parts = sourceBlock.split(',').map(s => s.trim()).filter(Boolean);
       url = parts[0] || '';
       const dateCandidate = parts.slice(1).join(', ');
-      if (dateCandidate && /\d{4}-\d{2}-\d{2}/.test(dateCandidate)) date = dateCandidate.match(/\d{4}-\d{2}-\d{2}/)[0];
+
+      if (dateCandidate && /\d{4}-\d{2}-\d{2}/.test(dateCandidate)) {
+date = dateCandidate.match(/\d{4}-\d{2}-\d{2}/)[0];
+}
+
       rest = rest.slice(0, sourceM.index).trim();
     }
 
     let title = rest;
     let snippet = '';
     const pipeIdx = rest.indexOf('|');
+
     if (pipeIdx !== -1) {
       title = rest.slice(0, pipeIdx).trim();
       snippet = rest.slice(pipeIdx + 1).trim();
@@ -211,20 +269,30 @@ function parseMentions(sectionText) {
 
     out.push({ sourceType, title, snippet, url, date });
   }
+
   return out;
 }
 
 // Parse Benchmarks section into structured entries.
 // Format: `- Title | Source | URL | Key finding`  or  `- **Title** — Source (URL): finding`
 function parseBenchmarks(sectionText) {
-  if (!sectionText) return [];
+  if (!sectionText) {
+return [];
+}
+
   const out = [];
+
   for (const raw of sectionText.split('\n')) {
     const line = raw.trim();
-    if (!line.startsWith('- ')) continue;
+
+    if (!line.startsWith('- ')) {
+continue;
+}
+
     const rest = line.slice(2).trim();
     const parts = rest.split('|').map(s => s.trim()).filter(Boolean);
     let title = '', source = '', url = '', finding = '';
+
     if (parts.length >= 4) {
       [title, source, url, finding] = parts;
     } else if (parts.length === 3) {
@@ -232,10 +300,15 @@ function parseBenchmarks(sectionText) {
     } else {
       title = rest;
       const urlM = rest.match(/https?:\/\/\S+/);
-      if (urlM) url = urlM[0];
+
+      if (urlM) {
+url = urlM[0];
+}
     }
+
     out.push({ title, source, url, finding });
   }
+
   return out;
 }
 
@@ -258,50 +331,85 @@ function mdToHtml(md) {
       let text = escapeHtml(paraLines.join(' ').trim());
       text = text.replace(/\*\*\[(\w+)\]\*\*/g, '<span class="confidence $1">[$1]</span>');
       text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-      if (text) out.push(`<p>${text}</p>`);
+
+      if (text) {
+out.push(`<p>${text}</p>`);
+}
+
       paraLines = [];
     }
   }
-  function closeList() { if (inList) { out.push('</ul>'); inList = false; } }
+  function closeList() {
+ if (inList) {
+ out.push('</ul>'); inList = false; 
+} 
+}
 
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) { flushPara(); closeList(); continue; }
-    if (trimmed.startsWith('## ')) { flushPara(); closeList(); out.push(`<h2>${escapeHtml(trimmed.slice(3))}</h2>`); continue; }
-    if (trimmed.startsWith('### ')) { flushPara(); closeList(); out.push(`<h3>${escapeHtml(trimmed.slice(4))}</h3>`); continue; }
+
+    if (!trimmed) {
+ flushPara(); closeList(); continue; 
+}
+
+    if (trimmed.startsWith('## ')) {
+ flushPara(); closeList(); out.push(`<h2>${escapeHtml(trimmed.slice(3))}</h2>`); continue; 
+}
+
+    if (trimmed.startsWith('### ')) {
+ flushPara(); closeList(); out.push(`<h3>${escapeHtml(trimmed.slice(4))}</h3>`); continue; 
+}
+
     if (trimmed.startsWith('- ')) {
       flushPara();
-      if (!inList) { out.push('<ul>'); inList = true; }
+
+      if (!inList) {
+ out.push('<ul>'); inList = true; 
+}
+
       let text = escapeHtml(trimmed.slice(2));
       text = text.replace(/\*\*\[(\w+)\]\*\*/g, '<span class="confidence $1">[$1]</span>');
       text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
       text = text.replace(/(https?:\/\/\S+)/g, (_, raw) => {
         let url = raw;
         let trail = '';
+
         while (url && /[)\],.;:!?]$/.test(url)) {
           trail = url.slice(-1) + trail;
           url = url.slice(0, -1);
         }
-        if (!url) return raw;
+
+        if (!url) {
+return raw;
+}
+
         return `<a href="${url}" target="_blank">${url}</a>${trail}`;
       });
       out.push(`<li>${text}</li>`);
       continue;
     }
+
     closeList();
     paraLines.push(trimmed);
   }
+
   flushPara(); closeList();
+
   return out.join('\n');
 }
 
 // ---------- Load all competitor records ----------
 
 const competitors = [];
+
 for (const file of files) {
   const content = readFileSync(safeJoin(dir, file), 'utf-8');
   const fields = parseFrontmatter(content);
-  if (!fields) continue;
+
+  if (!fields) {
+continue;
+}
+
   const body = parseBody(content);
   const sections = parseSections(body);
   const mentions = parseMentions(sections['Mentions']);
@@ -315,19 +423,28 @@ for (const file of files) {
 // strip "co" from inside names like "Cisco" or "Costco" (`\s*` matches zero chars), corrupting
 // the dedup key and silently dropping legit competitors.
 const seen = new Map();
+
 for (const c of competitors) {
   const name = (c.competitor_name || '').toLowerCase().replace(/\s*\b(inc|llc|ltd|corp|co)\b\s*\.?$/i, '').trim();
-  if (!seen.has(name)) seen.set(name, c);
+
+  if (!seen.has(name)) {
+seen.set(name, c);
 }
+}
+
 const deduped = [...seen.values()].sort((a, b) => (a.competitor_name || '').localeCompare(b.competitor_name || ''));
 
 // Load the curated matrix EARLY — the overview table needs userCompany.name to filter the
 // user's own company out of the competitor list, and the strategic summary card needs the
 // whole matrix. Keep this block above the first use site to avoid temporal dead zones.
 let curatedMatrix = null;
+
 try {
   const p = safeJoin(dir, 'matrix.json');
-  if (existsSync(p)) curatedMatrix = JSON.parse(readFileSync(p, 'utf-8'));
+
+  if (existsSync(p)) {
+curatedMatrix = JSON.parse(readFileSync(p, 'utf-8'));
+}
 } catch (err) {
   console.error(`Warning: matrix.json present but unreadable — falling back to pipe split. ${err.message}`);
 }
@@ -349,9 +466,13 @@ const userKey = normKey(userCompanyName);
 const slugKey = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const userSlugKey = slugKey(userCompanyName);
 const competitorRows = deduped.filter(c => {
-  if (!userKey) return true;
+  if (!userKey) {
+return true;
+}
+
   const nameKey = normKey(c.competitor_name);
   const sKey = slugKey(c.slug);
+
   return nameKey !== userKey && sKey !== userKey && sKey !== userSlugKey;
 });
 
@@ -373,18 +494,27 @@ function featurePills(featuresStr, max = 4) {
   // If no pipes are present, split on commas as a fallback so we still show something
   // and cap item length to avoid bleeding wall-of-text into the table.
   let feats = splitPipes(featuresStr);
+
   if (feats.length <= 1 && featuresStr) {
     feats = featuresStr.split(/[;,]/).map(s => s.trim()).filter(Boolean);
   }
+
   return feats.slice(0, max).map(f => {
     const short = f.length > 42 ? f.slice(0, 40).replace(/\s+\S*$/, '') + '…' : f;
+
     return `<span class="pill pill-feature">${escapeHtml(short)}</span>`;
   }).join('');
 }
 
 function truncate(str, n) {
-  if (!str) return '';
-  if (str.length <= n) return str;
+  if (!str) {
+return '';
+}
+
+  if (str.length <= n) {
+return str;
+}
+
   return str.slice(0, n - 1).replace(/\s+\S*$/, '') + '…';
 }
 
@@ -398,7 +528,11 @@ const tableRows = competitorRows.map(c => {
     : '';
   // Pricing: prefer pipe-split summary; if there are no pipes (prose drift), truncate hard.
   let pricingShort = splitPipes(c.pricing_tiers).slice(0, 3).join(' · ');
-  if (!pricingShort) pricingShort = truncate(c.pricing_tiers || '', 140) || '—';
+
+  if (!pricingShort) {
+pricingShort = truncate(c.pricing_tiers || '', 140) || '—';
+}
+
   return `      <tr>
         <td><strong>${nameHtml}</strong>${websiteHtml}</td>
         <td style="max-width:260px;">${escapeHtml(truncate(c.tagline || c.positioning || c.product_description || '', 140))}</td>
@@ -419,7 +553,10 @@ const tableRows = competitorRows.map(c => {
 // If userCompany is absent we render nothing — a skill run that skipped Step 5's
 // matrix synthesis shouldn't get a broken/empty block here.
 function buildStrategicSummary() {
-  if (!curatedMatrix || !curatedMatrix.userCompany) return '';
+  if (!curatedMatrix || !curatedMatrix.userCompany) {
+return '';
+}
+
   const user = curatedMatrix.userCompany;
   const userName = user.name || userCompany || 'You';
   const userEsc = escapeHtml(userName);
@@ -430,25 +567,34 @@ function buildStrategicSummary() {
     const userFlags = user[kind] || {};
     const wins = [];
     const losses = [];
+
     for (const entry of axis) {
       const label = entry.name;
       const userHas = !!userFlags[label];
       const whoElseHas = [];
+
       for (const c of competitorRows) {
         const compEntry = compMap[c.slug];
-        if (compEntry && compEntry[kind] && compEntry[kind][label]) whoElseHas.push(c.competitor_name);
+
+        if (compEntry && compEntry[kind] && compEntry[kind][label]) {
+whoElseHas.push(c.competitor_name);
+}
       }
+
       const competitorCount = whoElseHas.length;
+
       if (userHas && competitorCount <= 1) {
         wins.push({ label, whoElseHas });
       } else if (!userHas && competitorCount >= 3) {
         losses.push({ label, whoElseHas });
       }
     }
+
     // Order wins by rarity (fewest competitors have it first → most differentiated).
     wins.sort((a, b) => a.whoElseHas.length - b.whoElseHas.length);
     // Order losses by how many competitors have it (more = bigger gap).
     losses.sort((a, b) => b.whoElseHas.length - a.whoElseHas.length);
+
     return { wins, losses };
   }
 
@@ -458,10 +604,14 @@ function buildStrategicSummary() {
   const allLosses = [...featureAnalysis.losses, ...integrationAnalysis.losses];
 
   function renderList(items, emptyMessage) {
-    if (!items.length) return `<div class="empty">${escapeHtml(emptyMessage)}</div>`;
+    if (!items.length) {
+return `<div class="empty">${escapeHtml(emptyMessage)}</div>`;
+}
+
     return `<ul>${items.slice(0, 10).map(it => {
       const n = it.whoElseHas.length;
       const who = n === 0 ? 'only you' : (n <= 3 ? it.whoElseHas.join(', ') : `${n} competitors`);
+
       return `<li><span class="label">${escapeHtml(it.label)}</span><span class="who">${escapeHtml(who)}</span></li>`;
     }).join('')}</ul>`;
   }
@@ -470,7 +620,10 @@ function buildStrategicSummary() {
   // not a spreadsheet. Falls back to the bulleted list when no prose is provided so a
   // skill run that skipped the prose step still surfaces the boolean comparison.
   function renderBody(prose, items, emptyMessage) {
-    if (prose && prose.trim()) return `<p class="prose">${escapeHtml(prose)}</p>`;
+    if (prose && prose.trim()) {
+return `<p class="prose">${escapeHtml(prose)}</p>`;
+}
+
     return renderList(items, emptyMessage);
   }
 
@@ -510,7 +663,9 @@ writeFileSync(safeJoin(dir, 'index.html'), indexHtml);
 
 // ---------- competitors/{slug}.html ----------
 
-try { mkdirSync(safeJoin(dir, 'competitors'), { recursive: true }); } catch {}
+try {
+ mkdirSync(safeJoin(dir, 'competitors'), { recursive: true }); 
+} catch {}
 
 const perCompetitorCss = `
   :root { --brand:#F03603; --blue:#4DA9E4; --black:#100D0D; --gray:#514F4F; --border:#edebeb; --bg:#F9F6F4; --card:#ffffff; --text:#100D0D; --muted:#514F4F; }
@@ -568,13 +723,16 @@ const perCompetitorCss = `
 `;
 
 for (const c of competitorRows) {
-  if (!c.body || c.body.length < 50) continue;
+  if (!c.body || c.body.length < 50) {
+continue;
+}
 
   const mentionsHtml = c.mentions.length
     ? c.mentions.map(m => {
         const dateStr = m.date ? `<span class="muted-line" style="color:var(--muted);font-size:0.75rem;margin-left:auto;">${escapeHtml(m.date)}</span>` : '';
         const linkText = m.url ? `<a href="${escapeHtml(m.url)}" target="_blank">${escapeHtml(m.title || m.url)}</a>` : escapeHtml(m.title);
         const snippet = m.snippet ? ` — <span style="color:var(--muted);">${escapeHtml(m.snippet)}</span>` : '';
+
         return `<div class="mention-item"><span class="src-pill src-${escapeHtml(m.sourceType)}">${escapeHtml(m.sourceType)}</span><div style="flex:1;">${linkText}${snippet}</div>${dateStr}</div>`;
       }).join('\n')
     : '<p style="color:var(--muted);font-size:0.875rem;">No mentions collected.</p>';
@@ -584,6 +742,7 @@ for (const c of competitorRows) {
         const link = b.url ? `<a href="${escapeHtml(b.url)}" target="_blank">${escapeHtml(b.title || b.url)}</a>` : escapeHtml(b.title);
         const src = b.source ? ` <span style="color:var(--muted);">(${escapeHtml(b.source)})</span>` : '';
         const finding = b.finding ? ` — ${escapeHtml(b.finding)}` : '';
+
         return `<li>${link}${src}${finding}</li>`;
       }).join('')}</ul>`
     : '';
@@ -668,28 +827,43 @@ for (const c of competitorRows) {
 // strategic summary on the overview page reads userCompany from it.
 
 function buildMatrixAxisFromCurated(kind) {
-  if (!curatedMatrix || !curatedMatrix[kind]) return [];
+  if (!curatedMatrix || !curatedMatrix[kind]) {
+return [];
+}
+
   const compMap = curatedMatrix.competitors || {};
+
   return curatedMatrix[kind].map(entry => {
     const label = entry.name;
     let count = 0;
+
     for (const c of competitorRows) {
       const compKey = compMap[c.slug];
-      if (compKey && compKey[kind] && compKey[kind][label]) count += 1;
+
+      if (compKey && compKey[kind] && compKey[kind][label]) {
+count += 1;
+}
     }
+
     return { label, count, description: entry.description || '' };
   });
 }
 
 function buildMatrixAxisFromPipes(field) {
   const counts = new Map();
+
   for (const c of competitorRows) {
     for (const item of splitPipes(c[field])) {
       const key = item.toLowerCase();
-      if (!counts.has(key)) counts.set(key, { label: item, count: 0 });
+
+      if (!counts.has(key)) {
+counts.set(key, { label: item, count: 0 });
+}
+
       counts.get(key).count += 1;
     }
   }
+
   return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 18);
 }
 
@@ -705,15 +879,21 @@ function competitorHas(c, field, label) {
   if (curatedMatrix) {
     const compMap = curatedMatrix.competitors || {};
     const compEntry = compMap[c.slug];
+
     return !!(compEntry && compEntry[field] && compEntry[field][label]);
   }
+
   // Fallback: raw pipe-split match.
   const rawField = field === 'features' ? 'key_features' : field;
+
   return splitPipes(c[rawField]).some(x => x.toLowerCase() === label.toLowerCase());
 }
 
 function matrixSection(heading, axis, field) {
-  if (!axis.length) return '';
+  if (!axis.length) {
+return '';
+}
+
   // Horizontal competitor-name headers — simpler to read than rotated. Row label (feature name) is
   // the sticky left column so users can scroll horizontally without losing context on wide tables.
   const header = `<tr>
@@ -724,11 +904,13 @@ function matrixSection(heading, axis, field) {
     const cells = competitorRows.map(c => competitorHas(c, field, a.label)
       ? `<td class="mx-cell mx-yes" title="${escapeHtml(c.competitor_name)} has ${escapeHtml(a.label)}">●</td>`
       : `<td class="mx-cell mx-no">·</td>`).join('');
+
     return `<tr>
       <td class="mx-feature"><span class="mx-feature-label">${escapeHtml(a.label)}</span><span class="mx-count">${a.count}</span></td>
       ${cells}
     </tr>`;
   }).join('\n');
+
   return `<section class="mx-section">
     <h2 class="mx-heading">${escapeHtml(heading)}</h2>
     <div class="mx-scroll">
@@ -819,16 +1001,27 @@ writeFileSync(safeJoin(dir, 'matrix.html'), matrixHtml);
 // Mentions feed: iterate `competitorRows` (user's own company already filtered out earlier)
 // so the chronological feed doesn't mix the user's own mentions with competitors'.
 const allMentions = [];
+
 for (const c of competitorRows) {
   for (const m of c.mentions) {
     allMentions.push({ ...m, competitor: c.competitor_name || c.slug, slug: c.slug });
   }
 }
+
 // Sort by date desc (empty dates last)
 allMentions.sort((a, b) => {
-  if (a.date && b.date) return b.date.localeCompare(a.date);
-  if (a.date) return -1;
-  if (b.date) return 1;
+  if (a.date && b.date) {
+return b.date.localeCompare(a.date);
+}
+
+  if (a.date) {
+return -1;
+}
+
+  if (b.date) {
+return 1;
+}
+
   return 0;
 });
 
@@ -841,6 +1034,7 @@ const mentionItems = allMentions.map(m => {
   const link = m.url ? `<a href="${escapeHtml(m.url)}" target="_blank">${escapeHtml(m.title || m.url)}</a>` : escapeHtml(m.title);
   const snippet = m.snippet ? `<div class="snippet">${escapeHtml(m.snippet)}</div>` : '';
   const date = m.date ? `<span class="date">${escapeHtml(m.date)}</span>` : '';
+
   return `<div class="mention" data-type="${escapeHtml(m.sourceType)}">
     <span class="src-pill src-${escapeHtml(m.sourceType)}">${escapeHtml(m.sourceType)}</span>
     <div class="body">
@@ -954,12 +1148,18 @@ const priority = [
 ];
 const flatRows = competitorRows.map(c => {
   const row = {};
+
   for (const k of Object.keys(c)) {
-    if (['body', 'sections', 'mentions', 'benchmarks', 'slug', 'file'].includes(k)) continue;
+    if (['body', 'sections', 'mentions', 'benchmarks', 'slug', 'file'].includes(k)) {
+continue;
+}
+
     row[k] = c[k];
   }
+
   row.mention_count = String(c.mentions.length);
   row.benchmark_count = String(c.benchmarks.length);
+
   return row;
 });
 const allCols = [...new Set(flatRows.flatMap(r => Object.keys(r)))];
@@ -967,12 +1167,20 @@ const cols = [...priority.filter(c => allCols.includes(c)), ...allCols.filter(c 
 
 function csvEscape(v) {
   v = String(v || '');
-  if (v.includes(',') || v.includes('"') || v.includes('\n')) return '"' + v.replace(/"/g, '""') + '"';
+
+  if (v.includes(',') || v.includes('"') || v.includes('\n')) {
+return '"' + v.replace(/"/g, '""') + '"';
+}
+
   return v;
 }
 
 const csvLines = [cols.join(',')];
-for (const row of flatRows) csvLines.push(cols.map(c => csvEscape(row[c] || '')).join(','));
+
+for (const row of flatRows) {
+csvLines.push(cols.map(c => csvEscape(row[c] || '')).join(','));
+}
+
 writeFileSync(safeJoin(dir, 'results.csv'), csvLines.join('\n') + '\n');
 
 // ---------- Summary ----------
@@ -996,7 +1204,10 @@ console.log(safeJoin(dir, 'index.html'));
 
 if (shouldOpen) {
   const { execFileSync } = await import('child_process');
+
   // Use execFileSync (not execSync with string interpolation) so a `dir` containing
   // shell metacharacters like `"`, `$`, or backticks can't break out into command exec.
-  try { execFileSync('open', [safeJoin(dir, 'index.html')]); } catch {}
+  try {
+ execFileSync('open', [safeJoin(dir, 'index.html')]); 
+} catch {}
 }

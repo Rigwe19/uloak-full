@@ -1,5 +1,5 @@
-import React from 'react';
 import { Image, Video, FileText } from 'lucide-react';
+import React from 'react';
 import type { PersonMedia } from '@/types/person';
 
 export default function PersonMediaGrid({ items }: { items: any[] }) {

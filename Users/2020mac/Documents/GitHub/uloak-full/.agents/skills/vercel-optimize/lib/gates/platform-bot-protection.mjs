@@ -22,10 +22,15 @@ export function gate(signals) {
     || signals.project?.security?.botProtection === true
     || signals.project?.botProtection?.enabled === true
     || signals.project?.delegatedProtection?.bot === true;
-  if (botEnabled) return [];
+
+  if (botEnabled) {
+return [];
+}
 
   // Project config failed — we can't tell if BotID is on, so stay silent.
-  if (signals.project?.error) return [];
+  if (signals.project?.error) {
+return [];
+}
 
   const totalRequests = totalRequestsFromSignals(signals);
   const botShare = computeBotShare(signals);
@@ -38,7 +43,10 @@ export function gate(signals) {
   const hasObservedBots = botShare?.botPct != null && botShare.botPct >= MIN_BOT_PCT;
   const hasMaterialEdgeCost = edgeCost != null && edgeCost >= MIN_EDGE_COST;
   const hasSubstantialTraffic = totalRequests >= MIN_TOTAL_REQUESTS;
-  if (!hasObservedBots && !hasMaterialEdgeCost && !hasSubstantialTraffic) return [];
+
+  if (!hasObservedBots && !hasMaterialEdgeCost && !hasSubstantialTraffic) {
+return [];
+}
 
   const challengeRule = signals.project?.security?.managedRules?.bot_filter;
   const ruleNote = challengeRule?.active
@@ -47,11 +55,17 @@ export function gate(signals) {
 
   // Kicker on high observed bot share — harder evidence than config alone.
   let priority = edgeCost != null ? Math.max(20, Math.round(edgeCost)) : 30;
-  if (botShare?.botPct != null && botShare.botPct > 0.2) priority += 20;
+
+  if (botShare?.botPct != null && botShare.botPct > 0.2) {
+priority += 20;
+}
 
   // Confidence bumps when we can SEE bot traffic, not just infer from config.
   let confidence = edgeCost != null ? 0.85 : 0.6;
-  if (botShare?.botPct != null && botShare.botPct > 0.2) confidence = Math.min(0.95, confidence + 0.05);
+
+  if (botShare?.botPct != null && botShare.botPct > 0.2) {
+confidence = Math.min(0.95, confidence + 0.05);
+}
 
   const botShareNote = botShare?.botPct != null
     ? `bot_fdt_pct=${(botShare.botPct * 100).toFixed(0)}%`
@@ -84,32 +98,48 @@ export function gate(signals) {
 
 function totalRequestsFromSignals(signals) {
   const rows = signals.metrics?.requestsByRouteCache?.rows;
-  if (!Array.isArray(rows)) return 0;
+
+  if (!Array.isArray(rows)) {
+return 0;
+}
+
   return rows.reduce((s, r) => s + (r.value ?? 0), 0);
 }
 
 // CLI convention: bot_category="" means "not classified as a bot" (human + unclassified); any non-empty = bot.
 function computeBotShare(signals) {
   const rows = signals.metrics?.fdtByBot?.rows;
-  if (!Array.isArray(rows) || rows.length === 0) return null;
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+return null;
+}
+
   let humanBytes = 0;
   let botBytes = 0;
   let topCategory = null;
   let topBytes = 0;
+
   for (const r of rows) {
     const v = r.value ?? 0;
     const cat = r.bot_category ?? '';
+
     if (cat === '') {
       humanBytes += v;
     } else {
       botBytes += v;
+
       if (v > topBytes) {
         topBytes = v;
         topCategory = cat;
       }
     }
   }
+
   const total = humanBytes + botBytes;
-  if (total < MIN_TOTAL_FDT_BYTES) return null;
+
+  if (total < MIN_TOTAL_FDT_BYTES) {
+return null;
+}
+
   return { humanBytes, botBytes, botPct: botBytes / total, topCategory };
 }

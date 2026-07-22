@@ -13,6 +13,7 @@ export async function fetchCached(url) {
 
   const cacheFile = resolve(CACHE_DIRECTORY, hashUrl(url) + '.json');
   const cached = await loadCacheEntry(cacheFile);
+
   if (cached && cached.expires > Math.floor(Date.now() / 1000)) {
     return cached.data;
   }
@@ -30,6 +31,7 @@ export async function fetchCached(url) {
     // Refresh expiration and return cached data
     const entry = { ...cached, expires: getExpires(response.headers) };
     await saveCacheEntry(cacheFile, entry);
+
     return cached.data;
   }
 
@@ -67,14 +69,17 @@ function getExpires(headers) {
 
   // Prefer Cache-Control: max-age
   const maxAgeSeconds = parseMaxAge(headers.get('cache-control'));
+
   if (maxAgeSeconds != null) {
     return now + maxAgeSeconds;
   }
 
   // Fall back to Expires header
   const expires = headers.get('expires');
+
   if (expires) {
     const expiresTime = Date.parse(expires);
+
     if (!Number.isNaN(expiresTime)) {
       return Math.floor(expiresTime / 1000);
     }
@@ -88,7 +93,9 @@ function parseMaxAge(cacheControl) {
   if (!cacheControl) {
     return null;
   }
+
   const match = cacheControl.match(/max-age=(\d+)/i);
+
   return match ? parseInt(match[1], 10) : null;
 }
 

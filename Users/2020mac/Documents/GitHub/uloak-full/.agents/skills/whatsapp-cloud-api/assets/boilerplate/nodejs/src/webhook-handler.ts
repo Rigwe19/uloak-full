@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { Request, Response, NextFunction } from 'express';
-import { WebhookPayload, IncomingMessage, StatusUpdate } from './types';
+import type { Request, Response, NextFunction } from 'express';
+import type { WebhookPayload, IncomingMessage, StatusUpdate } from './types';
 
 const SAFE_CHALLENGE_RE = /^[A-Za-z0-9._-]{1,200}$/;
 const SIGNATURE_RE = /^sha256=[a-f0-9]{64}$/i;
@@ -22,13 +22,16 @@ export function validateHMAC(appSecret: string) {
     if (!signature) {
       console.warn('Webhook request without signature header');
       res.sendStatus(401);
+
       return;
     }
 
     const rawBody = (req as any).rawBody;
+
     if (!rawBody) {
       console.error('Raw body not available. Ensure rawBody middleware is configured.');
       res.sendStatus(500);
+
       return;
     }
 
@@ -39,6 +42,7 @@ export function validateHMAC(appSecret: string) {
     if (!SIGNATURE_RE.test(signature)) {
       console.warn('Invalid webhook signature format');
       res.sendStatus(401);
+
       return;
     }
 
@@ -51,6 +55,7 @@ export function validateHMAC(appSecret: string) {
     if (!isValid) {
       console.warn('Invalid webhook signature');
       res.sendStatus(401);
+
       return;
     }
 
@@ -101,6 +106,7 @@ export function parseWebhookPayload(payload: WebhookPayload): {
       if (change.value.messages) {
         messages.push(...change.value.messages);
       }
+
       if (change.value.statuses) {
         statuses.push(...change.value.statuses);
       }
@@ -134,6 +140,7 @@ export function extractMessageContent(message: IncomingMessage): {
           text: message.interactive.button_reply?.title,
         };
       }
+
       if (message.interactive?.type === 'list_reply') {
         return {
           type: 'list',
@@ -141,12 +148,14 @@ export function extractMessageContent(message: IncomingMessage): {
           text: message.interactive.list_reply?.title,
         };
       }
+
       if (message.interactive?.type === 'nfm_reply') {
         return {
           type: 'flow',
           text: message.interactive.nfm_reply?.response_json,
         };
       }
+
       return { type: 'interactive' };
 
     case 'image':

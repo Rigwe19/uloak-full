@@ -57,13 +57,20 @@ const SERVICE_DIMENSION = [
 ];
 
 export function classifyService(serviceName, activeDims) {
-  if (!serviceName) return { covered: false, family: 'unknown' };
+  if (!serviceName) {
+return { covered: false, family: 'unknown' };
+}
+
   for (const e of SERVICE_DIMENSION) {
     if (e.match.test(serviceName)) {
-      if (e.dim && activeDims.has(e.dim)) return { covered: true, dim: e.dim };
+      if (e.dim && activeDims.has(e.dim)) {
+return { covered: true, dim: e.dim };
+}
+
       return { covered: false, family: e.family ?? 'unknown', actionable: e.actionable ?? true };
     }
   }
+
   return { covered: false, family: 'unknown', actionable: true };
 }
 
@@ -81,13 +88,19 @@ export function computeCostCoverage(usage, gates) {
 
   for (const s of services) {
     const billed = Number(s.billedCost ?? 0);
-    if (!Number.isFinite(billed) || billed <= 0) continue;
+
+    if (!Number.isFinite(billed) || billed <= 0) {
+continue;
+}
+
     total += billed;
     const c = classifyService(s.name, activeDims);
+
     if (c.covered) {
       covered += billed;
       continue;
     }
+
     uncovered += billed;
     const key = c.family;
     const prev = byFamily.get(key) ?? { family: key, billed: 0, services: [], actionable: c.actionable !== false };
@@ -103,25 +116,38 @@ export function computeCostCoverage(usage, gates) {
 
   // Pick top gaps globally so multiple families surface (Sandbox + AI Gateway + Build, not 5 Sandbox sub-services). Exclude fixed costs — seats aren't actionable workload.
   const allActionableServices = [];
+
   for (const family of uncoveredByFamily) {
-    if (!family.actionable) continue;
+    if (!family.actionable) {
+continue;
+}
+
     for (const s of family.services) {
       allActionableServices.push({ name: s.name, billed: s.billed, family: family.family });
     }
   }
+
   allActionableServices.sort((a, b) => b.billed - a.billed);
   const topGaps = allActionableServices.slice(0, 5).map((s) => ({
     ...s,
     share: total > 0 ? s.billed / total : 0,
   }));
+
   return { totalBilled: total, coveredBilled: covered, uncoveredBilled: uncovered, uncoveredByFamily, topGaps };
 }
 
 export function renderCostCoverageMarkdown(coverage) {
-  if (!coverage || !Number.isFinite(coverage.totalBilled) || coverage.totalBilled <= 0) return [];
+  if (!coverage || !Number.isFinite(coverage.totalBilled) || coverage.totalBilled <= 0) {
+return [];
+}
+
   const { totalBilled, coveredBilled, uncoveredBilled, topGaps } = coverage;
   const actionableGaps = topGaps.filter((g) => g.share >= 0.01); // 1%+ share
-  if (actionableGaps.length === 0) return [];
+
+  if (actionableGaps.length === 0) {
+return [];
+}
+
   const lines = [];
   lines.push('');
   lines.push('### Coverage gaps');
@@ -132,11 +158,14 @@ export function renderCostCoverageMarkdown(coverage) {
   lines.push('');
   lines.push('| Service | Billed | Share | Family | Coverage |');
   lines.push('|---|---|---|---|---|');
+
   for (const g of actionableGaps) {
     lines.push(`| ${escapeCell(g.name)} | $${g.billed.toFixed(2)} | ${(g.share * 100).toFixed(1)}% | ${g.family} | _not analyzed in this run_ |`);
   }
+
   lines.push('');
   lines.push('_Recommendations in this report address the covered dimensions. The uncovered rows are not ignored; they need a separate investigation before we can make safe recommendations._');
+
   return lines;
 }
 

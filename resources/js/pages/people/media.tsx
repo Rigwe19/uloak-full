@@ -2,8 +2,8 @@ import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Image } from 'lucide-react';
 import React from 'react';
-import PersonLayout from '@/layouts/person-layout';
 import PersonMediaGrid from '@/components/people/PersonMediaGrid';
+import PersonLayout from '@/layouts/person-layout';
 import type { Person } from '@/types/person';
 
 interface MediaProps {

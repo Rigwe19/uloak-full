@@ -60,4 +60,6 @@ export interface FeedVideoData {
         name: string;
     };
     comments_count: number;
+    likes_count: number;
+    is_liked: boolean;
 }

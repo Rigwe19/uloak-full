@@ -22,6 +22,7 @@ export function useMediaUpload() {
 
       if (!validation.valid) {
         setError(id, validation?.error ?? '');
+
         throw new Error(validation.error);
       }
 
@@ -125,7 +126,9 @@ export function useMediaUpload() {
         .getState()
         .uploads.find((u) => u.id === id);
 
-      if (!item) return;
+      if (!item) {
+return;
+}
 
       useUploadStore.getState().retryUpload(id);
 

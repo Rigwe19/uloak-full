@@ -164,7 +164,7 @@ return story.thumbnail;
                                 onClick={() => setIsAnnexModalOpen(true)}
                                 className="shadow-[0_20px_40px_rgba(198,161,91,0.15)]"
                             >
-                                Annex Memory
+                                Upload
                             </Button>
                         </div>
                     </div>
@@ -199,7 +199,7 @@ return story.thumbnail;
                                     <Plus size={32} />
                                 </div>
                                 <span className="text-xs font-bold tracking-[0.3em] text-text-primary uppercase transition-colors group-hover:text-accent-gold">
-                                    Annex Memory
+                                    Upload
                                 </span>
                             </div>
                         }

@@ -15,6 +15,7 @@ export const metadata = {
 
 export function gate(signals) {
   const errors = extractErrors(signals);
+
   return errors
     .filter((e) => e.count > 250 || (e.total >= MIN_VOLUME_FOR_RATE_EMISSION && (e.errorRate ?? 0) > 0.01))
     .map((e) => withRouteShapeWarnings({
@@ -35,23 +36,34 @@ export function gate(signals) {
 
 function extractErrors(signals) {
   const fnStatus = signals.metrics?.fnStatusByRoute;
-  if (Array.isArray(fnStatus?.rows)) return extractFromStatusRows(fnStatus.rows, 'fnStatusByRoute');
+
+  if (Array.isArray(fnStatus?.rows)) {
+return extractFromStatusRows(fnStatus.rows, 'fnStatusByRoute');
+}
 
   const m = signals.metrics?.requestsByRouteStatus;
   const cache = signals.metrics?.requestsByRouteCache;
-  if (!m?.ok && !Array.isArray(m?.rows)) return [];
+
+  if (!m?.ok && !Array.isArray(m?.rows)) {
+return [];
+}
 
   const errors = extractFromStatusRows(m?.rows ?? [], 'requestsByRouteStatus');
 
   // cache rollup is summed across cache_result, giving per-route total request count.
   const totalByRoute = new Map();
+
   for (const row of (cache?.rows ?? [])) {
-    if (!row.route) continue;
+    if (!row.route) {
+continue;
+}
+
     totalByRoute.set(row.route, (totalByRoute.get(row.route) ?? 0) + (row.value ?? 0));
   }
 
   return errors.map((e) => {
     const total = totalByRoute.get(e.route) ?? 0;
+
     return {
       ...e,
       total,
@@ -63,18 +75,28 @@ function extractErrors(signals) {
 function extractFromStatusRows(rows, metric) {
   const errByRoute = new Map();
   const totalByRoute = new Map();
+
   for (const row of rows) {
     const route = row.route;
-    if (!route) continue;
+
+    if (!route) {
+continue;
+}
+
     const v = row.value ?? 0;
     const status = String(row.http_status ?? '');
-    if (/^5\d\d$/.test(status)) errByRoute.set(route, (errByRoute.get(route) ?? 0) + v);
+
+    if (/^5\d\d$/.test(status)) {
+errByRoute.set(route, (errByRoute.get(route) ?? 0) + v);
+}
+
     totalByRoute.set(route, (totalByRoute.get(route) ?? 0) + v);
   }
 
   return [...errByRoute.entries()].map(([route, count]) => {
     const total = totalByRoute.get(route) ?? 0;
     const errorRate = total > 0 ? count / total : null;
+
     return { route, count, total, errorRate, metric };
   });
 }

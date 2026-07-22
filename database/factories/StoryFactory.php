@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Room;
 use App\Models\Story;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,7 +20,15 @@ class StoryFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'room_id' => Room::factory(),
+            'user_id' => User::factory(),
+            'title' => $this->faker->sentence(),
+            'description' => $this->faker->paragraph(),
+            'type' => 'video',
+            'file_url' => $this->faker->imageUrl(),
+            'thumbnail' => $this->faker->imageUrl(),
+            'tags' => [],
+            'assets' => [],
         ];
     }
 }

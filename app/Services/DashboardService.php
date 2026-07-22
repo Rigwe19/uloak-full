@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Event;
 use App\Models\Room;
 use App\Models\Story;
 use App\Models\Tribute;
@@ -27,6 +28,12 @@ class DashboardService
 
         // Merge user rooms with admin rooms, deduplicating by id
         $rooms = $userRooms->merge($adminRooms)->unique('id')->values();
+
+        // Load user's events
+        $events = Event::where('created_by', $user->id)
+            ->withCount('stories')
+            ->latest()
+            ->get();
 
         $houseMembers = $user->houseMembers()->latest()->get();
 
@@ -59,6 +66,7 @@ class DashboardService
 
         return [
             'rooms' => $rooms,
+            'events' => $events,
             'recentStories' => $recentStories->map(fn ($story) => [
                 'id' => $story->id,
                 'title' => $story->title,
@@ -68,7 +76,7 @@ class DashboardService
             ]),
             'stats' => $stats,
             'house_members' => $houseMemberData,
-            'notifications' => [], // $user->notifications()->take(5)->get(),
+            'notifications' => [],
         ];
     }
 

@@ -22,8 +22,15 @@ export function buildBudgetSummary(gate) {
   const totalPassed = toLaunch.length + skipped;
 
   const reasonParts = [];
-  if (budgetSource !== 'default') reasonParts.push(`user pre-set budget via ${budgetSource}`);
-  if (skipped === 0) reasonParts.push('no candidates skipped by budget');
+
+  if (budgetSource !== 'default') {
+reasonParts.push(`user pre-set budget via ${budgetSource}`);
+}
+
+  if (skipped === 0) {
+reasonParts.push('no candidates skipped by budget');
+}
+
   const shouldAsk = budgetSource === 'default' && skipped > 0;
   const reason = shouldAsk
     ? `default budget skipped ${skipped} candidate(s); ask user whether to expand`
@@ -50,6 +57,7 @@ export function buildBudgetSummary(gate) {
   const questionPayload = shouldAsk ? buildQuestionPayload(questionText, options) : null;
   const chatPreview = buildChatPreview({ shouldAsk, totalPassed, currentBudget, skipped, topInvestigating, topSkipped, reason });
   const exactChatMessage = buildExactChatMessage(chatPreview);
+
   return {
     shouldAsk,
     reason,
@@ -70,20 +78,26 @@ export function buildBudgetSummary(gate) {
 }
 
 function buildChatPreview({ shouldAsk, totalPassed, currentBudget, skipped, topInvestigating, topSkipped, reason }) {
-  if (!shouldAsk) return `Audit scope: no question needed — ${reason}.`;
+  if (!shouldAsk) {
+return `Audit scope: no question needed — ${reason}.`;
+}
+
   const lines = [];
   lines.push(`Found ${totalPassed} potential issue${totalPassed === 1 ? '' : 's'} worth checking. By default I'll inspect the ${currentBudget} strongest now; ${skipped} will stay in the report for a larger run.`);
   lines.push(`Choose a larger scope if you want broader coverage. More checks take longer.`);
+
   if (topInvestigating.length > 0) {
     lines.push('');
     lines.push(`Checking now${topInvestigating.length < currentBudget ? ` (${topInvestigating.length} shown)` : ''}:`);
     topInvestigating.forEach((c, i) => lines.push(`  ${i + 1}. ${formatCandidateLine(c)}`));
   }
+
   if (topSkipped.length > 0) {
     lines.push('');
     lines.push(`Only checked if you expand this run (${topSkipped.length}):`);
     topSkipped.forEach((c, i) => lines.push(`  ${i + 1}. ${formatCandidateLine(c)}`));
   }
+
   return lines.join('\n');
 }
 
@@ -114,13 +128,20 @@ function buildPrintCheck({ exactChatMessage, skipped }) {
 }
 
 function buildQuestionText({ shouldAsk, totalPassed, currentBudget }) {
-  if (!shouldAsk) return '';
+  if (!shouldAsk) {
+return '';
+}
+
   return `How many potential issues should I check in this run?`;
 }
 
 function buildOptions(currentCount, skippedCount) {
-  if (skippedCount === 0) return [];
+  if (skippedCount === 0) {
+return [];
+}
+
   const total = currentCount + skippedCount;
+
   return [
     {
       label: `Check ${currentCount} (default)`,
@@ -164,19 +185,28 @@ export function renderBudgetSummaryMarkdown(s) {
   const lines = [];
   lines.push(`## Audit scope`);
   lines.push('');
+
   if (!s.shouldAsk) {
     lines.push(`_No question needed — ${s.reason}._`);
+
     return lines.join('\n');
   }
-  for (const ln of s.chatPreview.split('\n')) lines.push(ln);
+
+  for (const ln of s.chatPreview.split('\n')) {
+lines.push(ln);
+}
+
   lines.push('');
   lines.push('### Options');
   lines.push('');
+
   for (const o of s.options) {
     const tag = o.recommended ? ' (recommended)' : '';
     lines.push(`- **${o.label}${tag}** — ${o.rationale}`);
   }
+
   lines.push('');
   lines.push(`**Question:** ${s.questionText}`);
+
   return lines.join('\n');
 }

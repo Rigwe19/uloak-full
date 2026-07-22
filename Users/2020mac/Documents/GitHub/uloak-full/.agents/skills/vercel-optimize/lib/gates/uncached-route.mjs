@@ -24,6 +24,7 @@ export const metadata = {
 export function gate(signals) {
   const rates = extractCacheHitRates(signals);
   const methods = extractMethodShares(signals);
+
   return rates
     .map((r) => ({ ...r, getShare: methods.get(r.route) ?? null }))
     .filter((r) => r.requests > 500 && r.hitRate < 0.5)
@@ -41,7 +42,11 @@ export function gate(signals) {
         question: `Why does ${r.route} have ${(r.hitRate * 100).toFixed(0)}% cache hit rate on ${r.requests} requests in this metrics window, and is it safe to cache at the edge?`,
         evidence: { metric: 'requestsByRouteCache', route: r.route, requests: r.requests, hitRate: r.hitRate, getShare: r.getShare },
       }, signals);
-      if (r.getShare !== null) return candidate;
+
+      if (r.getShare !== null) {
+return candidate;
+}
+
       return {
         ...candidate,
         disqualified: true,
@@ -53,15 +58,27 @@ export function gate(signals) {
 
 function extractCacheHitRates(signals) {
   const m = signals.metrics?.requestsByRouteCache;
-  if (!m?.ok && !Array.isArray(m?.rows)) return [];
+
+  if (!m?.ok && !Array.isArray(m?.rows)) {
+return [];
+}
 
   const perRoute = new Map();
+
   for (const row of (m?.rows ?? [])) {
     const route = row.route;
-    if (!route) continue;
+
+    if (!route) {
+continue;
+}
+
     const value = row.value ?? 0;
     const prior = perRoute.get(route) ?? { route, hits: 0, total: 0 };
-    if (row.cache_result === 'HIT') prior.hits += value;
+
+    if (row.cache_result === 'HIT') {
+prior.hits += value;
+}
+
     prior.total += value;
     perRoute.set(route, prior);
   }
@@ -76,18 +93,34 @@ function extractCacheHitRates(signals) {
 function extractMethodShares(signals) {
   const m = signals.metrics?.requestsByRouteMethod;
   const out = new Map();
-  if (!Array.isArray(m?.rows)) return out;
+
+  if (!Array.isArray(m?.rows)) {
+return out;
+}
+
   const perRoute = new Map();
+
   for (const row of m.rows) {
-    if (!row?.route) continue;
+    if (!row?.route) {
+continue;
+}
+
     const v = row.value ?? 0;
     const prior = perRoute.get(row.route) ?? { gets: 0, total: 0 };
-    if ((row.request_method ?? '').toUpperCase() === 'GET') prior.gets += v;
+
+    if ((row.request_method ?? '').toUpperCase() === 'GET') {
+prior.gets += v;
+}
+
     prior.total += v;
     perRoute.set(row.route, prior);
   }
+
   for (const [route, r] of perRoute) {
-    if (r.total > 0) out.set(route, r.gets / r.total);
+    if (r.total > 0) {
+out.set(route, r.gets / r.total);
+}
   }
+
   return out;
 }

@@ -1,7 +1,8 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { getDatabase } from '../db';
-import { ApiResponse, Todo } from '../types/index';
+import type { ApiResponse, Todo } from '../types/index';
 
 const router = Router();
 const WINDOW_MS = 60_000;
@@ -52,6 +53,7 @@ router.post('/todos', (req: Request, res: Response): void => {
   // Validation
   if (!title || typeof title !== 'string' || title.trim() === '') {
     res.status(400).json({ error: 'Title is required and must be a non-empty string' });
+
     return;
   }
 
@@ -68,6 +70,7 @@ router.post('/todos', (req: Request, res: Response): void => {
 
     if (!row) {
       res.status(500).json({ error: 'Database error' });
+
       return;
     }
 
@@ -90,15 +93,19 @@ router.patch('/todos/:id', (req: Request, res: Response): void => {
   // Validation
   if (typeof completed !== 'boolean') {
     res.status(400).json({ error: 'Completed must be a boolean value' });
+
     return;
   }
 
   try {
     const row = db.prepare('SELECT * FROM todos WHERE id = ?').get(id) as TodoRow | undefined;
+
     if (!row) {
       res.status(404).json({ error: 'Todo not found' });
+
       return;
     }
+
     const now = new Date().toISOString();
 
     db.prepare('UPDATE todos SET completed = ?, updatedAt = ? WHERE id = ?').run(
@@ -110,6 +117,7 @@ router.patch('/todos/:id', (req: Request, res: Response): void => {
 
     if (!updatedRow) {
       res.status(500).json({ error: 'Database error' });
+
       return;
     }
 
@@ -131,13 +139,16 @@ router.delete('/todos/:id', (req: Request, res: Response): void => {
   // Validation - check if id is a valid number
   if (!id || isNaN(Number(id))) {
     res.status(400).json({ error: 'Invalid id parameter' });
+
     return;
   }
 
   try {
     const row = db.prepare('SELECT * FROM todos WHERE id = ?').get(id) as TodoRow | undefined;
+
     if (!row) {
       res.status(404).json({ error: 'Todo not found' });
+
       return;
     }
 

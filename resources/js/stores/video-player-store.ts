@@ -1,12 +1,22 @@
 import { create } from 'zustand';
-import type { PlayerState, PlayerActions, PlaybackSpeed } from '@/types/video-player';
+import type { PlayerState as PlayerStateType, PlayerActions } from '@/types/video-player';
 
-const INITIAL_STATE: PlayerState = {
+interface VideoPlayerStoreState extends PlayerStateType {
+    activeVideoElement: HTMLVideoElement | null;
+}
+
+interface VideoPlayerStoreActions extends PlayerActions {
+    setOverlayVisible: (visible: boolean) => void;
+    setActiveVideoElement: (el: HTMLVideoElement | null) => void;
+}
+
+const usePlayerStoreBase = create<VideoPlayerStoreState & VideoPlayerStoreActions>((set) => ({
+    // State
     activeVideoId: null,
     isPlaying: false,
     isMuted: false,
     volume: 1,
-    speed: 1 as PlaybackSpeed,
+    speed: 1,
     currentTime: 0,
     duration: 0,
     buffered: 0,
@@ -14,109 +24,58 @@ const INITIAL_STATE: PlayerState = {
     isPip: false,
     overlayVisible: true,
     showPreview: false,
-    isLoading: true,
+    isLoading: false,
     hasError: false,
     errorMessage: null,
-};
+    activeVideoElement: null,
 
-type PlayerStore = PlayerState & PlayerActions;
-
-let activeVideoElement: HTMLVideoElement | null = null;
-
-export const usePlayerStore = create<PlayerStore>((set, get) => ({
-    ...INITIAL_STATE,
-
-    play: (videoId) => {
-        const { activeVideoId } = get();
-
-        if (activeVideoId && activeVideoId !== videoId && activeVideoElement) {
-            activeVideoElement.pause();
-        }
-
-        set({ activeVideoId: videoId, isPlaying: true, hasError: false, errorMessage: null });
-    },
-
+    // Actions
+    play: (videoId) => set({ activeVideoId: videoId, isPlaying: true }),
     pause: () => set({ isPlaying: false }),
-
-    togglePlay: () => {
-        const { isPlaying, activeVideoId } = get();
-
-        if (isPlaying) {
-            set({ isPlaying: false });
-        } else if (activeVideoId) {
-            set({ isPlaying: true, hasError: false, errorMessage: null });
-        }
-    },
-
-    seek: (time) => {
-        const el = activeVideoElement;
-
-        if (el && !isNaN(time)) {
-            el.currentTime = time;
-        }
-
-        set({ currentTime: time });
-    },
-
-    setVolume: (vol) => {
-        const clamped = Math.max(0, Math.min(1, vol));
-
-        set({ volume: clamped, isMuted: clamped === 0 });
-    },
-
-    toggleMute: () => set((s) => ({ isMuted: !s.isMuted })),
-
-    setSpeed: (speed: PlaybackSpeed) => set({ speed }),
-
+    togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
+    seek: (time) => set({ currentTime: time }),
+    setVolume: (vol) => set({ volume: vol, isMuted: vol === 0 }),
+    toggleMute: () => set((state) => ({ isMuted: !state.isMuted })),
+    setSpeed: (speed) => set({ speed }),
     setCurrentTime: (time) => set({ currentTime: time }),
-
     setDuration: (dur) => set({ duration: dur }),
-
     setBuffered: (buffered) => set({ buffered }),
-
-    toggleFullscreen: () => set((s) => ({ isFullscreen: !s.isFullscreen })),
-
+    toggleFullscreen: () => set((state) => ({ isFullscreen: !state.isFullscreen })),
     setIsFullscreen: (val) => set({ isFullscreen: val }),
-
-    togglePip: () => set((s) => ({ isPip: !s.isPip })),
-
+    togglePip: () => set((state) => ({ isPip: !state.isPip })),
     showOverlay: () => set({ overlayVisible: true }),
-
-    hideOverlay: () => {
-        const { isPlaying } = get();
-
-        if (isPlaying) {
-            set({ overlayVisible: false });
-        }
-    },
-
+    hideOverlay: () => set({ overlayVisible: false }),
     setLoading: (val) => set({ isLoading: val }),
-
-    setError: (msg) => set({ hasError: msg !== null, errorMessage: msg, isLoading: false, isPlaying: false }),
-
-    stop: () => {
-        if (activeVideoElement) {
-            activeVideoElement.pause();
-            activeVideoElement = null;
-        }
-
-        set({ ...INITIAL_STATE });
-    },
-
-    reset: () => {
-        if (activeVideoElement) {
-            activeVideoElement.pause();
-            activeVideoElement = null;
-        }
-
-        set({ ...INITIAL_STATE });
-    },
+    setError: (msg) => set({ hasError: !!msg, errorMessage: msg }),
+    stop: () => set({ isPlaying: false, currentTime: 0 }),
+    reset: () => set({
+        activeVideoId: null,
+        isPlaying: false,
+        isMuted: false,
+        volume: 1,
+        speed: 1,
+        currentTime: 0,
+        duration: 0,
+        buffered: 0,
+        isFullscreen: false,
+        isPip: false,
+        overlayVisible: true,
+        showPreview: false,
+        isLoading: false,
+        hasError: false,
+        errorMessage: null,
+        activeVideoElement: null,
+    }),
+    setOverlayVisible: (visible) => set({ overlayVisible: visible }),
+    setActiveVideoElement: (el) => set({ activeVideoElement: el }),
 }));
 
-export function setActiveVideoElement(el: HTMLVideoElement | null) {
-    activeVideoElement = el;
-}
+export const usePlayerStore = usePlayerStoreBase;
 
-export function getActiveVideoElement(): HTMLVideoElement | null {
-    return activeVideoElement;
-}
+export const getActiveVideoElement = (): HTMLVideoElement | null => {
+    return document.querySelector('video');
+};
+
+export const setActiveVideoElement = (el: HTMLVideoElement | null): void => {
+    usePlayerStoreBase.getState().setActiveVideoElement(el);
+};

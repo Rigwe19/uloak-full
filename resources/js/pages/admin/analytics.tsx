@@ -1,4 +1,14 @@
 import { Head, router } from '@inertiajs/react';
+import { LineChart, BarChart } from 'echarts/charts';
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  TitleComponent,
+} from 'echarts/components';
+import * as echarts from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import ReactEChartsCore from 'echarts-for-react/lib/core';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
@@ -18,16 +28,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
-import ReactEChartsCore from 'echarts-for-react/lib/core';
-import * as echarts from 'echarts/core';
-import { LineChart, BarChart } from 'echarts/charts';
-import {
-  GridComponent,
-  TooltipComponent,
-  LegendComponent,
-  TitleComponent,
-} from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
 
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -65,7 +65,9 @@ export default function AdminAnalytics() {
   const [exporting, setExporting] = useState(false);
 
   const fetchData = useCallback(async () => {
-    if (!dateRange?.from || !dateRange?.to) return;
+    if (!dateRange?.from || !dateRange?.to) {
+return;
+}
 
     const params = new URLSearchParams({
       start: dateRange.from.toISOString(),
@@ -92,7 +94,9 @@ export default function AdminAnalytics() {
   useAnalyticsPolling(fetchData);
 
   const handleExport = async (format: 'csv' | 'xlsx') => {
-    if (!dateRange?.from || !dateRange?.to) return;
+    if (!dateRange?.from || !dateRange?.to) {
+return;
+}
 
     setExporting(true);
 
@@ -238,7 +242,9 @@ function StatCard({
 }
 
 function OverviewTab({ data }: { data: any }) {
-  if (!data) return null;
+  if (!data) {
+return null;
+}
 
   const { media, user_stats, room_stats, realtime } = data;
 
@@ -347,7 +353,9 @@ function OverviewTab({ data }: { data: any }) {
 }
 
 function MediaTab({ data }: { data: any }) {
-  if (!data) return null;
+  if (!data) {
+return null;
+}
 
   const topStories = data.top_stories || [];
   const viewsOverTime = data.views_over_time || {};
@@ -447,7 +455,9 @@ function MediaTab({ data }: { data: any }) {
 }
 
 function UsersTab({ data }: { data: any }) {
-  if (!data) return null;
+  if (!data) {
+return null;
+}
 
   const usersOverTime = data.users_over_time || {};
 
@@ -532,7 +542,9 @@ function UsersTab({ data }: { data: any }) {
 }
 
 function ProcessingTab({ data }: { data: any }) {
-  if (!data) return null;
+  if (!data) {
+return null;
+}
 
   const failuresByDate = data.failures_over_time || {};
 
@@ -620,13 +632,26 @@ function ProcessingTab({ data }: { data: any }) {
 }
 
 function formatDuration(seconds: number): string {
-  if (!seconds || seconds < 0) return '0s';
+  if (!seconds || seconds < 0) {
+return '0s';
+}
+
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   const parts: string[] = [];
-  if (h > 0) parts.push(`${h}h`);
-  if (m > 0) parts.push(`${m}m`);
-  if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+
+  if (h > 0) {
+parts.push(`${h}h`);
+}
+
+  if (m > 0) {
+parts.push(`${m}m`);
+}
+
+  if (s > 0 || parts.length === 0) {
+parts.push(`${s}s`);
+}
+
   return parts.join(' ');
 }

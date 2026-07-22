@@ -14,10 +14,15 @@ export const metadata = {
 export function apply(rec, _ctx = {}) {
   const fields = ['fix', 'currentBehavior', 'desiredBehavior'];
   const strippedSet = new Set();
+
   for (const f of fields) {
-    if (typeof rec[f] !== 'string') continue;
+    if (typeof rec[f] !== 'string') {
+continue;
+}
+
     for (const directive of STRIP_DIRECTIVES) {
       const re = new RegExp(`(?:,\\s*)?\\b${escapeRegex(directive)}\\b(?:\\s*,)?`, 'g');
+
       if (re.test(rec[f])) {
         rec[f] = rec[f]
           .replace(new RegExp(`\\b${escapeRegex(directive)}\\b`, 'g'), '')
@@ -31,7 +36,12 @@ export function apply(rec, _ctx = {}) {
       }
     }
   }
+
   const stripped = [...strippedSet];
-  if (stripped.length === 0) return {};
+
+  if (stripped.length === 0) {
+return {};
+}
+
   return { tags: stripped.map((d) => `vercel-directive-strip:${d}`) };
 }

@@ -34,30 +34,42 @@ export function inferPlaybook(signals) {
     || has('@anthropic-ai/sdk')
     || hasPrefix('@ai-sdk/');
   const aiUsage = usageHas(/^AI Gateway$/i) || usageHas(/^Sandbox/i);
+
   if (aiDep || aiUsage) {
     return 'ai-application';
   }
+
   if (has('stripe') || has('@stripe/stripe-js') || has('react-stripe-js') ||
       anyRouteMatches(/^\/(cart|checkout|products?)\b/i)) {
     return 'ecommerce';
   }
+
   if (has('next-auth') || has('@clerk/nextjs') || has('@workos-inc/authkit-nextjs') ||
       anyRouteMatches(/^\/(admin|dashboard|settings|account|billing)\b/i)) {
     return 'saas';
   }
+
   if (routes.length > 0 && routes.every((r) => /^\/api\//.test(r.routePath ?? ''))) {
     return 'api-service';
   }
+
   if (codebaseStack.hasAppRouter || codebaseStack.hasPagesRouter) {
-    if (anyRouteMatches(/^\/(blog|docs|posts?|articles?|guides?)\b/i)) return 'content-site';
-    if (anyRouteMatches(/^\/\(?marketing\)?\b/i)) return 'marketing';
+    if (anyRouteMatches(/^\/(blog|docs|posts?|articles?|guides?)\b/i)) {
+return 'content-site';
+}
+
+    if (anyRouteMatches(/^\/\(?marketing\)?\b/i)) {
+return 'marketing';
+}
   }
+
   return null;
 }
 
 // SvelteKit/Nuxt/Astro have framework-shaped advice that doesn't fit the Next.js-flavored profile playbooks — both can ship together.
 export function inferFrameworkPlaybook(signals) {
   const stack = signals?.stack ?? signals?.codebase?.stack ?? {};
+
   switch (stack.framework) {
     case 'sveltekit': return 'sveltekit';
     default: return null;
@@ -69,54 +81,86 @@ export function inferFrameworkPlaybook(signals) {
 export function resolveFiles(candidate, signals) {
   const route = candidate.route;
   const routes = signals?.codebase?.routes ?? [];
+
   if (Array.isArray(candidate.files) && candidate.files.length > 0) {
     return capBriefFiles(candidate.files, route ? closestAncestorLayoutFiles(route, routes) : [], routes);
   }
-  if (!route) return [];
+
+  if (!route) {
+return [];
+}
+
   const nonLayoutRoutes = routes.filter((r) => r.type !== 'layout');
   const layoutFiles = closestAncestorLayoutFiles(route, routes);
   let matched = nonLayoutRoutes.filter((r) => r.routePath === route);
+
   if (matched.length === 0) {
     // Fuzzy: prefer max literal-segment matches so `/event/[code]/teaser` beats `/event/[code]/[location]` when candidate is `/event/[*]/teaser`.
     const scored = nonLayoutRoutes
       .map((r) => ({ r, score: routePathMatchScore(r.routePath, route) }))
       .filter((x) => x.score > 0);
-    if (scored.length === 0) return capBriefFiles([], layoutFiles, routes);
+
+    if (scored.length === 0) {
+return capBriefFiles([], layoutFiles, routes);
+}
+
     const top = Math.max(...scored.map((s) => s.score));
     matched = scored.filter((s) => s.score === top).map((s) => s.r);
   }
+
   const direct = matched.map((r) => r.file).filter(Boolean);
   const workspaceImports = matched
     .flatMap((r) => Array.isArray(r.workspaceImports) ? r.workspaceImports : [])
     .filter(Boolean);
+
   return capBriefFiles(uniq([...direct, ...workspaceImports]), layoutFiles, routes);
 }
 
 // literal-segment match × 10, dynamic × 1, pure equality = sentinel that always wins.
 export function routePathMatchScore(routePath, metricPath) {
-  if (typeof routePath !== 'string' || typeof metricPath !== 'string') return 0;
-  if (routePath === metricPath) return 1000 + routePath.split('/').filter(Boolean).length;
+  if (typeof routePath !== 'string' || typeof metricPath !== 'string') {
+return 0;
+}
+
+  if (routePath === metricPath) {
+return 1000 + routePath.split('/').filter(Boolean).length;
+}
+
   const rTokens = routePath.split('/').filter(Boolean);
   const mTokens = metricPath.split('/').filter(Boolean);
   let ri = 0, mi = 0, literals = 0, dynamicMatches = 0;
+
   while (ri < rTokens.length && mi < mTokens.length) {
     const r = rTokens[ri];
     const m = mTokens[mi];
-    if (isCatchAllPlaceholder(r)) return 1 + literals * 10 + dynamicMatches;
-    if (r === m) { literals++; ri++; mi++; continue; }
+
+    if (isCatchAllPlaceholder(r)) {
+return 1 + literals * 10 + dynamicMatches;
+}
+
+    if (r === m) {
+ literals++; ri++; mi++; continue; 
+}
+
     // Route patterns may match concrete metric paths, and route/metric dynamic
     // placeholders may match each other. A metric-side placeholder must not
     // match a static route literal: that would let `/docs/[...slug]` traffic
     // attach to an unrelated static scanner route like `/docs/llms.txt`.
-    if (isDynamicPlaceholder(r) && !isCatchAllPlaceholder(m)) { dynamicMatches++; ri++; mi++; continue; }
+    if (isDynamicPlaceholder(r) && !isCatchAllPlaceholder(m)) {
+ dynamicMatches++; ri++; mi++; continue; 
+}
+
     return 0;
   }
+
   if (ri === rTokens.length - 1 && /^\[\[\.\.\..+\]\]$/.test(rTokens[ri]) && mi === mTokens.length) {
     return 1 + literals * 10 + dynamicMatches;
   }
+
   if (ri !== rTokens.length || mi !== mTokens.length) {
     return trailingSingleDynamicPartialScore(rTokens, mTokens, ri, mi, literals, dynamicMatches);
   }
+
   return 1 + literals * 10 + dynamicMatches;
 }
 
@@ -137,15 +181,28 @@ function isCatchAllPlaceholder(token) {
 function trailingSingleDynamicPartialScore(rTokens, mTokens, ri, mi, literals, dynamicMatches) {
   const rRemaining = rTokens.length - ri;
   const mRemaining = mTokens.length - mi;
-  if (Math.abs(rRemaining - mRemaining) !== 1) return 0;
-  if (rRemaining !== 0 && mRemaining !== 0) return 0;
+
+  if (Math.abs(rRemaining - mRemaining) !== 1) {
+return 0;
+}
+
+  if (rRemaining !== 0 && mRemaining !== 0) {
+return 0;
+}
+
   const lastRouteToken = rTokens[ri - 1];
   const lastMetricToken = mTokens[mi - 1];
-  if (!isSingleDynamicPlaceholder(lastRouteToken) && !isSingleDynamicPlaceholder(lastMetricToken)) return 0;
+
+  if (!isSingleDynamicPlaceholder(lastRouteToken) && !isSingleDynamicPlaceholder(lastMetricToken)) {
+return 0;
+}
+
   return literals * 10 + dynamicMatches;
 }
 
-function uniq(xs) { return Array.from(new Set(xs)); }
+function uniq(xs) {
+ return Array.from(new Set(xs)); 
+}
 
 function briefRoots(signals) {
   const codebase = signals?.codebase ?? {};
@@ -155,23 +212,43 @@ function briefRoots(signals) {
   const repoRoot = typeof codebase.monorepoRoot === 'string' && codebase.monorepoRoot.length > 0
     ? normalize(codebase.monorepoRoot)
     : appRoot;
+
   return { appRoot, repoRoot };
 }
 
 function absoluteBriefPath(file, roots) {
-  if (typeof file !== 'string' || file.length === 0) return null;
-  if (isAbsolute(file)) return normalize(file);
+  if (typeof file !== 'string' || file.length === 0) {
+return null;
+}
+
+  if (isAbsolute(file)) {
+return normalize(file);
+}
+
   const base = isRepoRelativePath(file) ? roots.repoRoot : roots.appRoot;
+
   return base ? normalize(join(base, file)) : null;
 }
 
 function repoRelativeBriefPath(file, roots) {
-  if (typeof file !== 'string' || file.length === 0) return null;
+  if (typeof file !== 'string' || file.length === 0) {
+return null;
+}
+
   const normalized = normalize(file);
-  if (isRepoRelativePath(normalized)) return normalized;
+
+  if (isRepoRelativePath(normalized)) {
+return normalized;
+}
+
   const abs = absoluteBriefPath(file, roots);
-  if (!abs || !roots.repoRoot) return normalized;
+
+  if (!abs || !roots.repoRoot) {
+return normalized;
+}
+
   const rel = normalize(relative(roots.repoRoot, abs));
+
   return rel.startsWith('..') ? normalized : rel;
 }
 
@@ -183,11 +260,19 @@ function capBriefFiles(nonLayoutCandidates, layoutCandidates, routes) {
   const knownLayoutFiles = new Set(routes.filter((r) => r.type === 'layout').map((r) => r.file).filter(Boolean));
   const nonLayout = [];
   const layouts = [];
+
   for (const f of uniq(nonLayoutCandidates)) {
-    if (knownLayoutFiles.has(f) || isLayoutPath(f)) layouts.push(f);
-    else nonLayout.push(f);
+    if (knownLayoutFiles.has(f) || isLayoutPath(f)) {
+layouts.push(f);
+} else {
+nonLayout.push(f);
+}
   }
-  for (const f of layoutCandidates) layouts.push(f);
+
+  for (const f of layoutCandidates) {
+layouts.push(f);
+}
+
   return [
     ...uniq(nonLayout).slice(0, NON_LAYOUT_FILE_CAP),
     ...uniq(layouts).slice(0, LAYOUT_FILE_CAP),
@@ -195,7 +280,10 @@ function capBriefFiles(nonLayoutCandidates, layoutCandidates, routes) {
 }
 
 function closestAncestorLayoutFiles(route, routes) {
-  if (!route) return [];
+  if (!route) {
+return [];
+}
+
   return routes
     .filter((r) => r.type === 'layout' && r.file && layoutAppliesToRoute(r.routePath, route))
     .sort((a, b) =>
@@ -206,19 +294,40 @@ function closestAncestorLayoutFiles(route, routes) {
 }
 
 function layoutAppliesToRoute(layoutPath, routePath) {
-  if (typeof layoutPath !== 'string' || typeof routePath !== 'string') return false;
-  if (layoutPath === '/') return true;
+  if (typeof layoutPath !== 'string' || typeof routePath !== 'string') {
+return false;
+}
+
+  if (layoutPath === '/') {
+return true;
+}
+
   const layoutTokens = layoutPath.split('/').filter(Boolean);
   const routeTokens = routePath.split('/').filter(Boolean);
-  if (layoutTokens.length > routeTokens.length) return false;
+
+  if (layoutTokens.length > routeTokens.length) {
+return false;
+}
+
   for (let i = 0; i < layoutTokens.length; i++) {
     const l = layoutTokens[i];
     const r = routeTokens[i];
-    if (isCatchAllPlaceholder(l)) return true;
-    if (l === r) continue;
-    if (isDynamicPlaceholder(l) || isDynamicPlaceholder(r)) continue;
+
+    if (isCatchAllPlaceholder(l)) {
+return true;
+}
+
+    if (l === r) {
+continue;
+}
+
+    if (isDynamicPlaceholder(l) || isDynamicPlaceholder(r)) {
+continue;
+}
+
     return false;
   }
+
   return true;
 }
 
@@ -232,23 +341,50 @@ function isLayoutPath(file) {
 
 // Tells the sub-agent which signals are missing so it doesn't conflate "no data" with "no bottleneck."
 export function summarizeDeepDiveFailures(deepDive) {
-  if (!deepDive || typeof deepDive !== 'object') return null;
+  if (!deepDive || typeof deepDive !== 'object') {
+return null;
+}
+
   const entries = Object.entries(deepDive);
-  if (entries.length === 0) return null;
+
+  if (entries.length === 0) {
+return null;
+}
+
   const failures = entries.filter(([, v]) => isFailureEntry(v));
-  if (failures.length === 0) return null;
+
+  if (failures.length === 0) {
+return null;
+}
+
   // Surface when ≥50% failed OR ≥3 distinct signals failed.
-  if (failures.length / entries.length < 0.5 && failures.length < 3) return null;
+  if (failures.length / entries.length < 0.5 && failures.length < 3) {
+return null;
+}
+
   const failedIds = failures.map(([k]) => k).slice(0, 6).join(', ');
   const codes = uniq(failures.map(([, v]) => v?.code ?? v?.error ?? 'unknown')).slice(0, 3).join(' / ');
+
   return `${failures.length} of ${entries.length} deep-dive signals failed (${failedIds}${failures.length > 6 ? ', …' : ''}) — error: ${codes}.`;
 }
 
 function isFailureEntry(v) {
-  if (!v || typeof v !== 'object') return false;
-  if (v.ok === false) return true;
-  if (typeof v.code === 'string' && v.code !== 'OK') return true;
-  if (typeof v.error === 'string' && v.error.length > 0) return true;
+  if (!v || typeof v !== 'object') {
+return false;
+}
+
+  if (v.ok === false) {
+return true;
+}
+
+  if (typeof v.code === 'string' && v.code !== 'OK') {
+return true;
+}
+
+  if (typeof v.error === 'string' && v.error.length > 0) {
+return true;
+}
+
   return false;
 }
 
@@ -259,8 +395,10 @@ export async function citationSubset(candidateKind, framework, version) {
     entry.applicableFrameworks.some((p) => matchesFrameworkVersion(p, framework, version));
   const kindOk = (entry) => {
     const at = Array.isArray(entry.appliesTo) ? entry.appliesTo : [];
+
     return at.length === 0 || at.includes(candidateKind);
   };
+
   return {
     urls: lib.urls.filter((e) => versionOk(e) && kindOk(e)),
     ruleSkillRefs: lib.ruleSkillRefs.filter((r) => versionOk(r) && kindOk(r)),
@@ -349,25 +487,45 @@ export function buildBrief({
   lines.push('You are a Vercel-optimize investigation sub-agent. Your job is to investigate ONE evidence-backed candidate and emit ONE recommendation JSON. Stay narrow. Stay grounded. Do NOT widen the search.');
   lines.push('');
   lines.push(`Brief id: \`${candidateGroup}#${candidateIndex}\` · candidateRef: \`${candidateRef}\``);
-  if (generatedAt) lines.push(`Generated: ${generatedAt}`);
+
+  if (generatedAt) {
+lines.push(`Generated: ${generatedAt}`);
+}
+
   lines.push('');
 
   lines.push('## Candidate');
   lines.push('');
   lines.push(`- **Kind:** \`${kind}\``);
   lines.push(`- **Scope:** ${candidate.scope ?? 'route'}`);
-  if (routeOrHost) lines.push(`- **Target:** \`${routeOrHost}\``);
-  if (roots.repoRoot) lines.push(`- **Repo root:** \`${roots.repoRoot}\``);
-  if (roots.appRoot) lines.push(`- **App root:** \`${roots.appRoot}\``);
-  if (candidate.o11ySignal) lines.push(`- **o11y signal at gate-time:** \`${candidate.o11ySignal}\``);
+
+  if (routeOrHost) {
+lines.push(`- **Target:** \`${routeOrHost}\``);
+}
+
+  if (roots.repoRoot) {
+lines.push(`- **Repo root:** \`${roots.repoRoot}\``);
+}
+
+  if (roots.appRoot) {
+lines.push(`- **App root:** \`${roots.appRoot}\``);
+}
+
+  if (candidate.o11ySignal) {
+lines.push(`- **o11y signal at gate-time:** \`${candidate.o11ySignal}\``);
+}
+
   lines.push(`- **Confidence:** ${candidate.confidence ?? 'n/a'}`);
   lines.push(`- **Priority:** ${candidate.priority ?? 'n/a'}`);
+
   if (candidate.disqualified) {
     lines.push(`- **⚠ Disqualifier present:** ${candidate.disqualifyReason ?? 'disqualified'}`);
   }
+
   lines.push('');
   lines.push(`**Gate question (the hypothesis you're verifying):** ${candidate.question ?? '(no question)'}`);
   lines.push('');
+
   if (Array.isArray(files) && files.length > 0) {
     lines.push('**Files you may read (read ONLY these — open each one directly, NOT a repo-wide grep):**');
     lines.push(`_Capped at ${NON_LAYOUT_FILE_CAP} non-layout files + up to ${LAYOUT_FILE_CAP} layouts._`);
@@ -383,17 +541,23 @@ export function buildBrief({
     );
     const layoutFiles = new Set(closestAncestorLayoutFiles(routeOrHost, routes));
     const workspaceImportFiles = [];
+
     for (const f of files) {
       const tag = layoutFiles.has(f) || isLayoutPath(f)
         ? '(layout)'
         : routeFiles.has(f) ? '(route)' : '(workspace import)';
-      if (tag === '(workspace import)') workspaceImportFiles.push(f);
+
+      if (tag === '(workspace import)') {
+workspaceImportFiles.push(f);
+}
+
       const repoRel = repoRelativeBriefPath(f, roots) ?? f;
       const abs = absoluteBriefPath(f, roots);
       const sourceSuffix = repoRel !== f ? ` (scan path: \`${f}\`)` : '';
       const absSuffix = abs && abs !== repoRel ? ` — open \`${abs}\`` : '';
       lines.push(`- \`${repoRel}\` ${tag}${sourceSuffix}${absSuffix}`);
     }
+
     if ([...routeFiles].length > 0 && workspaceImportFiles.length > 0) {
       lines.push('');
       lines.push('_The route file is often a thin shell that re-exports from a workspace package. If the route file has no awaits / heavy imports / data fetching of its own, the bottleneck almost certainly lives in one of the (workspace import) files above — read those._');
@@ -401,25 +565,44 @@ export function buildBrief({
   } else {
     lines.push('**Files:** none mapped to this candidate. Either the gate is account-scope (platform_*) or the scanner could not resolve a route→file mapping (legitimate data gap). Work from the deep-dive evidence alone.');
   }
+
   lines.push('');
 
   lines.push('## Stack context');
   lines.push('');
   lines.push(`- **Framework:** \`${framework}@${version}\``);
-  if (stack.hasAppRouter) lines.push('- **Router:** App Router');
-  if (stack.hasPagesRouter) lines.push('- **Router:** Pages Router');
-  if (stack.orm && stack.orm !== 'none') lines.push(`- **ORM:** ${stack.orm}`);
-  if (stack.isMonorepo) lines.push('- **Monorepo:** yes (watch for cross-package effects)');
+
+  if (stack.hasAppRouter) {
+lines.push('- **Router:** App Router');
+}
+
+  if (stack.hasPagesRouter) {
+lines.push('- **Router:** Pages Router');
+}
+
+  if (stack.orm && stack.orm !== 'none') {
+lines.push(`- **ORM:** ${stack.orm}`);
+}
+
+  if (stack.isMonorepo) {
+lines.push('- **Monorepo:** yes (watch for cross-package effects)');
+}
+
   lines.push('');
 
   // Negative-space filter: sub-agent must not recommend toggling on something already on.
   const projectFacts = deriveProjectFacts(signals);
+
   if (projectFacts.length > 0) {
     lines.push('## Project config (already on — do NOT recommend toggling)');
     lines.push('');
     lines.push('These settings are already enabled on the project. A recommendation that says "enable X" or "turn on X" for any of these is wrong and will be rejected by the verifier. Treat them as the starting state for your investigation.');
     lines.push('');
-    for (const f of projectFacts) lines.push(`- ${f.briefLine}`);
+
+    for (const f of projectFacts) {
+lines.push(`- ${f.briefLine}`);
+}
+
     lines.push('');
   }
 
@@ -427,12 +610,14 @@ export function buildBrief({
   lines.push('');
   const deepDive = candidate?.evidence?.deepDive ?? {};
   const failureNotice = summarizeDeepDiveFailures(deepDive);
+
   if (failureNotice) {
     lines.push(`> ⚠ **Deep-dive partly incomplete.** ${failureNotice}`);
     lines.push('>');
     lines.push(`> The base evidence below is still valid — \`o11ySignal=${candidate.o11ySignal ?? '(unset)'}\` came directly from the gate's broad-pass query and is unaffected. Investigate against that signal and any deep-dive keys that DID populate. Do not conflate "missing data" with "no bottleneck": if the data didn't come back, abstain on the missing dimensions, not on the candidate as a whole.`);
     lines.push('');
   }
+
   lines.push('Treat these as ground truth. Cite the specific paths and values verbatim in `why` and `verify`. Numeric values are rounded to 4 decimal places.');
   lines.push('');
   lines.push('**Units legend** — all duration/timing fields below are in **milliseconds** (`latency.*`, `ttfb.*`, `cpu.p95`, `memory.*`). All `value` fields under `startTypeSplit` / `statusDistribution` / `methodDistribution` / `cacheBreakdown` are **invocation counts**. `botShare` / `bandwidthByCache` values are **bytes**. `perDeployment.value` is **p95 latency in ms** for that deployment.');
@@ -441,31 +626,45 @@ export function buildBrief({
   lines.push(JSON.stringify(deepDive, null, 2));
   lines.push('```');
   lines.push('');
+
   if (interp.length > 0) {
     lines.push('**How to read the evidence for this candidate kind:**');
     lines.push('');
-    for (const h of interp) lines.push(`- ${h}`);
+
+    for (const h of interp) {
+lines.push(`- ${h}`);
+}
+
     lines.push('');
   }
 
   const cachePolicyHints = cachePolicyGuidance(kind, stack);
+
   if (cachePolicyHints.length > 0) {
     lines.push('## Cache-policy decision');
     lines.push('');
     lines.push('Pick the narrowest cache mechanism that matches the source. Do not default to `no-store`; if data is unsafe to cache, abstain or emit a no-change observation.');
     lines.push('');
-    for (const h of cachePolicyHints) lines.push(`- ${h}`);
+
+    for (const h of cachePolicyHints) {
+lines.push(`- ${h}`);
+}
+
     lines.push('');
   }
 
   lines.push(...renderSupportTopics(supportTopics));
-  if (supportTopics.length > 0) lines.push('');
+
+  if (supportTopics.length > 0) {
+lines.push('');
+}
 
   lines.push('## Citation library (USE ONLY THESE)');
   lines.push('');
   lines.push(`You may cite ONLY these URLs and skill-rule references. They are filtered for \`${framework}@${version}\` and the candidate kind \`${kind}\`. Any other URL will be stripped by the \`unknown-citation\` sanitizer; any URL whose version range doesn't cover \`${framework}@${version}\` will be stripped by \`version-mismatch\`.`);
   lines.push('');
   lines.push('### URLs');
+
   if (citations.urls.length === 0) {
     lines.push('_(no URLs match this kind + version — investigate, but the rec may fail `missing-citation`; consider abstaining)_');
   } else {
@@ -473,8 +672,10 @@ export function buildBrief({
       lines.push(`- \`${e.url}\` — ${e.topic}`);
     }
   }
+
   lines.push('');
   lines.push('### Skill-rule references');
+
   if (citations.ruleSkillRefs.length === 0) {
     lines.push('_(none applicable)_');
   } else {
@@ -482,6 +683,7 @@ export function buildBrief({
       lines.push(`- \`${r.skill}:${r.rule}\` — ${r.topic}`);
     }
   }
+
   lines.push('');
 
   if (playbookId && playbookBody) {
@@ -492,6 +694,7 @@ export function buildBrief({
     lines.push('_Use the playbook to tilt phrasing and pattern priority. NEVER invent a claim because the playbook mentions a pattern — only emit it if the evidence supports it._');
     lines.push('');
   }
+
   if (frameworkPlaybookId && frameworkPlaybookBody) {
     lines.push(`## Framework-specific playbook (\`${frameworkPlaybookId}\`)`);
     lines.push('');
@@ -591,13 +794,17 @@ export function buildBrief({
 }
 
 function cachePolicyGuidance(kind, stack = {}) {
-  if (!['uncached_route', 'cache_header_gap'].includes(kind)) return [];
+  if (!['uncached_route', 'cache_header_gap'].includes(kind)) {
+return [];
+}
+
   const framework = stack.framework ?? 'unknown';
   const cacheComponents = stack.cacheComponents === true;
   const hints = [
     'Whole public GET response: recommend `Cache-Control` / `CDN-Cache-Control` with `s-maxage` and `stale-while-revalidate`; name the TTL/freshness window and required `Vary` headers. Avoid high-cardinality `Vary` headers such as `X-Vercel-IP-Latitude` or `X-Vercel-IP-Longitude`; use coarser geography only when the product can tolerate it.',
     'Fallback, 404, auth, preview, webhook, mutation, and per-user branches: keep them uncached or short-lived while caching only the safe success branch.',
   ];
+
   if (framework === 'next') {
     if (cacheComponents) {
       hints.push('Next.js with Cache Components: for reusable data inside the render path, prefer `use cache` / `use cache: remote` plus `cacheLife()` and `cacheTag()` when invalidation evidence exists.');
@@ -605,6 +812,8 @@ function cachePolicyGuidance(kind, stack = {}) {
       hints.push('Next.js data fetch path: use `fetch(..., { next: { revalidate: seconds } })` or route-level `revalidate` only when it matches the project version and route semantics. Before recommending route-level `export const revalidate`, inspect the page/layout route chain for `cookies()`, `headers()`, `draftMode()`, `connection()`, and auth helpers; if any parent layout is request-time dynamic, require `next build` or manifest proof that the route is still ISR/static, otherwise abstain.');
     }
   }
+
   hints.push('Reusable server data where whole-response CDN caching is unsafe: recommend Runtime Cache only when the same result is reused across requests and the freshness/invalidation story is explicit.');
+
   return hints;
 }

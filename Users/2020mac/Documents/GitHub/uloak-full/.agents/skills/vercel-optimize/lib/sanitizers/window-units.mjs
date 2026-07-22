@@ -19,14 +19,20 @@ const STRING_FIELDS = [
 
 export function apply(rec) {
   const tags = [];
+
   for (const field of STRING_FIELDS) {
-    if (typeof rec?.[field] !== 'string') continue;
+    if (typeof rec?.[field] !== 'string') {
+continue;
+}
+
     const before = rec[field];
     const after = normalizeObservedWindowUnits(before);
+
     if (after !== before) {
       rec[field] = after;
       tags.push(`window-units:${field}`);
     }
   }
+
   return tags.length > 0 ? { tags } : {};
 }

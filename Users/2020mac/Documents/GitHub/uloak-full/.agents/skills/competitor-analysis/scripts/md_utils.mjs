@@ -6,16 +6,26 @@
 export function parseFrontmatter(content) {
   content = content.replace(/\r\n/g, '\n'); // tolerate CRLF — anchors below assume LF
   const m = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!m) return null;
+
+  if (!m) {
+return null;
+}
+
   const fields = {};
+
   for (const line of m[1].split('\n')) {
     const idx = line.indexOf(':');
+
     if (idx > 0) {
       const k = line.slice(0, idx).trim();
       const v = line.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
-      if (k && v) fields[k] = v;
+
+      if (k && v) {
+fields[k] = v;
+}
     }
   }
+
   return fields;
 }
 
@@ -25,6 +35,7 @@ export function parseFrontmatter(content) {
 export function parseBody(content) {
   content = content.replace(/\r\n/g, '\n'); // tolerate CRLF — anchors below assume LF
   const m = content.match(/^---\n[\s\S]*?\n---\n([\s\S]*)/);
+
   return m ? m[1].trim() : content.trim();
 }
 
@@ -35,16 +46,25 @@ export function parseSections(body) {
   const lines = body.replace(/\r\n/g, '\n').split('\n');
   let currentKey = null;
   let buffer = [];
+
   for (const line of lines) {
     const m = line.match(/^## (.+)$/);
+
     if (m) {
-      if (currentKey !== null) sections[currentKey] = buffer.join('\n').trim();
+      if (currentKey !== null) {
+sections[currentKey] = buffer.join('\n').trim();
+}
+
       currentKey = m[1].trim();
       buffer = [];
     } else if (currentKey !== null) {
       buffer.push(line);
     }
   }
-  if (currentKey !== null) sections[currentKey] = buffer.join('\n').trim();
+
+  if (currentKey !== null) {
+sections[currentKey] = buffer.join('\n').trim();
+}
+
   return sections;
 }

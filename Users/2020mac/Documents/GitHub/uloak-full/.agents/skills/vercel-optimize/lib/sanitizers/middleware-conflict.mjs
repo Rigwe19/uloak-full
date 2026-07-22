@@ -13,10 +13,16 @@ export const metadata = {
 export function apply(rec, ctx = {}) {
   const findings = ctx?.signals?.codebase?.findings ?? [];
   const middlewareFinding = findings.find((f) => f?.scannerId === 'middleware-broad-matcher' || f?.id === 'middleware-broad-matcher');
-  if (!middlewareFinding) return {};
+
+  if (!middlewareFinding) {
+return {};
+}
 
   const route = extractRoute(rec);
-  if (!route) return {};
+
+  if (!route) {
+return {};
+}
 
   const matcher = middlewareFinding.detail?.matcher
     ?? middlewareFinding.matcher
@@ -24,6 +30,7 @@ export function apply(rec, ctx = {}) {
   const middlewareFile = middlewareFinding.file ?? middlewareFinding.path ?? 'middleware.ts';
 
   const covered = middlewareFinding.detail?.routesCovered ?? middlewareFinding.routesCovered;
+
   if (Array.isArray(covered) && covered.length > 0 && !covered.includes(route)) {
     return {};
   }
@@ -31,6 +38,9 @@ export function apply(rec, ctx = {}) {
   const tag = `middleware-conflict:${matcher}`;
   const caveat = `\n\n_Caveat: Middleware at \`${middlewareFile}\` (matcher: \`${matcher}\`) may intercept \`${route}\` and alter request/response before this fix takes effect. Verify the middleware does not set headers (e.g. \`Set-Cookie\`) that would invalidate caching._`;
 
-  if (typeof rec.fix === 'string') rec.fix += caveat;
+  if (typeof rec.fix === 'string') {
+rec.fix += caveat;
+}
+
   return { tag, needsReview: true };
 }

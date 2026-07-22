@@ -19,9 +19,14 @@ export const metadata = {
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (!/^next\.config\.(js|mjs|ts)$/.test(path.split('/').pop() ?? '')) continue;
+    if (!/^next\.config\.(js|mjs|ts)$/.test(path.split('/').pop() ?? '')) {
+continue;
+}
+
     const m = /productionBrowserSourceMaps\s*:\s*true/.exec(content);
+
     if (m) {
       out.push({
         pattern: metadata.id,
@@ -32,5 +37,6 @@ export function scan({ files }) {
       });
     }
   }
+
   return out;
 }

@@ -1,6 +1,6 @@
+import { VideoPlayer } from '@/components/media/VideoPlayer';
 import type { FeedVideoData } from '@/types/feed';
 import type { PlayerVideo } from '@/types/video-player';
-import { VideoPlayer } from '@/components/media/VideoPlayer';
 
 interface ReelVideoProps {
     video: FeedVideoData;

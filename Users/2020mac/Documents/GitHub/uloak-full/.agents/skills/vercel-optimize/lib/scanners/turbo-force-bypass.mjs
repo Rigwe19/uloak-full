@@ -45,6 +45,7 @@ export function scan({ files }) {
     if (name === 'turbo.json') {
       hasTurboJson = true;
       const buildCacheDisabled = detectBuildCacheDisabled(content);
+
       if (buildCacheDisabled) {
         out.push({
           pattern: metadata.id,
@@ -55,11 +56,13 @@ export function scan({ files }) {
           subtype: 'cache-disabled',
         });
       }
+
       continue;
     }
 
     if (name === 'package.json') {
       const scripts = safeScripts(content);
+
       for (const [scriptName, body] of Object.entries(scripts)) {
         if (FORCE_ENV_RE.test(body) || FORCE_FLAG_RE.test(body)) {
           const line = lineOfMatch(content, body) ?? 1;
@@ -73,6 +76,7 @@ export function scan({ files }) {
           });
         }
       }
+
       continue;
     }
 
@@ -102,15 +106,24 @@ function detectBuildCacheDisabled(content) {
   // Tolerate JSONC comments and trailing commas — light scan, not full parse.
   // Match `"build": { ... "cache": false ... }` within reasonable lookahead.
   const buildTask = /"build"\s*:\s*\{([\s\S]{0,400}?)\}/.exec(content);
-  if (!buildTask) return null;
-  if (!/"cache"\s*:\s*false/.test(buildTask[1])) return null;
+
+  if (!buildTask) {
+return null;
+}
+
+  if (!/"cache"\s*:\s*false/.test(buildTask[1])) {
+return null;
+}
+
   const lineNum = content.slice(0, buildTask.index).split('\n').length;
+
   return { line: lineNum };
 }
 
 function safeScripts(content) {
   try {
     const parsed = JSON.parse(content);
+
     return parsed?.scripts && typeof parsed.scripts === 'object' ? parsed.scripts : {};
   } catch {
     return {};
@@ -119,11 +132,18 @@ function safeScripts(content) {
 
 function lineOfMatch(haystack, needle) {
   const idx = haystack.indexOf(needle);
-  if (idx < 0) return null;
+
+  if (idx < 0) {
+return null;
+}
+
   return haystack.slice(0, idx).split('\n').length;
 }
 
 function truncate(s, n) {
-  if (typeof s !== 'string') return '';
+  if (typeof s !== 'string') {
+return '';
+}
+
   return s.length > n ? s.slice(0, n - 1) + '…' : s;
 }

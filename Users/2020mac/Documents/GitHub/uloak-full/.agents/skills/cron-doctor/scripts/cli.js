@@ -41,15 +41,21 @@ switch (cmd) {
     safe(() => {
       const r = cron.validate(expr);
       console.log('valid: ' + r.valid);
-      if (r.description) console.log('description: ' + r.description);
+
+      if (r.description) {
+console.log('description: ' + r.description);
+}
+
       if (r.warnings && r.warnings.length) {
         console.log('warnings:');
         r.warnings.forEach((w) => console.log('  - ' + w));
       }
+
       if (r.observations && r.observations.length) {
         console.log('observations:');
         r.observations.forEach((o) => console.log('  [' + (o.level || 'info') + '] ' + o.message));
       }
+
       if (r.suggestions && r.suggestions.length) {
         console.log('suggestions:');
         r.suggestions.forEach((s) => console.log('  [' + (s.level || 'info') + '] ' + s.message));

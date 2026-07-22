@@ -6,6 +6,7 @@ import { registerHandlers } from './handlers';
 
 async function main() {
   const token = process.env.TELEGRAM_BOT_TOKEN;
+
   if (!token) {
     console.error('ERROR: Set TELEGRAM_BOT_TOKEN in .env file');
     process.exit(1);

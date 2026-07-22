@@ -22,13 +22,22 @@ const RE = /Cache-Control[^"'`]*?max-age\s*=\s*\d+/gi;
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (/\.test\.|\.spec\./.test(path)) continue;
+    if (/\.test\.|\.spec\./.test(path)) {
+continue;
+}
+
     let m;
     RE.lastIndex = 0;
+
     while ((m = RE.exec(content)) !== null) {
       const hit = m[0];
-      if (/s-maxage/i.test(hit) || /CDN-Cache-Control/i.test(content.slice(Math.max(0, m.index - 100), m.index + hit.length + 100))) continue;
+
+      if (/s-maxage/i.test(hit) || /CDN-Cache-Control/i.test(content.slice(Math.max(0, m.index - 100), m.index + hit.length + 100))) {
+continue;
+}
+
       out.push({
         pattern: metadata.id,
         file: path,
@@ -38,5 +47,6 @@ export function scan({ files }) {
       });
     }
   }
+
   return out;
 }

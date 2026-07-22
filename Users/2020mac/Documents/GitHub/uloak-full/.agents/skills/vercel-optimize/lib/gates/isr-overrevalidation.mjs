@@ -13,10 +13,12 @@ export const metadata = {
 
 export function gate(signals) {
   const rows = extractRows(signals);
+
   return rows
     .filter((r) => r.writes > 100 && r.reads > 0 && r.writes / r.reads > 0.5)
     .map((r) => {
       const ratio = r.writes / r.reads;
+
       return {
         kind: metadata.id,
         scope: 'route',
@@ -43,17 +45,27 @@ function extractRows(signals) {
   const reads = signals.metrics?.isrReadsByRoute?.rows ?? [];
 
   const writeByRoute = new Map();
+
   for (const r of writes) {
-    if (!r.route) continue;
+    if (!r.route) {
+continue;
+}
+
     writeByRoute.set(r.route, (writeByRoute.get(r.route) ?? 0) + (r.value ?? 0));
   }
+
   const readByRoute = new Map();
+
   for (const r of reads) {
-    if (!r.route) continue;
+    if (!r.route) {
+continue;
+}
+
     readByRoute.set(r.route, (readByRoute.get(r.route) ?? 0) + (r.value ?? 0));
   }
 
   const routes = new Set([...writeByRoute.keys(), ...readByRoute.keys()]);
+
   return [...routes].map((route) => ({
     route,
     writes: writeByRoute.get(route) ?? 0,

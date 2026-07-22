@@ -1,8 +1,9 @@
+import { router } from '@inertiajs/react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FeedVideoData } from '@/types/feed';
+import { ReelsSocialOverlay } from './ReelsSocialOverlay';
 import { ReelVideo } from './ReelVideo';
-import { ReelsOverlay } from './ReelsOverlay';
 
 const SWIPE_THRESHOLD = 60;
 
@@ -14,6 +15,7 @@ interface ReelsPlayerProps {
     onNext: () => void;
     onPrev: () => void;
     onClose: () => void;
+    onVideoLike?: (storyId: number, isLiked: boolean, likesCount: number) => void;
 }
 
 export function ReelsPlayer({
@@ -24,7 +26,11 @@ export function ReelsPlayer({
     onNext,
     onPrev,
     onClose,
+    onVideoLike,
 }: ReelsPlayerProps) {
+    const [likesState, setLikesState] = useState<Map<number, { count: number; isLiked: boolean }>>(
+        new Map(videos.map(v => [v.id, { count: v.likes_count ?? 0, isLiked: v.is_liked ?? false }]))
+    );
     const touchStartY = useRef(0);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -65,12 +71,14 @@ export function ReelsPlayer({
         };
 
         window.addEventListener('keydown', handleKeyDown);
+
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onNext, onPrev]);
 
     useEffect(() => {
         const handleWheel = (e: globalThis.WheelEvent) => {
             e.preventDefault();
+
             if (e.deltaY > 0) {
                 onNext();
             } else {
@@ -79,13 +87,17 @@ export function ReelsPlayer({
         };
 
         window.addEventListener('wheel', handleWheel, { passive: false });
+
         return () => window.removeEventListener('wheel', handleWheel);
     }, [onNext, onPrev]);
 
     useLayoutEffect(() => {
         const original = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = original; };
+
+        return () => {
+ document.body.style.overflow = original; 
+};
     }, []);
 
     if (!currentVideo) {
@@ -118,6 +130,9 @@ export function ReelsPlayer({
     const isFirst = currentIndex === 0;
     const isLast = currentIndex >= videos.length - 1 && !hasMore;
 
+    // Get current likes state or use defaults from video
+    const currentLikes = likesState.get(currentVideo.id) ?? { count: currentVideo.likes_count ?? 0, isLiked: currentVideo.is_liked ?? false };
+
     return (
         <div
             ref={containerRef}
@@ -135,12 +150,30 @@ export function ReelsPlayer({
                 </div>
             )}
 
-            <ReelsOverlay
-                title={currentVideo.title}
-                author={currentVideo.author}
-                date={currentVideo.date}
-                description={currentVideo.description}
+            <ReelsSocialOverlay
+                video={currentVideo}
                 onClose={onClose}
+                onLike={() => {
+                    const newIsLiked = !currentLikes.isLiked;
+                    const newCount = newIsLiked ? currentLikes.count + 1 : currentLikes.count - 1;
+                    
+                    setLikesState(prev => new Map(prev.set(currentVideo.id, { count: newCount, isLiked: newIsLiked })));
+                    
+                    // Call backend
+                    router.post(`/dashboard/stories/${currentVideo.id}/likes`, {}, {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            onVideoLike?.(currentVideo.id, newIsLiked, newCount);
+                        },
+                        onError: () => {
+                            // Revert on error
+                            setLikesState(prev => new Map(prev.set(currentVideo.id, currentLikes)));
+                        },
+                    });
+                }}
+                onComment={(showPanel) => {}}
+                likesCount={currentLikes.count}
+                isLiked={currentLikes.isLiked}
             />
 
             {!isFirst && (

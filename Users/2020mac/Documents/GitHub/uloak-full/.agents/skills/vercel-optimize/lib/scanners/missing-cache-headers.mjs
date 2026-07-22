@@ -37,17 +37,22 @@ const REVALIDATE_ZERO_RE = /next\s*:\s*\{[^}]*revalidate\s*:\s*0\b/;
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (!isApplicable(path)) continue;
+    if (!isApplicable(path)) {
+continue;
+}
 
     const hasGetHandler =
       /export\s+(async\s+)?function\s+GET/.test(content)
       || /export\s+const\s+GET\s*=/.test(content);
+
     if (hasGetHandler) {
       const hasCacheControl =
         /Cache-Control/i.test(content)
         || /CDN-Cache-Control/i.test(content)
         || /export\s+const\s+revalidate\s*=/.test(content);
+
       if (!hasCacheControl && !AUTH_RE.test(content)) {
         out.push({
           pattern: metadata.id,
@@ -61,17 +66,29 @@ export function scan({ files }) {
     }
 
     const lines = content.split('\n');
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const noStoreHit = NO_STORE_RE.test(line);
       const revalidateZeroHit = REVALIDATE_ZERO_RE.test(line);
-      if (!noStoreHit && !revalidateZeroHit) continue;
+
+      if (!noStoreHit && !revalidateZeroHit) {
+continue;
+}
+
       const start = Math.max(0, i - 10);
       const end = Math.min(lines.length, i + 5);
       const window = lines.slice(start, end).join('\n');
-      if (AUTH_RE.test(window)) continue;
+
+      if (AUTH_RE.test(window)) {
+continue;
+}
+
       // Mutation verbs legitimately don't cache.
-      if (/method\s*:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/i.test(window)) continue;
+      if (/method\s*:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/i.test(window)) {
+continue;
+}
+
       out.push({
         pattern: metadata.id,
         subtype: noStoreHit ? 'fetch-no-store' : 'fetch-revalidate-zero',
@@ -82,6 +99,7 @@ export function scan({ files }) {
       });
     }
   }
+
   return out;
 }
 

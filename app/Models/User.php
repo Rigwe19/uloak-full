@@ -20,7 +20,7 @@ use Laravel\Passkeys\Passkey;
 use Laravel\Passkeys\PasskeyAuthenticatable;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'email', 'avatar', 'password', 'is_admin', 'house_thumbnail', 'house_pattern', 'house_pattern_upload'])]
+#[Fillable(['name', 'email', 'avatar', 'password', 'is_admin', 'role', 'house_thumbnail', 'house_pattern', 'house_pattern_upload'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -126,6 +126,7 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'is_admin' => 'boolean',
+            'role' => 'string',
         ];
     }
 
@@ -152,6 +153,16 @@ class User extends Authenticatable implements PasskeyUser
     public function hasPasskeysEnabled(): bool
     {
         return $this->passkeys()->exists();
+    }
+
+    public function isBusinessAdmin(): bool
+    {
+        return $this->role === 'business_admin';
+    }
+
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class, 'business_user_id');
     }
 
     public function person(): HasOne

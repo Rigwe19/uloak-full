@@ -15,12 +15,14 @@ const SCHEMA_URL = 'https://api.expo.dev/v2/workflows/schema';
 async function fetchSchema() {
   const data = await fetchCached(SCHEMA_URL);
   const body = JSON.parse(data);
+
   return body.data;
 }
 
 function createValidator(schema) {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
+
   return ajv.compile(schema);
 }
 
@@ -28,6 +30,7 @@ async function validateFile(validator, filePath) {
   const content = await readFile(filePath, 'utf-8');
 
   let doc;
+
   try {
     doc = yaml.load(content);
   } catch (e) {
@@ -35,6 +38,7 @@ async function validateFile(validator, filePath) {
   }
 
   const valid = validator(doc);
+
   if (!valid) {
     return { valid: false, error: formatErrors(validator.errors) };
   }
@@ -47,6 +51,7 @@ function formatErrors(errors) {
     .map((error) => {
       const path = error.instancePath || '(root)';
       const allowed = error.params?.allowedValues?.join(', ');
+
       return `  ${path}: ${error.message}${allowed ? ` (allowed: ${allowed})` : ''}`;
     })
     .join('\n');

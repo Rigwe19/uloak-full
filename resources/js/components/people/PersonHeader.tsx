@@ -1,5 +1,5 @@
-import React from 'react';
 import { User, Calendar, MapPin } from 'lucide-react';
+import React from 'react';
 import type { Person } from '@/types/person';
 
 export default function PersonHeader({ person, compact = false }: { person: Person; compact?: boolean }) {

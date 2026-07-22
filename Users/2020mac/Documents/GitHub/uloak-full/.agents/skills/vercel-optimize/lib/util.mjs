@@ -18,7 +18,11 @@ export function escapeMarkdownTableCell(value) {
 
 // `slow_route:/api/products` → `/api/products`.
 export function extractRoute(rec) {
-  if (typeof rec?.candidateRef !== 'string') return null;
+  if (typeof rec?.candidateRef !== 'string') {
+return null;
+}
+
   const m = rec.candidateRef.match(/^[^:]+:(.+)$/);
+
   return m ? m[1] : null;
 }

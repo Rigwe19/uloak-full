@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -12,7 +13,14 @@ class Event extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'thumbnail', 'description', 'privacy', 'created_by', 'event_date'];
+    protected $fillable = ['name', 'slug', 'thumbnail', 'description', 'privacy', 'created_by', 'event_date', 'allow_download'];
+
+    protected function casts(): array
+    {
+        return [
+            'allow_download' => 'boolean',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -36,5 +44,10 @@ class Event extends Model
     public function stories(): HasMany
     {
         return $this->hasMany(Story::class);
+    }
+
+    public function clients(): BelongsToMany
+    {
+        return $this->belongsToMany(Client::class);
     }
 }

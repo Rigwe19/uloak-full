@@ -1,6 +1,6 @@
-import React from 'react';
-import { Calendar, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Calendar, MapPin } from 'lucide-react';
+import React from 'react';
 import type { TimelineEvent as TEvent } from '@/types/person';
 
 export default function TimelineEvent({ event }: { event: TEvent }) {

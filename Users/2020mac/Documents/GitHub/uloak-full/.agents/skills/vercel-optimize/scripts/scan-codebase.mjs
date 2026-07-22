@@ -34,21 +34,25 @@ async function main() {
   const monorepoRoot = await detectMonorepoRoot(rootDir);
   let workspacePackages = [];
   let resolver = () => null;
+
   if (monorepoRoot) {
     workspacePackages = await listWorkspacePackages(monorepoRoot);
     resolver = buildResolver(workspacePackages);
     process.stderr.write(`[scan-codebase] monorepo root: ${monorepoRoot} (${workspacePackages.length} workspace packages)\n`);
   }
+
   await enrichRoutesWithWorkspaceImports(routes, rootDir, resolver, monorepoRoot);
 
   process.stderr.write(`[scan-codebase] ${files.length} files, ${routes.length} routes, ${scanners.length} scanners\n`);
 
   const findings = [];
+
   for (const scanner of scanners) {
     try {
       const applicable = filterApplicable(files, scanner.metadata);
       // Scanners may be sync or async (large-static-asset does fs.stat walks).
       const found = await scanner.scan({ files: applicable, rootDir, routes, stack });
+
       for (const f of (found ?? [])) {
         findings.push({
           ...f,
@@ -93,16 +97,26 @@ async function main() {
 // so the primary view component usually leads).
 const WORKSPACE_IMPORT_LIMIT_PER_ROUTE = 12;
 async function enrichRoutesWithWorkspaceImports(routes, scanRootDir, resolver, monorepoRoot) {
-  if (!monorepoRoot) return;
+  if (!monorepoRoot) {
+return;
+}
+
   for (const r of routes) {
-    if (!r?.file) continue;
+    if (!r?.file) {
+continue;
+}
+
     const abs = join(scanRootDir, r.file);
     const resolved = await resolveWorkspaceImports(abs, resolver, {
       pureBarrelDepth: 3,
       suffixFanoutDepth: 2,
       perSpecifierCap: 3,
     });
-    if (resolved.length === 0) continue;
+
+    if (resolved.length === 0) {
+continue;
+}
+
     // Paths must be relative to the monorepo root so they align between signals + verifier.
     r.workspaceImports = resolved
       .slice(0, WORKSPACE_IMPORT_LIMIT_PER_ROUTE)
@@ -113,25 +127,45 @@ async function enrichRoutesWithWorkspaceImports(routes, scanRootDir, resolver, m
 async function collectFiles(root) {
   const entries = await readdir(root, { recursive: true, withFileTypes: true });
   const out = [];
+
   for (const e of entries) {
-    if (!e.isFile()) continue;
+    if (!e.isFile()) {
+continue;
+}
+
     const segments = (e.parentPath ?? e.path ?? root).split('/');
-    if (segments.some((s) => SKIP_DIRS.has(s))) continue;
-    if (SKIP_FILE_PATTERNS.some((re) => re.test(e.name))) continue;
-    if (!/\.(tsx?|jsx?|mjs|cjs|html|svelte|astro|vue|json)$/.test(e.name)) continue;
+
+    if (segments.some((s) => SKIP_DIRS.has(s))) {
+continue;
+}
+
+    if (SKIP_FILE_PATTERNS.some((re) => re.test(e.name))) {
+continue;
+}
+
+    if (!/\.(tsx?|jsx?|mjs|cjs|html|svelte|astro|vue|json)$/.test(e.name)) {
+continue;
+}
 
     const full = join(e.parentPath ?? e.path ?? root, e.name);
+
     try {
       const content = await readFile(full, 'utf-8');
-      if (content.length > 500_000) continue;
+
+      if (content.length > 500_000) {
+continue;
+}
+
       out.push({ path: relative(root, full), content });
     } catch {}
   }
+
   return out;
 }
 
 function filterApplicable(files, meta) {
   const incl = meta.includeGlobs ?? ['**/*'];
+
   return files.filter((f) => incl.some((g) => globMatch(g, f.path)));
 }
 
@@ -147,16 +181,24 @@ function globMatch(pattern, path) {
       .replace(/__GLOBSTAR__/g, '.*')
     + '$'
   );
+
   return re.test(path);
 }
 
 async function enumerateRoutes(root) {
   const entries = await readdir(root, { recursive: true, withFileTypes: true });
   const routes = [];
+
   for (const e of entries) {
-    if (!e.isFile()) continue;
+    if (!e.isFile()) {
+continue;
+}
+
     const segments = (e.parentPath ?? e.path ?? root).split('/');
-    if (segments.some((s) => SKIP_DIRS.has(s))) continue;
+
+    if (segments.some((s) => SKIP_DIRS.has(s))) {
+continue;
+}
 
     const full = join(e.parentPath ?? e.path ?? root, e.name);
     const rel = relative(root, full);
@@ -164,8 +206,10 @@ async function enumerateRoutes(root) {
     // App Router: route groups ((name)), parallel routes (@slot), private folders
     // (_name), and the top-level page.tsx (no path segment) all need explicit handling.
     let m = rel.match(/^(?:src\/)?app\/(.*)\/(page|route|layout)\.(tsx?|jsx?)$/);
+
     if (!m) {
       const top = rel.match(/^(?:src\/)?app\/(page|route|layout)\.(tsx?|jsx?)$/);
+
       if (top) {
         routes.push({
           routePath: '/',
@@ -175,6 +219,7 @@ async function enumerateRoutes(root) {
         continue;
       }
     }
+
     if (m) {
       const stripped = m[1]
         .split('/')
@@ -194,6 +239,7 @@ async function enumerateRoutes(root) {
     // (`feed.xml.ts`, `robots.txt.ts`). Handle these before the generic
     // `src/pages` rule, which otherwise treats them as page components.
     m = rel.match(/^src\/pages\/(.*\.(?:xml|json|txt|rss|atom|svg|png|jpg|jpeg|webp))\.(tsx?|jsx?|mjs|cjs)$/);
+
     if (m) {
       const name = normalizeRouteFileStem(m[1]);
       routes.push({
@@ -205,6 +251,7 @@ async function enumerateRoutes(root) {
     }
 
     m = rel.match(/^(?:src\/)?pages\/(.*)\.(tsx?|jsx?)$/);
+
     if (m) {
       const name = m[1].replace(/\/index$/, '').replace(/^index$/, '');
       const isApi = /^api\//.test(name);
@@ -219,6 +266,7 @@ async function enumerateRoutes(root) {
     // Nuxt 3/4 pages. Dynamic segments use the same bracket shape as metrics
     // (`[id]`, `[...slug]`), so keep them intact for route matching.
     m = rel.match(/^(?:app\/)?pages\/(.*)\.vue$/);
+
     if (m) {
       const name = normalizeRouteFileStem(m[1]);
       routes.push({
@@ -232,6 +280,7 @@ async function enumerateRoutes(root) {
     // Nuxt server routes: server/api/foo.get.ts -> /api/foo,
     // server/routes/rss.xml.ts -> /rss.xml.
     m = rel.match(/^server\/(api|routes)\/(.*)\.(tsx?|jsx?|mjs|cjs)$/);
+
     if (m) {
       const base = m[1] === 'api' ? 'api/' : '';
       const name = normalizeRouteFileStem(`${base}${m[2]}`);
@@ -246,6 +295,7 @@ async function enumerateRoutes(root) {
     // Astro pages and endpoints. This is limited framework support, but route
     // mapping still improves reports when Vercel metrics use user-facing paths.
     m = rel.match(/^src\/pages\/(.*)\.(astro|tsx?|jsx?|mjs|cjs)$/);
+
     if (m) {
       const name = normalizeRouteFileStem(m[1]);
       routes.push({
@@ -260,6 +310,7 @@ async function enumerateRoutes(root) {
     // as page), +server.{ts,js} = API route, +layout.* = ancestor layout context.
     // Route groups (auth) stripped like Next; dynamic segments [slug]/[...rest]/[[opt]] preserved.
     m = rel.match(/^src\/routes\/(.*)\/\+(page\.svelte|page\.server\.(?:ts|js)|server\.(?:ts|js)|layout\.svelte|layout\.server\.(?:ts|js))$/);
+
     if (m || /^src\/routes\/\+(page\.svelte|page\.server\.(?:ts|js)|server\.(?:ts|js)|layout\.svelte|layout\.server\.(?:ts|js))$/.test(rel)) {
       const fileTypeMatch = rel.match(/\+(page\.svelte|page\.server\.(?:ts|js)|server\.(?:ts|js)|layout\.svelte|layout\.server\.(?:ts|js))$/);
       const fileType = fileTypeMatch?.[1] ?? '';
@@ -269,16 +320,20 @@ async function enumerateRoutes(root) {
       const type = fileType.startsWith('server') ? 'route' : fileType.startsWith('layout') ? 'layout' : 'page';
       // When +page.svelte AND +page.server.ts both exist, +page.svelte wins ownership.
       const existing = type === 'layout' ? null : routes.find((r) => r.routePath === routePath && r.type !== 'layout');
+
       if (existing) {
         if (fileType === 'page.svelte' && existing.type === 'page') {
           existing.file = rel;
         }
+
         continue;
       }
+
       routes.push({ routePath, file: rel, type });
       continue;
     }
   }
+
   return routes.sort((a, b) =>
     a.routePath.localeCompare(b.routePath)
     || routeTypeOrder(a.type) - routeTypeOrder(b.type)
@@ -304,6 +359,7 @@ function routeTypeOrder(type) {
 
 function mapFileToRoute(filePath, routes) {
   const r = routes.find((rt) => rt.file === filePath);
+
   return r?.routePath ?? null;
 }
 

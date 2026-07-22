@@ -14,10 +14,10 @@
 //   { "url": "https://foo.com", "status": "PASS" | "REJECT" | "UNKNOWN",
 //     "matched_includes": [...], "matched_excludes": [...], "title": "...", "hero": "..." }
 
-import sanitizeFilename from 'sanitize-filename';
 import { execFile } from 'child_process';
-import { promisify } from 'util';
 import { readFileSync } from 'fs';
+import { promisify } from 'util';
+import sanitizeFilename from 'sanitize-filename';
 
 // Async execFile so the worker pool actually parallelizes. spawnSync blocks the entire
 // event loop, which silently turns --concurrency N into N=1 — every URL fetched serially
@@ -29,9 +29,11 @@ const args = process.argv.slice(2);
 function sanitizePathSegments(pathValue) {
   return String(pathValue ?? '').split(/[\\/]+/).filter(Boolean).map((segment) => {
     const sanitized = sanitizeFilename(segment);
+
     if (sanitized !== segment || !sanitized) {
       throw new Error(`Unsafe path segment: ${segment}`);
     }
+
     return sanitized;
   });
 }
@@ -40,9 +42,11 @@ function safeCliPath(pathValue, baseDir = process.cwd()) {
   const root = resolve(baseDir);
   const target = resolve(root, ...sanitizePathSegments(pathValue));
   const rel = relative(root, target);
+
   if (rel.startsWith('..') || isAbsolute(rel)) {
     throw new Error(`Path escapes allowed directory: ${pathValue}`);
   }
+
   return target;
 }
 
@@ -66,6 +70,7 @@ Options:
 
 function flag(name) {
   const i = args.indexOf(name);
+
   return i !== -1 ? args[i + 1] : null;
 }
 
@@ -80,6 +85,7 @@ const inputFile = flag('--input');
 
 function stripHtml(html) {
   const withoutActiveContent = removeElementContent(removeElementContent(html, 'script'), 'style');
+
   return withoutActiveContent
     .replace(/<[^>]*>/g, ' ')
     .replace(/&lt;/g, '<')
@@ -98,22 +104,28 @@ function removeElementContent(html, tagName) {
   const lower = html.toLowerCase();
   const openNeedle = `<${tagName}`;
   const closeNeedle = `</${tagName}`;
+
   while (cursor < html.length) {
     const start = lower.indexOf(openNeedle, cursor);
+
     if (start === -1) {
       out += html.slice(cursor);
       break;
     }
+
     out += html.slice(cursor, start);
     const close = lower.indexOf(closeNeedle, start + openNeedle.length);
+
     if (close === -1) {
       cursor = html.length;
       break;
     }
+
     const closeEnd = html.indexOf('>', close + closeNeedle.length);
     cursor = closeEnd === -1 ? html.length : closeEnd + 1;
     out += ' ';
   }
+
   return out;
 }
 
@@ -129,6 +141,7 @@ if (includes.length === 0) {
 }
 
 let urls;
+
 if (inputFile) {
   urls = readFileSync(inputFile, 'utf-8').split('\n').map(l => l.trim()).filter(Boolean);
 } else {
@@ -162,24 +175,37 @@ function classify(title, heroFull, includes, excludes) {
   const excHero = excludes.filter(k => heroLower.includes(k));
 
   let status, reason;
+
   if (incTitle.length > 0 && excTitle.length > 0) {
     // Hybrid-identity title (e.g. "Browser Automation & Web Scraping API").
     // Break the tie by the early hero — whichever category has more mentions wins.
-    if (incEarly.length > excEarly.length)       { status = 'PASS';   reason = `title-hybrid→hero200 leans include(${incEarly[0] || incTitle[0]})`; }
-    else if (excEarly.length > incEarly.length)  { status = 'REJECT'; reason = `title-hybrid→hero200 leans exclude(${excEarly[0] || excTitle[0]})`; }
-    else                                          { status = 'PASS';   reason = `title-hybrid→tie, defaulting include(${incTitle[0]})`; }
-  }
-  else if (excTitle.length > 0)                   { status = 'REJECT'; reason = `title→exclude(${excTitle[0]})`; }
-  else if (incTitle.length > 0)                   { status = 'PASS';   reason = `title→include(${incTitle[0]})`; }
-  else if (incEarly.length > 0 && excEarly.length === 0) { status = 'PASS'; reason = `hero200→include(${incEarly[0]})`; }
-  else if (excEarly.length > 0)                   { status = 'REJECT'; reason = `hero200→exclude(${excEarly[0]})`; }
-  else if (incHero.length > 0 && excHero.length === 0)   { status = 'PASS'; reason = `hero→include(${incHero[0]})`; }
+    if (incEarly.length > excEarly.length)       {
+ status = 'PASS';   reason = `title-hybrid→hero200 leans include(${incEarly[0] || incTitle[0]})`; 
+} else if (excEarly.length > incEarly.length)  {
+ status = 'REJECT'; reason = `title-hybrid→hero200 leans exclude(${excEarly[0] || excTitle[0]})`; 
+} else                                          {
+ status = 'PASS';   reason = `title-hybrid→tie, defaulting include(${incTitle[0]})`; 
+}
+  } else if (excTitle.length > 0)                   {
+ status = 'REJECT'; reason = `title→exclude(${excTitle[0]})`; 
+} else if (incTitle.length > 0)                   {
+ status = 'PASS';   reason = `title→include(${incTitle[0]})`; 
+} else if (incEarly.length > 0 && excEarly.length === 0) {
+ status = 'PASS'; reason = `hero200→include(${incEarly[0]})`; 
+} else if (excEarly.length > 0)                   {
+ status = 'REJECT'; reason = `hero200→exclude(${excEarly[0]})`; 
+} else if (incHero.length > 0 && excHero.length === 0)   {
+ status = 'PASS'; reason = `hero→include(${incHero[0]})`; 
+}
   // Late-hero conflict: both include AND exclude appear in chars 200–800 (nothing in
   // title or early hero). This is genuine ambiguous signal, not absence — return UNKNOWN
   // so the candidate surfaces in the user-confirmation bucket at Step 4.5 instead of
   // being silently dropped as REJECT.
-  else if (incHero.length > 0 && excHero.length > 0)     { status = 'UNKNOWN'; reason = `hero→conflict(include:${incHero[0]}, exclude:${excHero[0]})`; }
-  else                                            { status = 'REJECT'; reason = 'no category signal'; }
+  else if (incHero.length > 0 && excHero.length > 0)     {
+ status = 'UNKNOWN'; reason = `hero→conflict(include:${incHero[0]}, exclude:${excHero[0]})`; 
+} else                                            {
+ status = 'REJECT'; reason = 'no category signal'; 
+}
 
   return {
     status, reason,
@@ -190,6 +216,7 @@ function classify(title, heroFull, includes, excludes) {
 
 async function gateOne(url) {
   let stdout;
+
   try {
     // --format raw returns the JSON envelope with raw HTML in `.content` (the default
     // is markdown, which has no <title> tag for the position-aware classifier to read).
@@ -202,15 +229,21 @@ async function gateOne(url) {
     // Non-zero exit, timeout, or spawn failure all surface here.
     return { url, status: 'UNKNOWN', reason: `browse cloud fetch failed: ${err.message}`, matched_includes: [], matched_excludes: [], title: '', hero: '' };
   }
+
   let resp;
-  try { resp = JSON.parse(stdout); } catch {
+
+  try {
+ resp = JSON.parse(stdout); 
+} catch {
     return { url, status: 'UNKNOWN', reason: 'non-JSON response', matched_includes: [], matched_excludes: [], title: '', hero: '' };
   }
+
   const html = resp.content || '';
   const titleM = html.match(/<title[^>]*>([^<]*)<\/title>/i);
   const title = titleM ? titleM[1].trim() : '';
   const heroFull = stripHtml(html).slice(0, heroChars);
   const c = classify(title, heroFull, includes, excludes);
+
   return {
     url,
     status: c.status,

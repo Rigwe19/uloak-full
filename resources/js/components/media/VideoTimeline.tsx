@@ -36,6 +36,7 @@ export function VideoTimeline({ duration, currentTime, buffered, onSeek, showScr
     useEffect(() => {
         if (!sprite?.vtt) {
             setCues([]);
+
             return;
         }
 
@@ -43,7 +44,10 @@ export function VideoTimeline({ duration, currentTime, buffered, onSeek, showScr
         fetch(sprite.vtt)
             .then((r) => r.text())
             .then((text) => {
-                if (cancelled) return;
+                if (cancelled) {
+return;
+}
+
                 const parsed: VttCue[] = [];
                 const lines = text.split('\n');
                 let currentTiming: { start: number; end: number } | null = null;

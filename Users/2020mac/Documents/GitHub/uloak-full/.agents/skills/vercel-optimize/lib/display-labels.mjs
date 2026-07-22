@@ -72,8 +72,14 @@ const PUBLIC_ASSIGNMENT_LABELS = new Map([
 ]);
 
 export function formatKind(kind) {
-  if (!kind) return 'Candidate';
-  if (KIND_LABELS.has(kind)) return KIND_LABELS.get(kind);
+  if (!kind) {
+return 'Candidate';
+}
+
+  if (KIND_LABELS.has(kind)) {
+return KIND_LABELS.get(kind);
+}
+
   return String(kind)
     .split(/[_-]+/g)
     .filter(Boolean)
@@ -83,13 +89,22 @@ export function formatKind(kind) {
 
 export function formatRoute(candidate) {
   const route = candidate?.displayRoute ?? candidate?.route ?? candidate?.hostname ?? null;
-  if (route) return String(canonicalizeRoute(route));
-  if (Array.isArray(candidate?.files) && candidate.files.length > 0) return candidate.files[0];
+
+  if (route) {
+return String(canonicalizeRoute(route));
+}
+
+  if (Array.isArray(candidate?.files) && candidate.files.length > 0) {
+return candidate.files[0];
+}
+
   return 'account-wide';
 }
 
 export function formatSignal(signal, context = {}) {
-  if (typeof signal !== 'string' || signal.trim() === '') return 'no signal recorded';
+  if (typeof signal !== 'string' || signal.trim() === '') {
+return 'no signal recorded';
+}
 
   const parts = signal
     .split(',')
@@ -101,7 +116,10 @@ export function formatSignal(signal, context = {}) {
 }
 
 export function formatPublicText(value) {
-  if (value == null) return '';
+  if (value == null) {
+return '';
+}
+
   return normalizeObservedWindowUnits(String(value))
     .replace(/\bo11y\b/gi, 'observability')
     .replace(/\bcache[- ]components gotcha\b/gi, 'Cache Components edge case')
@@ -113,7 +131,11 @@ export function formatPublicText(value) {
     )
     .replace(/\b([A-Za-z0-9][\w./-]*)=([^,;\s]+)/g, (match, key, rawValue) => {
       const label = PUBLIC_ASSIGNMENT_LABELS.get(key);
-      if (!label) return match;
+
+      if (!label) {
+return match;
+}
+
       return `${label}: ${formatSignalValue(key, rawValue)}`;
     })
     .replace(/\b(cache breakdown[^.!?\n;]{0,160}?)\b(?:function\s+)?invocations\b/gi, (match, prefix) =>
@@ -125,7 +147,10 @@ export function formatPublicText(value) {
 }
 
 export function normalizeObservedWindowUnits(value) {
-  if (value == null) return '';
+  if (value == null) {
+return '';
+}
+
   return String(value)
     .replace(/(?<!\$)\b(\d[\d,.]*(?:\s?(?:K|M|B|KB|MB|GB|TB))?)\/mo\b/gi, '$1/window')
     .replace(/\bmonthly\s+function\s+invocations\b/gi, 'function invocations/window')
@@ -149,17 +174,25 @@ export function formatCandidateLabel(candidate) {
 
 function formatSignalPart(part, context = {}) {
   const eq = part.indexOf('=');
-  if (eq === -1) return part;
+
+  if (eq === -1) {
+return part;
+}
 
   const key = part.slice(0, eq).trim();
   const value = part.slice(eq + 1).trim();
   const label = signalLabel(key, context);
+
   return `${label}: ${formatSignalValue(key, value)}`;
 }
 
 function signalLabel(key, context = {}) {
   const kind = typeof context === 'string' ? context : context?.kind;
-  if (key === 'inv' && REQUEST_COUNT_KINDS.has(kind)) return 'requests';
+
+  if (key === 'inv' && REQUEST_COUNT_KINDS.has(kind)) {
+return 'requests';
+}
+
   return SIGNAL_LABELS.get(key) ?? humanizeKey(key);
 }
 
@@ -175,11 +208,16 @@ function formatSignalValue(key, value) {
   if (key === 'inv' || key === 'runs' || key === 'middleware_inv' || key === 'total_req' || key === 'requests' || key === 'calls' || key === 'errs' || key === 'writes' || key === 'reads') {
     return formatNumberLike(value);
   }
+
   return value;
 }
 
 function formatNumberLike(value) {
   const n = Number(value);
-  if (!Number.isFinite(n)) return value;
+
+  if (!Number.isFinite(n)) {
+return value;
+}
+
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n);
 }

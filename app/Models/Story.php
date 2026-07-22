@@ -73,6 +73,11 @@ class Story extends Model
         return $this->hasMany(Comment::class);
     }
 
+    public function likes()
+    {
+        return $this->hasMany(Like::class);
+    }
+
     public function followUpStories(): HasMany
     {
         return $this->hasMany(Story::class, 'follow_up_to');
@@ -86,5 +91,10 @@ class Story extends Model
     public function commentsCount(): int
     {
         return $this->comments()->count();
+    }
+
+    public function likesCount(): int
+    {
+        return $this->likes()->count();
     }
 }

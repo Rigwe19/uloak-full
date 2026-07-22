@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-const puppeteer = require('puppeteer');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const puppeteer = require('puppeteer');
 
 async function takeScreenshots() {
     const dashboardPath = path.resolve(__dirname, '../autonomy/.loki/dashboard/index.html');

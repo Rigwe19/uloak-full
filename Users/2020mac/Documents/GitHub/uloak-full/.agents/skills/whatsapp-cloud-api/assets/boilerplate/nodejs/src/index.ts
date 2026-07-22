@@ -1,7 +1,7 @@
-import express from 'express';
 import dotenv from 'dotenv';
-import { WhatsAppClient } from './whatsapp-client';
+import express from 'express';
 import { TemplateManager } from './template-manager';
+import type { WhatsAppConfig, IncomingMessage, StatusUpdate } from './types';
 import {
   validateHMAC,
   rawBodyMiddleware,
@@ -9,7 +9,7 @@ import {
   parseWebhookPayload,
   extractMessageContent,
 } from './webhook-handler';
-import { WhatsAppConfig, IncomingMessage, StatusUpdate } from './types';
+import { WhatsAppClient } from './whatsapp-client';
 
 dotenv.config();
 

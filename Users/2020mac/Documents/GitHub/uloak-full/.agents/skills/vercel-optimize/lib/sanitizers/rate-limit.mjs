@@ -20,24 +20,44 @@ const CONCURRENCY_RE_REVERSE = /\b(\d{1,4})\s*(?:concurrent|parallel|simultaneou
 export function apply(rec, _ctx = {}) {
   const text = collectText(rec);
   const providers = matchProviders(text);
-  if (providers.length === 0) return {};
+
+  if (providers.length === 0) {
+return {};
+}
+
   const concurrency = matchConcurrency(text);
-  if (concurrency === null) return {};
+
+  if (concurrency === null) {
+return {};
+}
 
   const tags = [];
   let prepend = '';
+
   for (const key of providers) {
     const limit = PROVIDER_LIMITS[key];
-    if (!limit) continue;
+
+    if (!limit) {
+continue;
+}
+
     if (concurrency > limit.rps) {
       const tag = `rate-limit:${limit.label}:${concurrency}/${limit.rps}`;
       tags.push(tag);
       prepend += `⚠ ${limit.label} rate-limits to ~${limit.rps} requests/second on first-tier plans; the prescribed concurrency of ${concurrency} may saturate the limit. Verify your tier before applying.\n\n`;
     }
   }
-  if (tags.length === 0) return {};
-  if (typeof rec.fix === 'string') rec.fix = prepend + rec.fix;
-  else rec.fix = prepend.trim();
+
+  if (tags.length === 0) {
+return {};
+}
+
+  if (typeof rec.fix === 'string') {
+rec.fix = prepend + rec.fix;
+} else {
+rec.fix = prepend.trim();
+}
+
   return { tags, needsReview: true };
 }
 
@@ -49,19 +69,32 @@ function collectText(rec) {
 
 function matchProviders(text) {
   const out = new Set();
-  for (const m of text.matchAll(PROVIDER_RE)) out.add(m[1].toLowerCase());
+
+  for (const m of text.matchAll(PROVIDER_RE)) {
+out.add(m[1].toLowerCase());
+}
+
   return [...out];
 }
 
 function matchConcurrency(text) {
   let max = null;
+
   for (const m of text.matchAll(CONCURRENCY_RE)) {
     const n = Number(m[1]);
-    if (Number.isFinite(n) && (max === null || n > max)) max = n;
+
+    if (Number.isFinite(n) && (max === null || n > max)) {
+max = n;
+}
   }
+
   for (const m of text.matchAll(CONCURRENCY_RE_REVERSE)) {
     const n = Number(m[1]);
-    if (Number.isFinite(n) && (max === null || n > max)) max = n;
+
+    if (Number.isFinite(n) && (max === null || n > max)) {
+max = n;
+}
   }
+
   return max;
 }

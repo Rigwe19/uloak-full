@@ -2,8 +2,8 @@ import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
 import React from 'react';
-import PersonLayout from '@/layouts/person-layout';
 import TimelineEvent from '@/components/people/TimelineEvent';
+import PersonLayout from '@/layouts/person-layout';
 import type { Person, TimelineEvent as TEvent } from '@/types/person';
 
 interface TimelineProps {

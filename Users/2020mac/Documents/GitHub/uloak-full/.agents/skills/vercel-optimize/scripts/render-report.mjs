@@ -4,10 +4,10 @@
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { buildFinalReportMessage, renderReport } from '../lib/render-report.mjs';
 import { dedupeRecommendations } from '../lib/dedup-recs.mjs';
-import { canonicalizeRoute } from '../lib/route-normalize.mjs';
 import { hasUnsupportedCacheLifeCdnText, splitCustomerSafeObservations } from '../lib/observation-safety.mjs';
+import { buildFinalReportMessage, renderReport } from '../lib/render-report.mjs';
+import { canonicalizeRoute } from '../lib/route-normalize.mjs';
 
 const log = (...a) => console.error('[render-report]', ...a);
 const HARD_REGEN_TRIGGERS = new Set([
@@ -18,6 +18,7 @@ const HARD_REGEN_TRIGGERS = new Set([
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
   if (!args.recsPath || !args.gatePath || !args.signalsPath) {
     console.error('usage: node scripts/render-report.mjs <recommendations.json> <gate.json> <signals.json> [--project NAME] [--out FILE] [--message-out FILE] [--no-timestamp] [--debug-out FILE]');
     process.exit(1);
@@ -59,20 +60,31 @@ async function main() {
         .filter((r) => !hardRegenRefs.has(r.candidateRef));
   const recommendationsRaw = candidateRecommendations
         .filter((r) => {
-          if (r?.abstain === true || r?.needsReview !== true) return true;
+          if (r?.abstain === true || r?.needsReview !== true) {
+return true;
+}
+
           needsReviewDrops.push({
             candidateRef: r.candidateRef ?? null,
             reason: 'This recommendation needs a manual safety review before it is ready to apply.',
           });
+
           return false;
         })
         .filter((r) => {
-          if (!enforceCurrentGate) return true;
-          if (recommendationMatchesActiveCandidate(r, activeCandidates)) return true;
+          if (!enforceCurrentGate) {
+return true;
+}
+
+          if (recommendationMatchesActiveCandidate(r, activeCandidates)) {
+return true;
+}
+
           staleRecommendationDrops.push({
             candidateRef: r.candidateRef ?? null,
             reason: 'This recommendation came from a candidate that is not in the current run output. Re-run from a clean run directory before applying it.',
           });
+
           return false;
         });
   const recommendations = dedupeRecommendations(recommendationsRaw);
@@ -211,25 +223,39 @@ async function main() {
 
 function parseArgs(argv) {
   const out = { positional: [] };
+
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--project') out.projectName = argv[++i];
-    else if (a.startsWith('--project=')) out.projectName = a.slice('--project='.length);
-    else if (a === '--out') out.outPath = resolve(argv[++i]);
-    else if (a.startsWith('--out=')) out.outPath = resolve(a.slice('--out='.length));
-    else if (a === '--message-out') out.messageOutPath = resolve(argv[++i]);
-    else if (a.startsWith('--message-out=')) out.messageOutPath = resolve(a.slice('--message-out='.length));
-    else if (a === '--no-timestamp') out.noTimestamp = true;
-    else if (a === '--debug-out') out.debugOutPath = resolve(argv[++i]);
-    else if (a.startsWith('--debug-out=')) out.debugOutPath = resolve(a.slice('--debug-out='.length));
-    else if (a === '--debug') {
+
+    if (a === '--project') {
+out.projectName = argv[++i];
+} else if (a.startsWith('--project=')) {
+out.projectName = a.slice('--project='.length);
+} else if (a === '--out') {
+out.outPath = resolve(argv[++i]);
+} else if (a.startsWith('--out=')) {
+out.outPath = resolve(a.slice('--out='.length));
+} else if (a === '--message-out') {
+out.messageOutPath = resolve(argv[++i]);
+} else if (a.startsWith('--message-out=')) {
+out.messageOutPath = resolve(a.slice('--message-out='.length));
+} else if (a === '--no-timestamp') {
+out.noTimestamp = true;
+} else if (a === '--debug-out') {
+out.debugOutPath = resolve(argv[++i]);
+} else if (a.startsWith('--debug-out=')) {
+out.debugOutPath = resolve(a.slice('--debug-out='.length));
+} else if (a === '--debug') {
       console.error('[render-report] --debug no longer writes internal details into customer markdown; use --debug-out FILE');
-    }
-    else out.positional.push(a);
+    } else {
+out.positional.push(a);
+}
   }
+
   out.recsPath = out.positional[0];
   out.gatePath = out.positional[1];
   out.signalsPath = out.positional[2];
+
   return out;
 }
 
@@ -263,37 +289,65 @@ function publicHardRegenReason(plan) {
 
 function recommendationMatchesActiveCandidate(rec, candidates) {
   const ref = parseCandidateRef(rec?.candidateRef);
-  if (!ref) return true;
+
+  if (!ref) {
+return true;
+}
+
   return candidates.some((candidate) => candidateMatchesRef(candidate, ref));
 }
 
 function parseCandidateRef(ref) {
-  if (typeof ref !== 'string' || ref.length === 0) return null;
+  if (typeof ref !== 'string' || ref.length === 0) {
+return null;
+}
+
   const [kind, ...targetParts] = ref.split(':');
-  if (!kind) return null;
+
+  if (!kind) {
+return null;
+}
+
   return { kind, target: targetParts.join(':') };
 }
 
 function candidateMatchesRef(candidate, ref) {
-  if (!candidate || candidate.kind !== ref.kind) return false;
-  if (candidate.scope === 'account' || ref.target === '<account>') return true;
+  if (!candidate || candidate.kind !== ref.kind) {
+return false;
+}
+
+  if (candidate.scope === 'account' || ref.target === '<account>') {
+return true;
+}
 
   const candidateTarget = candidate.route ?? candidate.hostname ?? candidate.file ?? candidate.target ?? null;
-  if (!candidateTarget || !ref.target) return false;
+
+  if (!candidateTarget || !ref.target) {
+return false;
+}
 
   const a = String(candidateTarget);
   const b = String(ref.target);
+
   return a === b || canonicalizeRoute(a) === canonicalizeRoute(b);
 }
 
 function suppressReadyCoveredObservations(observations, recommendations = []) {
-  if (!Array.isArray(observations) || observations.length === 0) return [];
+  if (!Array.isArray(observations) || observations.length === 0) {
+return [];
+}
+
   const readyFamiliesByTarget = new Map();
+
   for (const rec of recommendations) {
     const parsed = parseCandidateRef(rec?.candidateRef);
     const target = candidateTarget(rec?.candidateRef);
     const family = candidateFamily(parsed?.kind);
-    if (!target || !family) continue;
+
+    if (!target || !family) {
+continue;
+}
+
     const set = readyFamiliesByTarget.get(target) ?? new Set();
     set.add(family);
     readyFamiliesByTarget.set(target, set);
@@ -303,7 +357,11 @@ function suppressReadyCoveredObservations(observations, recommendations = []) {
     const parsed = parseCandidateRef(observation?.candidateRef);
     const target = candidateTarget(observation?.candidateRef);
     const family = candidateFamily(parsed?.kind);
-    if (!target || !family) return true;
+
+    if (!target || !family) {
+return true;
+}
+
     return !readyFamiliesByTarget.get(target)?.has(family);
   });
 }
@@ -334,9 +392,16 @@ function candidateFamily(kind) {
 }
 
 function candidateTarget(ref) {
-  if (typeof ref !== 'string') return null;
+  if (typeof ref !== 'string') {
+return null;
+}
+
   const idx = ref.indexOf(':');
-  if (idx === -1) return null;
+
+  if (idx === -1) {
+return null;
+}
+
   return ref.slice(idx + 1);
 }
 
@@ -344,6 +409,7 @@ function publicNoChangeReason(reason) {
   if (hasUnsupportedCacheLifeCdnText(reason)) {
     return 'This candidate overlapped a cache-lifetime draft that did not meet the framework evidence bar. No supported change shipped from this run.';
   }
+
   return reason;
 }
 
@@ -369,6 +435,7 @@ function buildDebugArtifact({
         renderedRecommendationCount: recommendations.length,
       }
     : null;
+
   return {
     schemaVersion: '1.0',
     summary,
@@ -401,8 +468,12 @@ function buildDebugArtifact({
 
 function flattenObservations(records) {
   const out = [];
+
   for (const record of records) {
-    if (!record || typeof record !== 'object') continue;
+    if (!record || typeof record !== 'object') {
+continue;
+}
+
     if (record.observation && typeof record.observation === 'object') {
       out.push({
         candidateRef: record.candidateRef ?? null,
@@ -413,6 +484,7 @@ function flattenObservations(records) {
       });
       continue;
     }
+
     if ('summary' in record || 'evidence' in record || 'suggestedAction' in record || 'kind' in record) {
       out.push({
         candidateRef: record.candidateRef ?? null,
@@ -423,6 +495,7 @@ function flattenObservations(records) {
       });
     }
   }
+
   return out;
 }
 

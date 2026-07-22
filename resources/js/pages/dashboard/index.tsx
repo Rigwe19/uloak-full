@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
@@ -17,18 +17,30 @@ import {
     Tag,
     Music,
     Image,
+    UserPlus,
+    Briefcase,
 } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
 import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
 import { RoomCard } from '@/components/dashboard/room-card';
 import { Button, Badge, AvatarGroup } from '@/components/dashboard/ui';
 import { Portal } from '@/components/portal';
-import { store as storeEvent } from '@/routes/dashboard/events';
-import { store as storeRoom } from '@/routes/dashboard/rooms';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { store as storeEvent, show as showEvent } from '@/routes/dashboard/events';
+import { store as storeRoom, show as showRoom } from '@/routes/dashboard/rooms';
 
 interface DashboardProps {
     dashboardData: {
         rooms: any[];
+        events: any[];
         recentStories: any[];
         stats: {
             name: string;
@@ -48,13 +60,14 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ dashboardData, auth }: DashboardProps) {
-    const { rooms, stats, recentStories, notifications, house_members } = dashboardData;
+    const { rooms, events, stats, recentStories, notifications, house_members } = dashboardData;
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
     const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
-    const [createMode, setCreateMode] = useState<'room' | 'event'>('room');
-    
+    const INITIAL_MODE = auth.user.role === 'business_admin' ? 'event' : 'room';
+    const [createMode, setCreateMode] = useState<'room' | 'event'>(INITIAL_MODE);
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         description: '',
@@ -68,16 +81,65 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
         tribute_name: '',
         tribute_song: null as File | null,
         media_items: [] as File[],
+        allow_download: false,
         start_date: '',
         end_date: '',
+        client_id: '',
     });
 
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
+    // Client management for business_admin
+    const [clients, setClients] = useState<any[]>([]);
+    const [clientsLoaded, setClientsLoaded] = useState(false);
+    const [showClientForm, setShowClientForm] = useState(false);
+    const [newClient, setNewClient] = useState({ name: '', email: '', phone: '', company: '' });
+    const [clientSubmitting, setClientSubmitting] = useState(false);
+
+    const isBusinessAdmin = auth.user.role === 'business_admin';
+
     useEffect(() => {
-        if (!isCreateRoomOpen) {
+        if (isBusinessAdmin && isCreateRoomOpen && !clientsLoaded) {
+            fetch('/clients')
+                .then(res => res.json())
+                .then(data => {
+                    setClients(data.clients ?? []);
+                    setClientsLoaded(true);
+                })
+                .catch(() => { });
+        }
+    }, [isBusinessAdmin, isCreateRoomOpen, clientsLoaded]);
+
+    const handleAddClient = async () => {
+        if (!newClient.name || !newClient.email) {
 return;
 }
+
+        setClientSubmitting(true);
+
+        try {
+            const res = await fetch('/clients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' },
+                body: JSON.stringify(newClient),
+            });
+            const data = await res.json();
+
+            if (data.client) {
+                setClients(prev => [...prev, data.client]);
+                setData('client_id', String(data.client.id));
+                setShowClientForm(false);
+                setNewClient({ name: '', email: '', phone: '', company: '' });
+            }
+        } catch { }
+
+        setClientSubmitting(false);
+    };
+
+    useEffect(() => {
+        if (!isCreateRoomOpen) {
+            return;
+        }
 
         const original = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
@@ -120,7 +182,7 @@ return;
                 setIsCreateRoomOpen(false);
                 setThumbnailPreview(null);
                 reset();
-                setCreateMode('room');
+                setCreateMode(INITIAL_MODE);
             },
         });
     };
@@ -184,7 +246,7 @@ return;
                         />
                         <input
                             type="text"
-                            placeholder="Search rooms or memories..."
+                            placeholder={`Search ${isBusinessAdmin ? 'projects' : 'rooms or memories'}...`}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full rounded-2xl border border-border-subtle bg-surface py-3 pr-10 pl-12 text-sm text-text-primary shadow-inner transition-all focus:border-accent-gold/50 focus:outline-none md:max-w-64 xl:max-w-80"
@@ -204,7 +266,7 @@ return;
                         className="py-4 text-sm md:py-3"
                         onClick={() => setIsCreateRoomOpen(true)}
                     >
-                        Add Room
+                        Add {isBusinessAdmin ? 'Project' : 'Room'}
                     </Button>
                 </div>
             </header>
@@ -246,7 +308,7 @@ return;
             </section>
 
             {/* Room Grid Header */}
-            <section>
+            {!isBusinessAdmin && <section>
                 <div className="mb-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-3">
@@ -280,26 +342,88 @@ return;
                         </span>
                     </motion.div>
                 </div>
-            </section>
+            </section>}
 
-            {/* Recent Stories Section */}
-            {recentStories && recentStories.length > 0 && (
+            {/* Projects/Events Grid - Business Admin Only */}
+            {isBusinessAdmin && events && events.length > 0 && (
                 <section className="mt-20">
                     <div className="mb-10 flex items-center justify-between">
                         <div className="flex flex-col gap-1">
-                            <h2 className="text-xl font-bold text-text-primary md:text-2xl">Recent Echoes</h2>
-                            <p className="text-xs text-text-muted md:text-sm">The latest artifacts preserved in your heritage.</p>
+                            <h2 className="text-xl font-bold text-text-primary md:text-2xl">Your Projects</h2>
+                            <p className="text-xs text-text-muted md:text-sm">Events and projects you've created for clients.</p>
                         </div>
-                        <Button variant="ghost" className="text-xs font-bold tracking-widest text-accent-gold uppercase">View All</Button>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        {recentStories.map((story) => (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
+                        {events.map((event) => (
                             <Link
-                                key={story.id}
-                                href={`/dashboard/stories/${story.id}`}
-                                className="group relative aspect-square overflow-hidden rounded-[32px] border border-white/5 bg-surface/40"
+                                key={event.id}
+                                href={showEvent(event.slug).url}
+                                className="group relative h-100 cursor-pointer overflow-hidden rounded-3xl border border-border-subtle bg-surface transition-all"
                             >
+                                <div className="absolute inset-0 z-0 transition-transform duration-500">
+                                    {event.thumbnail ? (
+                                        <img
+                                            src={event.thumbnail}
+                                            alt={event.name}
+                                            className="h-full w-full object-cover opacity-60 transition-transform duration-1000 group-hover:scale-110"
+                                        />
+                                    ) : (
+                                        <div className="bg-surface-light flex h-full w-full items-center justify-center">
+                                            <span className="text-4xl font-bold text-text-muted opacity-20">
+                                                {event.name.charAt(0)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-linear-to-t from-bg-dark via-bg-dark/40 to-transparent" />
+                                </div>
+
+                                <div className="absolute right-0 bottom-0 left-0 z-10 flex flex-col gap-4 p-8">
+                                    <Badge className="bg-accent-gold/20 text-accent-gold transition-colors duration-500">
+                                        {event.event_date ? new Date(event.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Event'}
+                                    </Badge>
+                                    <h3 className="text-2xl font-bold text-text-primary transition-colors duration-500 group-hover:text-accent-gold">
+                                        {event.name}
+                                    </h3>
+                                    <p className="line-clamp-2 text-sm text-text-muted transition-all duration-500">
+                                        {event.description}
+                                    </p>
+                                </div>
+                            </Link>
+                        ))}
+                        <motion.div
+                            layout
+                            onClick={() => setIsCreateRoomOpen(true)}
+                            className="group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 h-[400px]"
+                        >
+                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold">
+                                <Plus size={32} />
+                            </div>
+                            <span className="text-xs font-bold tracking-[0.3em] text-text-primary uppercase transition-colors group-hover:text-accent-gold">
+                                Create
+                            </span>
+                        </motion.div>
+                </div>
+            </section>
+        )}
+
+        {/* Recent Stories Section */}
+        {recentStories && recentStories.length > 0 && (
+            <section className="mt-20">
+                <div className="mb-10 flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-xl font-bold text-text-primary md:text-2xl">Recent Echoes</h2>
+                        <p className="text-xs text-text-muted md:text-sm">The latest artifacts preserved in your heritage.</p>
+                    </div>
+                    <Button variant="ghost" className="text-xs font-bold tracking-widest text-accent-gold uppercase">View All</Button>
+                </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    {recentStories.map((story) => (
+                        <Link
+                            key={story.id}
+                            href={`/dashboard/stories/${story.id}`}
+                            className="group relative aspect-square overflow-hidden rounded-[32px] border border-white/5 bg-surface/40"
+                        >
                                 <img
                                     src={story.thumbnail}
                                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -338,7 +462,7 @@ return;
                             className="fixed inset-0 z-50 grid place-items-end md:place-items-center bg-black/80 p-4 backdrop-blur-md"
                             onClick={() => {
                                 setIsCreateRoomOpen(false);
-                                setCreateMode('room');
+                                setCreateMode(INITIAL_MODE);
                             }}
                         >
                             <motion.div
@@ -358,54 +482,32 @@ return;
                                 <button
                                     onClick={() => {
                                         setIsCreateRoomOpen(false);
-                                        setCreateMode('room');
+                                        setCreateMode(INITIAL_MODE);
                                     }}
                                     className="absolute top-6 right-6 text-text-muted transition-colors hover:text-text-primary md:top-8 md:right-8"
                                 >
                                     <X size={24} />
                                 </button>
 
-                                {/* Mode Tabs */}
+                                {/* Role-based Create Header */}
                                 <div className="mb-8">
-                                    <div className="mb-6 inline-flex rounded-2xl border border-white/5 bg-bg-dark p-1">
-                                        <button
-                                            type="button"
-                                            onClick={() => setCreateMode('room')}
-                                            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold tracking-widest uppercase transition-all ${createMode === 'room'
-                                                ? 'bg-accent-gold text-bg-dark shadow-lg shadow-accent-gold/20'
-                                                : 'text-text-muted hover:text-text-primary'
-                                                }`}
-                                        >
-                                            <Plus size={14} />
-                                            Room
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setCreateMode('event')}
-                                            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold tracking-widest uppercase transition-all ${createMode === 'event'
-                                                ? 'bg-accent-gold text-bg-dark shadow-lg shadow-accent-gold/20'
-                                                : 'text-text-muted hover:text-text-primary'
-                                                }`}
-                                        >
-                                            <Calendar size={14} />
-                                            Event
-                                        </button>
-                                    </div>
-
-                                    <h2 className="mb-2 text-2xl font-bold text-text-primary md:text-3xl">
-                                        {createMode === 'room' ? 'Open a New Room' : 'Create a New Event'}
-                                    </h2>
-                                    <p className="text-sm leading-relaxed text-text-muted">
-                                        {createMode === 'room'
-                                            ? 'Each room is a dedicated sanctuary for a family branch or heritage collection.'
-                                            : 'An event gathers memories around a special occasion or moment in time.'}
-                                    </p>
+                                    {isBusinessAdmin ? (
+                                        <>
+                                            <h2 className="mb-2 text-2xl font-bold text-text-primary md:text-3xl">Create a New Project</h2>
+                                            <p className="text-sm leading-relaxed text-text-muted">An event gathers memories around a special occasion or moment in time.</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h2 className="mb-2 text-2xl font-bold text-text-primary md:text-3xl">Open a New Room</h2>
+                                            <p className="text-sm leading-relaxed text-text-muted">Each room is a dedicated sanctuary for a family branch or heritage collection.</p>
+                                        </>
+                                    )}
                                 </div>
 
                                 <form onSubmit={handleCreate} className="flex flex-col gap-6">
                                     <div className="space-y-2">
                                         <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                            {createMode === 'room' ? 'Room Name' : 'Event Name'}
+                                            {createMode === 'room' ? 'Room Name' : 'Project Name'}
                                         </label>
                                         <input
                                             type="text"
@@ -744,6 +846,112 @@ return;
                                         </div>
                                         {errors.thumbnail && <p className="mt-1 text-xs text-red-500">{errors.thumbnail}</p>}
                                     </div>
+                                    {isBusinessAdmin && (
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                id="allow-download"
+                                                checked={data.allow_download}
+                                                onCheckedChange={(checked) => setData('allow_download', checked)}
+                                            />
+                                            <Label htmlFor="allow-download">Allow download of media by clients</Label>
+                                        </div>
+                                    )}
+
+                                    {/* Client Assignment - Business Admin Only */}
+                                    {isBusinessAdmin && (
+                                        <div className="space-y-3 rounded-2xl border border-accent-gold/20 bg-accent-gold/5 p-5">
+                                            <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                                <Briefcase size={14} />
+                                                Client Assignment
+                                            </div>
+                                            <p className="text-[10px] text-text-muted leading-relaxed">
+                                                Assign this {createMode === 'room' ? 'project' : 'event'} to a client. The client will be able to view it from their portal.
+                                            </p>
+
+                                            {/* Client Dropdown */}
+                                            {!showClientForm && (
+                                                <div className="flex gap-2">
+                                                    <Select
+                                                        value={data.client_id}
+                                                        onValueChange={(val) => setData('client_id', val)}
+                                                    >
+                                                        <SelectTrigger className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-3 text-sm text-text-primary outline-none">
+                                                            <SelectValue placeholder="Select a client..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent className="border-white/10 bg-surface text-text-primary">
+                                                            {clients.length === 0 && (
+                                                                <SelectItem value="__none__" disabled>No clients yet</SelectItem>
+                                                            )}
+                                                            {clients.map((c: any) => (
+                                                                <SelectItem key={c.id} value={String(c.id)}>
+                                                                    {c.name} ({c.email})
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowClientForm(true)}
+                                                        className="flex shrink-0 items-center gap-2 rounded-xl border border-dashed border-accent-gold/40 px-4 py-3 text-[10px] font-bold tracking-widest text-accent-gold uppercase transition-all hover:border-accent-gold hover:bg-accent-gold/10"
+                                                        title="Add new client"
+                                                    >
+                                                        <UserPlus size={16} />
+                                                        <span className="hidden sm:inline">Add Client</span>
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* Add Client Form (shown when + is clicked) */}
+                                            {showClientForm && (
+                                                <div className="space-y-3 rounded-xl border border-white/10 bg-bg-dark/50 p-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold tracking-widest text-accent-gold uppercase">New Client</span>
+                                                        <button type="button" onClick={() => setShowClientForm(false)} className="text-text-muted hover:text-text-primary">
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Client name *"
+                                                        value={newClient.name}
+                                                        onChange={(e) => setNewClient(p => ({ ...p, name: e.target.value }))}
+                                                        className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-accent-gold/50"
+                                                    />
+                                                    <input
+                                                        type="email"
+                                                        placeholder="Email *"
+                                                        value={newClient.email}
+                                                        onChange={(e) => setNewClient(p => ({ ...p, email: e.target.value }))}
+                                                        className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-accent-gold/50"
+                                                    />
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Phone"
+                                                            value={newClient.phone}
+                                                            onChange={(e) => setNewClient(p => ({ ...p, phone: e.target.value }))}
+                                                            className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-accent-gold/50"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Company"
+                                                            value={newClient.company}
+                                                            onChange={(e) => setNewClient(p => ({ ...p, company: e.target.value }))}
+                                                            className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-accent-gold/50"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAddClient}
+                                                        disabled={clientSubmitting || !newClient.name || !newClient.email}
+                                                        className="w-full rounded-xl bg-accent-gold px-4 py-2.5 text-xs font-bold tracking-widest text-bg-dark uppercase transition-all hover:opacity-90 disabled:opacity-50"
+                                                    >
+                                                        {clientSubmitting ? 'Adding...' : 'Add Client & Assign'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     <div className="flex flex-col gap-4 pt-2 sm:flex-row">
                                         <Button
@@ -751,7 +959,7 @@ return;
                                             className="w-full"
                                             onClick={() => {
                                                 setIsCreateRoomOpen(false);
-                                                setCreateMode('room');
+                                                setCreateMode(INITIAL_MODE);
                                             }}
                                             type="button"
                                         >

@@ -32,19 +32,26 @@ export function reconcileInvestigation(investigation, { gate = null } = {}) {
   };
 
   const reconcilePool = (pool, group) => {
-    if (!Array.isArray(pool)) return [];
+    if (!Array.isArray(pool)) {
+return [];
+}
+
     const kept = [];
+
     for (let i = 0; i < pool.length; i++) {
       const candidate = pool[i];
       const decision = reconcileCandidate(candidate, { group, index: i, gate });
+
       if (decision.keep) {
         kept.push(candidate);
         continue;
       }
+
       reconciliation.droppedBeforeInvestigation++;
       reconciliation.reasons[decision.reasonCode] = (reconciliation.reasons[decision.reasonCode] ?? 0) + 1;
       preResolvedRecords.push(decision.record);
     }
+
     return kept;
   };
 
@@ -65,45 +72,78 @@ export function reconcileInvestigation(investigation, { gate = null } = {}) {
 }
 
 export function reconcileCandidate(candidate, ctx = {}) {
-  if (!candidate || typeof candidate !== 'object') return { keep: true };
+  if (!candidate || typeof candidate !== 'object') {
+return { keep: true };
+}
 
   const scannerOnly = scannerOnlyDecision(candidate, ctx);
-  if (scannerOnly) return scannerOnly;
+
+  if (scannerOnly) {
+return scannerOnly;
+}
 
   if (candidate.kind === 'slow_route') {
     const errorDecision = slowRouteErrorDecision(candidate, ctx);
-    if (errorDecision) return errorDecision;
+
+    if (errorDecision) {
+return errorDecision;
+}
 
     const mismatchDecision = slowRouteMetricMismatchDecision(candidate, ctx);
-    if (mismatchDecision) return mismatchDecision;
+
+    if (mismatchDecision) {
+return mismatchDecision;
+}
 
     const regressionDecision = deploymentRegressionDecision(candidate, ctx);
-    if (regressionDecision) return regressionDecision;
+
+    if (regressionDecision) {
+return regressionDecision;
+}
   }
 
   if (candidate.kind === 'route_errors') {
     const mismatchDecision = routeErrorsMetricMismatchDecision(candidate, ctx);
-    if (mismatchDecision) return mismatchDecision;
+
+    if (mismatchDecision) {
+return mismatchDecision;
+}
   }
 
   if (candidate.kind === 'uncached_route') {
     const cacheDecision = uncachedRouteCacheDecision(candidate, ctx);
-    if (cacheDecision) return cacheDecision;
+
+    if (cacheDecision) {
+return cacheDecision;
+}
+
     const methodDecision = uncachedRouteMethodDecision(candidate, ctx);
-    if (methodDecision) return methodDecision;
+
+    if (methodDecision) {
+return methodDecision;
+}
   }
 
   if (candidate.kind === 'isr_overrevalidation') {
     const isrDecision = isrOverrevalidationDecision(candidate, ctx);
-    if (isrDecision) return isrDecision;
+
+    if (isrDecision) {
+return isrDecision;
+}
   }
 
   return { keep: true };
 }
 
 function scannerOnlyDecision(candidate, ctx) {
-  if (!SCANNER_ONLY_KINDS.has(candidate.kind)) return null;
-  if (candidate.o11ySignal !== 'scanner-only') return null;
+  if (!SCANNER_ONLY_KINDS.has(candidate.kind)) {
+return null;
+}
+
+  if (candidate.o11ySignal !== 'scanner-only') {
+return null;
+}
+
   return dropWithObservation(candidate, ctx, {
     reasonCode: 'scanner_only_no_metric',
     reason: 'Static scanner found a possible optimization, but no Vercel metric tied traffic or cost to this target.',
@@ -118,8 +158,15 @@ function scannerOnlyDecision(candidate, ctx) {
 
 function slowRouteMetricMismatchDecision(candidate, ctx) {
   const p95 = numberAt(candidate, ['evidence', 'deepDive', 'latency', 'p95']);
-  if (p95 == null) return null;
-  if (p95 >= SLOW_ROUTE_P95_THRESHOLD_MS) return null;
+
+  if (p95 == null) {
+return null;
+}
+
+  if (p95 >= SLOW_ROUTE_P95_THRESHOLD_MS) {
+return null;
+}
+
   return dropWithObservation(candidate, ctx, {
     reasonCode: 'metric_mismatch',
     reason: `Deep-dive p95 (${formatMs(p95)}) is below the slow-route threshold, so the broad gate did not survive follow-up verification.`,
@@ -134,18 +181,38 @@ function slowRouteMetricMismatchDecision(candidate, ctx) {
 
 function slowRouteErrorDecision(candidate, ctx) {
   const rows = arrayAt(candidate, ['evidence', 'deepDive', 'statusDistribution']);
-  if (rows.length === 0) return null;
+
+  if (rows.length === 0) {
+return null;
+}
+
   let total = 0;
   let errors = 0;
+
   for (const row of rows) {
     const value = numberValue(row?.value);
-    if (value == null) continue;
+
+    if (value == null) {
+continue;
+}
+
     total += value;
-    if (/^5/.test(String(row.http_status ?? ''))) errors += value;
+
+    if (/^5/.test(String(row.http_status ?? ''))) {
+errors += value;
+}
   }
-  if (total <= 0) return null;
+
+  if (total <= 0) {
+return null;
+}
+
   const rate = errors / total;
-  if (rate <= ERROR_RATE_DOMINATES_THRESHOLD) return null;
+
+  if (rate <= ERROR_RATE_DOMINATES_THRESHOLD) {
+return null;
+}
+
   return dropWithObservation(candidate, ctx, {
     reasonCode: 'error_storm',
     reason: `Function-level 5xx responses dominate this route (${formatPct(rate)}), so this is a reliability finding rather than a slow-route finding.`,
@@ -164,10 +231,19 @@ function deploymentRegressionDecision(candidate, ctx) {
     .map((row) => ({ deploymentId: row.deployment_id, p95: numberValue(row.value) }))
     .sort((a, b) => b.p95 - a.p95);
 
-  if (rows.length < 3) return null;
+  if (rows.length < 3) {
+return null;
+}
+
   const [worst, second] = rows;
-  if (!worst || !second || worst.p95 < DEPLOYMENT_OUTLIER_MIN_MS) return null;
-  if (worst.p95 < second.p95 * DEPLOYMENT_OUTLIER_MULTIPLE) return null;
+
+  if (!worst || !second || worst.p95 < DEPLOYMENT_OUTLIER_MIN_MS) {
+return null;
+}
+
+  if (worst.p95 < second.p95 * DEPLOYMENT_OUTLIER_MULTIPLE) {
+return null;
+}
 
   return dropWithObservation(candidate, ctx, {
     reasonCode: 'deployment_regression',
@@ -183,24 +259,47 @@ function deploymentRegressionDecision(candidate, ctx) {
 
 function routeErrorsMetricMismatchDecision(candidate, ctx) {
   const broadErrors = numberAt(candidate, ['evidence', 'count']) ?? parseSignalNumber(candidate.o11ySignal, 'errs');
-  if (broadErrors == null || broadErrors < 1000) return null;
+
+  if (broadErrors == null || broadErrors < 1000) {
+return null;
+}
+
   const rows = [
     ...arrayAt(candidate, ['evidence', 'deepDive', 'errorStatusPattern']),
     ...arrayAt(candidate, ['evidence', 'deepDive', 'errorsByDeployment']),
   ];
-  if (rows.length === 0) return null;
+
+  if (rows.length === 0) {
+return null;
+}
+
   let confirmed5xx = 0;
+
   for (const row of rows) {
-    if (!/^5\d\d$/.test(String(row?.http_status ?? ''))) continue;
+    if (!/^5\d\d$/.test(String(row?.http_status ?? ''))) {
+continue;
+}
+
     const value = numberValue(row?.value);
-    if (value != null) confirmed5xx += value;
+
+    if (value != null) {
+confirmed5xx += value;
+}
   }
+
   // errorStatusPattern and errorsByDeployment can both be present; avoid
   // double-count inflation by taking the lower non-zero route-level view when available.
   const statusRows = arrayAt(candidate, ['evidence', 'deepDive', 'errorStatusPattern']);
   const status5xx = sumRows(statusRows, (row) => /^5\d\d$/.test(String(row?.http_status ?? '')));
-  if (status5xx > 0) confirmed5xx = status5xx;
-  if (confirmed5xx >= broadErrors * ROUTE_ERROR_CONFIRMATION_RATIO) return null;
+
+  if (status5xx > 0) {
+confirmed5xx = status5xx;
+}
+
+  if (confirmed5xx >= broadErrors * ROUTE_ERROR_CONFIRMATION_RATIO) {
+return null;
+}
+
   return dropWithObservation(candidate, ctx, {
     reasonCode: 'metric_mismatch',
     reason: `Deep-dive 5xx volume (${formatInteger(confirmed5xx)}) does not confirm the broad route_errors gate (${formatInteger(broadErrors)}).`,
@@ -215,12 +314,24 @@ function routeErrorsMetricMismatchDecision(candidate, ctx) {
 
 function uncachedRouteCacheDecision(candidate, ctx) {
   const rows = arrayAt(candidate, ['evidence', 'deepDive', 'cacheBreakdown']);
-  if (rows.length === 0) return null;
+
+  if (rows.length === 0) {
+return null;
+}
+
   const total = sumRows(rows);
-  if (total <= 0) return null;
+
+  if (total <= 0) {
+return null;
+}
+
   const hits = sumRows(rows, (row) => ['HIT', 'STALE'].includes(String(row?.cache_result ?? '').toUpperCase()));
   const hitRate = hits / total;
-  if (hitRate < UNCACHED_HEALTHY_HIT_RATE) return null;
+
+  if (hitRate < UNCACHED_HEALTHY_HIT_RATE) {
+return null;
+}
+
   return dropWithObservation(candidate, ctx, {
     reasonCode: 'metric_mismatch',
     reason: `Deep-dive cache hit rate (${formatPct(hitRate)}) is already healthy, so the uncached-route gate did not survive follow-up verification.`,
@@ -235,12 +346,24 @@ function uncachedRouteCacheDecision(candidate, ctx) {
 
 function uncachedRouteMethodDecision(candidate, ctx) {
   const rows = arrayAt(candidate, ['evidence', 'deepDive', 'methodDistribution']);
-  if (rows.length === 0) return null;
+
+  if (rows.length === 0) {
+return null;
+}
+
   const total = sumRows(rows);
-  if (total <= 0) return null;
+
+  if (total <= 0) {
+return null;
+}
+
   const gets = sumRows(rows, (row) => String(row?.request_method ?? '').toUpperCase() === 'GET');
   const getShare = gets / total;
-  if (getShare >= UNCACHED_MIN_GET_SHARE) return null;
+
+  if (getShare >= UNCACHED_MIN_GET_SHARE) {
+return null;
+}
+
   return dropWithObservation(candidate, ctx, {
     reasonCode: 'protocol_mismatch',
     reason: `Deep-dive GET share (${formatPct(getShare)}) is below the cacheable-route floor, so this is not a good shared-cache candidate.`,
@@ -256,10 +379,15 @@ function uncachedRouteMethodDecision(candidate, ctx) {
 function isrOverrevalidationDecision(candidate, ctx) {
   const writeRows = arrayAt(candidate, ['evidence', 'deepDive', 'writePattern']);
   const readRows = arrayAt(candidate, ['evidence', 'deepDive', 'readPattern']);
-  if (writeRows.length === 0 && readRows.length === 0) return null;
+
+  if (writeRows.length === 0 && readRows.length === 0) {
+return null;
+}
+
   const writes = sumRows(writeRows);
   const reads = sumRows(readRows);
   const ratio = reads > 0 ? writes / reads : (writes > 0 ? Infinity : 0);
+
   if (reads <= 0) {
     return dropWithObservation(candidate, ctx, {
       reasonCode: 'metric_mismatch',
@@ -272,8 +400,13 @@ function isrOverrevalidationDecision(candidate, ctx) {
       },
     });
   }
-  if (writes >= ISR_WRITE_FLOOR && ratio > ISR_WRITE_READ_RATIO_THRESHOLD) return null;
+
+  if (writes >= ISR_WRITE_FLOOR && ratio > ISR_WRITE_READ_RATIO_THRESHOLD) {
+return null;
+}
+
   const ratioLabel = ratio === Infinity ? 'Infinity' : ratio.toFixed(2);
+
   return dropWithObservation(candidate, ctx, {
     reasonCode: 'metric_mismatch',
     reason: `Deep-dive ISR writes per read (${ratioLabel}) no longer crosses the over-revalidation threshold.`,
@@ -306,10 +439,14 @@ function dropWithObservation(candidate, ctx, { reasonCode, reason, observation }
 }
 
 export function candidateRefFor(candidate, files = candidate?.files) {
-  if (!candidate || typeof candidate !== 'object') return 'unknown:<unknown>';
+  if (!candidate || typeof candidate !== 'object') {
+return 'unknown:<unknown>';
+}
+
   const target = candidate.route
     ?? candidate.hostname
     ?? (Array.isArray(files) && files.length > 0 ? `<account>#${files[0]}` : '<account>');
+
   return `${candidate.kind ?? 'unknown'}:${target}`;
 }
 
@@ -319,13 +456,21 @@ function targetLabel(candidate) {
 
 function arrayAt(obj, path) {
   let cur = obj;
-  for (const p of path) cur = cur?.[p];
+
+  for (const p of path) {
+cur = cur?.[p];
+}
+
   return Array.isArray(cur) ? cur : [];
 }
 
 function numberAt(obj, path) {
   let cur = obj;
-  for (const p of path) cur = cur?.[p];
+
+  for (const p of path) {
+cur = cur?.[p];
+}
+
   return numberValue(cur);
 }
 
@@ -334,39 +479,70 @@ function numberValue(value) {
 }
 
 function sumRows(rows, predicate = () => true) {
-  if (!Array.isArray(rows)) return 0;
+  if (!Array.isArray(rows)) {
+return 0;
+}
+
   let total = 0;
+
   for (const row of rows) {
-    if (!predicate(row)) continue;
+    if (!predicate(row)) {
+continue;
+}
+
     const value = numberValue(row?.value);
-    if (value != null) total += value;
+
+    if (value != null) {
+total += value;
+}
   }
+
   return total;
 }
 
 function parseSignalNumber(signal, key) {
-  if (typeof signal !== 'string') return null;
+  if (typeof signal !== 'string') {
+return null;
+}
+
   const re = new RegExp(`(?:^|,)${key}=([\\d,.]+)`);
   const m = signal.match(re);
-  if (!m) return null;
+
+  if (!m) {
+return null;
+}
+
   const n = Number(m[1].replace(/,/g, ''));
+
   return Number.isFinite(n) ? n : null;
 }
 
 function formatMs(value) {
   const n = numberValue(value);
-  if (n == null) return String(value);
+
+  if (n == null) {
+return String(value);
+}
+
   return `${Math.round(n)}ms`;
 }
 
 function formatPct(value) {
   const n = numberValue(value);
-  if (n == null) return String(value);
+
+  if (n == null) {
+return String(value);
+}
+
   return `${(n * 100).toFixed(n >= 0.1 ? 1 : 2)}%`;
 }
 
 function formatInteger(value) {
   const n = numberValue(value);
-  if (n == null) return String(value);
+
+  if (n == null) {
+return String(value);
+}
+
   return Math.round(n).toLocaleString('en-US');
 }

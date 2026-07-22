@@ -1,4 +1,4 @@
-import { TelegramBotClient } from './bot-client';
+import type { TelegramBotClient } from './bot-client';
 
 function escapeHtml(value: string): string {
   return value
@@ -59,7 +59,9 @@ export function registerHandlers(client: TelegramBotClient): void {
   });
 
   bot.on('text', async (ctx) => {
-    if (ctx.message.text.startsWith('/')) return;
+    if (ctx.message.text.startsWith('/')) {
+return;
+}
 
     await client.sendMessageSafe(ctx.chat.id, `Voce disse: ${ctx.message.text}`);
   });

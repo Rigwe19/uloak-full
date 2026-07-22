@@ -41,11 +41,13 @@ const PREFERRED_REGION_RE = /export\s+const\s+preferredRegion\s*=\s*(['"][^'"]+[
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
     const name = path.split('/').pop();
 
     if (name === 'vercel.json') {
       const m = VERCEL_JSON_REGIONS_RE.exec(content);
+
       if (m) {
         const regions = parseRegionList(m[1]);
         out.push({
@@ -58,11 +60,13 @@ export function scan({ files }) {
           regions,
         });
       }
+
       continue;
     }
 
     // Segment config files (page.tsx, route.ts, layout.tsx).
     const m = PREFERRED_REGION_RE.exec(content);
+
     if (m) {
       const raw = m[1];
       const regions = raw.startsWith('[') ? parseRegionList(raw.slice(1, -1)) : [raw.replace(/['"]/g, '')];
@@ -77,6 +81,7 @@ export function scan({ files }) {
       });
     }
   }
+
   return out;
 }
 

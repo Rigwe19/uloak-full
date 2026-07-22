@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
-import type { FeedVideoData } from '@/types/feed';
 import { ReelsPlayer } from '@/components/reels/ReelsPlayer';
 import { useReelsFeed } from '@/hooks/use-reels-feed';
+import type { FeedVideoData } from '@/types/feed';
 
 interface FeedProps {
     room: {

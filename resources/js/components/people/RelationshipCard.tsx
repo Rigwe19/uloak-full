@@ -1,6 +1,6 @@
-import React from 'react';
-import { Heart, Users } from 'lucide-react';
 import { Link } from '@inertiajs/react';
+import { Heart, Users } from 'lucide-react';
+import React from 'react';
 import type { RelationshipNode } from '@/types/person';
 
 const typeLabels: Record<string, string> = {

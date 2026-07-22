@@ -4,10 +4,10 @@
 // PRs where the regenerated output diverges from what's checked in.
 
 import { writeFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { scanners } from '../lib/scanners/index.mjs';
+import { fileURLToPath } from 'node:url';
 import { gates, MAX_CODE_CANDIDATES, GATE_VERSION } from '../lib/gates/index.mjs';
+import { scanners } from '../lib/scanners/index.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REFS = join(HERE, '..', 'references');
@@ -29,6 +29,7 @@ function renderScanners() {
   out += 'AST/grep-style scanners run in parallel with metric-driven investigation. They find known anti-patterns. Findings on cold-path or unmappable files are dropped unless the scanner declares `trafficIndependent: true`.\n\n';
   out += `Total scanners: ${sorted.length}.\n\n`;
   out += '## Patterns\n\n';
+
   for (const s of sorted) {
     const m = s.metadata;
     out += `### \`${m.id}\` — ${m.title}\n\n`;
@@ -37,11 +38,14 @@ function renderScanners() {
     out += `- **Traffic-independent**: ${m.trafficIndependent ? 'yes (cold-path findings survive the doctrine drop)' : 'no (cold-path findings get dropped)'}\n\n`;
     out += `**Description.** ${m.description}\n\n`;
     out += `**Fix.** ${m.fix}\n\n`;
+
     if (m.citations?.length) {
       out += `**Citations:**\n${m.citations.map((c) => `- \`${c}\``).join('\n')}\n\n`;
     }
+
     out += '---\n\n';
   }
+
   return trimTrailingBlankLine(out);
 }
 
@@ -51,6 +55,7 @@ function renderCandidates() {
   out += 'The deterministic threshold expressions that turn observability signals into investigation candidates. Pure JS, no LLM. Thresholds live in `lib/gates/*.mjs`.\n\n';
   out += `Total gates: ${sorted.length}. Budget cap: \`MAX_CODE_CANDIDATES = ${MAX_CODE_CANDIDATES}\`. Gate version: \`${GATE_VERSION}\`.\n\n`;
   out += '## Gates\n\n';
+
   for (const g of sorted) {
     const m = g.metadata;
     out += `### \`${m.id}\`\n\n`;
@@ -61,6 +66,7 @@ function renderCandidates() {
     out += `${m.description}\n\n`;
     out += '---\n\n';
   }
+
   return trimTrailingBlankLine(out);
 }
 

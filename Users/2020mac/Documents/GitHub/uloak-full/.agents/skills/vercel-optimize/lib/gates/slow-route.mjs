@@ -23,6 +23,7 @@ export const metadata = {
 export function gate(signals) {
   const routes = extractFunctionRoutes(signals);
   const errorRates = extractErrorRatesByRoute(signals);
+
   return routes
     .filter((r) => (r.p95Ms > 500 && r.invocations >= 1400) || (r.p95Ms > 1500 && r.invocations >= 250))
     .map((r) => {
@@ -39,10 +40,12 @@ export function gate(signals) {
         question: `What is the concrete bottleneck in ${r.route} (p95=${r.p95Ms}ms over ${r.invocations} invocations), and which file-level change would reduce it?`,
         evidence: { metric: 'fnDurationP95ByRoute', route: r.route, p95Ms: r.p95Ms, invocations: r.invocations, errorRate },
       };
+
       if (errorRate != null && errorRate > ERROR_RATE_DISQUALIFY_THRESHOLD) {
         candidate.disqualified = true;
         candidate.disqualifyReason = `high error rate (${(errorRate * 100).toFixed(0)}% 5xx — reliability issue, not performance; covered by route_errors gate)`;
       }
+
       return withRouteShapeWarnings(candidate, signals);
     });
 }
@@ -51,30 +54,54 @@ export function gate(signals) {
 function extractErrorRatesByRoute(signals) {
   const m = signals.metrics?.fnStatusByRoute;
   const out = new Map();
-  if (!Array.isArray(m?.rows)) return out;
+
+  if (!Array.isArray(m?.rows)) {
+return out;
+}
+
   const perRoute = new Map();
+
   for (const row of m.rows) {
-    if (!row?.route) continue;
+    if (!row?.route) {
+continue;
+}
+
     const v = row.value ?? 0;
     const prior = perRoute.get(row.route) ?? { errors5xx: 0, total: 0 };
-    if (/^5/.test(String(row.http_status ?? ''))) prior.errors5xx += v;
+
+    if (/^5/.test(String(row.http_status ?? ''))) {
+prior.errors5xx += v;
+}
+
     prior.total += v;
     perRoute.set(row.route, prior);
   }
+
   for (const [route, r] of perRoute) {
-    if (r.total > 0) out.set(route, r.errors5xx / r.total);
+    if (r.total > 0) {
+out.set(route, r.errors5xx / r.total);
+}
   }
+
   return out;
 }
 
 function extractFunctionRoutes(signals) {
   const dur = signals.metrics?.fnDurationP95ByRoute;
-  if (!dur?.ok && !Array.isArray(dur?.rows)) return [];
+
+  if (!dur?.ok && !Array.isArray(dur?.rows)) {
+return [];
+}
+
   const req = signals.metrics?.requestsByRouteCache;
 
   const invByRoute = new Map();
+
   for (const row of (req?.rows ?? [])) {
-    if (!row.route) continue;
+    if (!row.route) {
+continue;
+}
+
     invByRoute.set(row.route, (invByRoute.get(row.route) ?? 0) + (row.value ?? 0));
   }
 

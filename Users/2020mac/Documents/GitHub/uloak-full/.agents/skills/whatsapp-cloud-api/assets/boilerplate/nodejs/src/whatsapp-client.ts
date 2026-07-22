@@ -1,5 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
-import { WhatsAppConfig, SendMessagePayload, SendMessageResponse } from './types';
+import type { AxiosInstance } from 'axios';
+import axios from 'axios';
+import type { WhatsAppConfig, SendMessagePayload, SendMessageResponse } from './types';
 
 export class WhatsAppClient {
   private client: AxiosInstance;
@@ -169,6 +170,7 @@ export class WhatsAppClient {
           `/${this.phoneNumberId}/messages`,
           payload
         );
+
         return response.data;
       } catch (error: any) {
         const errorCode = error.response?.data?.error?.code;

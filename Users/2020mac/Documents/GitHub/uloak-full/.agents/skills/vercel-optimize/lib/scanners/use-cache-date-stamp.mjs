@@ -42,14 +42,21 @@ const CLIENT_HOOK_RE = /\b(useEffect|useCallback|useMemo|useLayoutEffect)\s*\(/g
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (!USE_CACHE_RE.test(content)) continue;
+    if (!USE_CACHE_RE.test(content)) {
+continue;
+}
 
     const clientHookRanges = collectRanges(content, CLIENT_HOOK_RE);
     let match;
     SUSPECT_RE.lastIndex = 0;
+
     while ((match = SUSPECT_RE.exec(content)) !== null) {
-      if (isInsideAnyRange(match.index, clientHookRanges)) continue;
+      if (isInsideAnyRange(match.index, clientHookRanges)) {
+continue;
+}
+
       out.push({
         pattern: metadata.id,
         file: path,
@@ -60,6 +67,7 @@ export function scan({ files }) {
       });
     }
   }
+
   return out;
 }
 
@@ -67,33 +75,53 @@ function collectRanges(content, hookRe) {
   const ranges = [];
   hookRe.lastIndex = 0;
   let m;
+
   while ((m = hookRe.exec(content)) !== null) {
     const open = content.indexOf('(', m.index);
-    if (open < 0) continue;
+
+    if (open < 0) {
+continue;
+}
+
     const close = findMatchingParen(content, open);
-    if (close < 0) continue;
+
+    if (close < 0) {
+continue;
+}
+
     ranges.push([open, close]);
   }
+
   return ranges;
 }
 
 function findMatchingParen(content, openIdx) {
   let depth = 0;
+
   for (let i = openIdx; i < content.length; i++) {
     const c = content[i];
-    if (c === '(') depth++;
-    else if (c === ')') {
+
+    if (c === '(') {
+depth++;
+} else if (c === ')') {
       depth--;
-      if (depth === 0) return i;
+
+      if (depth === 0) {
+return i;
+}
     }
   }
+
   return -1;
 }
 
 function isInsideAnyRange(idx, ranges) {
   for (const [a, b] of ranges) {
-    if (idx >= a && idx <= b) return true;
+    if (idx >= a && idx <= b) {
+return true;
+}
   }
+
   return false;
 }
 
@@ -101,6 +129,10 @@ function isInsideAnyRange(idx, ranges) {
 // `in-cache-fn` otherwise (likely inside a render or helper function body).
 function classifySubtype(content, idx) {
   const head = content.slice(0, idx);
-  if (!/\bfunction\b|\bclass\b|=>\s*\{/.test(head)) return 'module-scope';
+
+  if (!/\bfunction\b|\bclass\b|=>\s*\{/.test(head)) {
+return 'module-scope';
+}
+
   return 'in-cache-fn';
 }

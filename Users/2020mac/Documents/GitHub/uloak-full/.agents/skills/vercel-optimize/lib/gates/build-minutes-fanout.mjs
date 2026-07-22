@@ -30,7 +30,9 @@ export function gate(signals) {
 
   const findings = (signals?.codebase?.findings ?? []).filter((f) => f.pattern === SCANNER_PATTERN);
 
-  if (buildShare <= SHARE_FLOOR && findings.length === 0) return [];
+  if (buildShare <= SHARE_FLOOR && findings.length === 0) {
+return [];
+}
 
   const subtypes = unique(findings.map((f) => f.subtype).filter(Boolean));
   const sampleFiles = unique(findings.map((f) => f.file).filter(Boolean)).slice(0, 4);

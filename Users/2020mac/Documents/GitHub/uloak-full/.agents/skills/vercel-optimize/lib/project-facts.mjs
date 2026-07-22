@@ -6,7 +6,10 @@ export function deriveProjectFacts(signals) {
   const out = [];
   const cfg = signals?.project?.defaultResourceConfig;
   const projectErr = signals?.project?.error;
-  if (!cfg || projectErr) return out;
+
+  if (!cfg || projectErr) {
+return out;
+}
 
   if (cfg.fluid === true) {
     out.push({
@@ -23,6 +26,7 @@ export function deriveProjectFacts(signals) {
       ],
     });
   }
+
   if (cfg.elasticConcurrencyEnabled === true) {
     out.push({
       id: 'in_function_concurrency',
@@ -36,6 +40,7 @@ export function deriveProjectFacts(signals) {
       ],
     });
   }
+
   if (cfg.functionDefaultMemoryType === 'standard') {
     out.push({
       id: 'memory_standard',
@@ -56,6 +61,7 @@ export function deriveProjectFacts(signals) {
       ],
     });
   }
+
   if (Array.isArray(cfg.functionDefaultRegions) && cfg.functionDefaultRegions.length > 0) {
     const r = cfg.functionDefaultRegions;
     out.push({
@@ -65,6 +71,7 @@ export function deriveProjectFacts(signals) {
       contradictPhrases: [],
     });
   }
+
   if (cfg.functionZeroConfigFailover === true) {
     out.push({
       id: 'zero_config_failover',
@@ -77,13 +84,20 @@ export function deriveProjectFacts(signals) {
       ],
     });
   }
+
   return out;
 }
 
 // `why` excluded — citing a fact as evidence ("fluid is on, so …") is legitimate, not contradiction.
 export function findRecContradictions(rec, facts) {
-  if (!rec || typeof rec !== 'object') return [];
-  if (!Array.isArray(facts) || facts.length === 0) return [];
+  if (!rec || typeof rec !== 'object') {
+return [];
+}
+
+  if (!Array.isArray(facts) || facts.length === 0) {
+return [];
+}
+
   const haystack = [
     rec.what,
     rec.fix,
@@ -92,7 +106,11 @@ export function findRecContradictions(rec, facts) {
   ]
     .map((s) => (typeof s === 'string' ? s.toLowerCase() : ''))
     .join('\n');
-  if (!haystack) return [];
+
+  if (!haystack) {
+return [];
+}
+
   return facts.filter((f) =>
     (f.contradictPhrases ?? []).some((p) => haystack.includes(p.toLowerCase()))
   );

@@ -22,6 +22,7 @@ const DIVERSITY_ELIGIBILITY = new Map([
   ['cache_header_gap', (candidate) => {
     const invocations = numberFromSignal(candidate?.o11ySignal, 'inv');
     const p95Ms = durationMsFromSignal(candidate?.o11ySignal, 'p95');
+
     return invocations >= 50_000 || p95Ms >= 2000;
   }],
   ['rendering_candidate', (candidate) => numberFromSignal(candidate?.o11ySignal, 'inv') >= 50_000],
@@ -29,12 +30,15 @@ const DIVERSITY_ELIGIBILITY = new Map([
 
 export function selectLaunchCandidates(candidates, budget, { diversify = false } = {}) {
   const pool = Array.isArray(candidates) ? candidates : [];
+
   if (budget === Infinity) {
     return { selected: pool, skipped: [], selectionMode: 'all' };
   }
+
   if (!Number.isInteger(budget) || budget < 1) {
     throw new TypeError('selectLaunchCandidates budget must be a positive integer or Infinity');
   }
+
   if (!diversify) {
     return {
       selected: pool.slice(0, budget),
@@ -49,11 +53,16 @@ export function selectLaunchCandidates(candidates, budget, { diversify = false }
 
   const add = (candidate) => {
     const key = candidateIdentity(candidate);
-    if (selectedKeys.has(key)) return false;
+
+    if (selectedKeys.has(key)) {
+return false;
+}
+
     selectedKeys.add(key);
     selected.push(candidate);
     const kind = candidate.kind ?? '<unknown>';
     countsByKind.set(kind, (countsByKind.get(kind) ?? 0) + 1);
+
     return true;
   };
 
@@ -61,28 +70,51 @@ export function selectLaunchCandidates(candidates, budget, { diversify = false }
   // order. This is where the default run gets broad coverage, but only for
   // kinds whose signal is strong enough for a default slot.
   for (const candidate of pool) {
-    if (selected.length >= budget) break;
+    if (selected.length >= budget) {
+break;
+}
+
     const kind = candidate.kind ?? '<unknown>';
-    if ((countsByKind.get(kind) ?? 0) > 0) continue;
-    if (!isDiversityEligible(candidate)) continue;
+
+    if ((countsByKind.get(kind) ?? 0) > 0) {
+continue;
+}
+
+    if (!isDiversityEligible(candidate)) {
+continue;
+}
+
     add(candidate);
   }
 
   // Second pass: allow a second entry for high-frequency families, but avoid
   // letting slow_route consume the entire default budget when other kinds exist.
   for (const candidate of pool) {
-    if (selected.length >= budget) break;
+    if (selected.length >= budget) {
+break;
+}
+
     const kind = candidate.kind ?? '<unknown>';
     const cap = DEFAULT_KIND_CAPS.get(kind) ?? 1;
-    if ((countsByKind.get(kind) ?? 0) >= cap) continue;
-    if (!isDiversityEligible(candidate)) continue;
+
+    if ((countsByKind.get(kind) ?? 0) >= cap) {
+continue;
+}
+
+    if (!isDiversityEligible(candidate)) {
+continue;
+}
+
     add(candidate);
   }
 
   // Final fill: if the project only has one or two candidate kinds, use the
   // whole requested budget rather than leaving slots empty.
   for (const candidate of pool) {
-    if (selected.length >= budget) break;
+    if (selected.length >= budget) {
+break;
+}
+
     add(candidate);
   }
 
@@ -105,30 +137,48 @@ function candidateIdentity(candidate) {
 
 function isDiversityEligible(candidate) {
   const fn = DIVERSITY_ELIGIBILITY.get(candidate?.kind);
+
   return fn ? fn(candidate) : true;
 }
 
 function numberFromEvidence(candidate, key) {
   const value = candidate?.evidence?.[key];
+
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
 function numberFromSignal(signal, key) {
-  if (typeof signal !== 'string') return 0;
+  if (typeof signal !== 'string') {
+return 0;
+}
+
   const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`(?:^|,)${escaped}=([\\d.]+)`);
   const m = re.exec(signal);
-  if (!m) return 0;
+
+  if (!m) {
+return 0;
+}
+
   const n = Number(m[1]);
+
   return Number.isFinite(n) ? n : 0;
 }
 
 function durationMsFromSignal(signal, key) {
-  if (typeof signal !== 'string') return 0;
+  if (typeof signal !== 'string') {
+return 0;
+}
+
   const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`(?:^|,)${escaped}=([\\d.]+)ms`);
   const m = re.exec(signal);
-  if (!m) return 0;
+
+  if (!m) {
+return 0;
+}
+
   const n = Number(m[1]);
+
   return Number.isFinite(n) ? n : 0;
 }

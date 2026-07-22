@@ -6,7 +6,9 @@ interface ConfirmDialogProps {
 }
 
 export const ConfirmDialog = ({ isOpen, message, onConfirm, onCancel }: ConfirmDialogProps) => {
-  if (!isOpen) return null;
+  if (!isOpen) {
+return null;
+}
 
   return (
     <div className="dialog-overlay">

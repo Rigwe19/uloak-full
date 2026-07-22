@@ -4,8 +4,8 @@
 // Byte-stable apart from totalWallMs; each CLI query is isolated.
 
 import { readFile } from 'node:fs/promises';
-import { queryMetric, readProjectJson, resolveCommandScope } from '../lib/vercel.mjs';
 import { specsForCandidate, mergeIntoEvidence, SCANNER_KINDS, TIME_WINDOW } from '../lib/deep-dive.mjs';
+import { queryMetric, readProjectJson, resolveCommandScope } from '../lib/vercel.mjs';
 
 const SCHEMA_VERSION = '1.0';
 const log = (...a) => console.error('[deep-dive]', ...a);
@@ -16,8 +16,10 @@ async function main() {
   // wrong team and look like "no traffic". We hard-fail on mismatch below.
   const positional = [];
   let explicitCwd = null;
+
   for (let i = 2; i < process.argv.length; i++) {
     const a = process.argv[i];
+
     if (a === '--cwd' && i + 1 < process.argv.length) {
       explicitCwd = process.argv[++i];
     } else if (a.startsWith('--cwd=')) {
@@ -26,8 +28,10 @@ async function main() {
       positional.push(a);
     }
   }
+
   const mergedPath = positional[0];
   const gatePath = positional[1];
+
   if (!mergedPath || !gatePath) {
     console.error('usage: node scripts/deep-dive.mjs <merged.json> <gate.json> [--cwd <project-dir>]');
     process.exit(1);
@@ -44,41 +48,50 @@ async function main() {
   }
 
   const link = await readProjectJson(process.cwd());
+
   if (!link) {
     console.error(`[deep-dive] FATAL: cwd ${process.cwd()} has no .vercel/project.json or .vercel/repo.json.`);
     console.error('         Re-run with --cwd <project-dir> pointing at the linked project, or cd into it first.');
     console.error('         (The Vercel CLI resolves team/project from cwd; without a .vercel/ linkage every query returns empty rows for the wrong team.)');
     process.exit(2);
   }
+
   if (merged.projectId && link.projectId !== merged.projectId) {
     console.error('[deep-dive] FATAL: cwd .vercel/ links a different project than merged.json.');
     console.error('         Re-run with --cwd <dir-linked-to-the-collected-project>.');
     process.exit(2);
   }
+
   if (merged.orgId && link.orgId && link.orgId !== merged.orgId) {
     console.error('[deep-dive] FATAL: cwd .vercel/ links the project to a different Vercel scope than signals.json.');
     console.error('         Re-run with --cwd <dir-linked-to-the-collected-project>, or rerun collect-signals.mjs from the intended app directory.');
     process.exit(2);
   }
+
   log(`cwd link OK (source ${link.source})`);
 
   const commandScope = await resolveDeepDiveCommandScope(merged, link);
+
   if (!commandScope.ok) {
     console.error(`[deep-dive] FATAL: could not resolve a CLI-safe Vercel scope (${commandScope.detail ?? commandScope.error ?? 'unknown'}).`);
     console.error('         Re-run collect-signals.mjs with the current skill, run `vercel switch <team>`, or re-link with `vercel link --yes --project <project> --team <team-slug>`.');
     process.exit(2);
   }
+
   if (typeof commandScope.cliScope === 'string' && /^(team|usr)_/.test(commandScope.cliScope)) {
     console.error('[deep-dive] FATAL: commandScope.cliScope is a raw account ID, not a CLI-safe scope.');
     console.error('         Re-run collect-signals.mjs with the current skill so deep-dive queries use the same team as the broad pass.');
     process.exit(2);
   }
+
   const commandAccountId = commandScope.teamId ?? commandScope.userId ?? null;
+
   if (commandAccountId && link.orgId && link.orgId !== commandAccountId) {
     console.error('[deep-dive] FATAL: cwd .vercel/ links the project to a different Vercel scope than commandScope.');
     console.error('         Re-run with --cwd <dir-linked-to-the-collected-project>, or rerun collect-signals.mjs from the intended app directory.');
     process.exit(2);
   }
+
   const scope = commandScope.cliScope || undefined;
   log(`command scope resolved (source=${commandScope.source}; scoped=${scope ? 'yes' : 'no'})`);
 
@@ -100,6 +113,7 @@ async function main() {
 
   for (const entry of allCandidates) {
     const specs = specsForCandidate(entry.c);
+
     if (specs.length === 0) {
       if (SCANNER_KINDS.has(entry.c.kind)) {
         skipNotes.set(`${entry.group}:${entry.i}`, 'scanner-driven (no deep-dive needed)');
@@ -108,8 +122,10 @@ async function main() {
       } else {
         skipNotes.set(`${entry.group}:${entry.i}`, `no deep-dive spec for kind=${entry.c.kind}`);
       }
+
       continue;
     }
+
     for (const spec of specs) {
       flatJobs.push({ entry, spec });
     }
@@ -122,8 +138,10 @@ async function main() {
   let dedupedQueryHits = 0;
   const broadPassResults = [];
   const remainingJobs = [];
+
   for (const job of flatJobs) {
     const extracted = tryExtractFromBroadPass(job.spec, merged);
+
     if (extracted) {
       broadPassResults.push({ entry: job.entry, spec: job.spec, ok: true, ...extracted });
       extractedFromBroadPass++;
@@ -134,13 +152,17 @@ async function main() {
 
   // One CLI call per unique dedup key; jobs sharing a key share the result.
   const queryGroups = new Map();
+
   for (const job of remainingJobs) {
     const key = queryKey(job.spec, scope);
+
     if (!queryGroups.has(key)) {
       queryGroups.set(key, { spec: job.spec, jobs: [] });
     }
+
     queryGroups.get(key).jobs.push(job);
   }
+
   dedupedQueryHits = remainingJobs.length - queryGroups.size;
 
   const totalCliQueries = queryGroups.size;
@@ -155,10 +177,12 @@ async function main() {
       limit: spec.limit,
       scope,
     });
+
     return { spec, jobs, response: r };
   }));
 
   const cliResults = [];
+
   for (const { spec, jobs, response: r } of groupResults) {
     if (!r.ok) {
       for (const job of jobs) {
@@ -172,28 +196,38 @@ async function main() {
         });
         cliResults.push({ entry: job.entry, spec, ok: false, error: r.code });
       }
+
       continue;
     }
+
     const norm = normalizeResponse(r.data, spec);
+
     for (const job of jobs) {
       cliResults.push({ entry: job.entry, spec, ok: true, ...norm });
     }
   }
+
   const results = [...broadPassResults, ...cliResults];
 
   const wallMs = Date.now() - t0;
   log(`done in ${wallMs}ms (${totalCliQueries} CLI queries, ${extractedFromBroadPass} extracted from broad-pass, ${dedupedQueryHits} deduped, ${errors.length} errors)`);
 
   const byCandidate = new Map();
+
   for (const res of results) {
     const k = `${res.entry.group}:${res.entry.i}`;
-    if (!byCandidate.has(k)) byCandidate.set(k, []);
+
+    if (!byCandidate.has(k)) {
+byCandidate.set(k, []);
+}
+
     byCandidate.get(k).push(res);
   }
 
   function enrich(c, group, i) {
     const k = `${group}:${i}`;
     const note = skipNotes.get(k);
+
     if (note) {
       return {
         ...c,
@@ -203,8 +237,10 @@ async function main() {
         },
       };
     }
+
     const list = byCandidate.get(k) ?? [];
     const merged = mergeIntoEvidence(list);
+
     return {
       ...c,
       evidence: {
@@ -236,10 +272,14 @@ async function main() {
 
 async function resolveDeepDiveCommandScope(merged, link) {
   const linkedOrgId = merged.orgId ?? link.orgId ?? null;
+
   if (merged.commandScope?.ok && (merged.commandScope.cliScope || !linkedOrgId)) {
     return merged.commandScope;
   }
-  if (merged.commandScope && merged.commandScope.ok === false) return merged.commandScope;
+
+  if (merged.commandScope && merged.commandScope.ok === false) {
+return merged.commandScope;
+}
 
   return await resolveCommandScope({
     projectId: merged.projectId ?? link.projectId ?? null,
@@ -251,26 +291,44 @@ async function resolveDeepDiveCommandScope(merged, link) {
 // underscore field (e.g. vercel_function_invocation_count_sum) gets renamed
 // to `value` for compactness.
 function normalizeResponse(data, spec) {
-  if (!data || !Array.isArray(data.summary)) return { value: null };
+  if (!data || !Array.isArray(data.summary)) {
+return { value: null };
+}
+
   const field = `${spec.metricId.replace(/\./g, '_')}_${spec.aggregation}`;
+
   if (spec.groupBy.length === 0) {
     const first = data.summary[0];
-    if (!first) return { value: null };
+
+    if (!first) {
+return { value: null };
+}
+
     const v = first[field];
+
     return { value: typeof v === 'number' ? round4(v) : null };
   }
+
   const rows = data.summary.map((row) => {
     const out = { value: typeof row[field] === 'number' ? round4(row[field]) : null };
+
     for (const dim of spec.groupBy) {
-      if (row[dim] !== undefined) out[dim] = row[dim];
+      if (row[dim] !== undefined) {
+out[dim] = row[dim];
+}
     }
+
     return out;
   });
+
   return { rows };
 }
 
 function round4(n) {
-  if (!Number.isFinite(n)) return n;
+  if (!Number.isFinite(n)) {
+return n;
+}
+
   return Math.round(n * 10000) / 10000;
 }
 
@@ -279,21 +337,41 @@ function round4(n) {
 // for per-route slice specs (startTypeSplit, cacheBreakdown, methodDistribution).
 function tryExtractFromBroadPass(spec, merged) {
   const eq = spec.broadPassEquivalent;
-  if (!eq) return null;
+
+  if (!eq) {
+return null;
+}
+
   const broadRows = merged?.metrics?.[eq.key]?.rows;
-  if (!Array.isArray(broadRows)) return null;
+
+  if (!Array.isArray(broadRows)) {
+return null;
+}
+
   const rows = [];
+
   for (const row of broadRows) {
-    if (row.route !== eq.routeFilter) continue;
+    if (row.route !== eq.routeFilter) {
+continue;
+}
+
     const out = { value: typeof row.value === 'number' ? row.value : null };
+
     for (const dim of (eq.projectDims ?? [])) {
-      if (row[dim] !== undefined) out[dim] = row[dim];
+      if (row[dim] !== undefined) {
+out[dim] = row[dim];
+}
     }
+
     rows.push(out);
   }
+
   // Zero rows ≠ "no data" — broad-pass row limit may have truncated the route.
   // Fall through to CLI so the caller gets a definitive answer.
-  if (rows.length === 0) return null;
+  if (rows.length === 0) {
+return null;
+}
+
   return { rows };
 }
 
@@ -301,6 +379,7 @@ function tryExtractFromBroadPass(spec, merged) {
 // Must include everything that affects the CLI's arg list.
 function queryKey(spec, scope) {
   const groupBy = [...(spec.groupBy ?? [])].sort();
+
   return JSON.stringify({
     metricId: spec.metricId,
     aggregation: spec.aggregation,

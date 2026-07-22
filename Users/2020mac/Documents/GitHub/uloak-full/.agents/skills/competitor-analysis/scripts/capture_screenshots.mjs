@@ -12,19 +12,21 @@
 //
 // Usage: node capture_screenshots.mjs <research-dir> [--mode remote|local] [--concurrency 2]
 
-import sanitizeFilename from 'sanitize-filename';
+import { spawnSync } from 'child_process';
 import { readdirSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { isAbsolute, join, relative, resolve } from 'path';
-import { spawnSync } from 'child_process';
+import sanitizeFilename from 'sanitize-filename';
 import { parseFrontmatter } from './md_utils.mjs';
 
 const args = process.argv.slice(2);
 function sanitizePathSegments(pathValue) {
   return String(pathValue ?? '').split(/[\\/]+/).filter(Boolean).map((segment) => {
     const sanitized = sanitizeFilename(segment);
+
     if (sanitized !== segment || !sanitized) {
       throw new Error(`Unsafe path segment: ${segment}`);
     }
+
     return sanitized;
   });
 }
@@ -33,9 +35,11 @@ function safeCliPath(pathValue, baseDir = process.cwd()) {
   const root = resolve(baseDir);
   const target = resolve(root, ...sanitizePathSegments(pathValue));
   const rel = relative(root, target);
+
   if (rel.startsWith('..') || isAbsolute(rel)) {
     throw new Error(`Path escapes allowed directory: ${pathValue}`);
   }
+
   return target;
 }
 
@@ -70,10 +74,14 @@ const SESSION = 'competitor-analysis-shots';
 const browseFlags = [modeFlag, '-s', SESSION];
 const concurrencyIdx = args.indexOf('--concurrency');
 let concurrency = concurrencyIdx !== -1 ? parseInt(args[concurrencyIdx + 1], 10) : 1;
+
 // Floor at 1: `--concurrency 0` would spawn zero workers (no screenshots captured, yet the
 // script exits "successfully"), and a non-numeric value (NaN) would throw on Array(NaN).
 // Normalize before the >1 clamp below.
-if (!Number.isFinite(concurrency) || concurrency < 1) concurrency = 1;
+if (!Number.isFinite(concurrency) || concurrency < 1) {
+concurrency = 1;
+}
+
 const skipExisting = args.includes('--skip-existing');
 
 // All captures share one named `browse` session; parallel `browse open/screenshot` calls would
@@ -108,17 +116,29 @@ async function captureOne(slug, website) {
     // code, so we never screenshot a Chrome error page (and, since the session is reused
     // across competitors, never save one competitor's page under another's slug).
     let landedUrl = '';
-    try { landedUrl = (JSON.parse(openRes.stdout || '{}').url) || ''; } catch { /* non-JSON stdout */ }
+
+    try {
+ landedUrl = (JSON.parse(openRes.stdout || '{}').url) || ''; 
+} catch { /* non-JSON stdout */ }
+
     if (openRes.status !== 0 || !landedUrl || /^chrome-error:\/\//.test(landedUrl) || landedUrl === 'about:blank') {
       result.errors.push(`open failed (landed: ${landedUrl || 'unknown'}): ${openRes.stderr || openRes.stdout || `exit ${openRes.status}`}`.slice(0, 200));
+
       return result;
     }
+
     run('browse', ['viewport', '1280', '800', ...browseFlags]);
     run('browse', ['wait', 'timeout', '1500', ...browseFlags]); // let the hero settle
     const r = run('browse', ['screenshot', '--path', heroPath, '--animations', 'disabled', ...browseFlags]);
-    if (r.status === 0 && existsSync(heroPath)) result.hero = heroPath;
-    else result.errors.push(`hero: ${r.stderr || r.stdout}`);
-  } catch (err) { result.errors.push(`hero exception: ${err.message}`); }
+
+    if (r.status === 0 && existsSync(heroPath)) {
+result.hero = heroPath;
+} else {
+result.errors.push(`hero: ${r.stderr || r.stdout}`);
+}
+  } catch (err) {
+ result.errors.push(`hero exception: ${err.message}`); 
+}
 
   return result;
 }
@@ -126,10 +146,15 @@ async function captureOne(slug, website) {
 // Load competitor records
 const files = readdirSync(dir).filter(f => f.endsWith('.md')).sort();
 const jobs = [];
+
 for (const f of files) {
   const content = readFileSync(join(dir, f), 'utf-8');
   const fm = parseFrontmatter(content);
-  if (!fm || !fm.website) continue;
+
+  if (!fm || !fm.website) {
+continue;
+}
+
   const slug = f.replace('.md', '');
   jobs.push({ slug, website: fm.website });
 }
@@ -147,7 +172,12 @@ async function worker() {
     const elapsed = ((Date.now() - started) / 1000).toFixed(1);
     const mark = r.hero ? 'H' : '-';
     console.error(`  [${mark}] ${job.slug.padEnd(24)} ${elapsed}s ${r.skipped ? '(skipped)' : ''}`);
-    if (r.errors.length) for (const e of r.errors) console.error(`       ! ${e.slice(0, 120)}`);
+
+    if (r.errors.length) {
+for (const e of r.errors) {
+console.error(`       ! ${e.slice(0, 120)}`);
+}
+}
   }
 }
 await Promise.all(Array(Math.min(concurrency, jobs.length || 1)).fill(0).map(worker));

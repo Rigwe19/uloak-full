@@ -19,9 +19,14 @@ const RE = /export\s+const\s+dynamic\s*=\s*["']force-dynamic["']/;
 
 export function scan({ files }) {
   const out = [];
+
   for (const { path, content } of files) {
-    if (!isApplicable(path)) continue;
+    if (!isApplicable(path)) {
+continue;
+}
+
     const m = RE.exec(content);
+
     if (m) {
       out.push({
         pattern: metadata.id,
@@ -32,6 +37,7 @@ export function scan({ files }) {
       });
     }
   }
+
   return out;
 }
 

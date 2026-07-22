@@ -9,17 +9,19 @@
 // Output: newline-delimited JSON to stdout, one object per candidate:
 //   { "name": "serper", "hits": 3, "domain": "serper.dev", "example": "Tavily vs Serper..." }
 
-import sanitizeFilename from 'sanitize-filename';
 import { readdirSync, readFileSync } from 'fs';
 import { isAbsolute, join, relative, resolve } from 'path';
+import sanitizeFilename from 'sanitize-filename';
 
 const args = process.argv.slice(2);
 function sanitizePathSegments(pathValue) {
   return String(pathValue ?? '').split(/[\\/]+/).filter(Boolean).map((segment) => {
     const sanitized = sanitizeFilename(segment);
+
     if (sanitized !== segment || !sanitized) {
       throw new Error(`Unsafe path segment: ${segment}`);
     }
+
     return sanitized;
   });
 }
@@ -28,9 +30,11 @@ function safeCliPath(pathValue, baseDir = process.cwd()) {
   const root = resolve(baseDir);
   const target = resolve(root, ...sanitizePathSegments(pathValue));
   const rel = relative(root, target);
+
   if (rel.startsWith('..') || isAbsolute(rel)) {
     throw new Error(`Path escapes allowed directory: ${pathValue}`);
   }
+
   return target;
 }
 
@@ -64,6 +68,7 @@ const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const pattern = new RegExp(`^${escapedPrefix}_discovery_batch_.*\\.json$`);
 
 let files;
+
 try {
   files = readdirSync(dir).filter(f => pattern.test(f)).sort();
 } catch (err) {
@@ -77,6 +82,7 @@ if (files.length === 0) {
 }
 
 const allResults = [];
+
 for (const f of files) {
   try {
     const d = JSON.parse(readFileSync(join(dir, f), 'utf-8'));
@@ -90,30 +96,55 @@ for (const f of files) {
 // Exclude any host whose root-base equals a seed name — otherwise a short extracted token
 // like "exa" can match the user's own domain (exa.ai).
 const hostMap = new Map();
+
 for (const r of allResults) {
-  if (!r.url) continue;
+  if (!r.url) {
+continue;
+}
+
   try {
     const h = new URL(r.url).hostname.replace(/^www\./, '');
     const root = h.split('.').slice(-2).join('.');
     const rootBase = root.split('.')[0];
-    if (seedSet.has(rootBase)) continue;
-    if (!hostMap.has(root)) hostMap.set(root, h);
+
+    if (seedSet.has(rootBase)) {
+continue;
+}
+
+    if (!hostMap.has(root)) {
+hostMap.set(root, h);
+}
   } catch {}
 }
 
 // Extract names from "X vs Y" patterns.
 const counts = new Map();
+
 for (const r of allResults) {
   const title = (r.title || '').toLowerCase();
   const ms = [...title.matchAll(/\b([a-z][\w.\-]{2,})\s+(?:vs\.?|versus)\s+([a-z][\w.\-]{2,})/g)];
+
   for (const m of ms) {
     for (const raw of [m[1], m[2]]) {
       const name = raw.replace(/[^a-z0-9.\-]/g, '').trim();
-      if (!name || name.length < 3) continue;
-      if (seedSet.has(name)) continue;
+
+      if (!name || name.length < 3) {
+continue;
+}
+
+      if (seedSet.has(name)) {
+continue;
+}
+
       // Reject obvious non-product tokens
-      if (['the', 'and', 'for', 'with', 'best', 'top', 'better', 'using', 'choosing'].includes(name)) continue;
-      if (!counts.has(name)) counts.set(name, { name, hits: 0, example: r.title });
+      if (['the', 'and', 'for', 'with', 'best', 'top', 'better', 'using', 'choosing'].includes(name)) {
+continue;
+}
+
+      if (!counts.has(name)) {
+counts.set(name, { name, hits: 0, example: r.title });
+}
+
       counts.get(name).hits += 1;
     }
   }
@@ -133,11 +164,17 @@ function resolveDomain(name) {
   const needle = name.replace(/\./g, '');
   let exact = null;
   let bestSuffix = null; // { host, suffixLen }
+
   for (const [root, host] of hostMap.entries()) {
     const rootBase = root.split('.')[0];
-    if (rootBase === needle) { exact = host; break; }
+
+    if (rootBase === needle) {
+ exact = host; break; 
+}
+
     if (rootBase.length > needle.length && rootBase.startsWith(needle)) {
       const suffix = rootBase.slice(needle.length).replace(/^[\-_]/, '');
+
       if (BRAND_SUFFIXES.includes(suffix)) {
         if (!bestSuffix || suffix.length < bestSuffix.suffixLen) {
           bestSuffix = { host, suffixLen: suffix.length };
@@ -145,8 +182,15 @@ function resolveDomain(name) {
       }
     }
   }
-  if (exact) return exact;
-  if (bestSuffix) return bestSuffix.host;
+
+  if (exact) {
+return exact;
+}
+
+  if (bestSuffix) {
+return bestSuffix.host;
+}
+
   return null;
 }
 

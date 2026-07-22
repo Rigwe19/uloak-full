@@ -5,17 +5,19 @@
 // Reads all {prefix}_discovery_batch_*.json files, deduplicates by domain,
 // outputs one URL per line to stdout, stats to stderr.
 
-import sanitizeFilename from 'sanitize-filename';
 import { readdirSync, readFileSync } from 'fs';
 import { isAbsolute, join, relative, resolve } from 'path';
+import sanitizeFilename from 'sanitize-filename';
 
 const args = process.argv.slice(2);
 function sanitizePathSegments(pathValue) {
   return String(pathValue ?? '').split(/[\\/]+/).filter(Boolean).map((segment) => {
     const sanitized = sanitizeFilename(segment);
+
     if (sanitized !== segment || !sanitized) {
       throw new Error(`Unsafe path segment: ${segment}`);
     }
+
     return sanitized;
   });
 }
@@ -24,9 +26,11 @@ function safeCliPath(pathValue, baseDir = process.cwd()) {
   const root = resolve(baseDir);
   const target = resolve(root, ...sanitizePathSegments(pathValue));
   const rel = relative(root, target);
+
   if (rel.startsWith('..') || isAbsolute(rel)) {
     throw new Error(`Path escapes allowed directory: ${pathValue}`);
   }
+
   return target;
 }
 
@@ -57,6 +61,7 @@ const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const pattern = new RegExp(`^${escapedPrefix}_discovery_batch_.*\\.json$`);
 
 let files;
+
 try {
   files = readdirSync(dir)
     .filter(f => pattern.test(f))
@@ -86,14 +91,20 @@ for (const file of files) {
 
     for (const result of results) {
       const url = result.url;
-      if (!url) continue;
+
+      if (!url) {
+continue;
+}
 
       try {
         const u = new URL(url);
         const hostname = u.hostname.replace(/^www\./, '');
         const depth = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean).length;
         const existing = byDomain.get(hostname);
-        if (!existing || depth < existing.depth) byDomain.set(hostname, { url, depth });
+
+        if (!existing || depth < existing.depth) {
+byDomain.set(hostname, { url, depth });
+}
       } catch {
         // Skip invalid URLs
       }
@@ -104,6 +115,7 @@ for (const file of files) {
 }
 
 const urls = [...byDomain.values()].map(v => v.url);
+
 for (const url of urls) {
   console.log(url);
 }

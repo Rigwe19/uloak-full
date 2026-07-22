@@ -2,8 +2,8 @@ import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Users, Heart, ChevronRight } from 'lucide-react';
 import React from 'react';
-import PersonLayout from '@/layouts/person-layout';
 import RelationshipCard from '@/components/people/RelationshipCard';
+import PersonLayout from '@/layouts/person-layout';
 import type { Person, RelationshipNode, FamilyTree, TreeNode, SiblingNode, SpouseNode } from '@/types/person';
 
 interface FamilyTreeProps {
@@ -89,9 +89,11 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
 }
 
 function TreeView({ nodes, baseUrl, depth = 0 }: { nodes: TreeNode[]; baseUrl: string; depth?: number }) {
-    if (!nodes || nodes.length === 0) return (
+    if (!nodes || nodes.length === 0) {
+return (
         <p className="text-xs italic text-text-muted">None recorded</p>
     );
+}
 
     return (
         <div className="space-y-2" style={{ paddingLeft: depth > 0 ? 16 : 0 }}>
