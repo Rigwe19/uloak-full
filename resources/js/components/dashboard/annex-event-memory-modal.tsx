@@ -1,9 +1,10 @@
 import { router, useForm } from '@inertiajs/react';
 import {
-    X, Camera, Video, MessageSquare, Files,
+    X, Camera, Video, MessageSquare, Files, ExternalLink,
     ArrowLeft, Check, Loader2
 } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import { ResponsiveModal } from '@/components/responsive-modal';
 import { UploadDropzone } from '@/components/upload/UploadDropzone';
 import { UploadQueue } from '@/components/upload/UploadQueue';
@@ -63,6 +64,7 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
         files.forEach((file) => {
             addToQueue(file, mediaType || 'photo');
         });
+        // If multiple files selected, skip details and auto-submit after uploads
         setStep('details');
     }, [addToQueue, mediaType]);
 
@@ -93,39 +95,59 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
 
-        const uuids = uploads
-            .filter((u) => u.status === 'ready')
-            .map((u) => u.mediaUuid)
-            .filter(Boolean) as string[];
+        const readyUploads = uploads.filter((u) => u.status === 'ready');
+        const uuids = readyUploads.map((u) => u.mediaUuid).filter(Boolean) as string[];
 
-        if (uuids.length === 0 && !data.recording) {
-return;
-}
+        if (uuids.length === 0 && !data.recording) return;
 
+        // For photo type with multiple uploads, submit each one as a separate story
+        if ((data.type === 'photo' || data.type === 'video') && uuids.length > 1) {
+            uuids.forEach((uuid, index) => {
+                const formData = new FormData();
+                formData.append('title', data.title || `${event.name} Memory ${index + 1}`);
+                if (data.description) formData.append('description', data.description);
+                formData.append('type', data.type || 'photo');
+                if (data.thumbnail) formData.append('thumbnail', data.thumbnail);
+                if (data.recording) formData.append('recording', data.recording);
+                if (data.duration) formData.append('duration', data.duration);
+                formData.append('media_uuids[]', uuid);
+
+                router.post(
+                    `/dashboard/events/${event.slug}/stories`,
+                    formData,
+                    {
+                        preserveScroll: true,
+                        preserveState: index < uuids.length - 1,
+                        onSuccess: () => {
+                            if (index === uuids.length - 1) {
+                                setStep('success');
+                                router.visit(window.location.pathname, {
+                                    only: ['stories', 'pagination'],
+                                    preserveScroll: true,
+                                    preserveState: true,
+                                    onSuccess: (page) => {
+                                        window.dispatchEvent(new CustomEvent('feed:reset', {
+                                            detail: { stories: (page.props as any).stories ?? [] },
+                                        }));
+                                    },
+                                });
+                                onSuccess?.();
+                            }
+                        },
+                    },
+                );
+            });
+            return;
+        }
+
+        // Single story submission
         const formData = new FormData();
-
-        if (data.title) {
-formData.append('title', data.title);
-}
-
-        if (data.description) {
-formData.append('description', data.description);
-}
-
+        if (data.title) formData.append('title', data.title);
+        if (data.description) formData.append('description', data.description);
         formData.append('type', data.type || 'photo');
-
-        if (data.thumbnail) {
-formData.append('thumbnail', data.thumbnail);
-}
-
-        if (data.recording) {
-formData.append('recording', data.recording);
-}
-
-        if (data.duration) {
-formData.append('duration', data.duration);
-}
-
+        if (data.thumbnail) formData.append('thumbnail', data.thumbnail);
+        if (data.recording) formData.append('recording', data.recording);
+        if (data.duration) formData.append('duration', data.duration);
         uuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
 
         router.post(
@@ -134,7 +156,6 @@ formData.append('duration', data.duration);
             {
                 onSuccess: () => {
                     setStep('success');
-
                     router.visit(window.location.pathname, {
                         only: ['stories', 'pagination'],
                         preserveScroll: true,
@@ -145,7 +166,6 @@ formData.append('duration', data.duration);
                             }));
                         },
                     });
-
                     onSuccess?.();
                 },
             },
@@ -236,9 +256,55 @@ formData.append('duration', data.duration);
                                         mediaType === 'video' ? 'video/*' :
                                         '*/*'
                                     }
-                                    multiple={mediaType === 'photo' || mediaType === 'video'}
+                                    multiple={mediaType === 'photo'}
                                     maxSizeMB={50}
                                 />
+
+                                {/* Google Drive Import */}
+                                <div className="mt-6 border-t border-border-subtle pt-6">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <ExternalLink size={14} className="text-accent-gold" />
+                                        <span className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Import from Drive</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Paste a Google Drive share link..."
+                                                    onPaste={async (e) => {
+                                                        const link = e.clipboardData.getData('text');
+                                                        if (link.includes('drive.google.com')) {
+                                                            try {
+                                                                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+                                                                const res = await fetch('/api/drive/import', {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+                                                                    credentials: 'include',
+                                                                    body: JSON.stringify({ url: link }),
+                                                                });
+                                                                const data = await res.json();
+                                                                if (data.success) {
+                                                                    const byteStr = atob(data.body);
+                                                                    const bytes = new Uint8Array(byteStr.length);
+                                                                    for (let i = 0; i < byteStr.length; i++) bytes[i] = byteStr.charCodeAt(i);
+                                                                    const blob = new Blob([bytes], { type: data.content_type });
+                                                                    const file = new File([blob], data.name, { type: data.content_type });
+                                                                    addToQueue(file, mediaType || 'photo');
+                                                                    toast.success('File imported from Drive');
+                                                                } else {
+                                                                    toast.error(data.error || 'Failed to import from Drive.');
+                                                                }
+                                                            } catch {
+                                                                toast.error('Failed to import from Drive. Make sure the file is publicly accessible.');
+                                                            }
+                                                        }
+                                                    }}
+                                            className="flex-1 rounded-xl border border-border-subtle bg-bg-dark px-4 py-2.5 text-xs text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
+                                        />
+                                    </div>
+                                    <p className="mt-1.5 text-[10px] text-text-muted text-left">
+                                        Copy a Drive share link, then paste (Ctrl+V / Cmd+V) into the field above
+                                    </p>
+                                </div>
 
                                 {uploads.length > 0 && (
                                     <div className="mt-6">
@@ -278,7 +344,7 @@ formData.append('duration', data.duration);
                                     <input
                                         autoFocus
                                         type="text"
-                                        placeholder="e.g., Opening ceremony speeches"
+                                        placeholder={uploads.length > 1 ? "Auto-named for each upload (optional)" : "e.g., Opening ceremony speeches"}
                                         value={data.title}
                                         onChange={(e) => setData('title', e.target.value)}
                                         className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
@@ -367,13 +433,15 @@ formData.append('duration', data.duration);
                                 variant="primary"
                                 className="w-full"
                                 type="submit"
-                                disabled={processing || !data.title || (!hasReadyUploads && !data.recording)}
+                                disabled={processing || (!hasReadyUploads && !data.recording)}
                             >
                                 {processing ? (
                                     <div className="flex items-center gap-2">
                                         <Loader2 size={18} className="animate-spin" /> Preserving...
                                     </div>
-                                ) : 'Preserve Memory'}
+                                ) : (
+                                    <span>{uploads.length > 1 ? `Preserve ${uploads.length} Memories` : 'Preserve Memory'}</span>
+                                )}
                             </Button>
                         </form>
                     )}

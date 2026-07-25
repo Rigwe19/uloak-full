@@ -95,6 +95,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
     const [showClientForm, setShowClientForm] = useState(false);
     const [newClient, setNewClient] = useState({ name: '', email: '', phone: '', company: '' });
     const [clientSubmitting, setClientSubmitting] = useState(false);
+    const [clientFilter, setClientFilter] = useState('');
 
     const isBusinessAdmin = auth.user.role === 'business_admin';
 
@@ -347,11 +348,26 @@ return;
             {/* Projects/Events Grid - Business Admin Only */}
             {isBusinessAdmin && events && events.length > 0 && (
                 <section className="mt-20">
-                    <div className="mb-10 flex items-center justify-between">
+                    <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-xl font-bold text-text-primary md:text-2xl">Your Projects</h2>
                             <p className="text-xs text-text-muted md:text-sm">Events and projects you've created for clients.</p>
                         </div>
+                        {clients.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Client</label>
+                                <select
+                                    value={clientFilter}
+                                    onChange={(e) => setClientFilter(e.target.value)}
+                                    className="rounded-xl border border-border-subtle bg-surface px-3 py-2 text-xs text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
+                                >
+                                    <option value="">All Clients</option>
+                                    {clients.map((client) => (
+                                        <option key={client.id} value={client.id}>{client.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
