@@ -86,7 +86,7 @@ class AggregateAnalytics extends Command
                 'processing_jobs' => $totalJobs,
                 'failed_jobs' => $failedJobs,
                 'comments' => $comments,
-                'avg_processing_time_ms' => $avgProcessingTime ? round((float) $avgProcessingTime, 2) : null,
+                'avg_processing_time_ms' => round((float) ($avgProcessingTime ?? 0), 2),
             ],
         );
 

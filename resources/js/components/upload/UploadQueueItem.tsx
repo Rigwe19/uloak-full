@@ -32,6 +32,7 @@ export function UploadQueueItem({ item, onCancel, onRetry, onRemove }: UploadQue
   const isImage = item.file.type.startsWith('image/')
   const isActive = item.status === 'uploading' || item.status === 'processing' || item.status === 'queued'
   const isFinished = item.status === 'ready'
+  console.log(item)
 
   return (
     <motion.div
@@ -73,6 +74,9 @@ export function UploadQueueItem({ item, onCancel, onRetry, onRemove }: UploadQue
             <UploadStatusBadge status="processing" />
           </div>
         )}
+        {item.errorMessage && <span className="flex w-full text-xs text-red-500">
+          {item.errorMessage}
+        </span>}
       </div>
 
       <div className="flex shrink-0 items-center gap-1">

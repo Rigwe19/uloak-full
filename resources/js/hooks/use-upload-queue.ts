@@ -3,7 +3,7 @@ import { useUploadStore } from '@/stores/upload-store';
 import type { UploadItem } from '@/types/media';
 import { useMediaUpload } from './use-media-upload';
 
-const MAX_CONCURRENT = 2;
+const MAX_CONCURRENT = 3;
 
 export function useUploadQueue() {
     const { uploadFile, cancelUpload, retryUpload } = useMediaUpload();
@@ -34,9 +34,16 @@ export function useUploadQueue() {
 
                 activeCountRef.current++;
 
-                uploadFile(next.id, next.file, next.mediaType)
-                    .catch(() => {})
-                    .finally(() => {
+                                uploadFile(next.id, next.file, next.mediaType)
+                                    .catch((e) => {
+                                        const message =
+                                            e?.response?.data?.message ||
+                                            e?.message ||
+                                            'Upload failed. Please try again.';
+
+                                        useUploadStore.getState().setError(next.id, message);
+                                    })
+                                    .finally(() => {
                         activeCountRef.current--;
                         processQueueRef.current();
                     });

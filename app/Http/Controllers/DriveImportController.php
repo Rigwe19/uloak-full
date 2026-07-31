@@ -134,7 +134,8 @@ class DriveImportController extends Controller
 
             return $files;
         } catch (\Exception $e) {
-            logger()->error("Failed to list Drive folder {$folderId}: " . $e->getMessage());
+            logger()->error("Failed to list Drive folder {$folderId}: ".$e->getMessage());
+
             return [];
         }
     }

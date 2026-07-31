@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Event;
 use App\Models\Room;
 use App\Models\User;
 use App\Services\StoryService;
@@ -46,6 +47,7 @@ class ProcessDriveImport implements ShouldQueue
 
             if (! $response->successful()) {
                 logger()->warning("Drive import failed for file: {$this->fileId}");
+
                 return;
             }
 
@@ -76,7 +78,7 @@ class ProcessDriveImport implements ShouldQueue
             ];
 
             if ($this->eventId) {
-                $event = \App\Models\Event::findOrFail($this->eventId);
+                $event = Event::findOrFail($this->eventId);
                 $storyService->createStory($user, $event, $data);
             } else {
                 $storyService->createStory($user, $room, $data);
@@ -85,7 +87,7 @@ class ProcessDriveImport implements ShouldQueue
             Storage::disk('local')->delete($tempPath);
             logger()->info("Drive import completed: {$this->fileName}");
         } catch (\Exception $e) {
-            logger()->error("Drive import error for {$this->fileId}: " . $e->getMessage());
+            logger()->error("Drive import error for {$this->fileId}: ".$e->getMessage());
         }
     }
 
@@ -97,22 +99,35 @@ class ProcessDriveImport implements ShouldQueue
             'video/quicktime' => 'mov', 'audio/mpeg' => 'mp3', 'audio/wav' => 'wav',
             'audio/webm' => 'webm', 'application/pdf' => 'pdf',
         ];
+
         return $map[$contentType] ?? 'bin';
     }
 
     private function guessMediaType(string $contentType, string $extension): string
     {
-        if (str_starts_with($contentType, 'image/')) return 'photo';
-        if (str_starts_with($contentType, 'video/')) return 'video';
-        if (str_starts_with($contentType, 'audio/')) return 'audio';
+        if (str_starts_with($contentType, 'image/')) {
+            return 'photo';
+        }
+        if (str_starts_with($contentType, 'video/')) {
+            return 'video';
+        }
+        if (str_starts_with($contentType, 'audio/')) {
+            return 'audio';
+        }
 
         $photoExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $videoExts = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
         $audioExts = ['mp3', 'wav', 'ogg', 'aac', 'm4a'];
 
-        if (in_array($extension, $photoExts)) return 'photo';
-        if (in_array($extension, $videoExts)) return 'video';
-        if (in_array($extension, $audioExts)) return 'audio';
+        if (in_array($extension, $photoExts)) {
+            return 'photo';
+        }
+        if (in_array($extension, $videoExts)) {
+            return 'video';
+        }
+        if (in_array($extension, $audioExts)) {
+            return 'audio';
+        }
 
         return 'document';
     }

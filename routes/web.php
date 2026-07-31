@@ -51,6 +51,7 @@ Route::delete('/share/rooms/{room}/stories/{story}', [ShareController::class, 'd
 Route::post('/share/events/{event}/contributions', [ShareController::class, 'storeEventContribution'])->name('share.events.contributions.store');
 Route::get('/magic-login', [ShareController::class, 'magicLogin'])->name('magic.login');
 Route::get('/rooms/{room}/download-media', [RoomController::class, 'downloadMedia'])->name('rooms.download-media');
+Route::get('/share/events/{slug}/download-media', [ShareController::class, 'downloadEventMedia'])->name('share.events.download-media');
 
 // Family Member Access Routes (token-based, no password)
 Route::get('/family/access/{token}', [FamilyController::class, 'accessViaToken'])->name('family.access');
@@ -129,8 +130,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('tributes/{tribute}/approve', [TributeController::class, 'approve'])->name('tributes.approve');
         Route::patch('candles/{candle}/approve', [TributeController::class, 'approveCandle'])->name('candles.approve');
         Route::delete('tributes/{tribute}', [TributeController::class, 'destroy'])->name('tributes.destroy');
-        Route::resource('events', EventController::class)->only(['show', 'store']);
+        Route::resource('events', EventController::class)->only(['show', 'store', 'destroy']);
         Route::post('events/{event}/stories', [EventController::class, 'storeStory'])->name('events.stories.store');
+        Route::get('events/{event}/download-media', [EventController::class, 'downloadMedia'])->name('events.download-media');
         Route::get('stories/{story}', [StoryController::class, 'show'])->name('stories.show');
         Route::get('stories/{story}/data', [StoryController::class, 'showData'])->name('stories.data');
         Route::delete('stories/{story}', [StoryController::class, 'destroy'])->name('stories.destroy');

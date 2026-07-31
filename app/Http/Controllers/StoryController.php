@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Media\Cloudinary\CloudinaryService;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\Story;
@@ -285,8 +286,11 @@ class StoryController extends Controller
     /**
      * Delete a story.
      */
-    public function destroy(Story $story): RedirectResponse
+    public function destroy(Story $story, CloudinaryService $cloudinary): RedirectResponse
     {
+        // Delete Cloudinary resources associated with this story
+        $this->deleteStoryCloudinaryResources($story, $cloudinary);
+
         $story->delete();
 
         $this->analytics->track('story.deleted', story: $story);
@@ -299,5 +303,48 @@ class StoryController extends Controller
         );
 
         return redirect()->back()->with('success', 'Memory deleted.');
+    }
+
+    /**
+     * Delete all Cloudinary resources associated with a story.
+     */
+    protected function deleteStoryCloudinaryResources(Story $story, CloudinaryService $cloudinary): void
+    {
+        // 1. Delete via Media records linked to this story's assets
+        if ($story->assets) {
+            foreach ($story->assets as $asset) {
+                if (isset($asset['media_uuid'])) {
+                    $media = Media::where('uuid', $asset['media_uuid'])->first();
+                    if ($media && $media->cloudinary_public_id) {
+                        $cloudinary->deleteResource($media->cloudinary_public_id);
+                        $media->delete();
+                    }
+                }
+
+                // Also try extracting public ID from asset URL
+                if (isset($asset['url']) && str_contains($asset['url'], 'cloudinary')) {
+                    $publicId = CloudinaryService::extractPublicIdFromUrl($asset['url']);
+                    if ($publicId) {
+                        $cloudinary->deleteResource($publicId);
+                    }
+                }
+            }
+        }
+
+        // 2. Delete via file_url if it's a Cloudinary URL
+        if ($story->file_url && str_contains($story->file_url, 'cloudinary')) {
+            $publicId = CloudinaryService::extractPublicIdFromUrl($story->file_url);
+            if ($publicId) {
+                $cloudinary->deleteResource($publicId);
+            }
+        }
+
+        // 3. Delete via thumbnail if it's a Cloudinary URL
+        if ($story->thumbnail && str_contains($story->thumbnail, 'cloudinary')) {
+            $publicId = CloudinaryService::extractPublicIdFromUrl($story->thumbnail);
+            if ($publicId) {
+                $cloudinary->deleteResource($publicId);
+            }
+        }
     }
 }

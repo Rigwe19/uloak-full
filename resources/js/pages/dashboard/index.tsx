@@ -395,7 +395,7 @@ return;
                                 </div>
 
                                 <div className="absolute right-0 bottom-0 left-0 z-10 flex flex-col gap-4 p-8">
-                                    <Badge className="bg-accent-gold/20 text-accent-gold transition-colors duration-500">
+                                    <Badge className="bg-accent-gold/20 text-accent-gold transition-colors duration-500 w-fit">
                                         {event.event_date ? new Date(event.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Event'}
                                     </Badge>
                                     <h3 className="text-2xl font-bold text-text-primary transition-colors duration-500 group-hover:text-accent-gold">

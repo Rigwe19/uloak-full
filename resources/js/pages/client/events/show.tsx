@@ -1,6 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, Clock, Image, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Image, User as UserIcon, DownloadCloud, Loader } from 'lucide-react';
+import { useState } from 'react';
 import { dashboard } from '@/routes/client';
 
 interface Story {
@@ -29,6 +30,23 @@ interface Props {
 }
 
 export default function ClientEventShow({ event, stories }: Props) {
+    const [showDownloadModal, setShowDownloadModal] = useState(false);
+    const [email, setEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleDownloadRequest = (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        router.post('/downloads/request', {
+            email,
+            type: 'event',
+            slug: event.slug,
+        }, {
+            onSuccess: () => setShowDownloadModal(false),
+            onFinish: () => setSubmitting(false),
+        });
+    };
+
     return (
         <div className="min-h-screen bg-bg-dark">
             <Head title={`${event.name} - Uloak`} />
@@ -54,6 +72,13 @@ export default function ClientEventShow({ event, stories }: Props) {
                                 )}
                             </div>
                         </div>
+                        <button
+                            onClick={() => setShowDownloadModal(true)}
+                            className="inline-flex items-center gap-2 rounded-xl border border-accent-gold/20 hover:border-accent-gold/40 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-accent-gold transition-all"
+                        >
+                            <DownloadCloud size={14} />
+                            Download All
+                        </button>
                     </div>
                 </header>
 
@@ -87,6 +112,31 @@ export default function ClientEventShow({ event, stories }: Props) {
                     </div>
                 )}
             </div>
+
+            {/* Email download modal */}
+            {showDownloadModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6">
+                        <h3 className="text-lg font-bold text-text-primary">Download All Media</h3>
+                        <p className="mt-1 text-sm text-text-muted">Enter your email and we'll send you a download link.</p>
+                        <form onSubmit={handleDownloadRequest} className="mt-4 space-y-3">
+                            <input
+                                type="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="you@example.com"
+                                className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted"
+                            />
+                            <button type="submit" disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-accent-gold px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-bg-dark">
+                                {submitting && <Loader size={14} className="animate-spin" />}
+                                {submitting ? 'Sending...' : 'Send Link'}
+                            </button>
+                        </form>
+                        <button onClick={() => setShowDownloadModal(false)} className="mt-3 w-full text-center text-xs text-text-muted">Cancel</button>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }

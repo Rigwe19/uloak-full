@@ -1,5 +1,5 @@
 import eventsRoutes from '@/routes/share/events';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Filter,
@@ -16,10 +16,12 @@ import {
     ChevronLeft,
     ChevronRight,
     Download,
+    DownloadCloud,
     File as FileIcon,
     Sparkles,
     ArrowRight,
     X,
+    Loader,
 } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Button, Badge } from '@/components/dashboard/ui';
@@ -45,6 +47,7 @@ interface ShareEventProps {
         thumbnail: string;
         event_date?: string;
         stories_count: number;
+        allow_download: boolean;
         creator?: {
             name: string;
             avatar?: string;
@@ -243,6 +246,17 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
                         ) : (story.type === 'photo' && mediaUrl) ? (
                             <div className="relative max-w-full max-h-[65vh]">
                                 <img src={mediaUrl} alt={story.title} className="max-w-full max-h-[65vh] object-contain rounded-2xl shadow-2xl" />
+                                {/* Download button overlay */}
+                                <a
+                                    href={mediaUrl}
+                                    download
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white/80 hover:bg-black/60 transition-all backdrop-blur-sm"
+                                    title="Download"
+                                >
+                                    <Download size={18} />
+                                </a>
                             </div>
                         ) : isDocument ? (
                             <div className="w-full max-w-lg text-center">
@@ -313,6 +327,10 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
     }, [allStories]);
 
     const viewerOpen = viewerIndex !== null;
+
+    const [showDownloadModal, setShowDownloadModal] = useState(false);
+    const [email, setEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     // Derive Cloudinary thumbnail URL by adding transformation params
     function getThumbnailUrl(url: string | null): string | null {
@@ -397,6 +415,55 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
                                         </div>
                                     )}
                                 </div>
+                                {/* Download ZIP button */}
+                                {event.allow_download && <div className="flex items-center gap-3 pt-2">
+                                    <button
+                                        onClick={() => setShowDownloadModal(true)}
+                                        className="inline-flex items-center gap-2 rounded-xl border border-accent-gold/20 hover:border-accent-gold/40 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-accent-gold transition-all"
+                                    >
+                                        <DownloadCloud size={14} />
+                                        Download All Media
+                                    </button>
+                                </div>}
+
+                                {/* Email download modal */}
+                                {showDownloadModal && (
+                                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+                                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6">
+                                            <h3 className="text-lg font-bold text-text-primary">Download All Media</h3>
+                                            <p className="mt-1 text-sm text-text-muted">Enter your email and we'll send you a download link.</p>
+                                            <form onSubmit={(e) => {
+                                                e.preventDefault();
+                                                setSubmitting(true);
+                                                router.post('/downloads/request', {
+                                                    email,
+                                                    type: 'event',
+                                                    slug: event.slug,
+                                                }, {
+                                                    onSuccess: () => {
+                                                        setShowDownloadModal(false);
+                                                        setEmail('');
+                                                    },
+                                                    onFinish: () => setSubmitting(false),
+                                                });
+                                            }} className="mt-4 space-y-3">
+                                                <input
+                                                    type="email"
+                                                    required
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    placeholder="you@example.com"
+                                                    className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted"
+                                                />
+                                                <button type="submit" disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-accent-gold px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-bg-dark">
+                                                    {submitting && <Loader size={14} className="animate-spin" />}
+                                                    {submitting ? 'Sending...' : 'Send Link'}
+                                                </button>
+                                            </form>
+                                            <button onClick={() => setShowDownloadModal(false)} className="mt-3 w-full text-center text-xs text-text-muted">Cancel</button>
+                                        </motion.div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </header>
@@ -459,6 +526,20 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
                                                         <Badge className="border-accent-gold/20 bg-accent-gold/10 text-[9px] text-accent-gold tracking-widest uppercase backdrop-blur-md">Guest</Badge>
                                                     )}
                                                 </div>
+                                                {/* Individual download button overlay */}
+                                                {(story.file_url) && (
+                                                    <a
+                                                        href={story.file_url.replace(
+                                                            "/image/upload/",
+                                                            "/image/upload/fl_attachment/"
+                                                        )}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="absolute bottom-6 right-6 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 opacity-0 transition-all hover:bg-white/20 group-hover:opacity-100 backdrop-blur-md"
+                                                        title="Download this media"
+                                                    >
+                                                        <Download size={14} />
+                                                    </a>
+                                                )}
                                             </div>
                                             {/* <div className="flex grow flex-col justify-between gap-6 p-8">
                                             <div className="space-y-3">
@@ -489,7 +570,23 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
                                                     <Badge className="border-white/10 bg-white/5"><MediaTypeIcon type={story.type} /><span className="ml-1.5">{story.type}</span></Badge>
                                                     <span className="flex items-center gap-1"><Clock size={12} className="text-accent-gold" /> {story.date}</span>
                                                 </div>
-                                                <h3 className="text-2xl font-bold text-text-primary transition-colors">{story.title}</h3>
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <h3 className="text-2xl font-bold text-text-primary transition-colors">{story.title}</h3>
+                                                    {/* Individual download button */}
+                                                    {story.file_url && (
+                                                        <a
+                                                            href={story.file_url}
+                                                            download
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 text-text-muted hover:text-accent-gold hover:border-accent-gold/30 transition-all"
+                                                            title="Download"
+                                                        >
+                                                            <Download size={14} />
+                                                        </a>
+                                                    )}
+                                                </div>
                                                 <p className="text-sm text-text-muted italic">"{story.description}"</p>
                                             </div>
                                         </>

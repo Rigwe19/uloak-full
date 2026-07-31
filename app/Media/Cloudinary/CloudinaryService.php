@@ -110,4 +110,84 @@ class CloudinaryService
     {
         return $this->config['api_secret'] ?? '';
     }
+
+    /**
+     * Delete a resource from Cloudinary by its public ID.
+     */
+    public function deleteResource(string $publicId, ?string $resourceType = null): bool
+    {
+        if (empty($publicId)) {
+            return false;
+        }
+
+        try {
+            $type = $resourceType ?? $this->inferResourceType($publicId);
+
+            $result = $this->cloudinary->uploadApi()->destroy($publicId, [
+                'resource_type' => $type,
+            ]);
+
+            $deleted = ($result['result'] ?? '') === 'ok';
+
+            if (! $deleted) {
+                logger()->warning('Cloudinary deletion returned non-ok result', [
+                    'public_id' => $publicId,
+                    'result' => $result,
+                ]);
+            }
+
+            return $deleted;
+        } catch (\Throwable $e) {
+            logger()->error('Failed to delete Cloudinary resource', [
+                'public_id' => $publicId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Infer the Cloudinary resource type from the public ID prefix.
+     */
+    protected function inferResourceType(string $publicId): string
+    {
+        if (str_contains($publicId, 'story_video_') || str_contains($publicId, 'videos/')) {
+            return 'video';
+        }
+
+        if (str_contains($publicId, 'story_image_') || str_contains($publicId, 'images/')) {
+            return 'image';
+        }
+
+        if (str_contains($publicId, 'story_document_') || str_contains($publicId, 'raw/')) {
+            return 'raw';
+        }
+
+        return 'image';
+    }
+
+    /**
+     * Extract Cloudinary public ID from a Cloudinary URL.
+     */
+    public static function extractPublicIdFromUrl(string $url): ?string
+    {
+        // Pattern: https://res.cloudinary.com/{cloud}/image/upload/v{version}/{public_id}.{ext}
+        // Or: https://res.cloudinary.com/{cloud}/video/upload/v{version}/{public_id}.{ext}
+        $pattern = '/\/upload\/(?:v\d+\/)?(.+?)(?:\.[a-zA-Z0-9]+)?$/';
+
+        if (preg_match($pattern, $url, $matches)) {
+            $publicId = $matches[1];
+
+            // Remove any transformation segments
+            if (str_contains($publicId, '/')) {
+                $parts = explode('/', $publicId);
+                $publicId = end($parts);
+            }
+
+            return $publicId;
+        }
+
+        return null;
+    }
 }

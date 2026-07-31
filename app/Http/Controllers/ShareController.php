@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use ZipArchive;
 
 class ShareController extends Controller
 {
@@ -508,6 +509,89 @@ class ShareController extends Controller
         }
 
         return redirect()->back()->with('success', 'Memory deleted.');
+    }
+
+    /**
+     * Download all media from a shared event as a ZIP file.
+     */
+    public function downloadEventMedia(string $slug)
+    {
+        $event = Event::where('slug', $slug)->firstOrFail();
+        $stories = $event->stories;
+        $files = [];
+
+        foreach ($stories as $story) {
+            $storyPrefix = 'story_'.$story->id.'_';
+
+            if (! empty($story->file_url)) {
+                $content = $this->fetchUrlContent($story->file_url);
+                if ($content) {
+                    $ext = pathinfo(parse_url($story->file_url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'bin';
+                    $files[] = ['content' => $content, 'name' => $storyPrefix.'main.'.$ext];
+                }
+            }
+
+            if (! empty($story->assets)) {
+                foreach ($story->assets as $index => $asset) {
+                    $assetUrl = $asset['url'] ?? null;
+                    if ($assetUrl) {
+                        $content = $this->fetchUrlContent($assetUrl);
+                        if ($content) {
+                            $ext = pathinfo(parse_url($assetUrl, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'bin';
+                            $files[] = ['content' => $content, 'name' => $storyPrefix.'asset_'.($index + 1).'.'.$ext];
+                        }
+                    }
+                }
+            }
+
+            if (! empty($story->thumbnail) && $story->thumbnail !== $story->file_url) {
+                $content = $this->fetchUrlContent($story->thumbnail);
+                if ($content) {
+                    $ext = pathinfo(parse_url($story->thumbnail, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                    $files[] = ['content' => $content, 'name' => $storyPrefix.'thumbnail.'.$ext];
+                }
+            }
+        }
+
+        if (empty($files)) {
+            return back()->with('error', 'No media files found in this event.');
+        }
+
+        $sanitizedName = Str::slug($event->name, '_');
+        $zipFilename = "{$sanitizedName}_media.zip";
+        $zipPath = storage_path("app/{$zipFilename}");
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return back()->with('error', 'Could not create ZIP file.');
+        }
+
+        foreach ($files as $file) {
+            $zip->addFromString($file['name'], $file['content']);
+        }
+        $zip->close();
+
+        return response()->download($zipPath, $zipFilename, [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Fetch content from a URL.
+     */
+    protected function fetchUrlContent(string $url): ?string
+    {
+        try {
+            $context = stream_context_create([
+                'http' => ['timeout' => 30, 'user_agent' => 'Uloak/1.0'],
+                'ssl' => ['verify_peer' => false],
+            ]);
+            $content = @file_get_contents($url, false, $context);
+            return $content !== false ? $content : null;
+        } catch (\Throwable $e) {
+            logger()->warning('Failed to fetch URL content for download', ['url' => $url, 'error' => $e->getMessage()]);
+            return null;
+        }
     }
 
     public function magicLogin(Request $request): RedirectResponse

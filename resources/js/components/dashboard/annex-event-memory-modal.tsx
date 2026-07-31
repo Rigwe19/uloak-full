@@ -257,7 +257,7 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
                                         '*/*'
                                     }
                                     multiple={mediaType === 'photo'}
-                                    maxSizeMB={50}
+                                    maxSizeMB={mediaType === 'video' ? 500 : 50}
                                 />
 
                                 {/* Google Drive Import */}
@@ -331,13 +331,13 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
                                 <ArrowLeft size={14} /> Back
                             </button>
 
-                            <div>
+                            {/* <div>
                                 <h2 className="mb-1 text-2xl font-bold text-text-primary">Memory Details</h2>
                                 <p className="text-sm text-text-muted">Give your memory a title and description.</p>
-                            </div>
+                            </div> */}
 
                             <div className="space-y-4">
-                                <div className="space-y-2">
+                                {/* <div className="space-y-2">
                                     <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
                                         Memory Title
                                     </label>
@@ -363,7 +363,7 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
                                         onChange={(e) => setData('description', e.target.value)}
                                         className="w-full resize-none rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
                                     />
-                                </div>
+                                </div> */}
 
                                 {uploads.length > 0 && (
                                     <div className="space-y-3">
@@ -380,7 +380,7 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
                                     </div>
                                 )}
 
-                                {customThumbnailPreview ? (
+                                {/* {customThumbnailPreview ? (
                                     <div className="space-y-2">
                                         <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
                                             Custom Thumbnail
@@ -426,7 +426,7 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
                                             />
                                         </div>
                                     </div>
-                                )}
+                                )} */}
                             </div>
 
                             <Button

@@ -10,6 +10,7 @@ use App\Models\Room;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class DownloadController extends Controller
 {
@@ -23,22 +24,44 @@ class DownloadController extends Controller
             'type' => ['required', 'string', 'in:room,event'],
             'slug' => ['required', 'string'],
         ]);
+        logger()->info('download zip mail', [
+            'validated' => $validated
+        ]);
 
         if ($validated['type'] === 'room') {
             $room = Room::where('slug', $validated['slug'])->firstOrFail();
 
-            abort_unless($room->allow_download, 403);
+            if (! $this->isDownloadAllowed($room, $request->user())) {
+                return Inertia::render('error', [
+                    'status' => 403,
+                    'message' => 'Download is disabled for this room.',
+                ]);
+            }
 
             GenerateRoomZip::dispatch($room, $validated['email']);
         } else {
             $event = Event::where('slug', $validated['slug'])->firstOrFail();
 
-            abort_unless($event->allow_download, 403);
+            if (! $this->isDownloadAllowed($event, $request->user())) {
+                return Inertia::render('error', [
+                    'status' => 403,
+                    'message' => 'Download is disabled for this event.',
+                ]);
+            }
 
             GenerateEventZip::dispatch($event, $validated['email']);
         }
 
         return back()->with('success', 'Your download is being prepared. You will receive an email with the download link shortly.');
+    }
+
+    protected function isDownloadAllowed(Event|Room $model, ?\App\Models\User $user): bool
+    {
+        if ($user && !empty($model->created_by) && $model->created_by === $user->getKey()) {
+            return true;
+        }
+
+        return (bool) $model->allow_download;
     }
 
     /**
@@ -49,17 +72,24 @@ class DownloadController extends Controller
         $downloadRequest = DownloadRequest::where('token', $token)->firstOrFail();
 
         if ($downloadRequest->isExpired()) {
-            abort(410, 'This download link has expired. Downloads are only available for 48 hours.');
+            return Inertia::render('error', [
+                'status' => 410,
+                'message' => 'This download link has expired. Downloads are only available for 48 hours.',
+            ]);
         }
 
-        if (! Storage::exists($downloadRequest->zip_path)) {
-            abort(404, 'The requested file could not be found.');
+        $zipFullPath = Storage::disk('public')->path($downloadRequest->zip_path);
+
+        if (! file_exists($zipFullPath)) {
+            return Inertia::render('error', [
+                'status' => 404,
+                'message' => 'The requested file could not be found.',
+            ]);
         }
 
         $downloadRequest->update(['downloaded_at' => now()]);
 
-        $zipFullPath = Storage::disk('public')->path($downloadRequest->zip_path);
-
-        return response()->download($zipFullPath)->deleteFileAfterSend(false);
+        $response = response()->download($zipFullPath);
+        return $response->deleteFileAfterSend(false);
     }
 }

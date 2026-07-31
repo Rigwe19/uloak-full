@@ -3,6 +3,7 @@ export interface ValidationResult {
   error?: string
 }
 
+const MAX_VIDEO_SIZE = 700 * 1024 * 1024
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm']
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']
@@ -23,8 +24,8 @@ export function validateVideo(file: File): ValidationResult {
     return { valid: false, error: `Unsupported video format: ${file.type || 'unknown'}. Use MP4, MOV, AVI, or WebM.` }
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: `File too large (${formatSize(file.size)}). Maximum size is 50MB.` }
+  if (file.size > MAX_VIDEO_SIZE) {
+    return { valid: false, error: `File too large (${formatSize(file.size)}). Maximum size is 500MB.` }
   }
 
   return { valid: true }
