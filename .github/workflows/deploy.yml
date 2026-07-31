@@ -26,14 +26,13 @@ jobs:
 
             composer install --no-dev --optimize-autoloader
 
+            cp .env.example .env    # only the first deployment if .env doesn't exist
+
+            php artisan key:generate # only the first deployment
+
             php artisan migrate --force
 
             php artisan optimize:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
 
-            npm install
+            npm ci
             npm run build
-
-            sudo systemctl restart php8.5-fpm
