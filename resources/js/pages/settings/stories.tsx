@@ -12,7 +12,7 @@ interface SettingsStoriesProps {
 export default function SettingsStories({ person, stories }: SettingsStoriesProps) {
     return (
         <>
-            <Head title={(person?.name || 'Stories') + ' - Uloak'} />
+            <Head title={(person?.name || 'Stories') + ' - Ulo of Stories'} />
 
             <div className="mb-4">
                 <h2 className="text-lg font-bold tracking-tight text-text-primary">Stories</h2>

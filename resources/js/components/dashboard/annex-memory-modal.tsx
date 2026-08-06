@@ -38,7 +38,9 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
     const { addToQueue, removeFromQueue, cancelUpload, retryUpload, uploads } = useUploadQueue();
 
     const completedUploads = uploads.filter((u) => u.status === 'ready')
+    const processingUploads = uploads.filter((u) => u.status === 'processing')
     const hasReadyUploads = completedUploads.length > 0
+    const hasProcessingUploads = processingUploads.length > 0
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
@@ -433,7 +435,7 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
                             variant="primary"
                             className="w-full"
                             type="submit"
-                            disabled={processing || !data.title || (!hasReadyUploads && !data.recording)}
+                            disabled={processing || !data.title || (!hasReadyUploads && !hasProcessingUploads && !data.recording)}
                         >
                             {processing ? (
                                 <div className="flex items-center gap-2">

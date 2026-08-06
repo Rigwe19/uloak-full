@@ -14,7 +14,7 @@ interface TimelineProps {
 export default function Timeline({ person, events }: TimelineProps) {
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Timeline') + ' - Uloak'} />
+            <Head title={(person.name || 'Timeline') + ' - Ulo of Storiesf Storiesf Stories'} />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 {events.length > 0 ? (

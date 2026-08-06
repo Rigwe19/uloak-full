@@ -3,6 +3,7 @@
 namespace App\Media\Repositories;
 
 use App\Media\Enums\MediaType;
+use App\Media\Enums\ProcessingState;
 use App\Media\Exceptions\MediaNotFoundException;
 use App\Models\Media;
 use Illuminate\Database\Eloquent\Collection;
@@ -39,19 +40,20 @@ class MediaRepository
         return Media::where('metadata->rendi_command_id', $commandId)->first();
     }
 
-    public function findByCloudinaryPublicId(string $publicId): ?Media
-    {
-        return Media::where('cloudinary_public_id', $publicId)->first();
-    }
-
     public function createFromUpload(
         UploadedFile $file,
         string $path,
         string $disk,
         MediaType $type,
+        ?string $checksum = null,
         ?int $width = null,
         ?int $height = null,
-        ?string $checksum = null,
+        ?int $duration = null,
+        ?string $thumbnailPath = null,
+        ?string $spritePath = null,
+        ?string $spriteVttPath = null,
+        ?string $status = null,
+        ?string $processingStartedAt = null,
     ): Media {
         return Media::create([
             'uuid' => (string) Str::uuid(),
@@ -62,11 +64,16 @@ class MediaRepository
             'width' => $width,
             'height' => $height,
             'size' => $file->getSize(),
+            'duration' => $duration,
             'disk' => $disk,
             'path' => $path,
             'type' => $type->value,
             'checksum' => $checksum,
             'provider' => 'local',
+            'thumbnail' => $thumbnailPath,
+            'sprite' => ['image' => $spritePath, 'vtt' => $spriteVttPath],
+            'status' => $status ?? ProcessingState::Uploading->value,
+            'processing_started_at' => $processingStartedAt,
         ]);
     }
 

@@ -105,7 +105,7 @@ console.log(ReactEChartsCore);
 
   return (
     <>
-      <Head title="My Analytics - Uloak" />
+      <Head title="My Analytics - Ulo of Stories" />
 
       <div className="max-w-3xl md:max-w-full space-y-6 p-6">
         <div>

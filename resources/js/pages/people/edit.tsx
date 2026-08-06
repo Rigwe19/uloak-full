@@ -161,7 +161,7 @@ export default function Edit({
     return (
         <TooltipProvider>
             <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-                <Head title={'Edit ' + (identity?.display_name ?? 'Profile') + ' - Uloak'} />
+                <Head title={'Edit ' + (identity?.display_name ?? 'Profile') + ' - Ulo of Stories'} />
 
                 <Link href={peopleShow(person.uuid).url + '/about'} className="mb-4 inline-flex items-center gap-1 text-sm text-text-muted transition-colors hover:text-text-primary">
                     <ArrowLeft size={16} /> Back
@@ -267,7 +267,7 @@ export default function Edit({
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div>
                                             <label className={labelClass}>
-                                                Family Branch / House <FieldHelp content="Which side of the family — e.g. Adim family, mother's side, father's side, Uloak clan." />
+                                                Family Branch / House <FieldHelp content="Which side of the family — e.g. Adim family, mother's side, father's side, Ulo of Stories clan." />
                                             </label>
                                             <input value={data.family_branch} onChange={(e) => setData('family_branch', e.target.value)}
                                                 placeholder="e.g. Adim family, Mother's side, Okonkwo lineage"

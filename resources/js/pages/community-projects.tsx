@@ -62,7 +62,7 @@ export default function CommunityProjects({ page }: Props) {
     const content = page?.content || {};
     const hero = content.hero || {
         title: 'Impact through storytelling.',
-        subtitle: 'Uloak partners with community organizations, charities, and institutions to preserve collective memory and foster intergenerational connection.',
+        subtitle: 'Ulo of Stories partners with community organizations, charities, and institutions to preserve collective memory and foster intergenerational connection.',
     };
 
     const impactAreas = content.focus_areas || [
@@ -92,8 +92,8 @@ export default function CommunityProjects({ page }: Props) {
     return (
         <>
             {/* <Head>
-                <title>{page?.title || 'Community & Impact'} | Uloak</title>
-                <meta name="description" content={page?.meta_description || 'Discover the social impact and community projects led by Uloak.'} />
+                <title>{page?.title || 'Community & Impact'} | Ulo of Stories</title>
+                <meta name="description" content={page?.meta_description || 'Discover the social impact and community projects led by Ulo of Stories.'} />
             </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
@@ -222,7 +222,7 @@ export default function CommunityProjects({ page }: Props) {
                             </Button>
                             <div className="flex h-16 items-center gap-3 rounded-full border border-black/20 px-8 text-lg font-bold">
                                 <Mail size={20} />
-                                hello@uloak.co.uk
+                                hello@ulo of stories.co.uk
                             </div>
                         </div>
                     </motion.div>

@@ -14,7 +14,7 @@ interface HeritageProps {
 export default function Heritage({ person, heritage, languages }: HeritageProps) {
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Heritage') + ' - Uloak'} />
+            <Head title={(person.name || 'Heritage') + ' - Ulo of Stories'} />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 {heritage && (

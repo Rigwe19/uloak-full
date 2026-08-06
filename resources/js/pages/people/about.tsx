@@ -93,7 +93,7 @@ export default function About({ person, identity, heritage, languages, roles, ti
 
     return (
         <div>
-            <Head title={(identity?.display_name ?? 'About') + ' - Uloak'} />
+            <Head title={(identity?.display_name ?? 'About') + ' - Ulo of Stories'} />
 
             <motion.div variants={stagger.container} initial="initial" animate="animate" className="relative space-y-5">
                 {/* Biography Hero */}

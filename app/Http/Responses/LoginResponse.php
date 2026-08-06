@@ -15,7 +15,7 @@ class LoginResponse implements LoginResponseContract
 
         if ($request->header('X-Inertia')) {
             return Inertia::render('auth/login', [
-                'title' => 'Sign In - Uloak',
+                'title' => 'Sign In - Ulo of Stories',
                 'canResetPassword' => Features::enabled(Features::resetPasswords()),
                 'canRegister' => Features::enabled(Features::registration()),
                 'doorTransition' => true,

@@ -121,7 +121,7 @@ export default function SettingsAbout({ person, identity, heritage, languages, r
     if (!person) {
         return (
             <>
-                <Head title="About - Uloak" />
+                <Head title="About - Ulo of Storiesf Stories" />
                 <div className="flex flex-col items-center justify-center py-16">
                     <BookOpen size={40} className="text-text-muted/30" />
                     <p className="mt-4 text-sm text-text-muted">No person profile yet.</p>
@@ -141,7 +141,7 @@ export default function SettingsAbout({ person, identity, heritage, languages, r
 
     return (
         <>
-            <Head title={(identity?.display_name ?? 'About') + ' - Uloak'} />
+            <Head title={(identity?.display_name ?? 'About') + ' - Ulo of Storiesf Storiesf Storiesf Storiesf Storiesf Stories'} />
 
             <div className="space-y-6">
                 {/* Account Section */}

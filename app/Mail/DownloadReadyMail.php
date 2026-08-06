@@ -22,7 +22,7 @@ class DownloadReadyMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Your download for {$this->spaceName} is ready on Uloak",
+            subject: "Your download for {$this->spaceName} is ready on Ulo of Stories",
         );
     }
 

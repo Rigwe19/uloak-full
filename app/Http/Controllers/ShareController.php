@@ -49,7 +49,7 @@ class ShareController extends Controller
             'room' => $room,
             'tributes' => $room->approvedTributes,
             'candles' => $candles,
-            'title' => $room->name.' - Uloak, House of Stories',
+            'title' => $room->name.' - Ulo of Stories',
             'meta_description' => $room->description
                 ? Str::limit($room->description, 155)
                 : 'View and share memories, stories, and tributes in this room.',
@@ -116,7 +116,7 @@ class ShareController extends Controller
                 'path' => $paginator->path(),
                 'per_page' => $paginator->perPage(),
             ],
-            'title' => $room->name.' - Uloak, House of Stories',
+            'title' => $room->name.' - Ulo of Stories',
             'meta_description' => $room->description
                 ? Str::limit($room->description, 155)
                 : 'Share your memories, photos, videos in this room.',
@@ -154,7 +154,7 @@ class ShareController extends Controller
                 'path' => $paginator->path(),
                 'per_page' => $paginator->perPage(),
             ],
-            'title' => $event->name.' - Uloak, House of Stories',
+            'title' => $event->name.' - Ulo of Stories',
             'meta_description' => $event->description
                 ? Str::limit($event->description, 155)
                 : 'View and share memories in this event.',
@@ -583,13 +583,15 @@ class ShareController extends Controller
     {
         try {
             $context = stream_context_create([
-                'http' => ['timeout' => 30, 'user_agent' => 'Uloak/1.0'],
+                'http' => ['timeout' => 30, 'user_agent' => 'Ulo of Stories/1.0'],
                 'ssl' => ['verify_peer' => false],
             ]);
             $content = @file_get_contents($url, false, $context);
+
             return $content !== false ? $content : null;
         } catch (\Throwable $e) {
             logger()->warning('Failed to fetch URL content for download', ['url' => $url, 'error' => $e->getMessage()]);
+
             return null;
         }
     }

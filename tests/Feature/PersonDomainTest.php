@@ -100,7 +100,7 @@ test('person roles can be assigned', function () {
     PersonRole::factory()->create([
         'person_id' => $this->person->id,
         'role' => 'family_head',
-        'context' => 'Uloak Clan',
+        'context' => 'Ulo of Stories Clan',
     ]);
 
     expect($this->person->roles->first()->role)->toBe('family_head');

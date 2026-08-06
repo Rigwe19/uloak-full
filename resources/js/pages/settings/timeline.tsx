@@ -33,7 +33,7 @@ export default function SettingsTimeline({ person, events }: SettingsTimelinePro
 
     return (
         <>
-            <Head title={(person?.name || 'Timeline') + ' - Uloak'} />
+            <Head title={(person?.name || 'Timeline') + ' - Ulo of Stories'} />
 
             <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold tracking-tight text-text-primary">Life Timeline</h2>

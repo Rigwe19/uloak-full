@@ -25,7 +25,7 @@ return null;
                     </div>
                     <div className="min-w-0">
                         <p className="text-xs font-semibold text-text-primary truncate">
-                            Install Uloak on your device
+                            Install Ulo of Stories on your device
                         </p>
                         <p className="text-[10px] text-text-muted/70 truncate">
                             Access your family stories faster

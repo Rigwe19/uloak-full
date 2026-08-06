@@ -8,9 +8,11 @@ interface UploadQueueProps {
   onRetry?: (id: string) => void
   onRemove?: (id: string) => void
   emptyMessage?: string
+  onStatusChange?: (id: string, status: string) => void
+  onThumbnailUpdate?: (id: string, url: string) => void
 }
 
-export function UploadQueue({ uploads, onCancel, onRetry, onRemove, emptyMessage }: UploadQueueProps) {
+export function UploadQueue({ uploads, onCancel, onRetry, onRemove, emptyMessage, onStatusChange, onThumbnailUpdate }: UploadQueueProps) {
   if (uploads.length === 0) {
     return emptyMessage ? (
       <p className="py-4 text-center text-xs text-text-muted">{emptyMessage}</p>
@@ -27,6 +29,8 @@ export function UploadQueue({ uploads, onCancel, onRetry, onRemove, emptyMessage
             onCancel={onCancel}
             onRetry={onRetry}
             onRemove={onRemove}
+            onStatusChange={onStatusChange}
+            onThumbnailUpdate={onThumbnailUpdate}
           />
         ))}
       </AnimatePresence>

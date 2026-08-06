@@ -72,7 +72,7 @@ return null;
                 <Link href={home().url} className="flex items-center">
                     <img
                         src="/logo.png"
-                        alt="ULOAK - House of Stories"
+                        alt="ULOOFSTORIES - House of Stories"
                         className="h-18 w-auto object-contain lg:h-24"
                     />
                 </Link>
@@ -198,7 +198,7 @@ return null;
                         <Link href={home().url} className="flex items-center">
                             <img
                                 src="/logo-stacked.png"
-                                alt="ULOAK - House of Stories"
+                                alt="ULOOFSTORIES - House of Stories"
                                 className="h-auto w-24 object-contain"
                             />
                         </Link>

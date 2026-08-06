@@ -42,7 +42,7 @@ return;
                 >
                     <img
                         src="/logo.png"
-                        alt="ULOAK"
+                        alt="ULO OF STORIES"
                         className="h-12 w-auto opacity-80"
                     />
 

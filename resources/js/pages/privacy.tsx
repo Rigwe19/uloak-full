@@ -63,14 +63,14 @@ export default function Privacy({ page }: Props) {
             title: 'Your Rights',
             icon: 'Shield',
             content:
-                'You have the right to access, correct, or delete your personal data at any time. You maintain full ownership of all stories and media you upload to the ULOAK platform.',
+                'You have the right to access, correct, or delete your personal data at any time. You maintain full ownership of all stories and media you upload to the ULO OF STORIES platform.',
         },
     ];
 
     return (
         <>
             <Head>
-                <title>{page?.title || 'Privacy Policy'} | Uloak</title>
+                <title>{page?.title || 'Privacy Policy'} | Ulo of Stories</title>
                 <meta name="description" content={page?.meta_description || 'Our commitment to protecting your privacy and family stories.'} />
             </Head>
 
@@ -136,7 +136,7 @@ export default function Privacy({ page }: Props) {
                                 Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                             </p>
                             <p className="mt-4 text-sm text-text-muted">
-                                Questions? Reach us at <a href="mailto:privacy@uloak.co.uk" className="text-accent-gold hover:underline">privacy@uloak.co.uk</a>
+                                Questions? Reach us at <a href="mailto:privacy@ulo of stories.co.uk" className="text-accent-gold hover:underline">privacy@ulo of stories.co.uk</a>
                             </p>
                         </motion.div>
                     </div>

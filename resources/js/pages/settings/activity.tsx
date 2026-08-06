@@ -12,7 +12,7 @@ interface SettingsActivityProps {
 export default function SettingsActivity({ person, logs }: SettingsActivityProps) {
     return (
         <>
-            <Head title={(person?.name || 'Activity') + ' - Uloak'} />
+            <Head title={(person?.name || 'Activity') + ' - Ulo of Storiesf Storiesf Storiesf Stories'} />
 
             <div className="mb-4">
                 <h2 className="text-lg font-bold tracking-tight text-text-primary">Admin Notes</h2>

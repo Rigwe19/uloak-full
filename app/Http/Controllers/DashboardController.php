@@ -20,7 +20,7 @@ class DashboardController extends Controller
     {
         return Inertia::render('dashboard/index', [
             'dashboardData' => $this->dashboardService->getDashboardData($request->user()),
-            'title' => 'Dashboard - Uloak',
+            'title' => 'Dashboard - Ulo of Stories',
         ]);
     }
 
@@ -30,7 +30,7 @@ class DashboardController extends Controller
         $end = CarbonImmutable::now();
 
         return Inertia::render('dashboard/analytics', [
-            'title' => 'My Analytics - Uloak',
+            'title' => 'My Analytics - Ulo of Stories',
             'stats' => $this->aggregation->creatorStats($request->user(), $start, $end),
         ]);
     }

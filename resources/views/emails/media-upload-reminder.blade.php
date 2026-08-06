@@ -5,7 +5,7 @@ Thank you so much for gracing **{{ $roomName }}** with your presence, love, laug
 
 Having you there meant more to me than words can fully express. Every smile, every hug, every dance, every picture, every little moment helped make the day truly unforgettable. I am still carrying the joy in my heart.
 
-I would really love to keep those memories close, so please kindly upload any pictures or videos you captured from the event to my Uloak event room using the link below:
+I would really love to keep those memories close, so please kindly upload any pictures or videos you captured from the event to my Ulo of Stories event room using the link below:
 
 <x-mail::button :url="$roomUrl">
 Upload Your Memories

@@ -35,7 +35,7 @@ export default function Contact({ page }: Props) {
     const [sent, setSent] = useState(false);
 
     const contactInfo = content.contact_info || [
-        { label: 'Email', value: 'hello@uloak.co.uk', icon: 'Mail', link: 'mailto:hello@uloak.co.uk' },
+        { label: 'Email', value: 'hello@ulo of stories.co.uk', icon: 'Mail', link: 'mailto:hello@ulo of stories.co.uk' },
         { label: 'Phone', value: '+44 7830 129816', icon: 'Phone', link: 'tel:+447830129816' },
         { label: 'Location', value: 'Nottingham, UK', icon: 'MapPin', link: '#' },
     ];
@@ -52,8 +52,8 @@ export default function Contact({ page }: Props) {
     return (
         <>
             {/* <Head>
-                <title>{page?.title || 'Contact Us'} | Uloak</title>
-                <meta name="description" content={page?.meta_description || 'Get in touch with Uloak for storytelling services and collaborations.'} />
+                <title>{page?.title || 'Contact Us'} | Ulo of Stories</title>
+                <meta name="description" content={page?.meta_description || 'Get in touch with Ulo of Stories for storytelling services and collaborations.'} />
             </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
@@ -118,7 +118,7 @@ export default function Contact({ page }: Props) {
                                                 <input
                                                     type="email" required
                                                     className="w-full rounded-2xl border border-white/5 bg-bg-dark px-6 py-4 text-sm outline-none transition-all focus:border-accent-gold/50"
-                                                    placeholder="hello@uloak.co.uk"
+                                                    placeholder="hello@ulo of stories.co.uk"
                                                     value={formData.email}
                                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                 />

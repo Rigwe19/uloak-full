@@ -12,7 +12,7 @@ interface SettingsMemoriesProps {
 export default function SettingsMemories({ person, memories }: SettingsMemoriesProps) {
     return (
         <>
-            <Head title={(person?.name || 'Memories') + ' - Uloak'} />
+            <Head title={(person?.name || 'Memories') + ' - Ulo of Stories'} />
 
             <div className="mb-4">
                 <h2 className="text-lg font-bold tracking-tight text-text-primary">Memories From Others</h2>

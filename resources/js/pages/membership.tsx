@@ -67,7 +67,7 @@ export default function Membership({
                         <div className="mt-8 max-w-2xl text-xl leading-relaxed text-text-muted">
                             {subscriptions_enabled ? hero.subtitle : <>
                                 <p>
-                                    Uloak is already fully functional today — you can create memorials,
+                                    Ulo of Stories is already fully functional today — you can create memorials,
                                     share stories, and use the platform without any payment.
                                 </p>
 
@@ -220,7 +220,7 @@ export default function Membership({
                             Common Questions
                         </h2>
                         <p className="text-text-muted">
-                            Everything you need to know about Uloak membership.
+                            Everything you need to know about Ulo of Stories membership.
                         </p>
                     </div>
 

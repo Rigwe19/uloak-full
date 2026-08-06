@@ -37,7 +37,7 @@ class PersonController extends Controller
         ]);
 
         return Inertia::render('people/about', [
-            'title' => ($person->identity?->display_name ?? 'About').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'About').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'identity' => $person->identity,
             'heritage' => $person->heritage,
@@ -58,7 +58,7 @@ class PersonController extends Controller
         $graph = $this->personService->getRelationshipGraph($person);
 
         return Inertia::render('people/family-tree', [
-            'title' => ($person->identity?->display_name ?? 'Family Tree').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Family Tree').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'graph' => $graph,
         ]);
@@ -71,7 +71,7 @@ class PersonController extends Controller
         $events = $this->personService->getTimeline($person);
 
         return Inertia::render('people/timeline', [
-            'title' => ($person->identity?->display_name ?? 'Timeline').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Timeline').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'events' => $events,
         ]);
@@ -87,7 +87,7 @@ class PersonController extends Controller
             ->paginate(12);
 
         return Inertia::render('people/stories', [
-            'title' => ($person->identity?->display_name ?? 'Stories').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Stories').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'stories' => $stories,
         ]);
@@ -100,7 +100,7 @@ class PersonController extends Controller
         $media = $this->personService->getMediaArchive($person);
 
         return Inertia::render('people/media', [
-            'title' => ($person->identity?->display_name ?? 'Media').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Media').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'media' => $media,
         ]);
@@ -113,7 +113,7 @@ class PersonController extends Controller
         $person->load('heritage', 'languages');
 
         return Inertia::render('people/heritage', [
-            'title' => ($person->identity?->display_name ?? 'Heritage').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Heritage').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'heritage' => $person->heritage,
             'languages' => $person->languages,
@@ -130,7 +130,7 @@ class PersonController extends Controller
             ->paginate(12);
 
         return Inertia::render('people/memories', [
-            'title' => ($person->identity?->display_name ?? 'Memories').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Memories').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'memories' => $memories,
         ]);
@@ -144,7 +144,7 @@ class PersonController extends Controller
         $consents = $this->personService->getConsents($person);
 
         return Inertia::render('people/permissions', [
-            'title' => ($person->identity?->display_name ?? 'Permissions').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Permissions').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'permissions' => $permissions,
             'consents' => $consents,
@@ -158,7 +158,7 @@ class PersonController extends Controller
         $logs = $this->personService->getActivity($person);
 
         return Inertia::render('people/activity', [
-            'title' => ($person->identity?->display_name ?? 'Activity').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Activity').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'logs' => $logs,
         ]);
@@ -167,7 +167,7 @@ class PersonController extends Controller
     public function create(Request $request): Response
     {
         return Inertia::render('people/create', [
-            'title' => 'Create Person - Uloak',
+            'title' => 'Create Person - Ulo of Stories',
             'personTypes' => collect(PersonType::cases())->map(fn ($t) => [
                 'value' => $t->value,
                 'label' => str($t->name)->headline(),
@@ -234,7 +234,7 @@ class PersonController extends Controller
         ]);
 
         return Inertia::render('people/edit', [
-            'title' => 'Edit '.($person->identity?->getDisplayName() ?? 'Profile').' - Uloak',
+            'title' => 'Edit '.($person->identity?->getDisplayName() ?? 'Profile').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'identity' => $person->identity,
             'heritage' => $person->heritage,
@@ -416,7 +416,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/about', [
-                'title' => 'About - Uloak',
+                'title' => 'About - Ulo of Stories',
                 'person' => null,
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
                 'status' => $request->session()->get('status'),
@@ -429,7 +429,7 @@ class PersonController extends Controller
         ]);
 
         return Inertia::render('settings/about', [
-            'title' => ($person->identity?->display_name ?? 'About').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'About').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'identity' => $person->identity,
             'heritage' => $person->heritage,
@@ -451,7 +451,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/family-tree', [
-                'title' => 'Family Tree - Uloak',
+                'title' => 'Family Tree - Ulo of Stories',
                 'person' => null,
             ]);
         }
@@ -459,7 +459,7 @@ class PersonController extends Controller
         $graph = $this->personService->getRelationshipGraph($person);
 
         return Inertia::render('settings/family-tree', [
-            'title' => ($person->identity?->display_name ?? 'Family Tree').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Family Tree').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'graph' => $graph,
         ]);
@@ -471,7 +471,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/timeline', [
-                'title' => 'Timeline - Uloak',
+                'title' => 'Timeline - Ulo of Stories',
                 'person' => null,
             ]);
         }
@@ -479,7 +479,7 @@ class PersonController extends Controller
         $events = $this->personService->getTimeline($person);
 
         return Inertia::render('settings/timeline', [
-            'title' => ($person->identity?->display_name ?? 'Timeline').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Timeline').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'events' => $events,
         ]);
@@ -491,7 +491,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/stories', [
-                'title' => 'Stories - Uloak',
+                'title' => 'Stories - Ulo of Stories',
                 'person' => null,
             ]);
         }
@@ -502,7 +502,7 @@ class PersonController extends Controller
             ->paginate(12);
 
         return Inertia::render('settings/stories', [
-            'title' => ($person->identity?->display_name ?? 'Stories').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Stories').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'stories' => $stories,
         ]);
@@ -514,7 +514,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/media', [
-                'title' => 'Media - Uloak',
+                'title' => 'Media - Ulo of Stories',
                 'person' => null,
             ]);
         }
@@ -522,7 +522,7 @@ class PersonController extends Controller
         $media = $this->personService->getMediaArchive($person);
 
         return Inertia::render('settings/media', [
-            'title' => ($person->identity?->display_name ?? 'Media').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Media').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'media' => $media,
         ]);
@@ -534,7 +534,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/heritage', [
-                'title' => 'Heritage - Uloak',
+                'title' => 'Heritage - Ulo of Stories',
                 'person' => null,
             ]);
         }
@@ -542,7 +542,7 @@ class PersonController extends Controller
         $person->load('heritage', 'languages');
 
         return Inertia::render('settings/heritage', [
-            'title' => ($person->identity?->display_name ?? 'Heritage').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Heritage').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'heritage' => $person->heritage,
             'languages' => $person->languages,
@@ -555,7 +555,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/memories', [
-                'title' => 'Memories - Uloak',
+                'title' => 'Memories - Ulo of Stories',
                 'person' => null,
             ]);
         }
@@ -566,7 +566,7 @@ class PersonController extends Controller
             ->paginate(12);
 
         return Inertia::render('settings/memories', [
-            'title' => ($person->identity?->display_name ?? 'Memories').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Memories').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'memories' => $memories,
         ]);
@@ -578,7 +578,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/permissions', [
-                'title' => 'Permissions - Uloak',
+                'title' => 'Permissions - Ulo of Stories',
                 'person' => null,
             ]);
         }
@@ -587,7 +587,7 @@ class PersonController extends Controller
         $consents = $this->personService->getConsents($person);
 
         return Inertia::render('settings/permissions', [
-            'title' => ($person->identity?->display_name ?? 'Permissions').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Permissions').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'permissions' => $permissions,
             'consents' => $consents,
@@ -600,7 +600,7 @@ class PersonController extends Controller
 
         if (! $person) {
             return Inertia::render('settings/activity', [
-                'title' => 'Activity - Uloak',
+                'title' => 'Activity - Ulo of Stories',
                 'person' => null,
             ]);
         }
@@ -608,7 +608,7 @@ class PersonController extends Controller
         $logs = $this->personService->getActivity($person);
 
         return Inertia::render('settings/activity', [
-            'title' => ($person->identity?->display_name ?? 'Activity').' - Uloak',
+            'title' => ($person->identity?->display_name ?? 'Activity').' - Ulo of Stories',
             'person' => $this->serializePerson($person, $request),
             'logs' => $logs,
         ]);

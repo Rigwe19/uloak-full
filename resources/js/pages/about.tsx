@@ -63,15 +63,15 @@ export default function About({ page }: Props) {
 
     const hero = content?.hero || {
         title: 'A house built for stories that matter.',
-        subtitle: 'Uloak is a storytelling movement based in the UK. We exist to preserve the stories that make us human — through film, technology, community, and research.'
+        subtitle: 'Ulo of Stories is a storytelling movement based in the UK. We exist to preserve the stories that make us human — through film, technology, community, and research.'
     };
 
     const origin = content?.origin || {
         quote: '"The stories we fail to capture today become the silences our grandchildren inherit tomorrow."',
         paragraphs: [
-            'Uloak began from a simple, persistent question: what happens to the stories we fail to tell? Every family has an elder whose wisdom will one day be irretrievable. Every community has a history that mainstream archives overlook. Every culture carries stories that need more than a photograph and a caption to survive.',
-            'Uloak was built to answer that question — not as a product, but as a movement. We believe that storytelling is not a luxury. It is the infrastructure of identity, and it belongs to everyone.',
-            'Today, Uloak operates as a creative studio and technology company based in the UK. We produce documentary films, oral history archives, and heritage photography.'
+            'Ulo of Stories began from a simple, persistent question: what happens to the stories we fail to tell? Every family has an elder whose wisdom will one day be irretrievable. Every community has a history that mainstream archives overlook. Every culture carries stories that need more than a photograph and a caption to survive.',
+            'Ulo of Stories was built to answer that question — not as a product, but as a movement. We believe that storytelling is not a luxury. It is the infrastructure of identity, and it belongs to everyone.',
+            'Today, Ulo of Stories operates as a creative studio and technology company based in the UK. We produce documentary films, oral history archives, and heritage photography.'
         ]
     };
 
@@ -85,10 +85,10 @@ export default function About({ page }: Props) {
         role: 'Founder & Creative Director',
         image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
         title: 'Archiving the Unseen.',
-        quote: '"I built Uloak because I believe every person contains a world. Our job is to help that world survive."',
+        quote: '"I built Ulo of Stories because I believe every person contains a world. Our job is to help that world survive."',
         paragraphs: [
             'Nnanna Adim is a documentary filmmaker, storyteller, and social entrepreneur based in the UK. He has spent his career at the intersection of creativity and community — believing that the most important stories are often the ones we assume no one wants to hear.',
-            'Uloak was born from his own experience of intergenerational disconnection and the grief of stories lost — the grandmother whose life was never documented, the family history that existed only in fading memories.'
+            'Ulo of Stories was born from his own experience of intergenerational disconnection and the grief of stories lost — the grandmother whose life was never documented, the family history that existed only in fading memories.'
         ]
     };
 
@@ -111,8 +111,8 @@ export default function About({ page }: Props) {
     return (
         <>
             {/* <Head>
-                <title>{page?.title || 'About Us'} | Uloak</title>
-                <meta name="description" content={page?.meta_description || 'Learn about Uloak, our mission to preserve human stories, and the people behind the movement.'} />
+                <title>{page?.title || 'About Us'} | Ulo of Stories</title>
+                <meta name="description" content={page?.meta_description || 'Learn about Ulo of Stories, our mission to preserve human stories, and the people behind the movement.'} />
             </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
@@ -285,7 +285,7 @@ export default function About({ page }: Props) {
                 <section className="px-6 py-32 md:px-12 lg:px-24">
                     <div className="mx-auto max-w-7xl">
                         <div className="mb-20 text-center">
-                            <h2 className="text-4xl font-bold tracking-tight text-text-primary md:text-5xl">The Expressions of Uloak.</h2>
+                            <h2 className="text-4xl font-bold tracking-tight text-text-primary md:text-5xl">The Expressions of Ulo of Stories.</h2>
                             <p className="mt-6 text-xl text-text-muted">One mission, many forms.</p>
                         </div>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

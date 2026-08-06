@@ -13,7 +13,7 @@ interface ShowProps {
 export default function Show({ person, stats }: ShowProps) {
     return (
         <PersonLayout person={person} stats={stats}>
-            <Head title={person.name + ' - Uloak'} />
+            <Head title={person.name + ' - Ulo of Storiesf Stories'} />
 
             <motion.div
                 initial={{ opacity: 0, y: 10 }}

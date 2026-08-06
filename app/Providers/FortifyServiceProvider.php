@@ -65,40 +65,40 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureViews(): void
     {
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
-            'title' => 'Sign In - Uloak',
+            'title' => 'Sign In - Ulo of Stories',
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'canRegister' => Features::enabled(Features::registration()),
             'status' => $request->session()->get('status'),
         ]));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
-            'title' => 'Reset Password - Uloak',
+            'title' => 'Reset Password - Ulo of Stories',
             'email' => $request->email,
             'token' => $request->route('token'),
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
         ]));
 
         Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/forgot-password', [
-            'title' => 'Forgot Password - Uloak',
+            'title' => 'Forgot Password - Ulo of Stories',
             'status' => $request->session()->get('status'),
         ]));
 
         Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
-            'title' => 'Verify Email - Uloak',
+            'title' => 'Verify Email - Ulo of Stories',
             'status' => $request->session()->get('status'),
         ]));
 
         Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'title' => 'Create Account - Uloak',
+            'title' => 'Create Account - Ulo of Stories',
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
         ]));
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge', [
-            'title' => 'Two-Factor Authentication - Uloak',
+            'title' => 'Two-Factor Authentication - Ulo of Stories',
         ]));
 
         Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password', [
-            'title' => 'Confirm Password - Uloak',
+            'title' => 'Confirm Password - Ulo of Stories',
         ]));
     }
 

@@ -27,7 +27,7 @@ class WaitingListConfirmationMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'You\'re on the Uloak waiting list!',
+            subject: 'You\'re on the Ulo of Stories waiting list!',
         );
     }
 

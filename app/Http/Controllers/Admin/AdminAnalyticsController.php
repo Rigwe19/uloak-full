@@ -24,7 +24,7 @@ class AdminAnalyticsController extends Controller
     public function index(): Response
     {
         return Inertia::render('admin/analytics', [
-            'title' => 'Analytics - Uloak',
+            'title' => 'Analytics - Ulo of Stories',
         ]);
     }
 

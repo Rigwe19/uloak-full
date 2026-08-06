@@ -43,6 +43,14 @@ class StorageManager
         return $this->disk($disk)->url($path);
     }
 
+    public function path(string $path, ?string $disk = null): string
+    {
+        // Always use the specified disk or default to public
+        $diskName = $disk ?? $this->defaultDisk;
+
+        return Storage::disk($diskName)->path($path);
+    }
+
     public function delete(string $path, ?string $disk = null): bool
     {
         return $this->disk($disk)->delete($path);

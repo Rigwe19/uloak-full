@@ -13,7 +13,7 @@ interface MemoriesProps {
 export default function Memories({ person, memories }: MemoriesProps) {
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Memories') + ' - Uloak'} />
+            <Head title={(person.name || 'Memories') + ' - Ulo of Stories'} />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                 {memories?.data?.length > 0 ? (

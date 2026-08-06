@@ -14,7 +14,7 @@ interface MediaProps {
 export default function Media({ person, media }: MediaProps) {
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Media') + ' - Uloak'} />
+            <Head title={(person.name || 'Media') + ' - Ulo of Storiesf Stories'} />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <PersonMediaGrid items={media} />

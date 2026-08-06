@@ -27,7 +27,7 @@ export default function AuthLayout({
                     <Link href={home().url}>
                         <img
                             src="/logo.png"
-                            alt="ULOAK"
+                            alt="ULO OF STORIES"
                             className="mx-auto mb-8 h-16"
                         />
                     </Link>

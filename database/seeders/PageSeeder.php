@@ -17,13 +17,13 @@ class PageSeeder extends Seeder
             [
                 'title' => 'Home',
                 'is_published' => true,
-                'meta_description' => 'Uloak is the digital architecture for your heritage. Built for the diaspora to preserve what distance usually takes.',
+                'meta_description' => 'Ulo of Stories is the digital architecture for your heritage. Built for the diaspora to preserve what distance usually takes.',
                 'content' => [
                     'hero_slides' => [
                         [
                             'id' => 'porch',
                             'title' => 'Every Family Is a Home.',
-                            'subtitle' => 'Uloak is the digital architecture for your heritage. Built for the diaspora to preserve what distance usually takes.',
+                            'subtitle' => 'Ulo of Stories is the digital architecture for your heritage. Built for the diaspora to preserve what distance usually takes.',
                             'image' => '/images/hero-1.webp',
                             'badge' => 'Step Inside',
                         ],
@@ -37,7 +37,7 @@ class PageSeeder extends Seeder
                         [
                             'id' => 'heartland',
                             'title' => 'Reclaim Your Lineage.',
-                            'subtitle' => 'For those navigating between worlds, Uloak provides a grounded space where your identity remains central.',
+                            'subtitle' => 'For those navigating between worlds, Ulo of Stories provides a grounded space where your identity remains central.',
                             'image' => '/images/hero-3.webp',
                             'badge' => 'The Heartland',
                         ],
@@ -45,7 +45,7 @@ class PageSeeder extends Seeder
                     'foyer' => [
                         'title_line_1' => 'Every door',
                         'title_line_2' => 'has a story.',
-                        'paragraph_1' => 'Traditional archives are cold. Digital storage is fragmented. Uloak is built as a home — a place where memories are curated, not just stored.',
+                        'paragraph_1' => 'Traditional archives are cold. Digital storage is fragmented. Ulo of Stories is built as a home — a place where memories are curated, not just stored.',
                         'paragraph_2' => 'For the global diaspora, heritage is often the one thing distance can quietly steal. We built the architecture to reclaim it.',
                     ],
                     'archive' => [
@@ -77,7 +77,7 @@ class PageSeeder extends Seeder
                         'quote_1' => '"Connecting generations across',
                         'quote_italic' => 'places, time, and distance.',
                         'quote_2' => '"',
-                        'body' => 'Legacy is not a file format. It is the feeling of belonging. Uloak is the bridge between the home you remember and the home you are building.',
+                        'body' => 'Legacy is not a file format. It is the feeling of belonging. Ulo of Stories is the bridge between the home you remember and the home you are building.',
                     ],
                     'cta' => [
                         'badge' => 'The Best Time was Yesterday',
@@ -98,14 +98,14 @@ class PageSeeder extends Seeder
                 'content' => [
                     'hero' => [
                         'title' => 'A house built for stories that matter.',
-                        'subtitle' => 'Uloak is a storytelling movement based in the UK. We exist to preserve the stories that make us human — through film, technology, community, and research.',
+                        'subtitle' => 'Ulo of Stories is a storytelling movement based in the UK. We exist to preserve the stories that make us human — through film, technology, community, and research.',
                     ],
                     'origin' => [
                         'quote' => '"The stories we fail to capture today become the silences our grandchildren inherit tomorrow."',
                         'paragraphs' => [
-                            'Uloak began from a simple, persistent question: what happens to the stories we fail to tell? Every family has an elder whose wisdom will one day be irretrievable. Every community has a history that mainstream archives overlook. Every culture carries stories that need more than a photograph and a caption to survive.',
-                            'Uloak was built to answer that question — not as a product, but as a movement. We believe that storytelling is not a luxury. It is the infrastructure of identity, and it belongs to everyone.',
-                            'Today, Uloak operates as a creative studio and technology company based in the UK. We produce documentary films, oral history archives, and heritage photography.',
+                            'Ulo of Stories began from a simple, persistent question: what happens to the stories we fail to tell? Every family has an elder whose wisdom will one day be irretrievable. Every community has a history that mainstream archives overlook. Every culture carries stories that need more than a photograph and a caption to survive.',
+                            'Ulo of Stories was built to answer that question — not as a product, but as a movement. We believe that storytelling is not a luxury. It is the infrastructure of identity, and it belongs to everyone.',
+                            'Today, Ulo of Stories operates as a creative studio and technology company based in the UK. We produce documentary films, oral history archives, and heritage photography.',
                         ],
                     ],
                     'mission_vision' => [
@@ -117,10 +117,10 @@ class PageSeeder extends Seeder
                         'role' => 'Founder & Creative Director',
                         'image' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
                         'title' => 'Archiving the Unseen.',
-                        'quote' => '"I built Uloak because I believe every person contains a world. Our job is to help that world survive."',
+                        'quote' => '"I built Ulo of Stories because I believe every person contains a world. Our job is to help that world survive."',
                         'paragraphs' => [
                             'Nnanna Adim is a documentary filmmaker, storyteller, and social entrepreneur based in the UK. He has spent his career at the intersection of creativity and community — believing that the most important stories are often the ones we assume no one wants to hear.',
-                            'Uloak was born from his own experience of intergenerational disconnection and the grief of stories lost — the grandmother whose life was never documented, the family history that existed only in fading memories.',
+                            'Ulo of Stories was born from his own experience of intergenerational disconnection and the grief of stories lost — the grandmother whose life was never documented, the family history that existed only in fading memories.',
                         ],
                     ],
                     'values' => [
@@ -214,7 +214,7 @@ class PageSeeder extends Seeder
                         [
                             'id' => '04',
                             'title' => 'The Multi-Generational Home',
-                            'desc' => 'Invite your lineage. Uloak is a shared space where children and grandchildren can interact with stories that would otherwise be lost.',
+                            'desc' => 'Invite your lineage. Ulo of Stories is a shared space where children and grandchildren can interact with stories that would otherwise be lost.',
                             'icon' => 'Users',
                         ],
                     ],
@@ -314,7 +314,7 @@ class PageSeeder extends Seeder
                 'content' => [
                     'hero' => [
                         'title' => 'Impact through storytelling.',
-                        'subtitle' => 'Uloak partners with community organizations, charities, and institutions to preserve collective memory and foster intergenerational connection.',
+                        'subtitle' => 'Ulo of Stories partners with community organizations, charities, and institutions to preserve collective memory and foster intergenerational connection.',
                     ],
                     'stats' => [
                         ['label' => 'Stories Preserved', 'value' => '1,200+'],
@@ -369,7 +369,7 @@ class PageSeeder extends Seeder
                     'sections' => [
                         [
                             'title' => 'Our Commitment',
-                            'content' => 'At Uloak, we understand that the stories you share with us are deeply personal. We are committed to protecting your privacy and ensuring that your data is handled with the utmost care and respect.',
+                            'content' => 'At Ulo of Stories, we understand that the stories you share with us are deeply personal. We are committed to protecting your privacy and ensuring that your data is handled with the utmost care and respect.',
                             'icon' => 'Shield',
                         ],
                         [
@@ -395,7 +395,7 @@ class PageSeeder extends Seeder
                 'content' => [
                     'hero' => [
                         'title' => 'The digital home for your family heritage.',
-                        'subtitle' => 'Join Uloak to preserve, organize, and share your family stories across generations.',
+                        'subtitle' => 'Join Ulo of Stories to preserve, organize, and share your family stories across generations.',
                     ],
                     'plans' => [
                         [
@@ -429,8 +429,8 @@ class PageSeeder extends Seeder
                     ],
                     'faqs' => [
                         [
-                            'question' => 'What is Uloak Membership?',
-                            'answer' => 'Uloak is a platform designed specifically for the diaspora to archive family memories in a way that feels like a home, not a hard drive.',
+                            'question' => 'What is Ulo of Stories Membership?',
+                            'answer' => 'Ulo of Stories is a platform designed specifically for the diaspora to archive family memories in a way that feels like a home, not a hard drive.',
                         ],
                         [
                             'question' => 'Is my data secure?',

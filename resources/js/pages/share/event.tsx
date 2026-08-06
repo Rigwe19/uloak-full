@@ -371,7 +371,7 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
     return (
         <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative min-h-screen bg-bg-dark">
-                <Head title={`${event.name} - Uloak, House of Stories`} />
+                <Head title={`${event.name} - Ulo of Stories`} />
 
                 {/* Atmosphere background */}
                 <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">

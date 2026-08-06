@@ -1499,7 +1499,7 @@ return;
 
     return (
         <div className="relative min-h-screen bg-bg-dark">
-            <Head title={`${room.name} - Uloak, House of Stories`} />
+            <Head title={`${room.name} - Ulo of Stories`} />
 
             {/* Background */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">

@@ -5,25 +5,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description"
-        content="{{ \Illuminate\Support\Str::limit($page['props']['meta_description'] ?? 'Preserve your family stories, heritage, and memories with Uloak.', 155) }}">
+        content="{{ \Illuminate\Support\Str::limit($page['props']['meta_description'] ?? 'Preserve your family stories, heritage, and memories with Ulo of Stories.', 155) }}">
 
     {{-- Facebook Open Graph --}}
-    <meta property="og:title" content="{{ $page['props']['title'] ?? 'Uloak, House of Stories' }}" />
+    <meta property="og:title" content="{{ $page['props']['title'] ?? 'Ulo of Stories' }}" />
     <meta property="og:description"
-        content="{{ \Illuminate\Support\Str::limit($page['props']['meta_description'] ?? 'Preserve your family stories, heritage, and memories with Uloak.', 125) }}" />
+        content="{{ \Illuminate\Support\Str::limit($page['props']['meta_description'] ?? 'Preserve your family stories, heritage, and memories with Ulo of Stories.', 125) }}" />
     <meta property="og:image" content="{{ asset($page['props']['meta_image'] ?? url('/images/og-image.webp')) }}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:url" content="{{ $page['props']['meta_url'] ?? url()->current() }}" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="{{ config('app.name', 'Uloak') }}" />
+    <meta property="og:site_name" content="{{ config('app.name', 'Ulo of Stories') }}" />
     <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}" />
 
     {{-- Twitter Card --}}
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{{ $page['props']['title'] ?? 'Uloak, House of Stories' }}" />
+    <meta name="twitter:title" content="{{ $page['props']['title'] ?? 'Ulo of Stories' }}" />
     <meta name="twitter:description"
-        content="{{ \Illuminate\Support\Str::limit($page['props']['meta_description'] ?? 'Preserve your family stories, heritage, and memories with Uloak.', 125) }}" />
+        content="{{ \Illuminate\Support\Str::limit($page['props']['meta_description'] ?? 'Preserve your family stories, heritage, and memories with Ulo of Stories.', 125) }}" />
     <meta name="twitter:image" content="{{ asset($page['props']['meta_image'] ?? url('/images/og-image.webp')) }}" />
 
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
@@ -65,7 +65,7 @@
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
     <x-inertia::head>
-        <title>{{ $page['props']['title'] ?? config('app.name', 'Uloak') }}</title>
+        <title>{{ $page['props']['title'] ?? config('app.name', 'Ulo of Stories') }}</title>
     </x-inertia::head>
 
     {{-- Service Worker for Web Push Notifications --}}

@@ -31,7 +31,7 @@ interface Props {
 export default function ClientRoomShow({ room, stories }: Props) {
     return (
         <div className="min-h-screen bg-bg-dark">
-            <Head title={`${room.name} - Uloak`} />
+            <Head title={`${room.name} - Ulo of Stories`} />
 
             <div className="mx-auto max-w-7xl p-5 pb-32 md:p-8 lg:p-16">
                 <header className="mb-12">

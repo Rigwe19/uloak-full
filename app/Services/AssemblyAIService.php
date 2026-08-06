@@ -59,7 +59,7 @@ class AssemblyAIService
 
             // optional but useful for sync UI
             'word_boost' => [],
-            'webhook_url' => 'https://uloakstories.com/api/webhooks/assemblyai', // $webhookUrl, // 'https://webhook.site/bd44e705-5a6e-475f-9a74-997b2d646c3b', // ,
+            'webhook_url' => 'https://uloofstories.com/api/webhooks/assemblyai', // $webhookUrl, // 'https://webhook.site/bd44e705-5a6e-475f-9a74-997b2d646c3b', // ,
         ]);
         logger('assembly.info', $response->json());
 

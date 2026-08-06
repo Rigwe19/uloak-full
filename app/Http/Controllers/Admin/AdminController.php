@@ -17,7 +17,7 @@ class AdminController extends Controller
     public function dashboard(): Response
     {
         return Inertia::render('admin/dashboard', [
-            'title' => 'Admin Dashboard - Uloak',
+            'title' => 'Admin Dashboard - Ulo of Stories',
             'stats' => [
                 'totalUsers' => User::count(),
                 'totalRooms' => Room::count(),
@@ -31,7 +31,7 @@ class AdminController extends Controller
     public function users(): Response
     {
         return Inertia::render('admin/users', [
-            'title' => 'Manage Users - Uloak',
+            'title' => 'Manage Users - Ulo of Stories',
             'users' => User::latest()->get(),
         ]);
     }
@@ -39,7 +39,7 @@ class AdminController extends Controller
     public function rooms(): Response
     {
         return Inertia::render('admin/rooms', [
-            'title' => 'Manage Rooms - Uloak',
+            'title' => 'Manage Rooms - Ulo of Stories',
             'rooms' => Room::with('members')->latest()->get(),
         ]);
     }
@@ -47,7 +47,7 @@ class AdminController extends Controller
     public function enquiries(): Response
     {
         return Inertia::render('admin/enquiries', [
-            'title' => 'Enquiries - Uloak',
+            'title' => 'Enquiries - Ulo of Stories',
             'enquiries' => Enquiry::latest()->get(),
         ]);
     }
@@ -55,7 +55,7 @@ class AdminController extends Controller
     public function pages(): Response
     {
         return Inertia::render('admin/pages', [
-            'title' => 'Manage Pages - Uloak',
+            'title' => 'Manage Pages - Ulo of Stories',
             'pages' => Page::all(),
         ]);
     }
@@ -63,7 +63,7 @@ class AdminController extends Controller
     public function editPage(Page $page): Response
     {
         return Inertia::render('admin/pages/edit', [
-            'title' => ($page->title ?? 'Edit Page').' - Uloak',
+            'title' => ($page->title ?? 'Edit Page').' - Ulo of Stories',
             'page' => $page,
         ]);
     }
@@ -71,7 +71,7 @@ class AdminController extends Controller
     public function memberships(): Response
     {
         return Inertia::render('admin/memberships', [
-            'title' => 'Memberships - Uloak',
+            'title' => 'Memberships - Ulo of Stories',
             'page' => Page::where('slug', '/membership')->first(),
         ]);
     }
@@ -79,7 +79,7 @@ class AdminController extends Controller
     public function settings(): Response
     {
         return Inertia::render('admin/settings', [
-            'title' => 'Admin Settings - Uloak',
+            'title' => 'Admin Settings - Ulo of Stories',
         ]);
     }
 

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Media\MediaManager;
-use App\Models\Event;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\Story;
@@ -14,44 +13,57 @@ use Illuminate\Support\Facades\Storage;
 class StoryService
 {
     public function __construct(
-        private AssemblyAIService $assemblyAIService,
-        private MediaManager $mediaManager,
+        protected MediaManager $mediaManager,
     ) {}
 
-    public function createStory(User $user, Room|Event $space, array $data): Story
+    public function createStory(User $user, Room $room, array $data): Story
     {
-        $fileUrl = null;
-        $storyThumbnail = null;
-        $assets = [];
+        $story = $room->stories()->create([
+            'uuid' => (string) \Str::uuid(),
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'type' => $data['type'] ?? 'photo',
+            'duration' => $data['duration'] ?? null,
+            'user_id' => $user->id,
+            'guest_name' => $data['guest_name'] ?? null,
+            'metadata' => [
+                'thumbnail' => $data['thumbnail'] ?? null,
+                'recording' => $data['recording'] ?? null,
+            ],
+        ]);
+
+        if (isset($data['thumbnail']) && $data['thumbnail'] instanceof UploadedFile) {
+            $media = $this->mediaManager->uploadImage($data['thumbnail']);
+            $story->update(['thumbnail' => $media->path]);
+        }
+
+        if (isset($data['tribute_song']) && $data['tribute_song'] instanceof UploadedFile) {
+            $media = $this->mediaManager->uploadAudio($data['tribute_song']);
+            $story->update(['tributes_song' => $media->path]);
+        }
 
         if (isset($data['files']) && is_array($data['files'])) {
+            $assets = [];
             foreach ($data['files'] as $file) {
                 if ($file instanceof UploadedFile) {
                     $media = $this->uploadViaPipeline($file);
-                    $url = $media->url();
-
-                    $type = 'photo';
-                    if ($media->mime_type === 'application/pdf') {
-                        $type = 'pdf';
-                    } elseif (str_contains($media->mime_type, 'video')) {
-                        $type = 'video';
-                    }
-
-                    $assets[] = [
-                        'url' => $url,
-                        'type' => $type,
-                        'title' => $media->original_name,
-                        'media_uuid' => $media->uuid,
-                    ];
-
-                    if (! $fileUrl) {
-                        $fileUrl = $url;
+                    if ($media) {
+                        $assets[] = [
+                            'media_uuid' => $media->uuid,
+                            'url' => $media->url(),
+                            'type' => $media->type,
+                            'created_at' => now()->toIso8601String(),
+                        ];
                     }
                 }
             }
+
+            if (! empty($assets)) {
+                $story->update(['assets' => $assets]);
+            }
         }
 
-        // Handle pre-uploaded media UUIDs (Cloudinary direct upload)
+        // Handle pre-uploaded media UUIDs
         if (isset($data['media_uuids']) && is_array($data['media_uuids'])) {
             foreach ($data['media_uuids'] as $uuid) {
                 $media = Media::where('uuid', $uuid)->first();
@@ -69,123 +81,79 @@ class StoryService
                     $type = 'audio';
                 }
 
-                $assets[] = [
-                    'url' => $media->url(),
+                $story->update([
                     'type' => $type,
-                    'title' => $media->original_name,
-                    'media_uuid' => $media->uuid,
-                ];
-
-                if (! $fileUrl) {
-                    $fileUrl = $media->url();
-                }
-                logger()->info('Story thumbnail', [
-                    'thumb' => $media->thumbnail,
-                    'story' => $storyThumbnail,
+                    'file_url' => $media->path,
                 ]);
+            }
+        }
 
-                if ($media->thumbnail) {
-                    $storyThumbnail = $media->thumbnail;
+        if (isset($data['type']) && $data['type'] === 'collection') {
+            if (isset($data['media_items']) && is_array($data['media_items'])) {
+                $assets = [];
+                foreach ($data['media_items'] as $item) {
+                    if (isset($item['media_uuid'])) {
+                        $media = Media::where('uuid', $item['media_uuid'])->first();
+                        if ($media) {
+                            $assets[] = [
+                                'media_uuid' => $media->uuid,
+                                'url' => $media->url(),
+                                'type' => $media->type,
+                                'created_at' => now()->toIso8601String(),
+                            ];
+                        }
+                    }
                 }
+                $story->update(['assets' => $assets]);
             }
         }
 
-        // Handle single file (legacy or specific upload)
-        if (isset($data['file']) && $data['file'] instanceof UploadedFile) {
-            $media = $this->uploadViaPipeline($data['file']);
-            $fileUrl = $media->url();
-        }
-
-        // Handle recording specifically if it comes as a blob
-        if (isset($data['recording']) && $data['recording'] instanceof UploadedFile) {
-            $media = $this->mediaManager->uploadAudio($data['recording']);
-            $fileUrl = $media->url();
-
-            if (filter_var($media->path, FILTER_VALIDATE_URL)) {
-                $tempFile = tempnam(sys_get_temp_dir(), 'audio_');
-                file_put_contents($tempFile, file_get_contents($media->path));
-                $fullPath = $tempFile;
-            } else {
-                $fullPath = Storage::disk($media->disk)->path($media->path);
-            }
-
-            $storyData = [
-                'user_id' => $user->id,
-                'title' => $data['title'] ?? 'New Memory',
-                'type' => 'audio',
-                'description' => $data['description'] ?? '',
-                'file_url' => $fileUrl,
-                'duration' => $data['duration'] ?? null,
-                'thumbnail' => $fileUrl,
-                'transcript_status' => 'processing',
-                'assets' => $assets,
-            ];
-
-            if ($space instanceof Room) {
-                $storyData['room_id'] = $space->id;
-            } else {
-                $storyData['event_id'] = $space->id;
-            }
-
-            $story = Story::create($storyData);
-
-            $audioUrl = $this->assemblyAIService->uploadFile($fullPath);
-
-            if (isset($tempFile)) {
-                @unlink($tempFile);
-            }
-
-            $transcriptId = $this->assemblyAIService->createTranscript(
-                $audioUrl,
-                url('/api/webhooks/assemblyai')
-            );
-
-            $story->update(['transcript_id' => $transcriptId]);
-
-            return $story;
-        }
-
-        $type = $data['type'] ?? 'photo';
-        if (count($assets) > 1) {
-            $type = 'collection';
-        }
-        logger()->info('Creating story', [
-            'type' => $type,
-            'assets_count' => count($assets),
-            'data' => $data['thumbnail'] ?? null,
-            'story' => $storyThumbnail,
-            'fileUrl' => $fileUrl,
-            'thumbnail' => $data['thumbnail'] ?? $storyThumbnail ?? $fileUrl,
-        ]);
-
-        $storyData = [
-            'user_id' => $user->id,
-            'title' => $data['title'] ?? 'New Memory',
-            'type' => $type,
-            'description' => $data['description'] ?? '',
-            'file_url' => $fileUrl,
-            'duration' => $data['duration'] ?? null,
-            'thumbnail' => $data['thumbnail'] ?? $storyThumbnail ?? $fileUrl,
-            'assets' => $assets,
-        ];
-
-        if ($space instanceof Room) {
-            $storyData['room_id'] = $space->id;
-        } else {
-            $storyData['event_id'] = $space->id;
-        }
-
-        return Story::create($storyData);
+        return $story;
     }
 
-    protected function uploadViaPipeline(UploadedFile $file): Media
+    protected function uploadViaPipeline(UploadedFile $file): ?Media
     {
-        $mime = $file->getMimeType() ?: $file->getClientMimeType();
+        $mimeType = $file->getMimeType();
 
-        if (str_starts_with($mime, 'video/')) {
+        if (str_contains($mimeType, 'video')) {
             return $this->mediaManager->uploadVideo($file);
         }
 
+        if (str_contains($mimeType, 'audio')) {
+            return $this->mediaManager->uploadAudio($file);
+        }
+
         return $this->mediaManager->uploadImage($file);
+    }
+
+    public function deleteMedia(Media $media): bool
+    {
+        // Delete file from storage
+        $disk = $media->disk ?? 'public';
+        $path = $media->path;
+
+        if ($path && Storage::disk($disk)->exists($path)) {
+            Storage::disk($disk)->delete($path);
+        }
+
+        // Delete thumbnail if exists
+        if ($media->thumbnail && Storage::disk($disk)->exists($media->thumbnail)) {
+            Storage::disk($disk)->delete($media->thumbnail);
+        }
+
+        // Delete media record
+        return $media->delete();
+    }
+
+    public function downloadMedia(Media $media): ?string
+    {
+        $disk = $media->disk ?? 'public';
+        $path = $media->path;
+
+        if (! $path || ! Storage::disk($disk)->exists($path)) {
+            return null;
+        }
+
+        return Storage::disk($disk)->path($path);
     }
 }

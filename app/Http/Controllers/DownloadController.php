@@ -7,6 +7,7 @@ use App\Jobs\GenerateRoomZip;
 use App\Models\DownloadRequest;
 use App\Models\Event;
 use App\Models\Room;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -25,7 +26,7 @@ class DownloadController extends Controller
             'slug' => ['required', 'string'],
         ]);
         logger()->info('download zip mail', [
-            'validated' => $validated
+            'validated' => $validated,
         ]);
 
         if ($validated['type'] === 'room') {
@@ -55,9 +56,9 @@ class DownloadController extends Controller
         return back()->with('success', 'Your download is being prepared. You will receive an email with the download link shortly.');
     }
 
-    protected function isDownloadAllowed(Event|Room $model, ?\App\Models\User $user): bool
+    protected function isDownloadAllowed(Event|Room $model, ?User $user): bool
     {
-        if ($user && !empty($model->created_by) && $model->created_by === $user->getKey()) {
+        if ($user && ! empty($model->created_by) && $model->created_by === $user->getKey()) {
             return true;
         }
 
@@ -90,6 +91,7 @@ class DownloadController extends Controller
         $downloadRequest->update(['downloaded_at' => now()]);
 
         $response = response()->download($zipFullPath);
+
         return $response->deleteFileAfterSend(false);
     }
 }

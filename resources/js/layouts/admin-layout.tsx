@@ -60,7 +60,7 @@ export default function AdminLayout({
                 <Link href={home().url} className="mb-12 shrink-0 px-4">
                     <img
                         src="/logo.png"
-                        alt="ULOAK"
+                        alt="ULO OF STORIES"
                         className="h-auto w-full object-contain"
                     />
                 </Link>

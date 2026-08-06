@@ -107,7 +107,7 @@ class ClientController extends Controller
             'client_name' => session('client_name'),
             'rooms' => $rooms,
             'events' => $events,
-            'title' => 'Client Dashboard - Uloak',
+            'title' => 'Client Dashboard - Ulo of Stories',
         ]);
     }
 
@@ -173,7 +173,7 @@ class ClientController extends Controller
         return Inertia::render('client/rooms/show', [
             'room' => $room,
             'stories' => $stories,
-            'title' => $room->name.' - Uloak',
+            'title' => $room->name.' - Ulo of Stories',
         ]);
     }
 
@@ -204,7 +204,7 @@ class ClientController extends Controller
         return Inertia::render('client/events/show', [
             'event' => $event,
             'stories' => $stories,
-            'title' => $event->name.' - Uloak',
+            'title' => $event->name.' - Ulo of Stories',
         ]);
     }
 }

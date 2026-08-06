@@ -115,7 +115,7 @@ export default function LegacyFilms({ page }: Props) {
 
     return (
         <>
-            <Head title="Legacy Films & Services - ULOAK" />
+            <Head title="Legacy Films & Services - ULO OF STORIES" />
             <div className="bg-bg-dark pt-20">
                 {/* Hero Section */}
                 <section className="relative flex h-[80vh] items-center overflow-hidden">
@@ -137,7 +137,7 @@ export default function LegacyFilms({ page }: Props) {
                         >
                             <div className="mb-8 flex items-center gap-4 text-xs font-bold tracking-[0.4em] text-accent-gold uppercase">
                                 <div className="h-px w-12 bg-accent-gold/40" />
-                                <span>Uloak Studio</span>
+                                <span>Ulo of Stories Studio</span>
                             </div>
                             <h1 className="mb-10 text-6xl leading-[0.9] font-bold tracking-tighter text-text-primary md:text-8xl">
                                 {heroContent.title.includes('story') ? (

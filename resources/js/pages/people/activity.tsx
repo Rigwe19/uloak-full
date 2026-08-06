@@ -13,7 +13,7 @@ interface ActivityProps {
 export default function Activity({ person, logs }: ActivityProps) {
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Activity') + ' - Uloak'} />
+            <Head title={(person.name || 'Activity') + ' - Ulo of Stories'} />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
                 {logs.length > 0 ? (

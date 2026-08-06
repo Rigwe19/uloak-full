@@ -76,7 +76,7 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                         className="flex flex-col items-center"
                     >
                         <span className="text-3xl font-extrabold tracking-[0.25em] text-text-primary uppercase md:text-4xl text-glow">
-                            Uloak
+                            Ulo of Stories
                         </span>
                         <div className="mt-2 h-0.5 w-16 bg-accent-gold/30" />
                         <span className="mt-2 text-[10px] font-bold tracking-[0.4em] text-accent-gold uppercase">

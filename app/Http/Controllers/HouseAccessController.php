@@ -33,7 +33,7 @@ class HouseAccessController extends Controller
     //     'house_member_name' => $member->name,
     //     'house_owner_id' => $member->owner_id,
 
-    //     'meta_title' => "{$owner->name} Family House - Uloak",
+    //     'meta_title' => "{$owner->name} Family House - Ulo of Stories",
     //     'meta_description' => Str::limit(
     //         $owner->description ?: 'View and share memories in my house.',
     //         155
@@ -138,7 +138,7 @@ class HouseAccessController extends Controller
             ]);
 
         return Inertia::render('house/dashboard', [
-            // 'title' => 'House Dashboard - Uloak',
+            // 'title' => 'House Dashboard - Ulo of Stories',
             'rooms' => $rooms,
             'recentStories' => $recentStories,
             'stats' => $stats,
@@ -146,7 +146,7 @@ class HouseAccessController extends Controller
             'house_member_name' => session('house_member_name'),
             'house_thumbnail' => $owner->house_thumbnail_url,
             'house_pattern' => $owner->house_pattern,
-            'title' => $owner->name.' Family House - Uloak, House of Stories',
+            'title' => $owner->name.' Family House - Ulo of Stories',
             'meta_description' => $owner->description
                 ? Str::limit($owner->description, 155)
                 : 'View and share memories in my house as a member.',
@@ -167,7 +167,7 @@ class HouseAccessController extends Controller
         $approvedTributes = $room->tributes()->where('is_approved', true)->latest()->get();
         $allTributes = $room->tributes;
 
-        $pageTitle = $room->name.' - Uloak, House of Stories';
+        $pageTitle = $room->name.' - Ulo of Stories';
 
         return Inertia::render('house/rooms/show', [
             'title' => $pageTitle,

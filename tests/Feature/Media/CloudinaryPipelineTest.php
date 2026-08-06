@@ -69,12 +69,12 @@ test('signed upload dto is readonly', function () {
         timestamp: 1234567890,
         publicId: 'test_id',
         folder: 'stories/videos/1/2026/07',
-        uploadPreset: 'uloak_video',
+        uploadPreset: 'uloofstories_video',
         apiKey: 'test_api_key',
         mediaId: 1,
         mediaUuid: 'some-uuid',
         eager: 'w_auto,c_limit,q_auto,f_auto',
-        eager_notification_url: 'https://uloak.test/api/webhooks/cloudinary',
+        eager_notification_url: 'https://uloofstories.test/api/webhooks/cloudinary',
     );
 
     expect($dto->url)->toBe('https://api.cloudinary.com/v1_1/test/video/upload')

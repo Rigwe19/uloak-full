@@ -13,8 +13,8 @@ class RoomSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::where('email', 'admin@uloak.com')->first();
-        $user = User::where('email', 'user@uloak.com')->first();
+        $admin = User::where('email', 'admin@ulo of stories.com')->first();
+        $user = User::where('email', 'user@ulo of stories.com')->first();
 
         if (! $admin || ! $user) {
             return;

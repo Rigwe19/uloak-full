@@ -12,6 +12,8 @@ interface UploadQueueItemProps {
   onCancel?: (id: string) => void
   onRetry?: (id: string) => void
   onRemove?: (id: string) => void
+  onStatusChange?: (id: string, status: string) => void
+  onThumbnailUpdate?: (id: string, url: string) => void
 }
 
 function FileTypeIcon({ mimeType, size = 20 }: { mimeType: string; size?: number }) {
@@ -32,7 +34,6 @@ export function UploadQueueItem({ item, onCancel, onRetry, onRemove }: UploadQue
   const isImage = item.file.type.startsWith('image/')
   const isActive = item.status === 'uploading' || item.status === 'processing' || item.status === 'queued'
   const isFinished = item.status === 'ready'
-  console.log(item)
 
   return (
     <motion.div

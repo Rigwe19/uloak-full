@@ -13,7 +13,7 @@ interface StoriesProps {
 export default function Stories({ person, stories }: StoriesProps) {
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Stories') + ' - Uloak'} />
+            <Head title={(person.name || 'Stories') + ' - Ulo of Storiesf Stories'} />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                 {stories?.data?.length > 0 ? (

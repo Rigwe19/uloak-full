@@ -50,7 +50,7 @@ export default function SettingsHeritage({ person, heritage, languages }: Settin
 
     return (
         <>
-            <Head title={(person?.name || 'Heritage') + ' - Uloak'} />
+            <Head title={(person?.name || 'Heritage') + ' - Ulo of Storiesf Storiesf Stories'} />
 
             <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold tracking-tight text-text-primary">Heritage</h2>

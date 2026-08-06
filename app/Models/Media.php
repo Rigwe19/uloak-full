@@ -25,7 +25,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $status
  * @property string $provider
  * @property string|null $provider_id
- * @property string|null $cloudinary_public_id
  * @property string|null $thumbnail
  * @property string|null $preview
  * @property array|null $sprite
@@ -60,7 +59,6 @@ class Media extends Model
         'status',
         'provider',
         'provider_id',
-        'cloudinary_public_id',
         'thumbnail',
         'preview',
         'sprite',
@@ -97,40 +95,16 @@ class Media extends Model
 
     public function url(): string
     {
-        if ($this->provider === 'cloudinary') {
-            if ($this->path !== null && str_starts_with($this->path, 'http')) {
-                return $this->path;
-            }
-
-            $cloudName = config('media.cloudinary.cloud_name');
-
-            if ($cloudName && $this->path) {
-                $resourceType = $this->type === 'video' ? 'video' : 'image';
-
-                return "https://res.cloudinary.com/{$cloudName}/{$resourceType}/upload/{$this->path}";
-            }
-
-            return $this->path ?? '';
-        }
-
         return app(MediaManager::class)->forMedia($this)->url();
     }
 
     public function thumbnail(?int $width = 300, ?int $height = 300, array $options = []): string
     {
-        if ($this->provider === 'cloudinary' && $this->thumbnail !== null) {
-            return $this->thumbnail;
-        }
-
         return app(MediaManager::class)->forMedia($this)->thumbnail($width, $height, $options);
     }
 
     public function resize(int $width, int $height, array $options = []): string
     {
-        if ($this->provider === 'cloudinary') {
-            return $this->url();
-        }
-
         return app(MediaManager::class)
             ->forMedia($this)
             ->width($width)
@@ -147,11 +121,6 @@ class Media extends Model
     public function isVideo(): bool
     {
         return $this->type === 'video';
-    }
-
-    public function isCloudinary(): bool
-    {
-        return $this->provider === 'cloudinary';
     }
 
     public function isReady(): bool

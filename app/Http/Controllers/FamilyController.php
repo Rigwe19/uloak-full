@@ -130,7 +130,7 @@ class FamilyController extends Controller
                 'email' => $member->email,
                 'relationship' => $member->relationship,
             ],
-            'title' => $room->name.' - Uloak, House of Stories',
+            'title' => $room->name.' - Ulo of Stories',
         ]);
     }
 

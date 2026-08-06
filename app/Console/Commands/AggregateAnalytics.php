@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\CloudinaryUsage;
 use App\Models\Comment;
 use App\Models\MediaView;
 use App\Models\PlatformMetric;
@@ -14,10 +13,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 
 #[Signature('analytics:aggregate {--date= : The date to aggregate (Y-m-d). Defaults to yesterday.} {--force : Overwrite existing record}')]
-#[Description('Aggregate daily analytics into platform_metrics and cloudinary_usage tables')]
+#[Description('Aggregate daily analytics into platform_metrics tables')]
 class AggregateAnalytics extends Command
 {
     public function handle()
@@ -38,8 +36,6 @@ class AggregateAnalytics extends Command
         $this->info("Aggregating analytics for {$dateStr}...");
 
         $this->aggregatePlatformMetrics($date, $dateStr, $force);
-
-        $this->aggregateCloudinaryUsage($dateStr, $force);
 
         $this->info('Done.');
 
@@ -91,55 +87,5 @@ class AggregateAnalytics extends Command
         );
 
         $this->info("  Platform metrics: {$totalViews} views, {$uploads} uploads, {$newUsers} new users");
-    }
-
-    protected function aggregateCloudinaryUsage(string $dateStr, bool $force): void
-    {
-        if (CloudinaryUsage::where('date', $dateStr)->exists() && ! $force) {
-            $this->warn("  Cloudinary usage for {$dateStr} already exists. Use --force to overwrite.");
-
-            return;
-        }
-
-        $cloudinaryUrl = config('services.cloudinary.api_url');
-        $cloudinaryKey = config('services.cloudinary.api_key');
-        $cloudinarySecret = config('services.cloudinary.api_secret');
-        $cloudinaryCloud = config('services.cloudinary.cloud_name');
-
-        if (! $cloudinaryKey || ! $cloudinarySecret || ! $cloudinaryCloud) {
-            $this->warn('  Cloudinary API not configured. Skipping Cloudinary usage aggregation.');
-
-            return;
-        }
-
-        try {
-            $response = Http::withBasicAuth($cloudinaryKey, $cloudinarySecret)
-                ->get("https://api.cloudinary.com/v1_1/{$cloudinaryCloud}/usage");
-
-            if ($response->failed()) {
-                $this->warn('  Failed to fetch Cloudinary usage data. Skipping.');
-
-                return;
-            }
-
-            $usage = $response->json();
-
-            CloudinaryUsage::updateOrCreate(
-                ['date' => $dateStr],
-                [
-                    'storage_bytes' => $usage['storage']['bytes'] ?? 0,
-                    'bandwidth_bytes' => $usage['bandwidth']['bytes'] ?? 0,
-                    'transformations' => $usage['transformations']['count'] ?? 0,
-                    'derived_assets' => $usage['derived_assets']['count'] ?? 0,
-                    'credits_used' => $usage['credits']['usage'] ?? 0,
-                    'credits_remaining' => $usage['credits']['limit'] ?? null,
-                    'raw_api_response' => $usage,
-                ],
-            );
-
-            $this->info('  Cloudinary usage aggregated successfully.');
-        } catch (\Exception $e) {
-            $this->warn("  Failed to aggregate Cloudinary usage: {$e->getMessage()}");
-        }
     }
 }

@@ -101,7 +101,7 @@ export default function AdminSettings() {
                                                 <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Platform Name</label>
                                                 <input 
                                                     type="text" 
-                                                    defaultValue="ULOAK"
+                                                    defaultValue="ULO OF STORIES"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>
@@ -109,7 +109,7 @@ export default function AdminSettings() {
                                                 <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Support Email</label>
                                                 <input 
                                                     type="email" 
-                                                    defaultValue="support@uloak.com"
+                                                    defaultValue="support@ulo of stories.com"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>
@@ -257,7 +257,7 @@ export default function AdminSettings() {
                                                 <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">From Address</label>
                                                 <input 
                                                     type="email" 
-                                                    defaultValue="noreply@uloak.com"
+                                                    defaultValue="noreply@ulo of stories.com"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>

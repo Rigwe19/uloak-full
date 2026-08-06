@@ -20,7 +20,7 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
 
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Family Tree') + ' - Uloak'} />
+            <Head title={(person.name || 'Family Tree') + ' - Ulo of Stories'} />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                 {graph.graph.spouses.length > 0 && (

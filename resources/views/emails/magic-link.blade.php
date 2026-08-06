@@ -1,5 +1,5 @@
 <x-mail::message>
-# Welcome to Uloak, {{ $name }}!
+# Welcome to Ulo of Stories, {{ $name }}!
 
 You have been invited to access and participate in the legacy preservation space: **{{ $spaceName }}**.
 

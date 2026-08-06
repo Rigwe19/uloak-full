@@ -13,7 +13,7 @@ interface SettingsPermissionsProps {
 export default function SettingsPermissions({ person, permissions, consents }: SettingsPermissionsProps) {
     return (
         <>
-            <Head title={(person?.name || 'Permissions') + ' - Uloak'} />
+            <Head title={(person?.name || 'Permissions') + ' - Ulo of Stories'} />
 
             <div className="mb-4">
                 <h2 className="text-lg font-bold tracking-tight text-text-primary">Permissions & Consent</h2>

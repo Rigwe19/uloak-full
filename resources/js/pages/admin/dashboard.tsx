@@ -68,7 +68,7 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                             Welcome back, Admin.
                         </h1>
                         <p className="mt-2 text-text-muted">
-                            Here is what's happening at Uloak right now.
+                            Here is what's happening at Ulo of Stories right now.
                         </p>
                     </div>
                     <Button variant="outline" size="sm">

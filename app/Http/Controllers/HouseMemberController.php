@@ -24,7 +24,7 @@ class HouseMemberController extends Controller
         $user = auth()->user();
 
         return Inertia::render('settings/house', [
-            'title' => 'House Settings - Uloak',
+            'title' => 'House Settings - Ulo of Stories',
             'house' => [
                 'thumbnail' => $user->house_thumbnail_url,
                 'pattern' => $user->house_pattern,

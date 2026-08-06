@@ -22,7 +22,7 @@ class HouseMemberInvitation extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "You've been invited to {$this->ownerName}'s Family House on Uloak",
+            subject: "You've been invited to {$this->ownerName}'s Family House on Ulo of Stories",
         );
     }
 

@@ -1,9 +1,9 @@
 <!doctype html>
 <html>
 <head>
-    <title>{{ $owner->name }} Family House - Uloak</title>
+    <title>{{ $owner->name }} Family House - Ulo of Stories</title>
 
-    <meta property="og:title" content="{{ $owner->name }} Family House - Uloak">
+    <meta property="og:title" content="{{ $owner->name }} Family House - Ulo of Stories">
     <meta property="og:description"
           content="{{ "View and share memories in {$owner->name} house as a member." }}">
     <meta property="og:image"

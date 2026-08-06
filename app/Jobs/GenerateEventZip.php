@@ -47,8 +47,9 @@ class GenerateEventZip implements ShouldQueue
 
         if (empty($files)) {
             logger()->warning('files are empty', [
-                'stories' => $this->event->stories
+                'stories' => $this->event->stories,
             ]);
+
             return;
         }
 
@@ -65,6 +66,7 @@ class GenerateEventZip implements ShouldQueue
         $zip = new ZipArchive;
         if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             logger()->warning('failed to create zip');
+
             return;
         }
 
@@ -103,7 +105,7 @@ class GenerateEventZip implements ShouldQueue
                 $context = stream_context_create([
                     'http' => [
                         'timeout' => 30,
-                        'user_agent' => 'Uloak/1.0',
+                        'user_agent' => 'Ulo of Stories/1.0',
                     ],
                     'ssl' => [
                         'verify_peer' => false,

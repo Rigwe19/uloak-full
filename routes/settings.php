@@ -26,7 +26,7 @@ Route::middleware(['auth'])->group(function () {
     // Danger Zone
     Route::get('settings/danger-zone', function () {
         return Inertia::render('settings/danger-zone', [
-            'title' => 'Danger Zone - Uloak',
+            'title' => 'Danger Zone - Ulo of Stories',
         ]);
     })->name('settings.danger-zone');
 
@@ -50,7 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/privacy', function () {
         return Inertia::render('settings/privacy', [
-            'title' => 'Privacy Settings - Uloak',
+            'title' => 'Privacy Settings - Ulo of Stories',
         ]);
     })->name('privacy.edit');
 
@@ -60,7 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance', [
-            'title' => 'Appearance Settings - Uloak',
+            'title' => 'Appearance Settings - Ulo of Stories',
         ]);
     })->name('appearance.edit');
 });

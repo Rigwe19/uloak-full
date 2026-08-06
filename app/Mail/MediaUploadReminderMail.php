@@ -30,7 +30,7 @@ class MediaUploadReminderMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Share your memories from '.$this->roomName.' on Uloak',
+            subject: 'Share your memories from '.$this->roomName.' on Ulo of Stories',
         );
     }
 

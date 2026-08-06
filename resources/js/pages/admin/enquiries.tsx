@@ -40,7 +40,7 @@ export default function AdminEnquiries({ enquiries }: Props) {
                             Inbound Enquiries
                         </h1>
                         <p className="mt-2 text-text-muted">
-                            Review and respond to messages from the Uloak community.
+                            Review and respond to messages from the Ulo of Storiesf Stories community.
                         </p>
                     </div>
                     <div className="flex gap-3">

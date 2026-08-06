@@ -16,7 +16,7 @@ class NotificationController extends Controller
         $notifications = $request->user()->notifications()->paginate(20);
 
         return Inertia::render('dashboard/notifications', [
-            'title' => 'Notifications - Uloak',
+            'title' => 'Notifications - Ulo of Stories',
             'notifications' => $notifications,
         ]);
     }

@@ -67,7 +67,7 @@ class ActivityLogController extends Controller
             });
 
         return Inertia::render('admin/activity-logs', [
-            'title' => 'Activity Logs - Uloak',
+            'title' => 'Activity Logs - Ulo of Stories',
             'logs' => $logs,
             'filters' => $request->only(['search', 'user_id', 'action', 'from', 'to']),
         ]);

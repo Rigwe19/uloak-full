@@ -86,7 +86,7 @@ export default function HowItWorks({ page }: Props) {
         {
             id: '04',
             title: 'The Multi-Generational Home',
-            desc: 'Invite your lineage. Uloak is a shared space where children and grandchildren can interact with stories that would otherwise be lost.',
+            desc: 'Invite your lineage. Ulo of Stories is a shared space where children and grandchildren can interact with stories that would otherwise be lost.',
             icon: 'Users',
         },
     ];
@@ -94,8 +94,8 @@ export default function HowItWorks({ page }: Props) {
     return (
         <>
             {/* <Head>
-                <title>{page?.title || 'How It Works'} | Uloak</title>
-                <meta name="description" content={page?.meta_description || 'Learn how Uloak helps you preserve your family heritage and stories.'} />
+                <title>{page?.title || 'How It Works'} | Ulo of Stories</title>
+                <meta name="description" content={page?.meta_description || 'Learn how Ulo of Stories helps you preserve your family heritage and stories.'} />
             </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">

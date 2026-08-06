@@ -26,7 +26,7 @@ const slides = [
         id: 'porch',
         title: 'Every Family Is a Home.',
         subtitle:
-            'Uloak is the digital architecture for your heritage. Built for the diaspora to preserve what distance usually takes.',
+            'Ulo of Stories is the digital architecture for your heritage. Built for the diaspora to preserve what distance usually takes.',
         image: '/images/hero-1.webp',
         badge: 'Step Inside',
     },
@@ -42,7 +42,7 @@ const slides = [
         id: 'heartland',
         title: 'Reclaim Your Lineage.',
         subtitle:
-            'For those navigating between worlds, Uloak provides a grounded space where your identity remains central.',
+            'For those navigating between worlds, Ulo of Stories provides a grounded space where your identity remains central.',
         image: '/images/hero-3.webp',
         badge: 'The Heartland',
     },
@@ -162,7 +162,7 @@ export default function Welcome({
 
     return (
         <>
-            <Head title="ULOAK - House of Stories" />
+            <Head title="ULO OF STORIES - House of Stories" />
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
                 {/* 1. CINEMATIC HERO CAROUSEL */}
@@ -316,7 +316,7 @@ export default function Welcome({
                         </h2>
                         <div className="mx-auto max-w-3xl space-y-8 text-xl leading-relaxed font-light text-text-muted md:text-2xl">
                             <p>
-                                {page?.content?.foyer?.paragraph_1 || "Traditional archives are cold. Digital storage is fragmented. Uloak is built as a home — a place where memories are curated, not just stored."}
+                                {page?.content?.foyer?.paragraph_1 || "Traditional archives are cold. Digital storage is fragmented. Ulo of Stories is built as a home — a place where memories are curated, not just stored."}
                             </p>
                             <p>
                                 {page?.content?.foyer?.paragraph_2 || "For the global diaspora, heritage is often the one thing distance can quietly steal. We built the architecture to reclaim it."}
@@ -434,7 +434,7 @@ export default function Welcome({
                         </h2>
                         <div className="mx-auto mb-12 h-px w-24 bg-accent-gold/40" />
                         <p className="mx-auto max-w-3xl text-2xl leading-relaxed font-light text-text-muted">
-                            {page?.content?.vision?.body || "Legacy is not a file format. It is the feeling of belonging. Uloak is the bridge between the home you remember and the home you are building."}
+                            {page?.content?.vision?.body || "Legacy is not a file format. It is the feeling of belonging. Ulo of Stories is the bridge between the home you remember and the home you are building."}
                         </p>
                     </div>
                 </Room>
@@ -554,7 +554,7 @@ export default function Welcome({
                                 Be the first to know
                             </h2>
                             <p className="mx-auto max-w-2xl text-xl leading-relaxed font-light text-text-muted">
-                                Uloak is opening its doors soon. Leave your details and we'll invite you in when it's time.
+                                Ulo of Stories is opening its doors soon. Leave your details and we'll invite you in when it's time.
                             </p>
                         </div>
 
@@ -563,7 +563,7 @@ export default function Welcome({
                             <div className="rounded-[2rem] border border-border-subtle bg-bg-dark p-10">
                                 <h3 className="mb-6 text-3xl font-bold">Join the Waiting List</h3>
                                 <p className="mb-8 text-text-muted">
-                                    Early access is coming soon. Add your name below and we'll reach out the moment Uloak is ready for you.
+                                    Early access is coming soon. Add your name below and we'll reach out the moment Ulo of Stories is ready for you.
                                 </p>
 
                                 {success && (
@@ -620,7 +620,7 @@ export default function Welcome({
                                 </p>
                                 <div className="space-y-4">
                                     <a
-                                        href="https://linkedin.com/company/uloak"
+                                        href="https://linkedin.com/company/ulo of stories"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
@@ -629,7 +629,7 @@ export default function Welcome({
                                         <span className="text-lg font-medium">Follow on LinkedIn</span>
                                     </a>
                                     <a
-                                        href="https://instagram.com/uloak"
+                                        href="https://instagram.com/ulo of stories"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
@@ -647,7 +647,7 @@ export default function Welcome({
                                         <span className="text-lg font-medium">Follow on Facebook</span>
                                     </a>
                                     <a
-                                        href="http://www.youtube.com/@ULOAK"
+                                        href="http://www.youtube.com/@ULO OF STORIES"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
@@ -656,7 +656,7 @@ export default function Welcome({
                                         <span className="text-lg font-medium">Follow on Youtube</span>
                                     </a>
                                     <a
-                                        href="https://x.com/uloakHQ"
+                                        href="https://x.com/ulo of storiesHQ"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"
@@ -665,7 +665,7 @@ export default function Welcome({
                                         <span className="text-lg font-medium">Follow on X</span>
                                     </a>
                                     <a
-                                        href="https://facebook.com/uloak"
+                                        href="https://facebook.com/ulo of stories"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-4 rounded-xl border border-border-subtle bg-bg-dark px-6 py-4 transition-colors hover:border-accent-gold/50"

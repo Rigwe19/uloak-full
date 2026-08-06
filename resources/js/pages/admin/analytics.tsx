@@ -123,7 +123,7 @@ return;
 
   return (
     <AdminLayout>
-      <Head title="Analytics - Uloak" />
+      <Head title="Analytics - Ulo of Stories" />
 
       <div className="mx-auto max-w-7xl space-y-6 p-6">
         {/* Header */}

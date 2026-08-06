@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class MediaController extends Controller
 {
@@ -41,7 +42,8 @@ class MediaController extends Controller
 
         return response()->json([
             'data' => [
-                'id' => $media->uuid,
+                'id' => $media->id,
+                'uuid' => $media->uuid,
                 'url' => $media->url(),
                 'type' => $media->type,
                 'mime_type' => $media->mime_type,
@@ -77,11 +79,16 @@ class MediaController extends Controller
 
         return response()->json([
             'data' => [
-                'id' => $media->uuid,
+                'id' => $media->id,
+                'uuid' => $media->uuid,
                 'url' => $media->url(),
                 'type' => $media->type,
                 'mime_type' => $media->mime_type,
                 'status' => $media->status,
+                'thumbnail_url' => $media->thumbnail
+                    ? Storage::disk($media->disk)->url($media->thumbnail)
+                    : null,
+                'sprite' => $media->sprite,
             ],
         ], 201);
     }
@@ -96,14 +103,10 @@ class MediaController extends Controller
 
         $thumbnail = null;
         if ($media->isImage()) {
-            if ($media->provider === 'cloudinary') {
-                $thumbnail = $media->thumbnail;
-            } else {
-                try {
-                    $thumbnail = $media->thumbnail(300, 300);
-                } catch (\RuntimeException) {
-                    $thumbnail = null;
-                }
+            try {
+                $thumbnail = $media->thumbnail(300, 300);
+            } catch (\RuntimeException) {
+                $thumbnail = null;
             }
         }
 
@@ -117,7 +120,7 @@ class MediaController extends Controller
                 'size' => $media->size,
                 'type' => $media->type,
                 'url' => $media->url(),
-                'thumbnail' => $media->isCloudinary() ? $media->thumbnail : $thumbnail,
+                'thumbnail' => $thumbnail,
                 'preview' => $media->preview,
                 'status' => $media->status,
                 'provider' => $media->provider,

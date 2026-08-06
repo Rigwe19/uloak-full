@@ -381,7 +381,7 @@ return;
                                         Call
                                     </a>
                                     <a
-                                        href="mailto:hello@uloakstories.com"
+                                        href="mailto:hello@ulo of storiesstories.com"
                                         className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-text-primary hover:border-accent-gold/40 text-sm font-medium transition"
                                         >
                                         <Mail size={16} />

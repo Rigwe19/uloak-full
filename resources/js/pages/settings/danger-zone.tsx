@@ -7,7 +7,7 @@ import React from 'react';
 export default function SettingsDangerZone() {
     return (
         <>
-            <Head title="Danger Zone - Uloak" />
+            <Head title="Danger Zone - Ulo of Stories" />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <div className="mb-2">

@@ -51,10 +51,10 @@ class RoomController extends Controller
             'assets' => $story->assets ?? [],
         ]);
 
-        $pageTitle = $room->name.' - Uloak, House of Stories';
+        $pageTitle = $room->name.' - Ulo of Stories';
         $pageDescription = $room->description
             ? Str::limit($room->description, 155)
-            : 'Browse memories, stories, and tributes in this room on Uloak.';
+            : 'Browse memories, stories, and tributes in this room on Ulo of Stories.';
 
         return Inertia::render('dashboard/rooms/show', [
             'title' => $pageTitle,
@@ -89,11 +89,11 @@ class RoomController extends Controller
             ->get();
 
         $user = auth()->user();
-        $guestEmail = request()->cookie('uloak_guest_email');
+        $guestEmail = request()->cookie('ulo of stories_guest_email');
         $guestIdentifier = $guestEmail ? hash('sha256', strtolower($guestEmail)) : null;
 
         return Inertia::render('dashboard/rooms/feed', [
-            'title' => $room->name.' - Reels - Uloak',
+            'title' => $room->name.' - Reels - Ulo of Stories',
             'meta_description' => 'Browse video memories in '.$room->name,
             'room' => [
                 'id' => $room->id,

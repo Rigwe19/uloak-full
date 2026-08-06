@@ -97,4 +97,113 @@ class Story extends Model
     {
         return $this->likes()->count();
     }
+
+    /**
+     * Get all media records associated with this story's assets.
+     */
+    public function media()
+    {
+        $uuids = collect($this->assets ?? [])->pluck('media_uuid')->filter()->toArray();
+
+        return $this->hasMany(Media::class, 'uuid', 'media_uuid')
+            ->whereIn('uuid', $uuids);
+    }
+
+    /**
+     * Get only ready media assets.
+     */
+    public function getReadyAssetsAttribute(): array
+    {
+        $uuids = collect($this->assets ?? [])->pluck('media_uuid')->filter()->toArray();
+
+        if (empty($uuids)) {
+            return [];
+        }
+
+        $readyMedia = Media::whereIn('uuid', $uuids)->where('status', 'ready')->get()->keyBy('uuid');
+
+        return collect($this->assets ?? [])->map(function ($asset) use ($readyMedia) {
+            if (isset($asset['media_uuid']) && $readyMedia->has($asset['media_uuid'])) {
+                $media = $readyMedia->get($asset['media_uuid']);
+
+                return array_merge($asset, [
+                    'url' => $media->url(),
+                    'thumbnail' => $media->thumbnail,
+                    'type' => $media->type,
+                    'duration' => $media->duration,
+                    'width' => $media->width,
+                    'height' => $media->height,
+                    'status' => 'ready',
+                ]);
+            }
+
+            return $asset;
+        })->filter()->toArray();
+    }
+
+    /**
+     * Get pending media assets (still processing).
+     */
+    public function getPendingAssetsAttribute(): array
+    {
+        $uuids = collect($this->assets ?? [])->pluck('media_uuid')->filter()->toArray();
+
+        if (empty($uuids)) {
+            return [];
+        }
+
+        $pendingMedia = Media::whereIn('uuid', $uuids)
+            ->whereIn('status', ['uploading', 'processing'])
+            ->get()
+            ->keyBy('uuid');
+
+        return collect($this->assets ?? [])->map(function ($asset) use ($pendingMedia) {
+            if (isset($asset['media_uuid']) && $pendingMedia->has($asset['media_uuid'])) {
+                $media = $pendingMedia->get($asset['media_uuid']);
+
+                return array_merge($asset, [
+                    'status' => 'pending',
+                    'processing' => true,
+                ]);
+            }
+
+            return $asset;
+        })->filter()->toArray();
+    }
+
+    /**
+     * Refresh assets from media records.
+     */
+    public function refreshAssets(): array
+    {
+        $uuids = collect($this->assets ?? [])->pluck('media_uuid')->filter()->toArray();
+
+        if (empty($uuids)) {
+            return [];
+        }
+
+        $mediaRecords = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+
+        $assets = collect($this->assets ?? [])->map(function ($asset) use ($mediaRecords) {
+            if (isset($asset['media_uuid']) && $mediaRecords->has($asset['media_uuid'])) {
+                $media = $mediaRecords->get($asset['media_uuid']);
+
+                return array_merge($asset, [
+                    'url' => $media->url(),
+                    'thumbnail' => $media->thumbnail,
+                    'type' => $media->type,
+                    'duration' => $media->duration,
+                    'width' => $media->width,
+                    'height' => $media->height,
+                    'updated_at' => now()->toIso8601String(),
+                ]);
+            }
+
+            return $asset;
+        })->filter()->toArray();
+
+        $this->update(['assets' => $assets]);
+
+        return $assets;
+    }
 }

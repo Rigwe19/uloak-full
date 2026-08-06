@@ -13,7 +13,7 @@ interface SettingsMediaProps {
 export default function SettingsMedia({ person, media }: SettingsMediaProps) {
     return (
         <>
-            <Head title={(person?.name || 'Media') + ' - Uloak'} />
+            <Head title={(person?.name || 'Media') + ' - Ulo of Storiesf Stories'} />
 
             <div className="mb-4">
                 <h2 className="text-lg font-bold tracking-tight text-text-primary">Photos & Documents</h2>

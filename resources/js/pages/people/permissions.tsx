@@ -14,7 +14,7 @@ interface PermissionsProps {
 export default function Permissions({ person, permissions, consents }: PermissionsProps) {
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Permissions') + ' - Uloak'} />
+            <Head title={(person.name || 'Permissions') + ' - Ulo of Storiesf Stories'} />
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <section className="rounded-xl border border-border-subtle bg-surface p-5">

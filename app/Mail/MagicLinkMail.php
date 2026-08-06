@@ -29,7 +29,7 @@ class MagicLinkMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Magic Link to Access '.$this->spaceName.' on Uloak',
+            subject: 'Your Magic Link to Access '.$this->spaceName.' on Ulo of Stories',
         );
     }
 

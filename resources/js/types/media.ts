@@ -53,6 +53,7 @@ export interface MediaStatus {
     provider: string;
     duration: number | null;
     sprite: Record<string, unknown> | null;
+    failed_reason: string | null;
 }
 
 export interface UploadCallbacks {

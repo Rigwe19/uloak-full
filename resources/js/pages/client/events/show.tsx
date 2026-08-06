@@ -49,7 +49,7 @@ export default function ClientEventShow({ event, stories }: Props) {
 
     return (
         <div className="min-h-screen bg-bg-dark">
-            <Head title={`${event.name} - Uloak`} />
+            <Head title={`${event.name} - Ulo of Stories`} />
 
             <div className="mx-auto max-w-7xl p-5 pb-32 md:p-8 lg:p-16">
                 <header className="mb-12">

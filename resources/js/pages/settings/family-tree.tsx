@@ -19,7 +19,7 @@ export default function SettingsFamilyTree({ person, graph }: SettingsFamilyTree
 
     return (
         <>
-            <Head title={(person?.name || 'Family Tree') + ' - Uloak'} />
+            <Head title={(person?.name || 'Family Tree') + ' - Ulo of Storiesf Stories'} />
 
             <div className="mb-4">
                 <h2 className="text-lg font-bold tracking-tight text-text-primary">Family Tree</h2>

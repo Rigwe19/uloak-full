@@ -39,7 +39,7 @@ export default function AdminUsers({ users }: Props) {
                             Custodians
                         </h1>
                         <p className="mt-2 text-text-muted">
-                            Manage the guardians of memories on the Uloak platform.
+                            Manage the guardians of memories on the Ulo of Stories platform.
                         </p>
                     </div>
                     <div className="flex gap-3">

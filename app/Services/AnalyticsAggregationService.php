@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\CloudinaryUsage;
 use App\Models\Comment;
 use App\Models\MediaEvent;
 use App\Models\MediaSession;
@@ -258,31 +257,17 @@ class AnalyticsAggregationService
 
     public function cloudinaryUsage(CarbonImmutable $start, CarbonImmutable $end): array
     {
-        $records = CloudinaryUsage::whereBetween('date', [$start->toDateString(), $end->toDateString()])
-            ->orderBy('date')
-            ->get();
-
-        $latest = CloudinaryUsage::latest('date')->first();
-
-        $totals = [
-            'storage_bytes' => $latest?->storage_bytes ?? 0,
-            'bandwidth_bytes' => $latest?->bandwidth_bytes ?? 0,
-            'transformations' => $records->sum('transformations'),
-            'credits_used' => $records->sum('credits_used'),
-        ];
-
-        $trends = $records->map(fn ($r) => [
-            'date' => $r->date->toDateString(),
-            'storage_bytes' => $r->storage_bytes,
-            'bandwidth_bytes' => $r->bandwidth_bytes,
-            'transformations' => $r->transformations,
-        ]);
-
+        // This method is deprecated - Cloudinary has been removed
         return [
-            'daily' => $records,
-            'totals' => $totals,
-            'latest' => $latest,
-            'trends' => $trends,
+            'daily' => collect(),
+            'totals' => [
+                'storage_bytes' => 0,
+                'bandwidth_bytes' => 0,
+                'transformations' => 0,
+                'credits_used' => 0,
+            ],
+            'latest' => null,
+            'trends' => collect(),
         ];
     }
 

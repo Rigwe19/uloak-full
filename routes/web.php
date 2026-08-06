@@ -135,6 +135,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('events/{event}/download-media', [EventController::class, 'downloadMedia'])->name('events.download-media');
         Route::get('stories/{story}', [StoryController::class, 'show'])->name('stories.show');
         Route::get('stories/{story}/data', [StoryController::class, 'showData'])->name('stories.data');
+        Route::get('stories/{story}/processing-status', [StoryController::class, 'checkProcessingStatus'])->name('stories.processing-status');
         Route::delete('stories/{story}', [StoryController::class, 'destroy'])->name('stories.destroy');
         Route::post('stories/{story}/comments', [CommentController::class, 'store'])->name('stories.comments.store');
         Route::post('stories/{story}/assets', [StoryController::class, 'addAsset'])->name('stories.assets.store');

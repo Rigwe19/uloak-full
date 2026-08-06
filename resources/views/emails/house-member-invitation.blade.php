@@ -1,5 +1,5 @@
 <x-mail::message>
-# Welcome to Uloak, {{ $memberName }}!
+# Welcome to Ulo of Stories, {{ $memberName }}!
 
 You have been invited by **{{ $ownerName }}** to join their Family House — a private digital sanctuary to preserve and share family memories, stories, and legacies.
 

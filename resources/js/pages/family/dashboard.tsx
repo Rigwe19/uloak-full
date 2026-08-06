@@ -28,7 +28,7 @@ export default function FamilyDashboard({ rooms, memberName, memberEmail }: Prop
                     <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
                         <div className="flex items-center gap-4">
                             <Link href="/" className="text-xl font-bold tracking-tight text-text-primary">
-                                Uloak
+                                Ulo of Stories
                             </Link>
                             <span className="rounded-full border border-accent-gold/20 bg-accent-gold/5 px-3 py-1 text-[10px] font-bold tracking-widest text-accent-gold uppercase">
                                 Family

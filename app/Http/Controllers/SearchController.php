@@ -33,7 +33,7 @@ class SearchController extends Controller
         }
 
         return Inertia::render('dashboard/search', [
-            'title' => 'Search - Uloak',
+            'title' => 'Search - Ulo of Stories',
             'results' => [
                 'rooms' => $rooms,
                 'stories' => $stories,
