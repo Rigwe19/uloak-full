@@ -12,13 +12,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.5"
+          extensions: mbstring, bcmath, pdo_mysql, intl, fileinfo
           tools: composer:v2
 
       - name: Setup pnpm
@@ -30,25 +29,23 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: "24"
           cache: pnpm
 
-      - name: Install JS dependencies
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Verify Composer
+        run: |
+          ls -la
+          ls -la vendor
+          test -f vendor/autoload.php
+
+      - name: Install Node Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build assets
+      - name: Build Assets
         run: pnpm build
-
-      - name: Commit built assets if changed
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          git add public/build
-
-          git diff --cached --quiet || git commit -m "Build assets [skip ci]"
-
-          git push
 
       - name: Deploy
         uses: appleboy/ssh-action@v1.2.0
@@ -67,6 +64,7 @@ jobs:
 
             composer install \
               --no-dev \
+              --prefer-dist \
               --optimize-autoloader \
               --no-interaction
 
@@ -75,5 +73,5 @@ jobs:
             php artisan optimize:clear
             php artisan optimize
 
-            sudo systemctl restart laravel-queue
-            sudo systemctl restart laravel-scheduler
+            sudo systemctl restart laravel-queue || true
+            sudo systemctl restart laravel-scheduler || true
