@@ -10,29 +10,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.5
+          extensions: mbstring, bcmath, pdo_mysql
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Remove development files
+        run: |
+          rm -rf node_modules
+          rm -rf tests
 
       - name: Deploy
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: deploy
+          key: ${{ secrets.SSH_KEY }}
+          source: "."
+          target: "/var/www/ulo"
+
+      - name: Finish deployment
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
+          username: deploy
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.PORT }}
           script: |
             cd /var/www/ulo
 
-            git pull origin main
-
-            composer install --no-dev --optimize-autoloader
+            composer install \
+              --no-dev \
+              --optimize-autoloader \
+              --no-interaction
 
             php artisan migrate --force
 
             php artisan optimize:clear
+            php artisan optimize
 
             sudo systemctl restart laravel-queue
-            
             sudo systemctl restart laravel-scheduler
-
-            npm ci
-            npm run build
