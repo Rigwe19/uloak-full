@@ -49,8 +49,6 @@ jobs:
           script: |
             set -e
 
-            sudo chown -R deploy:deploy /var/www/ulo
-
             cd /var/www/ulo
 
             git fetch origin
