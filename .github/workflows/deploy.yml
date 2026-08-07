@@ -10,14 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.5"
-          extensions: mbstring, bcmath, pdo_mysql, intl, fileinfo
           tools: composer:v2
 
       - name: Setup pnpm
@@ -29,19 +27,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: 24
           cache: pnpm
 
-      - name: Install Composer Dependencies
+      - name: Install PHP Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Verify Composer
-        run: |
-          ls -la
-          ls -la vendor
-          test -f vendor/autoload.php
-
-      - name: Install Node Dependencies
+      - name: Install JS Dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build Assets
@@ -56,6 +48,8 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             set -e
+
+            sudo chown -R deploy:deploy /var/www/ulo
 
             cd /var/www/ulo
 
@@ -73,5 +67,5 @@ jobs:
             php artisan optimize:clear
             php artisan optimize
 
-            sudo systemctl restart laravel-queue || true
-            sudo systemctl restart laravel-scheduler || true
+            sudo systemctl restart laravel-queue
+            sudo systemctl restart laravel-scheduler
