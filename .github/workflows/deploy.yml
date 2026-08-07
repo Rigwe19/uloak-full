@@ -12,16 +12,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
-          extensions: mbstring, bcmath, pdo_mysql
+          php-version: "8.5"
           tools: composer:v2
-
-      - name: Install Composer dependencies
-        run: composer install --no-dev --optimize-autoloader
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -35,39 +33,37 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - name: Verify
-        run: |
-          node -v
-          pnpm -v
-
-      - name: Install dependencies
+      - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
+      - name: Build assets
         run: pnpm build
 
-      - name: Remove development files
+      - name: Commit built assets if changed
         run: |
-          rm -rf node_modules
-          rm -rf tests
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add public/build
+
+          git diff --cached --quiet || git commit -m "Build assets [skip ci]"
+
+          git push
 
       - name: Deploy
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: deploy
-          key: ${{ secrets.SSH_KEY }}
-          source: "."
-          target: "/var/www/ulo"
-
-      - name: Finish deployment
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST }}
           username: deploy
           key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
           script: |
+            set -e
+
             cd /var/www/ulo
+
+            git fetch origin
+            git reset --hard origin/main
 
             composer install \
               --no-dev \
