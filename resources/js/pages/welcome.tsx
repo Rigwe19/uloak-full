@@ -200,20 +200,20 @@ export default function Welcome({
                                         transition={{ duration: 0.8 }}
                                     >
                                         <div className="mb-8 flex items-center gap-4">
-                                            <motion.span
+                                            {/* <motion.span
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: 0.2 }}
                                                 className="inline-block rounded-full border border-accent-gold/10 bg-accent-gold/5 px-4 py-2 text-xs font-bold tracking-[0.5em] text-accent-gold uppercase backdrop-blur-sm"
                                             >
                                                 {displaySlides[currentSlide].badge}
-                                            </motion.span>
-                                            <ShareQRCode
+                                            </motion.span> */}
+                                            {/* <ShareQRCode
                                                 roomId={displaySlides[currentSlide].id}
                                                 roomName={
                                                     displaySlides[currentSlide].badge
                                                 }
-                                            />
+                                            /> */}
                                         </div>
 
                                         <SplitText
