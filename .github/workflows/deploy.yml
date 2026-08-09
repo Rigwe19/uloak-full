@@ -71,4 +71,6 @@ jobs:
             php artisan optimize:clear
             php artisan optimize
 
-            php artisan queue:restart 
+            sudo systemctl restart laravel-queue.service
+            sudo systemctl restart laravel-scheduler.service
+            sudo systemctl restart laravel-reverb.service
