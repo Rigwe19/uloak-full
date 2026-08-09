@@ -12,12 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.5"
-          tools: composer:v2
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -29,9 +23,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-
-      - name: Install PHP Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Install JS Dependencies
         run: pnpm install --frozen-lockfile
@@ -60,9 +51,11 @@ jobs:
               --optimize-autoloader \
               --no-interaction
 
-            php artisan migrate --force
+            pnpm install --frozen-lockfile
+            pnpm build
 
+            php artisan migrate --force
             php artisan optimize:clear
             php artisan optimize
 
-            php artisan queue:restart 
+            php artisan queue:restart
