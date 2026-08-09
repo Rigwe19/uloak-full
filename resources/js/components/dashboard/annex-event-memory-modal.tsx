@@ -98,6 +98,7 @@ export function AnnexEventMemoryModal({ isOpen, onClose, event, onSuccess }: Ann
         const readyUploads = uploads.filter((u) => u.status === 'ready');
         const uuids = readyUploads.map((u) => u.mediaUuid).filter(Boolean) as string[];
 
+        console.log('got here', readyUploads, uuids, data.recording);
         if (uuids.length === 0 && !data.recording) return;
 
         // For photo type with multiple uploads, submit each one as a separate story

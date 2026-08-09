@@ -42,14 +42,14 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Configure default behaviors for production-ready applications.
      */
-    /**
-     * Configure Socialite providers.
-     */
     protected function configureSubscribers(): void
     {
         Event::subscribe(TrackMediaEvent::class);
     }
 
+    /**
+     * Configure Socialite providers.
+     */
     protected function configureSocialite(): void
     {
         Event::listen(
@@ -70,11 +70,10 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
+            ? Password::min(8)
                 ->mixedCase()
                 ->letters()
                 ->numbers()
-                ->symbols()
                 ->uncompromised()
             : null,
         );

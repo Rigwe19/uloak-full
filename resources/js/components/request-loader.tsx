@@ -10,9 +10,9 @@ export function RequestLoader() {
         return router.on('start', (event) => {
             const method = event.detail.visit.method;
 
-            if (method === 'GET') {
-return;
-}
+            if (method === 'get') {
+                return;
+            }
 
             timerRef.current = setTimeout(() => setActive(true), 300);
         });
@@ -41,9 +41,14 @@ return;
                     className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-8 bg-bg-dark/70 backdrop-blur-sm"
                 >
                     <img
+                        src="/logo-dark.png"
+                        alt="ULO OF STORIES"
+                        className="h-12 dark:hidden w-auto opacity-80"
+                    />
+                    <img
                         src="/logo.png"
                         alt="ULO OF STORIES"
-                        className="h-12 w-auto opacity-80"
+                        className="h-12 dark:block hidden w-auto opacity-80"
                     />
 
                     <div className="relative flex items-center justify-center">

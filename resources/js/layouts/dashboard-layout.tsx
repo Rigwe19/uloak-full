@@ -1,7 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart3, LayoutGrid, Search, Bell, BellRing, Settings, LogOut, User } from 'lucide-react';
+import { BarChart3, LayoutGrid, Search, Bell, Settings, LogOut, User } from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { PageTransition } from '@/components/page-transition';
@@ -80,7 +80,7 @@ export default function DashboardLayout({
         { id: 'search', icon: Search, label: 'Search', href: dashboard.search().url },
         { id: 'notifications', icon: Bell, label: 'Notifications', href: dashboard.notifications().url },
         { id: 'analytics', icon: BarChart3, label: 'Analytics', href: dashboard.analytics().url },
-        ...(authPerson ? [{ id: 'profile', icon: User, label: 'Profile', href: '/settings/about' }] : []),
+        // ...(authPerson ? [{ id: 'profile', icon: User, label: 'Profile', href: '/settings/about' }] : []),
         { id: 'settings', icon: Settings, label: 'Settings', href: '/settings/house' },
     ];
 
@@ -102,9 +102,14 @@ export default function DashboardLayout({
             <aside className="sticky top-0 z-50 hidden h-screen w-20 shrink-0 flex-col items-center border-r border-border-subtle bg-bg-dark py-10 md:flex lg:w-24">
                 <Link href={home().url} className="mb-12 shrink-0 px-4">
                     <img
-                        src="/logo.png"
+                        src="/logo-stacked-dark.png"
                         alt="ULO OF STORIES"
-                        className="h-auto w-full object-contain"
+                        className="h-auto dark:hidden w-full object-contain"
+                    />
+                    <img
+                        src="/logo-stacked.png"
+                        alt="ULO OF STORIES"
+                        className="h-auto dark:block hidden w-full object-contain"
                     />
                 </Link>
 

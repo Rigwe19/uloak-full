@@ -39,6 +39,9 @@ export function UploadProgress({ percentage, speed, eta, status }: UploadProgres
             {eta !== null && isFinite(eta) ? `${Math.ceil(eta)}s remaining` : speed > 0 ? `${formatSpeed(speed)}` : ''}
           </span>
         )}
+        {status === 'processing' && (
+          <span>Processing...</span>
+        )}
       </div>
     </div>
   )

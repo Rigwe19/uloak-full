@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Media;
 use App\Models\Room;
 use App\Models\RoomMember;
 use App\Models\Story;
@@ -44,7 +45,7 @@ class FamilyController extends Controller
             ->withCount('stories')
             ->latest()
             ->get()
-            ->map(fn ($room) => [
+            ->map(fn($room) => [
                 'id' => $room->id,
                 'slug' => $room->slug,
                 'name' => $room->name,
@@ -75,12 +76,15 @@ class FamilyController extends Controller
 
         $paginator = $room->stories()
             ->whereNull('follow_up_to')
-            ->with(['comments' => function ($q) {
-                $q->latest();
-            }, 'followUpStories'])
+            ->with([
+                'comments' => function ($q) {
+                    $q->latest();
+                },
+                'followUpStories'
+            ])
             ->latest()
             ->cursorPaginate(24)
-            ->through(fn ($story) => [
+            ->through(fn($story) => [
                 'id' => $story->id,
                 'title' => $story->title,
                 'type' => $story->type,
@@ -90,14 +94,14 @@ class FamilyController extends Controller
                 'file_url' => $story->file_url,
                 'assets' => $story->assets ?? [],
                 'room_member_id' => $story->room_member_id,
-                'comments' => $story->comments->map(fn ($c) => [
+                'comments' => $story->comments->map(fn($c) => [
                     'id' => $c->id,
                     'content' => $c->content,
                     'author' => $c->authorName(),
                     'date' => $c->created_at->diffForHumans(),
                 ]),
                 'comments_count' => $story->comments()->count(),
-                'follow_ups' => $story->followUpStories->map(fn ($fs) => [
+                'follow_ups' => $story->followUpStories->map(fn($fs) => [
                     'id' => $fs->id,
                     'type' => $fs->type,
                     'file_url' => $fs->file_url,
@@ -130,7 +134,7 @@ class FamilyController extends Controller
                 'email' => $member->email,
                 'relationship' => $member->relationship,
             ],
-            'title' => $room->name.' - Ulo of Stories',
+            'title' => $room->name . ' - Ulo of Stories',
         ]);
     }
 
@@ -161,7 +165,7 @@ class FamilyController extends Controller
 
         if ($request->hasFile('recording')) {
             $recording = $request->file('recording');
-            $path = $recording->store('stories/rooms/'.$room->id.'/family-media', 'public');
+            $path = $recording->store('stories/rooms/' . $room->id . '/family-media', 'public');
             $fileUrl = Storage::url($path);
             $type = $validated['type'];
             $validated['type'] = $type;
@@ -174,7 +178,7 @@ class FamilyController extends Controller
 
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
-                $path = $file->store('stories/rooms/'.$room->id.'/family-assets', 'public');
+                $path = $file->store('stories/rooms/' . $room->id . '/family-assets', 'public');
                 $url = Storage::url($path);
                 $mime = $file->getMimeType();
                 $type = 'photo';
@@ -188,7 +192,7 @@ class FamilyController extends Controller
                     'type' => $type,
                     'title' => $file->getClientOriginalName(),
                 ];
-                if (! $fileUrl) {
+                if (!$fileUrl) {
                     $fileUrl = $url;
                     $validated['type'] = $type;
                 }
@@ -196,7 +200,7 @@ class FamilyController extends Controller
         }
 
         if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('stories/rooms/'.$room->id.'/family-thumbnails', 'public');
+            $path = $request->file('thumbnail')->store('stories/rooms/' . $room->id . '/family-thumbnails', 'public');
             $validated['thumbnail'] = Storage::url($path);
         }
 
@@ -241,9 +245,19 @@ class FamilyController extends Controller
             abort(403, 'You can only delete your own stories.');
         }
 
+        // Delete associated media/files
+        $media = $story->media;
+
+        if ($media) {
+            $this->deleteMediaFiles($media);
+            $media->delete();
+        }
+
         $story->delete();
 
-        return redirect()->back()->with('success', 'Story deleted.');
+        return redirect()
+            ->back()
+            ->with('success', 'Story deleted.');
     }
 
     /**
@@ -254,5 +268,64 @@ class FamilyController extends Controller
         session()->forget(['family_member_id', 'family_member_name', 'family_member_email']);
 
         return redirect()->route('home');
+    }
+
+    protected function deleteMediaFiles(Media $media): void
+    {
+        $disk = Storage::disk($media->disk ?? 'public');
+
+        $paths = [];
+
+        // Main media file
+        if (!empty($media->path)) {
+            $paths[] = $this->storagePath($media->path);
+        }
+
+        // Thumbnail
+        if (!empty($media->thumbnail)) {
+            $paths[] = $this->storagePath($media->thumbnail);
+        }
+
+        // Sprite can be an array containing image + VTT
+        if (!empty($media->sprite)) {
+            $sprite = $media->sprite;
+
+            if (is_string($sprite)) {
+                $paths[] = $this->storagePath($sprite);
+            } elseif (is_array($sprite)) {
+                if (!empty($sprite['image'])) {
+                    $paths[] = $this->storagePath($sprite['image']);
+                }
+
+                if (!empty($sprite['vtt'])) {
+                    $paths[] = $this->storagePath($sprite['vtt']);
+                }
+            }
+        }
+
+        // Remove duplicates and empty paths
+        $paths = array_values(array_unique(array_filter($paths)));
+
+        if ($paths) {
+            $disk->delete($paths);
+        }
+    }
+
+    protected function storagePath(string $value): string
+    {
+        // If the database accidentally contains a full URL,
+        // convert it back to the storage-relative path.
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            $parsed = parse_url($value, PHP_URL_PATH);
+
+            if ($parsed) {
+                return ltrim(
+                    preg_replace('#^/storage/#', '', $parsed),
+                    '/'
+                );
+            }
+        }
+
+        return ltrim($value, '/');
     }
 }

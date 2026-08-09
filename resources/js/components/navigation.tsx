@@ -73,7 +73,12 @@ return null;
                     <img
                         src="/logo.png"
                         alt="ULOOFSTORIES - House of Stories"
-                        className="h-18 w-auto object-contain lg:h-24"
+                        className="h-18 dark:block hidden w-auto object-contain lg:h-24"
+                    />
+                    <img
+                        src="/logo-dark.png"
+                        alt="ULOOFSTORIES - House of Stories"
+                        className="h-18 dark:hidden w-auto object-contain lg:h-24"
                     />
                 </Link>
 

@@ -59,7 +59,6 @@ export default function CreatorAnalytics({ stats }: Props) {
   const { url } = usePage();
 
   usePoll(120_000, { only: ['stats'] });
-console.log(ReactEChartsCore);
   const dates = Object.keys(stats.views_over_time).length
     ? Object.keys(stats.views_over_time)
     : Object.keys(stats.uploads_over_time);

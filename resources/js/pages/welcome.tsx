@@ -15,9 +15,7 @@ import { Linkedin } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import React, { useEffect, useState } from 'react';
 
-import { ShareQRCode } from '@/components/share-qr-code';
 import { Button } from '@/components/ui-elements';
-import GuestLayout from '@/layouts/guest-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/waiting-list';
 
@@ -61,7 +59,7 @@ const SplitText = ({
         <div className={`flex flex-wrap gap-x-[0.25em] ${className}`}>
             {words.map((word, i) => (
                 <span key={i} className="inline-block overflow-hidden">
-                    <motion.span
+                    <motion.h1
                         initial={{ y: '100%' }}
                         animate={{ y: 0 }}
                         transition={{
@@ -72,7 +70,7 @@ const SplitText = ({
                         className="inline-block"
                     >
                         {word}
-                    </motion.span>
+                    </motion.h1>
                 </span>
             ))}
         </div>
@@ -83,12 +81,10 @@ const Room = ({
     children,
     className = '',
     id = '',
-    title = '',
 }: {
     children: React.ReactNode;
     className?: string;
     id?: string;
-    title?: string;
 }) => (
     <section
         id={id}
@@ -101,20 +97,15 @@ const Room = ({
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="flex h-full w-full flex-col items-center"
         >
-            <div className="absolute top-10 right-10 z-30">
-                <ShareQRCode roomId={id} roomName={title || id} />
-            </div>
             {children}
         </motion.div>
     </section>
 );
 
 export default function Welcome({
-    canRegister = true,
     page,
     featuredRooms = [],
 }: {
-    canRegister?: boolean;
     page?: any;
     featuredRooms?: any[];
 }) {
@@ -138,7 +129,7 @@ export default function Welcome({
 
     const [success, setSuccess] = useState(false);
 
-    const { data, setData, reset, post, errors, processing, resetAndClearErrors } = useForm({
+    const { data, setData, reset, post, errors, processing } = useForm({
         name: '',
         email: ''
     });
@@ -176,13 +167,13 @@ export default function Welcome({
                             transition={{ duration: 2, ease: 'easeInOut' }}
                             className="absolute inset-0 z-0"
                         >
-                            <div className="absolute inset-0 z-10 bg-gradient-to-b from-bg-dark/70 via-bg-dark/30 to-bg-dark" />
+                            <div className="absolute inset-0 z-10 bg-linear-to-b from-bg-dark/70 via-bg-dark/30 to-bg-dark" />
                             <motion.img
                                 initial={{ scale: 1.1 }}
                                 animate={{ scale: 1 }}
                                 transition={{ duration: 10, ease: 'linear' }}
                                 src={displaySlides[currentSlide].image}
-                                className="h-full w-full object-cover opacity-50"
+                                className="h-full w-full object-cover object-center"
                                 alt={displaySlides[currentSlide].title}
                             />
                         </motion.div>
@@ -199,26 +190,10 @@ export default function Welcome({
                                         exit={{ opacity: 0 }}
                                         transition={{ duration: 0.8 }}
                                     >
-                                        <div className="mb-8 flex items-center gap-4">
-                                            {/* <motion.span
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: 0.2 }}
-                                                className="inline-block rounded-full border border-accent-gold/10 bg-accent-gold/5 px-4 py-2 text-xs font-bold tracking-[0.5em] text-accent-gold uppercase backdrop-blur-sm"
-                                            >
-                                                {displaySlides[currentSlide].badge}
-                                            </motion.span> */}
-                                            {/* <ShareQRCode
-                                                roomId={displaySlides[currentSlide].id}
-                                                roomName={
-                                                    displaySlides[currentSlide].badge
-                                                }
-                                            /> */}
-                                        </div>
 
                                         <SplitText
                                             text={displaySlides[currentSlide].title}
-                                            className="mb-10 text-6xl leading-[0.9] font-bold tracking-tighter md:text-9xl"
+                                            className="mb-10 text-5xl leading-[0.9] font-bold tracking-tighter md:text-9xl"
                                         />
 
                                         <motion.p
@@ -228,7 +203,7 @@ export default function Welcome({
                                                 duration: 1,
                                                 delay: 0.6,
                                             }}
-                                            className="mx-auto mb-14 max-w-2xl text-xl leading-relaxed font-light text-text-muted md:mx-0 md:text-2xl"
+                                            className="mx-auto mb-14 max-w-2xl text-lg leading-relaxed font-light md:text-text-muted md:mx-0 md:text-2xl"
                                         >
                                             {displaySlides[currentSlide].subtitle}
                                         </motion.p>
@@ -243,14 +218,14 @@ export default function Welcome({
                                             className="flex flex-wrap justify-center gap-6 md:justify-start"
                                         >
                                             <Link href={login()}>
-                                                <Button className="rounded-full px-12 py-6 text-xl shadow-[0_20px_60px_rgba(198,161,91,0.2)]">
+                                                <Button className="rounded-full md:px-12 md:py-6 md:text-xl shadow-[0_20px_60px_rgba(198,161,91,0.2)]">
                                                     Enter Your Home
                                                 </Button>
                                             </Link>
                                             <Link href="/how-it-works">
                                                 <Button
                                                     variant="outline"
-                                                    className="rounded-full border-white/10 px-12 py-6 text-xl hover:border-accent-gold/50"
+                                                    className="rounded-full border-white/10 md:px-12 md:py-6 md:text-xl hover:border-accent-gold/50"
                                                     icon={Play}
                                                 >
                                                     See the Architecture
@@ -300,7 +275,7 @@ export default function Welcome({
 
                 {/* 2. THE FOYER (THE STORY) */}
                 <Room className="bg-surface">
-                    <div className="max-w-4xl px-8 text-center">
+                    <div className="max-w-4xl px-4 md:px-8 text-center">
                         <div className="group relative mb-12 inline-flex rounded-[3.5rem] border border-accent-gold/10 bg-accent-gold/5 p-10 backdrop-blur-md">
                             <div className="absolute inset-0 scale-110 rounded-[3.5rem] bg-accent-gold/5 opacity-0 blur-xl transition-opacity group-hover:opacity-100" />
                             <Lock
@@ -308,13 +283,13 @@ export default function Welcome({
                                 size={64}
                             />
                         </div>
-                        <h2 className="mb-10 text-6xl leading-none font-bold tracking-tighter md:text-8xl">
-                            {page?.content?.foyer?.title_line_1 || "Every door"} <br />
+                        <h2 className="mb-10 text-5xl leading-none font-bold tracking-tighter md:text-8xl">
+                            {page?.content?.foyer?.title_line_1 || "Every door"} <br className='hidden md:block' />
                             <span className="text-accent-gold italic">
                                 {page?.content?.foyer?.title_line_2 || "has a story."}
                             </span>
                         </h2>
-                        <div className="mx-auto max-w-3xl space-y-8 text-xl leading-relaxed font-light text-text-muted md:text-2xl">
+                        <div className="md:mx-auto md:max-w-3xl space-y-8 text-xl leading-relaxed font-light text-text-muted md:text-2xl">
                             <p>
                                 {page?.content?.foyer?.paragraph_1 || "Traditional archives are cold. Digital storage is fragmented. Ulo of Stories is built as a home — a place where memories are curated, not just stored."}
                             </p>
@@ -333,14 +308,14 @@ export default function Welcome({
                                 <motion.div
                                     initial={{ scale: 0.9, opacity: 0 }}
                                     whileInView={{ scale: 1, opacity: 1 }}
-                                    className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-2xl"
+                                    className="relative aspect-4/5 overflow-hidden rounded-4xl shadow-2xl"
                                 >
                                     <img
                                         src={page?.content?.archive?.image || "/images/about.webp"}
                                         className="h-full w-full object-cover"
                                         alt="Memory"
                                     />
-                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-12">
+                                    <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-12">
                                         <p className="font-serif text-2xl leading-relaxed text-white italic">
                                             {page?.content?.archive?.quote || "\"The house we carry within us is the only one that never crumbles.\""}
                                         </p>
@@ -462,9 +437,9 @@ export default function Welcome({
                                         initial={{ opacity: 0, y: 30 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.1 }}
-                                        className="group overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20"
+                                        className="group overflow-hidden rounded-4xl border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20"
                                     >
-                                        <div className="relative aspect-[4/3] overflow-hidden">
+                                        <div className="relative aspect-4/3 overflow-hidden">
                                             <img
                                                 src={room.thumbnail}
                                                 alt={room.name}
@@ -540,7 +515,7 @@ export default function Welcome({
                     </div>
 
                     {/* Decorative architectural background element */}
-                    <div className="pointer-events-none absolute bottom-0 left-0 h-[50vh] w-full bg-gradient-to-t from-accent-gold/5 to-transparent" />
+                    <div className="pointer-events-none absolute bottom-0 left-0 h-[50vh] w-full bg-linear-to-t from-accent-gold/5 to-transparent" />
                 </Room>
 
                 {/* 6. WAITING LIST & SOCIAL CONNECTION */}
@@ -560,7 +535,7 @@ export default function Welcome({
 
                         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
                             {/* Waiting List Form */}
-                            <div className="rounded-[2rem] border border-border-subtle bg-bg-dark p-10">
+                            <div className="rounded-4xl border border-border-subtle bg-bg-dark p-10">
                                 <h3 className="mb-6 text-3xl font-bold">Join the Waiting List</h3>
                                 <p className="mb-8 text-text-muted">
                                     Early access is coming soon. Add your name below and we'll reach out the moment Ulo of Stories is ready for you.
@@ -613,7 +588,7 @@ export default function Welcome({
                             </div>
 
                             {/* Social Media & Community */}
-                            <div className="flex flex-col justify-center rounded-[2rem] border border-border-subtle bg-bg-dark p-10">
+                            <div className="flex flex-col justify-center rounded-4xl border border-border-subtle bg-bg-dark p-10">
                                 <h3 className="mb-6 text-3xl font-bold">Stay Connected</h3>
                                 <p className="mb-8 text-text-muted">
                                     Follow us for behind-the-scenes updates, launch announcements, and stories from our community.

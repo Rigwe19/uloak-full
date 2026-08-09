@@ -11,6 +11,13 @@ import GuestLayout from '@/layouts/guest-layout';
 import HouseLayout from '@/layouts/house-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
+import '@/echo';
+import { configureEcho } from '@laravel/echo-react';
+
+configureEcho({
+    broadcaster: 'reverb',
+});
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({

@@ -4,7 +4,6 @@ import {
     ArrowLeft,
     Upload,
     Clock,
-    User as UserIcon,
     Play,
     Plus,
     Calendar,
@@ -26,11 +25,10 @@ import { ShareQRCode } from '@/components/dashboard/share-qr-code';
 import { Button, Badge } from '@/components/dashboard/ui';
 import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
 import StoryFeed from '@/components/feed/StoryFeed';
+import { VideoPlayer } from '@/components/media/VideoPlayer';
 import { dashboard } from '@/routes';
 import eventsRoutes from '@/routes/dashboard/events';
-import storiesRoutes from '@/routes/dashboard/stories';
 import type { FeedStory } from '@/types/feed';
-import { VideoPlayer } from '@/components/media/VideoPlayer';
 
 interface EventShowProps {
     event: {
@@ -99,14 +97,25 @@ export default function EventShow({ event, stories: initialStories = [], paginat
 
     // Derive Cloudinary thumbnail URL by adding transformation params
     function getThumbnailUrl(url: string | null): string | null {
-        if (!url) return null;
-        if (url.includes('/image/upload/')) {
-            return url.replace('/image/upload/', '/image/upload/w_640,h_640,c_limit,q_auto,f_auto/');
+        if (!url) {
+            return null;
         }
+
+        // if (url.includes('/image/upload/')) {
+        //     return url.replace('/image/upload/', '/image/upload/w_640,h_640,c_limit,q_auto,f_auto/');
+        // }
+
         return url;
     }
 
     const getStoryThumbnail = (story: FeedStory) => {
+        if(story.type === 'video' && story.thumbnail) {
+            return story.thumbnail;
+        }
+        if(story.type === 'photo'){
+            return story.thumbnail || story.file_url || '/logo-stacked.png';
+        }
+
         if (story.thumbnail) {
             return story.thumbnail;
         }
@@ -138,6 +147,7 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                 }
             }
         });
+
         return flattened;
     }, [allStories]);
 
@@ -149,7 +159,9 @@ export default function EventShow({ event, stories: initialStories = [], paginat
     }, []);
 
     const confirmDeleteStory = useCallback(() => {
-        if (!storyToDelete) return;
+        if (!storyToDelete) {
+            return;
+        }
 
         setDeletingStory(true);
         router.delete(`/dashboard/stories/${storyToDelete.uuid}`, {
@@ -373,9 +385,9 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                                             <img
                                                 src={getStoryThumbnail(story)}
                                                 alt={story.title}
-                                                onError={(e) => {
-                                                    e.currentTarget.src = '/logo-stacked.png';
-                                                }}
+                                                // onError={(e) => {
+                                                //     e.currentTarget.src = '/logo-stacked.png';
+                                                // }}
                                                 className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                             />
                                             <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/40 opacity-0 transition-opacity group-hover:opacity-100">
@@ -610,7 +622,7 @@ interface MediaViewerModalProps {
 
 function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalProps) {
     const [currentIdx, setCurrentIdx] = useState(initialIndex);
-    const [isPlaying, setIsPlaying] = useState(false);
+    // const [isPlaying, setIsPlaying] = useState(false);
 
     const story = stories[currentIdx];
     const hasPrev = currentIdx > 0;
@@ -622,16 +634,20 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
     // Preload adjacent images for instant navigation
     useEffect(() => {
         const urls: string[] = [];
+
         for (const offset of [-2, -1, 1, 2]) {
             const idx = currentIdx + offset;
+
             if (idx >= 0 && idx < stories.length) {
                 const s = stories[idx];
                 const url = s?.file_url || s?.assets?.[0]?.url || null;
+
                 if (url && (s?.type === 'photo' || (!s?.type?.startsWith('video') && !s?.type?.startsWith('audio')))) {
                     urls.push(url);
                 }
             }
         }
+
         urls.forEach((url) => {
             const img = new Image();
             img.src = url;
@@ -640,19 +656,30 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
 
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-            if (e.key === 'ArrowLeft' && hasPrev) setCurrentIdx((p) => p - 1);
-            if (e.key === 'ArrowRight' && hasNext) setCurrentIdx((p) => p + 1);
+            if (e.key === 'Escape') {
+                onClose();
+            }
+
+            if (e.key === 'ArrowLeft' && hasPrev) {
+                setCurrentIdx((p) => p - 1);
+            }
+
+            if (e.key === 'ArrowRight' && hasNext) {
+                setCurrentIdx((p) => p + 1);
+            }
         };
         window.addEventListener('keydown', handleKey);
+
         return () => window.removeEventListener('keydown', handleKey);
     }, [onClose, hasPrev, hasNext]);
 
-    useEffect(() => {
-        setIsPlaying(false);
-    }, [currentIdx]);
+    // useEffect(() => {
+    //     setIsPlaying(false);
+    // }, [currentIdx]);
 
-    if (!story) return null;
+    if (!story) {
+        return null;
+    }
 
     return (
         <AnimatePresence>
@@ -718,7 +745,7 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
                                     showVolumeSlider
                                     className="w-full max-h-[60vh]"
                                     videoClassName="w-full max-h-[60vh] object-contain"
-                                    onEnded={() => setIsPlaying(false)}
+                                    // onEnded={() => setIsPlaying(false)}
                                 />
                             </div>
                         ) : (story.type === 'audio' && mediaUrl) ? (

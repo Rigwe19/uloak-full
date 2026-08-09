@@ -8,6 +8,7 @@ interface UploadStore {
   updateProgress: (id: string, progress: number, speed: number, uploadedBytes: number, eta: number | null) => void
   updateStatus: (id: string, status: ProcessingState) => void
   updateStatusByUuid: (uuid: string, status: ProcessingState) => void
+  updateProgressByUuid: (uuid: string, progress: number) => void
   updateMediaRef: (id: string, mediaUuid: string, mediaId: number) => void
   updateThumbnail: (id: string, thumbnailUrl: string) => void
   setError: (id: string, errorMessage: string) => void
@@ -44,6 +45,13 @@ export const useUploadStore = create<UploadStore>((set) => ({
     set((state) => ({
       uploads: state.uploads.map((u) =>
         u.mediaUuid === uuid ? { ...u, status } : u,
+      ),
+    })),
+
+  updateProgressByUuid: (uuid, progress) =>
+    set((state) => ({
+      uploads: state.uploads.map((u) =>
+        u.mediaUuid === uuid ? { ...u, progress } : u,
       ),
     })),
 

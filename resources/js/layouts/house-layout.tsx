@@ -102,9 +102,14 @@ mainRef.current.style.backgroundSize = patternStyle.backgroundSize;
             <aside className="sticky top-0 z-50 hidden h-screen w-20 shrink-0 flex-col items-center border-r border-border-subtle bg-bg-dark py-10 md:flex lg:w-24">
                 <Link href={homeRoute().url} className="mb-12 shrink-0 px-4">
                     <img
-                        src="/logo.png"
+                        src="/logo-stacked-dark.png"
                         alt="ULO OF STORIES"
-                        className="h-auto w-full object-contain"
+                        className="h-auto dark:hidden w-full object-contain"
+                    />
+                    <img
+                        src="/logo-stacked.png"
+                        alt="ULO OF STORIES"
+                        className="h-auto dark:block hidden w-full object-contain"
                     />
                 </Link>
 

@@ -79,6 +79,12 @@ class StoryController extends Controller
                 }
             }
         }
+        $media = Media::where('uuid', $story->uuid)->first();
+        logger()->info("Deleting story media for story UUID: {$story->uuid}");
+        if($media) {
+            logger()->info("Deleting associated media UUID: {$media->uuid}");
+            $this->storyService->deleteMedia($media);
+        }
 
         $story->delete();
 

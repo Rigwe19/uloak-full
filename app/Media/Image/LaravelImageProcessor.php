@@ -4,6 +4,7 @@ namespace App\Media\Image;
 
 use App\Media\Contracts\ImageProcessor;
 use App\Media\Enums\MediaType;
+use App\Media\Enums\ProcessingState;
 use App\Media\Exceptions\UnsupportedFormatException;
 use App\Media\Repositories\MediaRepository;
 use App\Media\Storage\StorageManager;
@@ -30,45 +31,81 @@ class LaravelImageProcessor implements ImageProcessor
         protected MediaRepository $repository,
         protected StorageManager $storage,
         protected array $config = [],
-    ) {}
+    ) {
+    }
 
     public function upload(UploadedFile $file): Media
     {
         $mimeType = $file->getMimeType() ?: $file->getClientMimeType();
 
-        if (! $this->supports($mimeType)) {
+        if (!$this->supports($mimeType)) {
             throw new UnsupportedFormatException(
                 mimeType: $mimeType,
                 driver: 'laravel-image',
             );
         }
 
-        // Store the original uploaded file first
-        $originalFilename = Str::uuid()->toString().'.'.pathinfo($file->getClientOriginalExtension(), PATHINFO_EXTENSION);
-        $originalPath = $this->storage->store($file, $this->originalsPath(), $this->storageDisk());
-
-        // Load with Laravel Image and optimize to WebP for cached version
         $image = Image::fromUpload($file);
 
-        // Generate cache filename
-        $cacheFilename = Str::uuid()->toString().'.webp';
-        $cachePath = $this->processedPath().'/'.$cacheFilename;
+        [$width, $height] = $image->dimensions();
 
-        // Convert to WebP and store in cache
-        $image->optimize()->store($cachePath, $this->cacheDisk());
-
-        $dimensions = $image->dimensions();
         $checksum = md5_file($file->getRealPath());
 
-        return $this->repository->createFromUpload(
+        $disk = $this->storageDisk();
+
+        // Create record first so we have the UUID.
+        $media = $this->repository->createFromUpload(
             file: $file,
-            path: $cachePath,
-            disk: $this->cacheDisk(),
+            path: '',
+            disk: $disk,
             type: MediaType::Image,
-            width: $dimensions[0] ?? null,
-            height: $dimensions[1] ?? null,
+            width: $width,
+            height: $height,
             checksum: $checksum,
         );
+
+        $uuid = $media->uuid ?? (string) $media->id;
+
+        /*
+         * Original WebP
+         */
+        $originalPath = $this->originalsPath() . '/' . $uuid . '.webp';
+
+        $image
+            ->toWebp()
+            ->quality($this->config['quality'] ?? 85)
+            ->storeAs(
+                $this->originalsPath(),
+                $uuid . '.webp',
+                $disk,
+            );
+
+        /*
+         * Thumbnail WebP
+         */
+        $thumbnailPath = $this->thumbnailsPath() . '/' . $uuid . '.webp';
+
+        Image::fromUpload($file)
+            ->cover(800, 800)
+            ->toWebp()
+            ->quality($this->config['thumbnail_quality'] ?? 80)
+            ->storeAs(
+                $this->thumbnailsPath(),
+                $uuid . '.webp',
+                $disk,
+            );
+
+        /*
+         * Update media record.
+         */
+        $media->update([
+            'path' => $originalPath,
+            'thumbnail' => $thumbnailPath,
+            'status' => ProcessingState::Ready->value,
+            'progress' => 100,
+        ]);
+
+        return $media->refresh();
     }
 
     public function process(Media $media, array $operations): string
@@ -104,7 +141,7 @@ class LaravelImageProcessor implements ImageProcessor
         $originalPath = $media->path;
         $originalDisk = $media->disk ?? 'public';
 
-        if (! $this->storage->exists($originalPath, $originalDisk)) {
+        if (!$this->storage->exists($originalPath, $originalDisk)) {
             throw new RuntimeException("Original file not found for media [{$media->id}].");
         }
 
@@ -169,6 +206,12 @@ class LaravelImageProcessor implements ImageProcessor
     protected function originalsPath(): string
     {
         return $this->config['paths']['originals'] ?? 'media/originals';
+    }
+
+    protected function thumbnailsPath(): string
+    {
+        return $this->config['paths']['thumbnails']
+            ?? 'media/thumbnails';
     }
 
     protected function processedPath(): string

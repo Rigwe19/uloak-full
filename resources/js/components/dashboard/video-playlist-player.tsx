@@ -193,7 +193,7 @@ return;
             <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative overflow-hidden rounded-4xl border border-white/5 bg-surface/30 p-12 text-center shadow-2xl backdrop-blur-sm"
+                className="relative overflow-hidden rounded-4xl border border-white/5 bg-surface/30 p-12 text-center backdrop-blur-sm"
             >
                 <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-accent-gold/20 bg-accent-gold/5 text-accent-gold/70">
                     <Tv size={36} className="stroke-[1.5]" />
@@ -213,7 +213,7 @@ return;
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className={`overflow-hidden ${!fullscreen ? 'rounded-4xl' : ''} border border-white/10 bg-surface/40 shadow-[0_30px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl`}
+            className={`overflow-hidden ${!fullscreen ? 'rounded-4xl' : ''} border border-white/10 bg-surface/40 backdrop-blur-xl`}
         >
             <div className={`relative flex flex-col justify-between bg-black/60 w-full ${!fullscreen?'h-75 sm:h-112.5 md:h-137.5 lg:h-150':'aspect-video'} group`}>
                 <video

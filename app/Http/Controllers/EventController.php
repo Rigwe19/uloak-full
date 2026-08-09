@@ -9,6 +9,7 @@ use App\Services\ActivityLogger;
 use App\Services\StoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use ZipArchive;
@@ -18,16 +19,20 @@ class EventController extends Controller
     public function __construct(
         protected StoryService $storyService,
         protected ActivityLogger $activityLogger
-    ) {}
+    ) {
+    }
 
     /**
      * Display the specified event with all its stories.
      */
     public function show(Event $event): Response
     {
-        $stories = $event->stories()->with('media', 'assets')->latest()->get();
+        $stories = $event->stories()
+            ->with('media')
+            ->latest()
+            ->get();
 
-        return Inertia::render('events/show', [
+        return Inertia::render('dashboard/events/show', [
             'event' => [
                 'id' => $event->id,
                 'name' => $event->name,
@@ -38,20 +43,20 @@ class EventController extends Controller
                 'location' => $event->location,
                 'created_at' => $event->created_at->format('M d, Y'),
             ],
-            'stories' => $stories->map(fn ($story) => [
+            'stories' => $stories->map(fn($story) => [
                 'id' => $story->id,
                 'uuid' => $story->uuid,
                 'title' => $story->title,
                 'description' => $story->description,
                 'type' => $story->type,
-                'thumbnail' => $story->thumbnail,
-                'file_url' => $story->file_url,
+                'thumbnail' => Storage::disk('public')->url($story->thumbnail),
+                'file_url' => Storage::disk('public')->url($story->file_url),
                 'duration' => $story->duration,
                 'assets' => $story->assets,
                 'created_at' => $story->created_at->format('M d, Y'),
                 'user' => $story->user?->name,
             ]),
-            'clients' => $event->clients->map(fn ($client) => [
+            'clients' => $event->clients->map(fn($client) => [
                 'id' => $client->id,
                 'name' => $client->name,
                 'email' => $client->email,
@@ -100,13 +105,13 @@ class EventController extends Controller
         $files = [];
 
         foreach ($stories as $story) {
-            $storyPrefix = 'story_'.$story->id.'_';
+            $storyPrefix = 'story_' . $story->id . '_';
             $media = $story->media;
 
             if ($media) {
                 $localPath = $this->storyService->downloadMedia($media);
                 if ($localPath) {
-                    $files[$storyPrefix.$media->original_name] = $localPath;
+                    $files[$storyPrefix . $media->original_name] = $localPath;
                 }
             }
 
@@ -117,7 +122,7 @@ class EventController extends Controller
                         if ($assetMedia) {
                             $localPath = $this->storyService->downloadMedia($assetMedia);
                             if ($localPath) {
-                                $files[$storyPrefix.'_'.$assetMedia->original_name] = $localPath;
+                                $files[$storyPrefix . '_' . $assetMedia->original_name] = $localPath;
                             }
                         }
                     }
@@ -130,8 +135,8 @@ class EventController extends Controller
         }
 
         $zip = new ZipArchive;
-        $zipName = 'event_'.$event->slug.'_media_'.now()->format('Y_m_d_H_i_s').'.zip';
-        $zipPath = storage_path('app/temp/'.$zipName);
+        $zipName = 'event_' . $event->slug . '_media_' . now()->format('Y_m_d_H_i_s') . '.zip';
+        $zipPath = storage_path('app/temp/' . $zipName);
 
         if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
             return back()->with('error', 'Could not create ZIP file.');
@@ -152,7 +157,7 @@ class EventController extends Controller
     public function storeStory(Request $request, Event $event): RedirectResponse
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
+            'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'type' => ['required', 'string', 'in:video,audio,photo,document,collection'],
             'files' => ['nullable', 'array'],

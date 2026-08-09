@@ -26,9 +26,14 @@ export default function AuthLayout({
                 <div className="mb-12 text-center">
                     <Link href={home().url}>
                         <img
+                            src="/logo-dark.png"
+                            alt="ULO OF STORIES"
+                            className="h-16 mx-auto mb-18 dark:hidden object-contain"
+                        />
+                        <img
                             src="/logo.png"
                             alt="ULO OF STORIES"
-                            className="mx-auto mb-8 h-16"
+                            className="h-16 mx-auto mb-18 dark:block hidden object-contain"
                         />
                     </Link>
                     <AnimatePresence mode="wait" initial={false}>

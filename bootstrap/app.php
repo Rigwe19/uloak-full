@@ -14,14 +14,19 @@ use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
-        commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
         then: function (): void {
             require base_path('routes/media.php');
             require base_path('routes/analytics.php');
         },
+    )
+    ->withBroadcasting(
+        __DIR__ . '/../routes/channels.php',
+        ['prefix' => 'broadcast', 'middleware' => ['web', 'auth']],
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
@@ -40,7 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->redirectTo(
             guests: '/login',
-            users: fn (Request $request) => $request->user()->is_admin ? '/admin' : '/dashboard'
+            users: fn(Request $request) => $request->user()->is_admin ? '/admin' : '/dashboard'
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {

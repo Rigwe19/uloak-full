@@ -50,6 +50,7 @@ export interface MediaStatus {
     thumbnail: string | null;
     preview: string | null;
     status: string;
+    progress: number | null;
     provider: string;
     duration: number | null;
     sprite: Record<string, unknown> | null;

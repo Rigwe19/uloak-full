@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Media\MediaManager;
+use App\Models\Event;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\Story;
@@ -14,13 +15,14 @@ class StoryService
 {
     public function __construct(
         protected MediaManager $mediaManager,
-    ) {}
+    ) {
+    }
 
-    public function createStory(User $user, Room $room, array $data): Story
+    public function createStory(User $user, Room|Event $room, array $data): Story
     {
         $story = $room->stories()->create([
             'uuid' => (string) \Str::uuid(),
-            'title' => $data['title'],
+            'title' => $data['title'] ?? null,
             'description' => $data['description'] ?? null,
             'type' => $data['type'] ?? 'photo',
             'duration' => $data['duration'] ?? null,
@@ -58,32 +60,48 @@ class StoryService
                 }
             }
 
-            if (! empty($assets)) {
+            if (!empty($assets)) {
                 $story->update(['assets' => $assets]);
             }
         }
 
         // Handle pre-uploaded media UUIDs
         if (isset($data['media_uuids']) && is_array($data['media_uuids'])) {
+            $assets = [];
+
             foreach ($data['media_uuids'] as $uuid) {
                 $media = Media::where('uuid', $uuid)->first();
 
-                if (! $media) {
+                if (!$media) {
                     continue;
                 }
 
-                $type = 'photo';
-                if ($media->mime_type === 'application/pdf') {
-                    $type = 'pdf';
-                } elseif (str_contains($media->mime_type, 'video')) {
-                    $type = 'video';
-                } elseif (str_contains($media->mime_type, 'audio')) {
-                    $type = 'audio';
-                }
+                $type = match (true) {
+                    $media->mime_type === 'application/pdf' => 'pdf',
+                    str_contains($media->mime_type, 'video') => 'video',
+                    str_contains($media->mime_type, 'audio') => 'audio',
+                    default => 'photo',
+                };
 
+                $assets[] = [
+                    'media_uuid' => $media->uuid,
+                    'url' => $media->url(),
+                    'type' => $type,
+                    'created_at' => now()->toIso8601String(),
+                ];
+
+                // Keep the existing Story columns populated.
                 $story->update([
                     'type' => $type,
                     'file_url' => $media->path,
+                    'thumbnail' => $media->thumbnail,
+                    'duration' => $media->duration,
+                ]);
+            }
+
+            if (!empty($assets)) {
+                $story->update([
+                    'assets' => $assets,
                 ]);
             }
         }
@@ -131,14 +149,43 @@ class StoryService
         // Delete file from storage
         $disk = $media->disk ?? 'public';
         $path = $media->path;
+        $paths = [];
+        logger()->info("Deleting media UUID: {$media->uuid}, Path: {$path}, Disk: {$disk}");
 
         if ($path && Storage::disk($disk)->exists($path)) {
+            logger()->info("Deleting media file from storage: {$disk}/{$path}");
             Storage::disk($disk)->delete($path);
         }
 
         // Delete thumbnail if exists
         if ($media->thumbnail && Storage::disk($disk)->exists($media->thumbnail)) {
+            logger()->info("Deleting thumbnail media: {$disk}/{$media->thumbnail}");
             Storage::disk($disk)->delete($media->thumbnail);
+        }
+
+        if (!empty($media->sprite)) {
+            logger()->info("Deleting sprite media for media UUID: {$media->uuid}");
+            $sprite = $media->sprite;
+
+            if (is_string($sprite)) {
+                $paths[] = $this->storagePath($sprite);
+            } elseif (is_array($sprite)) {
+                if (!empty($sprite['image'])) {
+                    $paths[] = $this->storagePath($sprite['image']);
+                }
+
+                if (!empty($sprite['vtt'])) {
+                    $paths[] = $this->storagePath($sprite['vtt']);
+                }
+            }
+        }
+
+        $disk = Storage::disk($media->disk ?? 'public');
+        // Remove duplicates and empty paths
+        $paths = array_values(array_unique(array_filter($paths)));
+
+        if ($paths) {
+            $disk->delete($paths);
         }
 
         // Delete media record
@@ -150,10 +197,28 @@ class StoryService
         $disk = $media->disk ?? 'public';
         $path = $media->path;
 
-        if (! $path || ! Storage::disk($disk)->exists($path)) {
+        if (!$path || !Storage::disk($disk)->exists($path)) {
             return null;
         }
 
         return Storage::disk($disk)->path($path);
+    }
+
+    protected function storagePath(string $value): string
+    {
+        // If the database accidentally contains a full URL,
+        // convert it back to the storage-relative path.
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            $parsed = parse_url($value, PHP_URL_PATH);
+
+            if ($parsed) {
+                return ltrim(
+                    preg_replace('#^/storage/#', '', $parsed),
+                    '/'
+                );
+            }
+        }
+
+        return ltrim($value, '/');
     }
 }

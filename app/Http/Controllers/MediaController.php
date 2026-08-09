@@ -123,6 +123,7 @@ class MediaController extends Controller
                 'thumbnail' => $thumbnail,
                 'preview' => $media->preview,
                 'status' => $media->status,
+                'progress' => $media->progress,
                 'provider' => $media->provider,
                 'duration' => $media->duration,
                 'sprite' => $media->sprite,

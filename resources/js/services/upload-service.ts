@@ -10,7 +10,7 @@ const API_BASE = '/api';
 export async function requestSignedUpload(
     file: File,
     mediaType: 'photo' | 'video' | 'audio' | 'document',
-): Promise<{ media_uuid: string; media_id: number; thumbnail_url: string | null }> {
+): Promise<{ media_uuid: string; media_id: number; thumbnail_url: string | null; status: string }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
@@ -44,6 +44,7 @@ export async function requestSignedUpload(
             media_uuid: json.data.uuid,
             media_id: json.data.id,
             thumbnail_url: json.data.thumbnail_url ?? null,
+            status: json.data.status,
         };
     } finally {
         clearTimeout(timeoutId);
@@ -53,6 +54,7 @@ export async function requestSignedUpload(
 function createFileFormData(file: File): FormData {
     const fd = new FormData();
     fd.append('file', file);
+
     return fd;
 }
 
@@ -65,7 +67,7 @@ export async function pollMediaStatus(
     onProgress: (percentage: number) => void,
     signal: AbortSignal,
 ): Promise<MediaStatus> {
-    const maxAttempts = 60; // 2 minutes max
+    const maxAttempts = 600; // 2 minutes max
     const intervalMs = 2000; // Check every 2 seconds
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -78,15 +80,17 @@ export async function pollMediaStatus(
 
             // Map status to percentage
             let percentage = 0;
+
             if (status.status === 'ready') {
                 percentage = 100;
                 onProgress(100);
+
                 return status;
             } else if (status.status === 'failed') {
                 throw new Error(status.failed_reason || 'Processing failed');
             } else if (status.status === 'processing' || status.status === 'uploading') {
-                percentage = 50; // Processing started
-                onProgress(50);
+                percentage = status.progress ?? 50;
+                onProgress(percentage);
             } else if (status.status === 'queued') {
                 percentage = 25; // Waiting in queue
                 onProgress(25);
@@ -97,6 +101,7 @@ export async function pollMediaStatus(
             if (signal.aborted) {
                 throw new Error('Upload polling cancelled');
             }
+            
             throw error;
         }
     }

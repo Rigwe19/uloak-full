@@ -382,7 +382,7 @@ return;
                                         <img
                                             src={event.thumbnail}
                                             alt={event.name}
-                                            className="h-full w-full object-cover opacity-60 transition-transform duration-1000 group-hover:scale-110"
+                                            className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                         />
                                     ) : (
                                         <div className="bg-surface-light flex h-full w-full items-center justify-center">

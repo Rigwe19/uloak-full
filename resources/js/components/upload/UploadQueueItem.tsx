@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { X, RotateCcw, FileVideo, FileImage, FileAudio, FileText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useProcessingStatus } from '@/hooks/use-processing-status';
+import { useMediaRealtime } from '@/hooks/use-media-realtime';
 import type { UploadItem } from '@/types/media';
 import { formatSize } from '@/utils/media-validation';
 import { UploadProgress } from './UploadProgress';
@@ -30,10 +30,13 @@ function FileTypeIcon({ mimeType, size = 20 }: { mimeType: string; size?: number
 }
 
 export function UploadQueueItem({ item, onCancel, onRetry, onRemove }: UploadQueueItemProps) {
-  useProcessingStatus(item.mediaUuid)
   const isImage = item.file.type.startsWith('image/')
+  const isVideo = item.file.type.startsWith('video/')
   const isActive = item.status === 'uploading' || item.status === 'processing' || item.status === 'queued'
   const isFinished = item.status === 'ready'
+
+  // Only use realtime updates for videos (images process synchronously)
+  useMediaRealtime(isVideo ? item.mediaUuid : null)
 
   return (
     <motion.div
