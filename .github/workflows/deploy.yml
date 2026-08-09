@@ -21,10 +21,11 @@ jobs:
       - name: Prepare Laravel environment
         run: |
           cp .env.example .env
-          php artisan key:generate
 
       - name: Install PHP Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: | 
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+          php artisan key:generate
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
