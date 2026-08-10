@@ -101,7 +101,7 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
     const [activeTab, setActiveTab] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
-
+console.log(allStories, 'allStories');
     // Merge paginated stories & handle reset
     useEffect(() => {
         const handleAppended = (e: CustomEvent) => {
