@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -161,12 +162,12 @@ class ClientController extends Controller
             'uuid' => $story->uuid,
             'id' => $story->id,
             'title' => $story->title,
-            'thumbnail' => $story->thumbnail,
+            'thumbnail' => $story->thumbnail ? Storage::disk('public')->url($story->thumbnail) : null,
             'type' => $story->type,
             'description' => $story->description,
             'author' => $story->user?->name ?? $story->guest_name,
             'date' => $story->created_at->format('M d, Y'),
-            'file_url' => $story->file_url,
+            'file_url' => $story->file_url ? Storage::disk('public')->url($story->file_url) : null,
             'assets' => $story->assets ?? [],
         ]);
 

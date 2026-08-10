@@ -6,6 +6,7 @@ import {
     BookOpen,
     Clock,
     Download,
+    DownloadCloud,
     Film,
     Headphones,
     Heart,
@@ -137,10 +138,28 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
     // Optional Service modal
     const [showOptionalService, setShowOptionalService] = useState(false);
 
+    // Download All modal state
+    const [showDownloadModal, setShowDownloadModal] = useState(false);
+    const [email, setEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
     // Delete confirmation state
     const [storyToDelete, setStoryToDelete] = useState<any | null>(null);
 
     const canModify = true;
+
+    const handleDownloadRequest = (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        router.post('/downloads/request', {
+            email,
+            type: 'room',
+            slug: room.slug,
+        }, {
+            onSuccess: () => setShowDownloadModal(false),
+            onFinish: () => setSubmitting(false),
+        });
+    };
 
     // ── Story Delete handler ──
     const handleDeleteStory = useCallback((story: any, e: React.MouseEvent) => {
@@ -297,6 +316,45 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
                                     </Button>
 
                                 </a>
+                                <button
+                                    onClick={() => setShowDownloadModal(true)}
+                                    className="hidden md:inline-flex items-center gap-2 rounded-xl border border-accent-gold/20 hover:border-accent-gold/40 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-accent-gold transition-all"
+                                >
+                                    <DownloadCloud size={14} />
+                                    Download All
+                                </button>
+                                <button
+                                    onClick={() => setShowDownloadModal(true)}
+                                    className="md:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-accent-gold/20 text-accent-gold hover:border-accent-gold/40 transition-all"
+                                    title="Download all media"
+                                >
+                                    <DownloadCloud size={16} />
+                                </button>
+
+                                {/* Email download modal */}
+                                {showDownloadModal && (
+                                    <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/70 p-4">
+                                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6">
+                                            <h3 className="text-lg font-bold text-text-primary">Download All Media</h3>
+                                            <p className="mt-1 text-sm text-text-muted">Enter your email and we'll send you a download link.</p>
+                                            <form onSubmit={handleDownloadRequest} className="mt-4 space-y-3">
+                                                <input
+                                                    type="email"
+                                                    required
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    placeholder="you@example.com"
+                                                    className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted"
+                                                />
+                                                <button type="submit" disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-accent-gold px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-bg-dark">
+                                                    {submitting && <Loader size={14} className="animate-spin" />}
+                                                    {submitting ? 'Sending...' : 'Send Link'}
+                                                </button>
+                                            </form>
+                                            <button type="button" onClick={() => setShowDownloadModal(false)} className="mt-3 w-full text-center text-xs text-text-muted">Cancel</button>
+                                        </motion.div>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-4">
                                     <AvatarGroup
                                         users={room.members.map((u) => ({ avatar: u.avatar_url, name: u.name }))}
