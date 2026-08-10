@@ -152,8 +152,8 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
 
     const confirmDeleteStory = useCallback(() => {
         if (!storyToDelete) {
-return;
-}
+            return;
+        }
 
         setDeleting(true);
         router.delete(`/dashboard/stories/${storyToDelete.uuid}`, {
@@ -205,6 +205,29 @@ return;
         router.patch(approve(candleId).url, {}, {
             preserveScroll: true,
         });
+    };
+    // Derive Cloudinary thumbnail URL by adding transformation params
+    function getThumbnailUrl(url: string | null): string | null {
+        if (!url) {
+            return null;
+        }
+
+        return url;
+    }
+
+    const getStoryThumbnail = (story: FeedStory) => {
+        if (story.type === 'video' && story.thumbnail) {
+            return story.thumbnail;
+        }
+        if (story.type === 'photo') {
+            return story.thumbnail || story.file_url || '/logo-stacked.png';
+        }
+
+        if (story.thumbnail) {
+            return story.thumbnail;
+        }
+
+        return '/logo-stacked.png';
     };
 
     return (
@@ -306,7 +329,7 @@ return;
                 </header>
 
                 <section className="mb-16">
-                   <Hero />
+                    <Hero />
                     {!room.enable_tributes && <VideoPlaylistPlayer stories={allStories} />}
                 </section>
 
@@ -314,83 +337,83 @@ return;
                 {/*  TRIBUTE SECTION                        */}
                 {/* ════════════════════════════════════════ */}
 
-                
-                    <div className="mb-16 flex justify-center">
-                        <button
-                            onClick={() => setShowOptionalService(true)}
-                            className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-accent-gold text-bg-dark text-sm font-bold tracking-wider uppercase transition-all hover:bg-accent-gold/90"
-                        >
-                            Request Story Editing Support
-                        </button>
-                    </div>
 
-                    <ResponsiveModal
-                        isOpen={showOptionalService}
-                        onClose={() => setShowOptionalService(false)}
-                        title="Optional Service"
-                        desktopMaxWidth="max-w-2xl"
+                <div className="mb-16 flex justify-center">
+                    <button
+                        onClick={() => setShowOptionalService(true)}
+                        className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-accent-gold text-bg-dark text-sm font-bold tracking-wider uppercase transition-all hover:bg-accent-gold/90"
                     >
-                        <div className="relative p-8 md:p-10">
-                            <button
-                                onClick={() => setShowOptionalService(false)}
-                                className="absolute top-6 right-6 text-text-muted transition-colors hover:text-text-primary"
-                            >
-                                <X size={24} />
-                            </button>
+                        Request Story Editing Support
+                    </button>
+                </div>
 
-                            <div className="space-y-6">
-                                <span className="text-[10px] font-mono tracking-[0.25em] text-accent-gold uppercase block">
-                                    Optional Service
-                                </span>
-                                <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-                                    Professional Memory Editing & Legacy Support
-                                </h2>
-                                <p className="text-sm leading-relaxed text-text-muted">
-                                    Families can request our professional support to organise, restore,
-                                    enhance, and edit photos, videos, tributes, stories, and other memories
-                                    uploaded into the room.
-                                </p>
-                                <p className="text-sm leading-relaxed text-text-muted">
-                                    This can be done after the event, or at any time when past family media,
-                                    random memories, or legacy content have been added.
-                                </p>
-                                <p className="text-sm leading-relaxed text-text-muted">
-                                    Our team can help turn your uploads into polished slideshows, tribute videos,
-                                    memory edits, story collections, or fuller family legacy pieces, prepared
-                                    with care, dignity, and clarity.
-                                </p>
-                                <p className="text-sm leading-relaxed text-text-muted">
-                                    To request this service for your room, please contact our team directly.
-                                    We will review your content and guide you on the best way to present it.
-                                </p>
+                <ResponsiveModal
+                    isOpen={showOptionalService}
+                    onClose={() => setShowOptionalService(false)}
+                    title="Optional Service"
+                    desktopMaxWidth="max-w-2xl"
+                >
+                    <div className="relative p-8 md:p-10">
+                        <button
+                            onClick={() => setShowOptionalService(false)}
+                            className="absolute top-6 right-6 text-text-muted transition-colors hover:text-text-primary"
+                        >
+                            <X size={24} />
+                        </button>
 
-                                <div className="flex flex-wrap gap-4 pt-4">
-                                    <a
-                                        href="https://wa.me/447830129816"
-                                        target="_blank"
-                                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
-                                    >
-                                        <SiWhatsapp size={18} />
-                                        WhatsApp
-                                    </a>
-                                    <a
-                                        href="tel:+447830129816"
-                                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-text-primary hover:border-accent-gold/40 text-sm font-medium transition"
-                                    >
-                                        <Phone size={16} />
-                                        Call
-                                    </a>
-                                    <a
-                                        href="mailto:hello@ulo of storiesstories.com"
-                                        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-text-primary hover:border-accent-gold/40 text-sm font-medium transition"
-                                        >
-                                        <Mail size={16} />
-                                        Email
-                                    </a>
-                                </div>
+                        <div className="space-y-6">
+                            <span className="text-[10px] font-mono tracking-[0.25em] text-accent-gold uppercase block">
+                                Optional Service
+                            </span>
+                            <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
+                                Professional Memory Editing & Legacy Support
+                            </h2>
+                            <p className="text-sm leading-relaxed text-text-muted">
+                                Families can request our professional support to organise, restore,
+                                enhance, and edit photos, videos, tributes, stories, and other memories
+                                uploaded into the room.
+                            </p>
+                            <p className="text-sm leading-relaxed text-text-muted">
+                                This can be done after the event, or at any time when past family media,
+                                random memories, or legacy content have been added.
+                            </p>
+                            <p className="text-sm leading-relaxed text-text-muted">
+                                Our team can help turn your uploads into polished slideshows, tribute videos,
+                                memory edits, story collections, or fuller family legacy pieces, prepared
+                                with care, dignity, and clarity.
+                            </p>
+                            <p className="text-sm leading-relaxed text-text-muted">
+                                To request this service for your room, please contact our team directly.
+                                We will review your content and guide you on the best way to present it.
+                            </p>
+
+                            <div className="flex flex-wrap gap-4 pt-4">
+                                <a
+                                    href="https://wa.me/447830129816"
+                                    target="_blank"
+                                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition"
+                                >
+                                    <SiWhatsapp size={18} />
+                                    WhatsApp
+                                </a>
+                                <a
+                                    href="tel:+447830129816"
+                                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-text-primary hover:border-accent-gold/40 text-sm font-medium transition"
+                                >
+                                    <Phone size={16} />
+                                    Call
+                                </a>
+                                <a
+                                    href="mailto:hello@ulo of storiesstories.com"
+                                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-text-primary hover:border-accent-gold/40 text-sm font-medium transition"
+                                >
+                                    <Mail size={16} />
+                                    Email
+                                </a>
                             </div>
                         </div>
-                    </ResponsiveModal>
+                    </div>
+                </ResponsiveModal>
                 {room.enable_tributes && (
                     <section
                         id="share-tribute"
@@ -608,10 +631,11 @@ return;
                                                 </div>
                                             ) : story.type === 'video' ? (
                                                 <div className="relative aspect-4/3 overflow-hidden">
-                                                    <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                    <img 
+                                                src={getStoryThumbnail(story)} alt={story.title}
                                                         onError={(e) => {
- e.currentTarget.src = '/logo-stacked.png'; 
-}}
+                                                            e.currentTarget.src = '/logo-stacked.png';
+                                                        }}
                                                         className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                                                     <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-linear-to-b from-bg-dark/60 to-transparent" />
                                                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-bg-dark/60 to-transparent" />
@@ -631,10 +655,10 @@ return;
                                                 </div>
                                             ) : story.type === 'photo' ? (
                                                 <div className="relative aspect-4/3 overflow-hidden">
-                                                    <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                    <img src={getStoryThumbnail(story)} alt={story.title}
                                                         onError={(e) => {
- e.currentTarget.src = '/logo-stacked.png'; 
-}}
+                                                            e.currentTarget.src = '/logo-stacked.png';
+                                                        }}
                                                         className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
                                                         <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl shadow-accent-gold/30 transition-transform duration-500 group-hover:scale-100">
@@ -647,10 +671,10 @@ return;
                                                 </div>
                                             ) : (
                                                 <div className="relative aspect-4/3 overflow-hidden">
-                                                    <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
+                                                    <img src={getStoryThumbnail(story)} alt={story.title}
                                                         onError={(e) => {
- e.currentTarget.src = '/logo-stacked.png'; 
-}}
+                                                            e.currentTarget.src = '/logo-stacked.png';
+                                                        }}
                                                         className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20" />
                                                     <div className="absolute top-4 left-4">
@@ -697,8 +721,8 @@ return;
                                                     <>
                                                         <img src={story.thumbnail || '/logo-stacked.png'} alt={story.title}
                                                             onError={(e) => {
- e.currentTarget.src = '/logo-stacked.png'; 
-}}
+                                                                e.currentTarget.src = '/logo-stacked.png';
+                                                            }}
                                                             className="md:h-full h-18 md:w-full aspect-square object-cover" />
                                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-bg-dark/20">
                                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold/80 text-bg-dark shadow-lg backdrop-blur-md">

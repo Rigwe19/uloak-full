@@ -49,8 +49,8 @@ export default function StoryFeed({
 
     const filteredStories = useMemo(() => {
         if (!filters) {
-return stories;
-}
+            return stories;
+        }
 
         let result = stories;
 

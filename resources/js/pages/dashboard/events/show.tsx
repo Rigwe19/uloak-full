@@ -101,10 +101,6 @@ export default function EventShow({ event, stories: initialStories = [], paginat
             return null;
         }
 
-        // if (url.includes('/image/upload/')) {
-        //     return url.replace('/image/upload/', '/image/upload/w_640,h_640,c_limit,q_auto,f_auto/');
-        // }
-
         return url;
     }
 
