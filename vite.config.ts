@@ -18,6 +18,10 @@ export default defineConfig({
                 bunny('Outfit', {
                     weights: [300, 400, 500, 600, 700],
                 }),
+                bunny('Lora', {
+                    weights: [400, 500, 600, 700],
+                    styles: ['italic', 'normal'],
+                }),
             ],
         }),
         inertia(),

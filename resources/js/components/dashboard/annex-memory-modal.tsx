@@ -449,7 +449,7 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
                                 </div>
                             )}
 
-                            {customThumbnailPreview ? (
+                            {/* {customThumbnailPreview ? (
                                 <div className="space-y-2">
                                     <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
                                         Custom Thumbnail
@@ -495,7 +495,7 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
                                         />
                                     </div>
                                 </div>
-                            )}
+                            )} */}
                         </div>
 
                         <Button

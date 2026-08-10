@@ -52,33 +52,33 @@ export function Navbar() {
     }, []);
 
     const links = [
-        { name: 'About', path: about().url },
-        { name: 'How It Works', path: howItWorks().url },
-        { name: 'Services', path: legacyFilms().url },
-        { name: 'Community', path: communityProjects().url },
-        { name: 'Subcription', path: membership().url },
-        { name: 'Contact', path: contact().url },
+        { name: 'How Ulo Works', path: '/#how-it-works' },
+        { name: 'Families', path: '/#rooms' },
+        { name: 'Events & Tributes', path: '/#rooms' },
+        { name: 'Communities', path: '/#rooms' },
+        { name: 'Ulo Studio', path: '/services' },
+        { name: 'About', path: '/about' },
     ];
 
     if (isApp) {
-return null;
-}
+        return null;
+    }
 
     return (
         <nav
-            className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${isScrolled ? 'border-b border-border-subtle bg-bg-dark/80 py-2 backdrop-blur-md' : 'bg-transparent py-4'}`}
+            className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${isScrolled ? 'border-b border-border-subtle bg-bg-dark/95 py-3 backdrop-blur-md shadow-xs' : 'bg-transparent py-5'}`}
         >
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-8">
-                <Link href={home().url} className="flex items-center">
+            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 md:px-8">
+                <Link href={home().url} className="flex items-center gap-3">
                     <img
                         src="/logo.png"
-                        alt="ULOOFSTORIES - House of Stories"
-                        className="h-18 dark:block hidden w-auto object-contain lg:h-24"
+                        alt="Ulo of Stories"
+                        className="h-10 dark:block hidden w-auto object-contain md:h-12"
                     />
                     <img
                         src="/logo-dark.png"
-                        alt="ULOOFSTORIES - House of Stories"
-                        className="h-18 dark:hidden w-auto object-contain lg:h-24"
+                        alt="Ulo of Stories"
+                        className="h-10 dark:hidden w-auto object-contain md:h-12"
                     />
                 </Link>
 
@@ -86,9 +86,9 @@ return null;
                 <div className="hidden items-center gap-8 lg:flex">
                     {links.map((link) => (
                         <Link
-                            key={link.path}
+                            key={link.name}
                             href={link.path}
-                            className={`text-sm font-medium transition-colors hover:text-text-primary ${url === link.path ? 'text-accent-gold' : 'text-text-muted'}`}
+                            className={`text-sm font-medium transition-colors duration-200 hover:text-text-primary ${url === link.path ? 'text-accent-gold' : 'text-text-muted'}`}
                         >
                             {link.name}
                         </Link>
@@ -98,23 +98,23 @@ return null;
 
                     {auth.user ? (
                         <Link href={dashboard()}>
-                            <Button variant="outline" className="px-6 py-2 text-sm">
-                                Dashboard
+                            <Button className="px-6 py-2 text-sm font-semibold tracking-wide">
+                                Create a Room
                             </Button>
                         </Link>
                     ) : (
-                        <>
+                        <div className="flex items-center gap-4">
                             <Link href={login().url}>
-                                <Button variant="outline" className="px-6 py-2 text-sm">
-                                    Login
+                                <Button variant="outline" className="px-5 py-2 text-sm border-text-primary/10 text-text-primary hover:bg-text-primary/5">
+                                    Sign in
                                 </Button>
                             </Link>
                             <Link href={register().url}>
-                                <Button className="px-6 py-2 text-sm">
-                                    Start Your Story
+                                <Button className="px-6 py-2 text-sm font-semibold tracking-wide">
+                                    Create a Room
                                 </Button>
                             </Link>
-                        </>
+                        </div>
                     )}
                 </div>
 
@@ -122,8 +122,9 @@ return null;
                 <div className="flex items-center gap-4 lg:hidden">
                     <ThemeToggle />
                     <button
-                        className="text-text-primary"
+                        className="text-text-primary p-2"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        aria-label="Toggle menu"
                     >
                         {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
@@ -134,29 +135,30 @@ return null;
             <AnimatePresence>
                 {isMenuOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: -20 }}
+                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="absolute top-full right-0 left-0 flex flex-col gap-6 border-b border-border-subtle bg-surface p-8 lg:hidden"
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full right-0 left-0 flex flex-col gap-5 border-b border-border-subtle bg-bg-dark p-6 shadow-xl lg:hidden"
                     >
                         {links.map((link) => (
                             <Link
-                                key={link.path}
+                                key={link.name}
                                 href={link.path}
                                 onClick={() => setIsMenuOpen(false)}
-                                className={`text-lg font-medium transition-colors hover:text-text-primary ${url === link.path ? 'text-accent-gold' : 'text-text-muted'}`}
+                                className={`text-base font-medium transition-colors py-1 ${url === link.path ? 'text-accent-gold' : 'text-text-muted'}`}
                             >
                                 {link.name}
                             </Link>
                         ))}
-                        <div className="flex flex-col gap-4 border-t border-border-subtle pt-4">
+                        <div className="flex flex-col gap-3 border-t border-border-subtle pt-4">
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
                                     onClick={() => setIsMenuOpen(false)}
                                 >
-                                    <Button variant="outline" className="w-full">
-                                        Dashboard
+                                    <Button className="w-full">
+                                        Create a Room
                                     </Button>
                                 </Link>
                             ) : (
@@ -166,7 +168,7 @@ return null;
                                         onClick={() => setIsMenuOpen(false)}
                                     >
                                         <Button variant="outline" className="w-full">
-                                            Login
+                                            Sign in
                                         </Button>
                                     </Link>
                                     <Link
@@ -174,7 +176,7 @@ return null;
                                         onClick={() => setIsMenuOpen(false)}
                                     >
                                         <Button className="w-full">
-                                            Start Your Story
+                                            Create a Room
                                         </Button>
                                     </Link>
                                 </>
@@ -192,75 +194,83 @@ export function Footer() {
     const isApp = url.startsWith('/dashboard') || url.startsWith('/settings');
 
     if (isApp) {
-return null;
-}
+        return null;
+    }
 
     return (
-        <footer className="border-t border-border-subtle bg-bg-dark pt-24 pb-12">
-            <div className="mx-auto max-w-7xl px-8">
-                <div className="mb-24 grid grid-cols-2 gap-12 md:grid-cols-2 lg:grid-cols-4">
-                    <div className="col-span-full flex flex-col gap-6">
+        <footer className="border-t border-border-subtle bg-bg-dark pt-20 pb-12">
+            <div className="mx-auto max-w-7xl px-6 md:px-8">
+                <div className="mb-16 grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="flex flex-col gap-6">
                         <Link href={home().url} className="flex items-center">
                             <img
                                 src="/logo-stacked.png"
-                                alt="ULOOFSTORIES - House of Stories"
+                                alt="Ulo of Stories"
                                 className="h-auto w-24 object-contain"
                             />
                         </Link>
                         <p className="max-w-xs text-sm leading-relaxed text-text-muted">
-                            A private digital home to capture moments, collect tributes, and preserve memories in organised rooms.
+                            Every story has a home. A private digital home where families gather, organise, and preserve their heritage.
                         </p>
                     </div>
 
                     <div>
-                        <h4 className="mb-6 text-xs font-bold tracking-widest text-text-primary uppercase">
-                            Platform
+                        <h4 className="mb-5 text-xs font-bold tracking-widest text-text-primary uppercase">
+                            Ulo
                         </h4>
-                        <ul className="flex flex-col gap-4">
+                        <ul className="flex flex-col gap-3">
                             <li>
                                 <Link
-                                    href={howItWorks().url}
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                    href="/#how-it-works"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
                                     How it Works
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    href={legacyFilms().url}
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                    href="/#rooms"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
-                                    Services
+                                    Families
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    href={communityProjects().url}
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                    href="/#rooms"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
-                                    Community Projects
+                                    Events & Tributes
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    href={membership().url}
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                    href="/#rooms"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
-                                    Membership
+                                    Communities
                                 </Link>
                             </li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="mb-6 text-xs font-bold tracking-widest text-text-primary uppercase">
-                            Company
+                        <h4 className="mb-5 text-xs font-bold tracking-widest text-text-primary uppercase">
+                            Ulo Studio & Company
                         </h4>
-                        <ul className="flex flex-col gap-4">
+                        <ul className="flex flex-col gap-3">
+                            <li>
+                                <Link
+                                    href="/services"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
+                                >
+                                    Explore Ulo Studio
+                                </Link>
+                            </li>
                             <li>
                                 <Link
                                     href={about().url}
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
                                     About Us
                                 </Link>
@@ -268,43 +278,33 @@ return null;
                             <li>
                                 <Link
                                     href={contact().url}
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
                                     Contact
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href={privacy().url}
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
-                                >
-                                    Privacy Policy
                                 </Link>
                             </li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="mb-6 text-xs font-bold tracking-widest text-text-primary uppercase">
-                            Connect
+                        <h4 className="mb-5 text-xs font-bold tracking-widest text-text-primary uppercase">
+                            Legal & Connect
                         </h4>
-                        <ul className="flex flex-col gap-4">
+                        <ul className="flex flex-col gap-3">
                             <li>
-                                <a
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    href="https://www.instagram.com/uloakstories/"
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                <Link
+                                    href={privacy().url}
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
-                                    Instagram
-                                </a>
+                                    Privacy Policy
+                                </Link>
                             </li>
                             <li>
                                 <a
                                     target="_blank"
                                     rel="noreferrer noopener"
-                                    href="https://linkedin.com/company/uloak"
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                    href="https://linkedin.com"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
                                     LinkedIn
                                 </a>
@@ -313,63 +313,27 @@ return null;
                                 <a
                                     target="_blank"
                                     rel="noreferrer noopener"
-                                    href="https://x.com/uloakHQ"
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
+                                    href="https://instagram.com"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
-                                    X
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    href="https://www.facebook.com/profile.php?id=61582751621270"
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
-                                >
-                                    Facebook
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    href="http://www.youtube.com/@ULOAK"
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
-                                >
-                                    Youtube
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    href="https://www.tiktok.com/@uloakhq"
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
-                                >
-                                    Tiktok
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    href="mailto:hello@uloakstories.com"
-                                    className="text-sm text-text-muted transition-colors hover:text-accent-gold"
-                                >
-                                    hello@uloakstories.com
+                                    Instagram
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-between gap-6 border-t border-border-subtle pt-12 md:flex-row">
-                    <p className="text-xs text-text-muted">
-                        &copy; {new Date().getFullYear()} ULOAK. All rights
-                        reserved.
-                    </p>
+                <div className="flex flex-col items-center justify-between gap-6 border-t border-border-subtle pt-10 md:flex-row text-center md:text-left">
+                    <div className="space-y-1">
+                        <p className="text-xs text-text-muted">
+                            &copy; {new Date().getFullYear()} Ulo of Stories. All rights reserved.
+                        </p>
+                        <p className="text-xs text-text-muted">
+                            Ulo is a trading name of My Story House Limited. Registered in England and Wales. Company number 16756288.
+                        </p>
+                    </div>
                     <p className="text-xs text-text-muted italic">
-                        Preserving the past, inspiring the future.
+                        Every story has a home.
                     </p>
                 </div>
             </div>
