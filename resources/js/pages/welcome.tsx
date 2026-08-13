@@ -156,7 +156,7 @@ export default function Welcome({
                             variants={staggerContainer}
                             initial="hidden"
                             animate="show"
-                            className="relative grid grid-cols-1 lg:grid-cols-12 gap-12 items-center h-[80vh] min-h-[560px]"
+                            className="relative grid grid-cols-1 lg:grid-cols-12 gap-12 items-center h-screen min-h-[560px]"
                         >
                             {/* Cinematic Carousel Background — full-bleed, spanning both columns */}
                             <div className="absolute inset-0 z-0 overflow-hidden">
@@ -191,7 +191,7 @@ export default function Welcome({
                             {/* Left: Editorial content — overlaid on the carousel */}
                             <motion.div
                                 variants={fadeFromLeft}
-                                className="lg:col-span-6 relative z-10 text-left space-y-8 max-w-2xl text-white"
+                                className="lg:col-span-6 relative z-10 px-4 md:px-12 text-left space-y-8 max-w-2xl text-white"
                             >
                                 <motion.h1
                                     className="font-serif text-5xl leading-[1.1] font-bold tracking-tight sm:text-6xl md:text-7.5xl"
