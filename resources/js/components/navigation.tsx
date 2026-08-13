@@ -99,7 +99,7 @@ export function Navbar() {
                     {auth.user ? (
                         <Link href={dashboard()}>
                             <Button className="px-6 py-2 text-sm font-semibold tracking-wide">
-                                Create a Room
+                                Create a House
                             </Button>
                         </Link>
                     ) : (
@@ -111,7 +111,7 @@ export function Navbar() {
                             </Link>
                             <Link href={register().url}>
                                 <Button className="px-6 py-2 text-sm font-semibold tracking-wide">
-                                    Create a Room
+                                    Create a House
                                 </Button>
                             </Link>
                         </div>
@@ -158,7 +158,7 @@ export function Navbar() {
                                     onClick={() => setIsMenuOpen(false)}
                                 >
                                     <Button className="w-full">
-                                        Create a Room
+                                        Create a House
                                     </Button>
                                 </Link>
                             ) : (
@@ -176,7 +176,7 @@ export function Navbar() {
                                         onClick={() => setIsMenuOpen(false)}
                                     >
                                         <Button className="w-full">
-                                            Create a Room
+                                            Create a House
                                         </Button>
                                     </Link>
                                 </>

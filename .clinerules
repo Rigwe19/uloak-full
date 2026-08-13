@@ -1,0 +1,774 @@
+# Cline Engineering Rules — Avoid Vibecoded Software
+
+## Core Principle
+
+Build software that looks good **because it is well engineered**, not software that merely looks good in a demo.
+
+AI-generated code must be treated as a starting point, not as proof that an implementation is correct.
+
+Prioritize:
+
+1. Correctness
+2. Simplicity
+3. Maintainability
+4. Consistency
+5. Accessibility
+6. Security
+7. Performance
+8. User experience
+9. Visual polish
+
+Do not optimize for visual polish at the expense of the fundamentals.
+
+---
+
+# 1. Do Not Build "Demo Software"
+
+Never implement functionality merely to make a UI appear complete.
+
+Do not use:
+
+* Fake API responses
+* Fake analytics
+* Hardcoded user data presented as real data
+* Randomly generated metrics
+* Placeholder users
+* Fake authentication
+* Simulated persistence when persistence is expected
+* Buttons that appear functional but do nothing
+* "Coming soon" screens for functionality that the user explicitly requested
+* Mock backend behavior disguised as production functionality
+
+If real functionality cannot yet be implemented, make that limitation explicit rather than disguising it.
+
+Every visible interaction should have a deliberate behavior.
+
+---
+
+# 2. Design the Entire Product, Not Just the Happy Path
+
+For every feature, consider all relevant states.
+
+At minimum, evaluate:
+
+* Initial state
+* Loading state
+* Success state
+* Empty state
+* Error state
+* Partial failure
+* Validation failure
+* Permission failure
+* Unauthorized state
+* Network failure
+* Retry behavior
+* Disabled state
+* Destructive-action confirmation
+* Mobile behavior
+
+Do not build only the state shown in the design/mockup.
+
+A feature is incomplete if its happy path works but predictable failure states are broken.
+
+---
+
+# 3. Avoid Generic AI UI Patterns
+
+Do not automatically reach for:
+
+* Purple/blue gradient backgrounds
+* Excessive glassmorphism
+* Excessive rounded cards
+* Floating gradient blobs
+* Gratuitous shadows
+* Huge hero sections
+* Generic SaaS dashboards
+* Decorative charts with no meaningful data
+* Excessive animations
+* Stock-looking AI illustrations
+* Generic "AI-powered / next-generation / supercharge your workflow" copy
+
+These patterns are acceptable when they are genuinely appropriate to the product, but never use them simply because they are common in AI-generated interfaces.
+
+Before adding a visual pattern, ask:
+
+> What product requirement does this solve?
+
+If the answer is "it looks modern," reconsider it.
+
+---
+
+# 4. Maintain a Consistent Design System
+
+Do not invent visual rules independently for every component.
+
+Establish and consistently reuse:
+
+* Typography scale
+* Spacing scale
+* Color tokens
+* Border radius
+* Shadows
+* Button variants
+* Input styles
+* Modal behavior
+* Toast behavior
+* Navigation patterns
+* Breakpoints
+* Icon sizing
+* Interaction states
+
+If an existing component or design token already solves the problem, reuse it.
+
+Do not create a second implementation of an existing UI primitive without a strong reason.
+
+---
+
+# 5. Prefer Simple Architecture
+
+Do not introduce complexity merely because a technology is available.
+
+Before adding:
+
+* A dependency
+* A state-management library
+* A custom abstraction
+* A hook
+* A service layer
+* A component abstraction
+* A caching system
+* A third-party UI library
+
+ask:
+
+> Is this complexity actually necessary?
+
+Prefer the simplest architecture that correctly solves the problem.
+
+Avoid:
+
+* Premature abstraction
+* Deep component hierarchies
+* Giant "god components"
+* Excessive prop drilling fixes
+* Multiple libraries solving the same problem
+* Duplicate utilities
+* Duplicate API clients
+* Multiple competing patterns for the same task
+
+---
+
+# 6. Do Not Over-Abbreviate Code
+
+Use names that communicate intent.
+
+Prefer:
+
+`calculateInvoiceTotal()`
+
+over:
+
+`calcTot()`
+
+Prefer:
+
+`isSubscriptionActive`
+
+over:
+
+`active`
+
+Avoid unnecessarily clever names.
+
+Code should be understandable by another engineer without requiring the original prompt that generated it.
+
+---
+
+# 7. Keep Components Focused
+
+Do not create enormous components containing:
+
+* Data fetching
+* Business logic
+* Validation
+* State management
+* Formatting
+* API calls
+* Complex UI
+* Navigation
+* Side effects
+
+all in one file.
+
+Separate responsibilities when doing so makes the system easier to understand.
+
+However, do not split every five lines into a new component merely for the sake of abstraction.
+
+The goal is **cohesion**, not maximum fragmentation.
+
+---
+
+# 8. Reuse Before Duplicating
+
+Before implementing something new, inspect the existing codebase.
+
+Look for:
+
+* Existing components
+* Existing hooks
+* Existing utilities
+* Existing API clients
+* Existing validation
+* Existing types
+* Existing design tokens
+* Existing error handling
+* Existing patterns for similar features
+
+Do not create a parallel implementation because it is slightly easier.
+
+If two pieces of functionality should behave the same way, they should normally share the same implementation.
+
+---
+
+# 9. Treat Data as Real
+
+Assume production data will be messy.
+
+Do not assume:
+
+* Names always exist
+* Images always load
+* Arrays are never empty
+* Strings are short
+* Dates are valid
+* API responses are complete
+* Numbers are always positive
+* Users behave predictably
+* Network requests always succeed
+
+Design interfaces that remain usable with:
+
+* Long names
+* Missing values
+* Empty arrays
+* Large datasets
+* Unexpected values
+* Slow responses
+* Failed requests
+
+Never use unrealistic perfect data simply because it makes the UI easier to build.
+
+---
+
+# 10. Handle Forms Properly
+
+Every form should have deliberate handling for:
+
+* Required fields
+* Invalid values
+* Field-level errors
+* Submission errors
+* Loading/submitting state
+* Duplicate submission
+* Successful submission
+* Keyboard interaction
+* Autofill where appropriate
+* Mobile input behavior
+
+Do not rely exclusively on frontend validation for security-sensitive operations.
+
+Validate important data on the server as well.
+
+---
+
+# 11. Handle Authentication and Authorization Correctly
+
+Never assume that hiding a UI element provides authorization.
+
+Authorization must be enforced at the appropriate backend/API boundary.
+
+Do not:
+
+* Trust user IDs from the client
+* Trust role information supplied by the client
+* Expose other users' data
+* Treat obscurity as security
+* Store secrets in frontend code
+* Put private credentials in environment variables that are exposed to the client
+
+When implementing authenticated functionality, explicitly consider:
+
+* Authentication
+* Authorization
+* Session expiration
+* Unauthorized requests
+* Resource ownership
+* Privilege escalation
+* Sensitive data exposure
+
+---
+
+# 12. Do Not Put Important Business Logic Only in the Client
+
+If an operation affects:
+
+* Money
+* Permissions
+* Accounts
+* Ownership
+* Security
+* Billing
+* Data integrity
+* Resource limits
+
+the client must not be the final authority.
+
+The server/backend must enforce the relevant rules.
+
+Client-side checks are for user experience, not trust.
+
+---
+
+# 13. Network and Async Behavior Must Be Deliberate
+
+For asynchronous operations, consider:
+
+* Loading indicators
+* Cancellation where appropriate
+* Race conditions
+* Duplicate requests
+* Retries
+* Timeouts
+* Error messages
+* Stale data
+* Optimistic updates
+* Rollback behavior
+
+Do not assume every request succeeds immediately.
+
+Do not make the interface appear successful before the underlying operation has actually succeeded unless the optimistic behavior is intentional and safely reversible.
+
+---
+
+# 14. Accessibility Is a Requirement
+
+Do not treat accessibility as optional polish.
+
+Ensure appropriate:
+
+* Semantic HTML
+* Keyboard navigation
+* Focus management
+* Visible focus states
+* Labels
+* Form associations
+* Accessible names
+* ARIA only when necessary
+* Color contrast
+* Reduced-motion behavior
+* Screen-reader behavior
+
+Interactive elements should generally be actual semantic controls rather than clickable `<div>` elements.
+
+Modals, menus, dropdowns, tabs, dialogs, and forms require particular attention.
+
+---
+
+# 15. Responsive Design Must Be Intentional
+
+Do not simply make desktop layouts "fit" on mobile.
+
+Consider:
+
+* Small phones
+* Tablets
+* Desktop
+* Large screens
+* Touch targets
+* Text wrapping
+* Navigation
+* Tables
+* Forms
+* Modals
+* Sidebars
+* Overflow
+* Long content
+
+Test narrow viewport behavior.
+
+A responsive implementation is not complete merely because nothing technically overflows.
+
+---
+
+# 16. Performance Matters
+
+Avoid unnecessary:
+
+* Re-renders
+* Large dependencies
+* Client-side JavaScript
+* Network requests
+* Image payloads
+* Expensive computations
+* Effects
+* Polling
+
+Do not prematurely optimize, but also do not knowingly create obviously expensive behavior.
+
+Prefer:
+
+* Appropriate caching
+* Pagination for large datasets
+* Lazy loading where useful
+* Optimized images
+* Server-side work where appropriate
+* Efficient queries
+
+Measure before introducing complicated optimization machinery.
+
+---
+
+# 17. SEO and Metadata Matter for Public Pages
+
+For public-facing pages, consider:
+
+* Meaningful page titles
+* Meta descriptions
+* Canonical URLs where appropriate
+* Semantic headings
+* Descriptive links
+* Image alt text
+* Structured content
+* Social sharing metadata where appropriate
+* Crawlability
+* Server rendering/prerendering where beneficial
+
+Do not assume a visually polished SPA automatically has good SEO.
+
+---
+
+# 18. Error Messages Must Help Users
+
+Avoid generic messages such as:
+
+> Something went wrong.
+
+when more useful information can safely be provided.
+
+Prefer messages that explain:
+
+1. What happened
+2. What the user can do
+3. Whether retrying is appropriate
+
+Do not expose sensitive implementation details, stack traces, secrets, or internal infrastructure information.
+
+---
+
+# 19. Do Not Leave Obvious AI Debris
+
+Before considering work complete, remove:
+
+* Unused imports
+* Dead code
+* Unused variables
+* Duplicate functions
+* Temporary debug logging
+* `console.log()` statements that are no longer useful
+* Placeholder comments
+* Fake data
+* Unused dependencies
+* Contradictory comments
+* Generated boilerplate that serves no purpose
+* TODOs that were introduced during implementation
+
+Do not leave comments such as:
+
+`// TODO: implement this later`
+
+unless the TODO is intentional and part of the actual project plan.
+
+---
+
+# 20. Comments Should Explain Decisions
+
+Do not write comments that merely translate code into English.
+
+Bad:
+
+```text
+// Loop through users
+```
+
+Good:
+
+```text
+// Preserve the original ordering because the API uses it
+// to represent the user's preferred priority.
+```
+
+Comments should explain **why**, not merely **what**.
+
+---
+
+# 21. Verify Instead of Assuming
+
+After making changes:
+
+1. Run the relevant tests.
+2. Run type checking.
+3. Run linting where configured.
+4. Build the project where practical.
+5. Inspect the affected UI.
+6. Test important edge cases.
+7. Check the browser console.
+8. Check network behavior when relevant.
+
+Do not say something "should work" when it can reasonably be verified.
+
+If verification cannot be performed, state that clearly.
+
+---
+
+# 22. Inspect Before Editing
+
+Before making substantial changes:
+
+* Understand the existing architecture.
+* Inspect related files.
+* Identify existing conventions.
+* Find similar functionality.
+* Understand how data flows through the system.
+
+Do not immediately generate a new implementation from the task description alone.
+
+The existing codebase is the source of truth.
+
+---
+
+# 23. Preserve Existing Conventions
+
+When joining an existing project, follow its established:
+
+* File structure
+* Naming
+* Styling
+* Framework patterns
+* Testing patterns
+* Data-fetching patterns
+* Error-handling patterns
+* Component conventions
+
+Do not rewrite established architecture simply because another approach is more familiar.
+
+If an architectural change is genuinely necessary, keep it deliberate and scoped.
+
+---
+
+# 24. Avoid "Magic"
+
+Prefer explicit behavior over surprising behavior.
+
+Avoid unnecessary:
+
+* Global mutable state
+* Hidden side effects
+* Implicit dependencies
+* Clever metaprogramming
+* Extremely generic abstractions
+* Configuration spread across unrelated files
+
+A future engineer should be able to trace:
+
+**User action → application logic → data/API → result → UI**
+
+without reverse-engineering a maze.
+
+---
+
+# 25. UI Copy Must Be Specific
+
+Avoid generic marketing filler.
+
+Instead of:
+
+> Unlock powerful insights and transform your workflow.
+
+Prefer copy that tells the user what the product actually does.
+
+Every important sentence should answer a useful question:
+
+* What is this?
+* What does it do?
+* Why does it matter?
+* What should I do next?
+* What happened?
+
+---
+
+# 26. Do Not Hide Incompleteness Behind Polish
+
+A beautiful loading skeleton does not compensate for missing functionality.
+
+A sophisticated dashboard does not compensate for broken data integrity.
+
+A polished animation does not compensate for inaccessible controls.
+
+A beautiful landing page does not compensate for a broken signup flow.
+
+When forced to choose, prioritize functional correctness over decoration.
+
+---
+
+# 27. Before Declaring a Feature Complete
+
+Use this checklist:
+
+### Functionality
+
+* [ ] Happy path works
+* [ ] Empty state works
+* [ ] Loading state works
+* [ ] Error state works
+* [ ] Validation works
+* [ ] Retry behavior is sensible
+* [ ] Refresh/navigation behavior works
+* [ ] Data persists correctly when required
+
+### UI/UX
+
+* [ ] Consistent with the existing design system
+* [ ] No unnecessary visual decoration
+* [ ] Clear hierarchy
+* [ ] Clear calls to action
+* [ ] Useful feedback after actions
+* [ ] No dead buttons
+* [ ] No fake data presented as real
+
+### Accessibility
+
+* [ ] Keyboard usable
+* [ ] Focus behavior works
+* [ ] Labels are present
+* [ ] Semantic controls are used
+* [ ] Contrast is sufficient
+* [ ] Reduced motion considered where relevant
+
+### Responsive
+
+* [ ] Mobile checked
+* [ ] Tablet checked where relevant
+* [ ] Desktop checked
+* [ ] Long text handled
+* [ ] Overflow handled
+
+### Engineering
+
+* [ ] Existing code reused where appropriate
+* [ ] No unnecessary dependencies
+* [ ] No duplicated logic
+* [ ] No obvious dead code
+* [ ] No debug output
+* [ ] Errors handled
+* [ ] Security boundaries respected
+* [ ] Tests/typecheck/lint run where applicable
+
+### Final question
+
+Before finishing, ask:
+
+> "If an experienced engineer inherited this code tomorrow, would they understand why it works this way?"
+
+If the answer is no, simplify or document the important decisions.
+
+---
+
+# 28. Avoid AI-Generated Decorative Icons and Emoji
+
+Do not use emojis or decorative "sparkle" icons as generic UI decoration unless the product requirements explicitly call for them.
+
+In particular, avoid using:
+
+* ✨ Sparkles
+* 🌟 Stars
+* 🚀 Rockets
+* 💡 Lightbulbs
+* 🤖 Robots
+* 🎯 Targets
+* 🔥 Fire
+* 💎 Gems
+* ❤️ Hearts
+* 👋 Waving hands
+* Generic emoji in headings, buttons, cards, badges, or marketing copy
+
+Do not use a sparkle icon to imply:
+
+* AI
+* Magic
+* Intelligence
+* Premium features
+* Automation
+* Enhancement
+* "Smart" functionality
+
+For example, avoid patterns such as:
+
+```text
+✨ AI Assistant
+✨ Generate with AI
+✨ Smart Insights
+✨ Enhance
+```
+
+or UI buttons such as:
+
+```text
+[ ✨ Generate ]
+[ ✨ Improve ]
+[ ✨ Magic ]
+```
+
+unless this is an intentional part of the product's established visual language.
+
+Prefer a consistent icon system already used by the project.
+
+If the project uses an icon library, use an appropriate semantic icon rather than selecting a sparkle icon simply because it looks visually appealing.
+
+For example:
+
+* Generate → appropriate action icon
+* Search → search icon
+* Settings → settings icon
+* Upload → upload icon
+* Delete → trash icon
+* Add → plus icon
+* AI-specific functionality → use the project's established AI iconography, if any
+
+Do not introduce emojis or a new icon style merely to make an interface feel more "modern", "friendly", or "AI-powered".
+
+## Exception
+
+Emoji are appropriate when they are actual user content or when the product explicitly requires them, such as:
+
+* Messaging
+* Reactions
+* User-generated content
+* Emoji pickers
+* Social features
+* A deliberately playful brand identity
+
+In those cases, treat emoji as product content rather than decorative filler.
+
+___
+
+# Final Rule
+
+Do not optimize for:
+
+> "Can I make this look like a finished product?"
+
+Optimize for:
+
+> "Can I make this behave like a finished product?"
+
+**Polish should be the consequence of good engineering, not a substitute for it.**

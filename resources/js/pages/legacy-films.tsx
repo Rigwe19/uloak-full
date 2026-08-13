@@ -17,6 +17,7 @@ import React from 'react';
 
 import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
+import { cinematicText, fadeUp, parallaxFloat, staggerContainer } from '@/lib/animations';
 
 interface Props {
     page?: {
@@ -118,28 +119,39 @@ export default function LegacyFilms({ page }: Props) {
             <Head title="Legacy Films & Services - ULO OF STORIES" />
             <div className="bg-bg-dark pt-20">
                 {/* Hero Section */}
-                <section className="relative flex h-[80vh] items-center overflow-hidden">
-                    <div className="absolute inset-0 z-0">
+                                <section className="relative flex h-[80vh] items-center overflow-hidden">
+                    <motion.div
+                        className="absolute inset-0 z-0"
+                        variants={parallaxFloat}
+                        initial="initial"
+                        animate="animate"
+                    >
                         <div className="absolute inset-0 z-10 bg-linear-to-r from-bg-dark via-bg-dark/80 to-transparent" />
                         <img
                             src={heroContent.image}
                             className="h-full w-full object-cover opacity-40 mix-blend-luminosity"
                             alt="Cinematic storytelling"
                         />
-                    </div>
+                    </motion.div>
 
                     <div className="relative z-20 mx-auto w-full max-w-7xl px-8">
                         <motion.div
-                            initial={{ opacity: 0, x: -50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.8 }}
+                            variants={staggerContainer}
+                            initial="hidden"
+                            animate="show"
                             className="max-w-3xl"
                         >
-                            <div className="mb-8 flex items-center gap-4 text-xs font-bold tracking-[0.4em] text-accent-gold uppercase">
+                            <motion.div
+                                variants={fadeUp}
+                                className="mb-8 flex items-center gap-4 text-xs font-bold tracking-[0.4em] text-accent-gold uppercase"
+                            >
                                 <div className="h-px w-12 bg-accent-gold/40" />
                                 <span>Ulo of Stories Studio</span>
-                            </div>
-                            <h1 className="mb-10 text-6xl leading-[0.9] font-bold tracking-tighter text-text-primary md:text-8xl">
+                            </motion.div>
+                            <motion.h1
+                                variants={cinematicText}
+                                className="mb-10 text-6xl leading-[0.9] font-bold tracking-tighter text-text-primary md:text-8xl"
+                            >
                                 {heroContent.title.includes('story') ? (
                                     <>
                                         {heroContent.title.split('story')[0]} <br />
@@ -148,13 +160,22 @@ export default function LegacyFilms({ page }: Props) {
                                 ) : (
                                     heroContent.title
                                 )}
-                            </h1>
-                            <p className="mb-12 max-w-xl text-xl leading-relaxed font-light text-text-muted md:text-2xl">
+                            </motion.h1>
+                            <motion.p
+                                variants={fadeUp}
+                                className="mb-12 max-w-xl text-xl leading-relaxed font-light text-text-muted md:text-2xl"
+                            >
                                 {heroContent.subtitle}
-                            </p>
-                            <Button className="rounded-full px-10 py-5 text-lg shadow-2xl shadow-accent-gold/10">
-                                Book a Free Discovery Call
-                            </Button>
+                            </motion.p>
+                            <motion.div
+                                variants={fadeUp}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.97 }}
+                            >
+                                <Button className="rounded-full px-10 py-5 text-lg shadow-2xl shadow-accent-gold/10">
+                                    Book a Free Discovery Call
+                                </Button>
+                            </motion.div>
                         </motion.div>
                     </div>
                 </section>

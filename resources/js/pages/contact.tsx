@@ -5,6 +5,12 @@ import React, { useState } from 'react';
 
 import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
+import {
+    cinematicText,
+    fadeUp,
+    parallaxFloat,
+    staggerContainer,
+} from '@/lib/animations';
 
 interface Props {
     page?: {
@@ -57,26 +63,46 @@ export default function Contact({ page }: Props) {
             </Head> */}
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
-                <section className="relative min-h-[60vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
+                                <section className="relative min-h-[60vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
+                    <motion.div
+                        className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]"
+                        variants={parallaxFloat}
+                        initial="initial"
+                        animate="animate"
+                    />
+                    <motion.div
+                        className="absolute bottom-48 -left-24 h-[500px] w-[500px] rounded-full bg-accent-gold/5 blur-[120px]"
+                        variants={parallaxFloat}
+                        initial="initial"
+                        animate="animate"
+                        style={{ animationDelay: '2s' }}
+                    />
                     <div className="absolute inset-0 z-0">
                         <div className="absolute inset-0 bg-gradient-to-b from-bg-dark via-bg-dark/95 to-bg-dark/90" />
-                        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]" />
-                        <div className="absolute bottom-48 -left-24 h-[500px] w-[500px] rounded-full bg-accent-gold/5 blur-[150px]" />
                     </div>
 
                     <div className="relative z-10 mx-auto max-w-7xl">
                         <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                            variants={staggerContainer}
+                            initial="hidden"
+                            animate="show"
                         >
-                            <span className="mb-6 inline-block text-[10px] font-bold text-accent-gold uppercase tracking-[0.4em]">Get in Touch</span>
-                            <h1 className="text-5xl leading-[1.1] font-bold tracking-tight text-text-primary md:text-7xl">
+                            <motion.span
+                                variants={fadeUp}
+                                className="mb-6 inline-block text-[10px] font-bold text-accent-gold uppercase tracking-[0.4em]"
+                            >Get in Touch</motion.span>
+                            <motion.h1
+                                variants={cinematicText}
+                                className="text-5xl leading-[1.1] font-bold tracking-tight text-text-primary md:text-7xl"
+                            >
                                 {hero.title}
-                            </h1>
-                            <p className="mt-8 max-w-2xl text-xl leading-relaxed text-text-muted">
+                            </motion.h1>
+                            <motion.p
+                                variants={fadeUp}
+                                className="mt-8 max-w-2xl text-xl leading-relaxed text-text-muted"
+                            >
                                 {hero.subtitle}
-                            </p>
+                            </motion.p>
                         </motion.div>
                     </div>
                 </section>

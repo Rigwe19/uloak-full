@@ -27,6 +27,13 @@ import React from 'react';
 
 import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
+import {
+    cinematicText,
+    fadeFromRight,
+    fadeUp,
+    parallaxFloat,
+    staggerContainer,
+} from '@/lib/animations';
 
 interface Props {
     page?: {
@@ -98,11 +105,22 @@ export default function CommunityProjects({ page }: Props) {
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
                 {/* Hero Section */}
-                <section className="relative min-h-[80vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
+                                <section className="relative min-h-[80vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
+                    <motion.div
+                        className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]"
+                        variants={parallaxFloat}
+                        initial="initial"
+                        animate="animate"
+                    />
+                    <motion.div
+                        className="absolute bottom-48 -left-24 h-[500px] w-[500px] rounded-full bg-accent-gold/5 blur-[120px]"
+                        variants={parallaxFloat}
+                        initial="initial"
+                        animate="animate"
+                        style={{ animationDelay: '2s' }}
+                    />
                     <div className="absolute inset-0 z-0">
                         <div className="absolute inset-0 bg-gradient-to-b from-bg-dark via-bg-dark/95 to-bg-dark/90" />
-                        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]" />
-                        <div className="absolute bottom-48 -left-24 h-[500px] w-[500px] rounded-full bg-accent-gold/5 blur-[150px]" />
                     </div>
 
                     <div className="relative z-10 mx-auto max-w-7xl">
@@ -115,28 +133,47 @@ export default function CommunityProjects({ page }: Props) {
                             >
                                 <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-accent-gold/20 bg-accent-gold/10 px-4 py-2">
                                     <Globe className="text-accent-gold" size={16} />
-                                    <span className="text-[10px] font-bold tracking-widest text-accent-gold uppercase">
+                                                                        <span className="text-[10px] font-bold tracking-widest text-accent-gold uppercase">
                                         Community & Impact
                                     </span>
                                 </div>
-                                <h1 className="mb-8 text-5xl leading-[1.1] font-bold tracking-tight text-text-primary md:text-7xl">
+                                <motion.h1
+                                    variants={cinematicText}
+                                    initial="hidden"
+                                    animate="show"
+                                    className="mb-8 text-5xl leading-[1.1] font-bold tracking-tight text-text-primary md:text-7xl"
+                                >
                                     {hero.title}
-                                </h1>
-                                <p className="mb-10 max-w-xl text-xl leading-relaxed text-text-muted md:text-2xl">
+                                </motion.h1>
+                                <motion.p
+                                    variants={fadeUp}
+                                    initial="hidden"
+                                    animate="show"
+                                    className="mb-10 max-w-xl text-xl leading-relaxed text-text-muted md:text-2xl"
+                                >
                                     {hero.subtitle}
-                                </p>
-                                <Button className="h-14 rounded-full px-10 text-lg font-bold">
-                                    Partner With Us
-                                </Button>
+                                </motion.p>
+                                <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <Button className="h-14 rounded-full px-10 text-lg font-bold">
+                                        Partner With Us
+                                    </Button>
+                                </motion.div>
                             </motion.div>
 
-                            <div className="grid grid-cols-2 gap-6 lg:w-1/2">
+                            <motion.div
+                                variants={staggerContainer}
+                                initial="hidden"
+                                animate="show"
+                                className="grid grid-cols-2 gap-6 lg:w-1/2"
+                            >
                                 {stats.map((stat: any, i: number) => (
                                     <motion.div
                                         key={i}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.1 }}
+                                        variants={fadeFromRight}
                                         className="flex flex-col items-center justify-center rounded-[40px] border border-white/5 bg-surface/30 p-10 text-center transition-all hover:bg-surface/50"
                                     >
                                         <span className="mb-2 text-4xl font-bold text-accent-gold md:text-5xl">
@@ -147,7 +184,7 @@ export default function CommunityProjects({ page }: Props) {
                                         </span>
                                     </motion.div>
                                 ))}
-                            </div>
+                            </motion.div>
                         </div>
                     </div>
                 </section>

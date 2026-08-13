@@ -14,7 +14,7 @@ const Hero: React.FC = () => {
         date: room?.created_at,
         caption: room?.description ?? ''
     }));
-    
+
     // GSAP Hero Carousel State
     const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
     const heroImagesRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -39,8 +39,8 @@ const Hero: React.FC = () => {
         // 1. Image slides crossfade & upscale Ken burns transition
         heroImagesRef.current.forEach((el, index) => {
             if (!el) {
-return;
-}
+                return;
+            }
 
             if (index === currentHeroIndex) {
                 gsap.killTweensOf(el);
@@ -119,8 +119,8 @@ return;
         e.stopPropagation();
 
         if (lightboxIndex === null || lightboxImages.length <= 1) {
-return;
-}
+            return;
+        }
 
         if (dir === "prev") {
             setLightboxIndex((prev) => (prev !== null ? (prev - 1 + lightboxImages.length) % lightboxImages.length : 0));
@@ -196,15 +196,15 @@ return;
                         <div
                             key={img.id}
                             ref={(el) => {
- heroImagesRef.current[index] = el; 
-}}
+                                heroImagesRef.current[index] = el;
+                            }}
                             onClick={() => openGalleryLightbox(index)}
                             className="absolute inset-0 w-full h-full opacity-0 pointer-events-none cursor-pointer overflow-hidden transition-all duration-300"
                         >
                             <img
                                 ref={(el) => {
- heroImgContentRef.current[index] = el; 
-}}
+                                    heroImgContentRef.current[index] = el;
+                                }}
                                 src={img.url}
                                 alt={img.alt}
                                 className="w-full h-full object-cover object-top md:object-[center_30%]"
