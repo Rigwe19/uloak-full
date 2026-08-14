@@ -135,151 +135,86 @@ export default function Welcome({
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/20">
                 {/* 1. HERO SECTION WITH IMAGE CAROUSEL */}
-                <section className="relative min-h-screen flex items-center overflow-hidden bg-bg-dark">
-                    {/* Warm floating background glow */}
-                    <motion.div
-                        className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]"
-                        variants={parallaxFloat}
-                        initial="initial"
-                        animate="animate"
-                    />
-                    <motion.div
-                        className="absolute bottom-48 -left-24 h-[500px] w-[500px] rounded-full bg-accent-gold/5 blur-[120px]"
-                        variants={parallaxFloat}
-                        initial="initial"
-                        animate="animate"
-                        style={{ animationDelay: '2s' }}
-                    />
-
-                    <div className="relative z-10 w-full min-h-screen">
-                        <motion.div
-                            variants={staggerContainer}
-                            initial="hidden"
-                            animate="show"
-                            className="relative grid grid-cols-1 lg:grid-cols-12 gap-12 items-center h-screen min-h-[560px]"
-                        >
-                            {/* Cinematic Carousel Background — full-bleed, spanning both columns */}
-                            <div className="absolute inset-0 z-0 overflow-hidden">
-                                <AnimatePresence initial={false}>
-                                    <motion.div
-                                        key={currentSlide}
-                                        initial={{ opacity: 0, scale: 1.05 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 1.05 }}
-                                        transition={{ duration: 1.2, ease: easeWarm }}
-                                        className="absolute inset-0"
-                                    >
-                                        <img
-                                            src={heroImages[currentSlide]}
-                                            alt={`Heritage memory ${currentSlide + 1}`}
-                                            className="h-full w-full object-cover"
-                                        />
-                                        {/* Editorial warm overlay gradient — makes text readable */}
-                                        <div className="absolute inset-0 bg-gradient-to-b from-bg-dark/50 via-bg-dark/30 to-bg-dark/60" />
-                                    </motion.div>
-                                </AnimatePresence>
-
-                                {/* Subtle parallax float overlay for warmth */}
-                                <motion.div
-                                    className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-accent-gold/5 blur-[120px]"
-                                    variants={parallaxFloat}
-                                    initial="initial"
-                                    animate="animate"
-                                />
-                            </div>
-
-                            {/* Left: Editorial content — overlaid on the carousel */}
-                            <motion.div
-                                variants={fadeFromLeft}
-                                className="lg:col-span-6 relative z-10 px-4 md:px-12 text-left space-y-8 max-w-2xl text-white"
-                            >
-                                <motion.h1
-                                    className="font-serif text-5xl leading-[1.1] font-bold tracking-tight sm:text-6xl md:text-7.5xl"
-                                    variants={heroTextStagger}
-                                >
+                <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden bg-bg-dark">
+                    <div className="mx-auto max-w-7xl px-6 md:px-8 w-full z-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                            {/* Left: Editorial content */}
+                            <div className="lg:col-span-6 text-left space-y-8 max-w-2xl">
+                                <h1 className="font-serif text-5xl leading-[1.1] font-bold tracking-tight text-text-primary sm:text-6xl md:text-7.5xl">
                                     Every story <br />
                                     has a <span className="text-accent-gold italic font-normal">home</span>.
-                                </motion.h1>
-                                <motion.p
-                                    className="text-lg leading-relaxed text-white/80 sm:text-xl font-light"
-                                    variants={fadeUp}
-                                >
+                                </h1>
+                                <p className="text-lg leading-relaxed text-text-muted sm:text-xl font-light">
                                     A private digital home for family stories, event memories and tributes. Capture the voices, moments and context your family never wants to lose.
-                                </motion.p>
-                                <motion.div
-                                    className="flex flex-col sm:flex-row gap-4 pt-4"
-                                    variants={staggerContainer}
-                                >
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-4 pt-4">
                                     <Link href={register().url}>
-                                        <motion.div
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.97 }}
-                                            transition={{ duration: 0.2, ease: easeWarm }}
-                                        >
-                                            <Button size="xl" className="w-full sm:w-auto font-semibold px-8 tracking-wide">
-                                                Create a House
-                                            </Button>
-                                        </motion.div>
+                                        <Button size="xl" className="w-full sm:w-auto font-semibold px-8 tracking-wide">
+                                            Create a House
+                                        </Button>
                                     </Link>
                                     <a href="#how-it-works">
-                                        <motion.div
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.97 }}
-                                            transition={{ duration: 0.2, ease: easeWarm }}
-                                        >
-                                            <Button size="xl" variant="outline" className="w-full sm:w-auto font-semibold px-8 border-white/20 text-white hover:bg-white/10">
-                                                See how Ulo works
-                                            </Button>
-                                        </motion.div>
+                                        <Button size="xl" variant="outline" className="w-full sm:w-auto font-semibold px-8 border-text-primary/10 text-text-primary hover:bg-text-primary/5">
+                                            See how Ulo works
+                                        </Button>
                                     </a>
-                                </motion.div>
-                            </motion.div>
-
-                            {/* Slide Controls — overlaid on the carousel */}
-                            <motion.div
-                                className="lg:col-span-6 relative z-10 flex justify-end"
-                                variants={fadeFromRight}
-                            >
-                                <motion.div
-                                    className="absolute bottom-8 right-8 flex items-center gap-3 z-20"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5, duration: 0.5, ease: easeWarm }}
-                                >
-                                    <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={prevSlide}
-                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 backdrop-blur-xs text-white transition hover:bg-white/10"
-                                        aria-label="Previous slide"
-                                    >
-                                        <ChevronLeft size={18} />
-                                    </motion.button>
-                                    <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={nextSlide}
-                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 backdrop-blur-xs text-white transition hover:bg-white/10"
-                                        aria-label="Next slide"
-                                    >
-                                        <ChevronRight size={18} />
-                                    </motion.button>
-                                </motion.div>
-
-                                {/* Pagination Indicators */}
-                                <div className="absolute bottom-8 left-8 flex gap-2 z-20">
-                                    {heroImages.map((_, i) => (
-                                        <motion.button
-                                            key={i}
-                                            onClick={() => setCurrentSlide(i)}
-                                            className={`h-1.5 rounded-full transition-all duration-300 ${i === currentSlide ? 'w-6 bg-accent-gold' : 'w-2 bg-white/30'}`}
-                                            whileHover={{ scale: 1.2 }}
-                                            aria-label={`Go to slide ${i + 1}`}
-                                        />
-                                    ))}
                                 </div>
-                            </motion.div>
-                        </motion.div>
+                            </div>
+
+                            {/* Right: Beautiful Premium Carousel */}
+                            <div className="lg:col-span-6 relative flex flex-col items-center">
+                                <div className="relative aspect-4/3 w-full overflow-hidden rounded-3xl border border-border-subtle bg-surface shadow-2xl">
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={currentSlide}
+                                            initial={{ opacity: 0, scale: 1.02 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ duration: 0.8, ease: 'easeInOut' }}
+                                            className="absolute inset-0"
+                                        >
+                                            <img
+                                                src={heroImages[currentSlide]}
+                                                alt={`Heritage memory ${currentSlide + 1}`}
+                                                className="h-full w-full object-cover"
+                                            />
+                                            {/* Editorial warm overlay gradient */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-bg-dark/40 via-transparent to-transparent" />
+                                        </motion.div>
+                                    </AnimatePresence>
+
+                                    {/* Slide Controls */}
+                                    <div className="absolute bottom-6 right-6 flex items-center gap-3 z-20">
+                                        <button
+                                            onClick={prevSlide}
+                                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-bg-dark/30 backdrop-blur-xs text-white transition hover:bg-white/20"
+                                            aria-label="Previous slide"
+                                        >
+                                            <ChevronLeft size={18} />
+                                        </button>
+                                        <button
+                                            onClick={nextSlide}
+                                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-bg-dark/30 backdrop-blur-xs text-white transition hover:bg-white/20"
+                                            aria-label="Next slide"
+                                        >
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    </div>
+
+                                    {/* Pagination Indicators */}
+                                    <div className="absolute bottom-6 left-6 flex gap-2 z-20">
+                                        {heroImages.map((_, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => setCurrentSlide(i)}
+                                                className={`h-1.5 rounded-full transition-all duration-300 ${i === currentSlide ? 'w-6 bg-accent-gold' : 'w-2 bg-white/40'}`}
+                                                aria-label={`Go to slide ${i + 1}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
