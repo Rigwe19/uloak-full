@@ -21,7 +21,8 @@ import {
     User as UserIcon,
     X,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import CandleSVG from '@/components/candleSVG';
 import type { Candle } from '@/components/candleThemes';
 import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
@@ -30,6 +31,7 @@ import { Badge, Button } from '@/components/dashboard/ui';
 import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
 import StoryFeed from '@/components/feed/StoryFeed';
 import Hero from '@/components/hero';
+import { MediaViewerModal } from '@/components/media/MediaViewerModal';
 import { ResponsiveModal } from '@/components/responsive-modal';
 import {
     ApprovedTributesSection,
@@ -99,6 +101,8 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
     const [activeTab, setActiveTab] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
+    const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+    const viewerOpen = viewerIndex !== null;
 
     // Merge paginated stories & handle reset
     useEffect(() => {
@@ -170,6 +174,43 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
             preserveScroll: true,
         });
     };
+
+    // Derive Cloudinary thumbnail URL by adding transformation params
+    function getThumbnailUrl(url: string | null): string | null {
+        if (!url) {
+            return null;
+        }
+
+        return url;
+    }
+
+    // Flatten collection stories into individual media items
+    const displayStories = useMemo(() => {
+        const flattened: (FeedStory & { assetIndex?: number })[] = [];
+        allStories.forEach((story) => {
+            if (story.type === 'collection' && story.assets && story.assets.length > 0) {
+                story.assets.forEach((asset, index) => {
+                    flattened.push({
+                        ...story,
+                        id: story.id * 1000 + index,
+                        type: asset.type === 'pdf' ? 'document' : asset.type,
+                        file_url: asset.url,
+                        thumbnail: getThumbnailUrl(asset.url) || story.thumbnail,
+                        title: asset.title || story.title,
+                        assetIndex: index,
+                    });
+                });
+            } else {
+                if (story.type !== 'video' && story.type !== 'audio' && story.file_url && !story.thumbnail) {
+                    flattened.push({ ...story, thumbnail: getThumbnailUrl(story.file_url) || story.thumbnail });
+                } else {
+                    flattened.push(story);
+                }
+            }
+        });
+
+        return flattened;
+    }, [allStories]);
 
     return (
         <motion.div
@@ -522,7 +563,10 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
                         }
                     >
                         {(story) => (
-                            <Link href={`/dashboard/stories/${story.uuid}`} className="block h-full">
+                            <div
+                                onClick={() => setViewerIndex(displayStories.findIndex((s) => s.id === story.id))}
+                                className="block h-full cursor-pointer"
+                            >
                                 <div className="surface-glow group flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20">
                                     {story.type === 'audio' ? (
                                         <div className="relative aspect-4/3 overflow-hidden bg-linear-to-br from-amber-900/60 via-purple-900/40 to-bg-dark">
@@ -614,7 +658,7 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
                                         </div>
                                     </div>
                                 </div>
-                            </Link>
+                            </div>
                         )}
                     </StoryFeed>
                 )}
@@ -628,6 +672,17 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
                     room={room as any}
                     onClose={() => setIsEditRoomModalOpen(false)}
                 />
+
+                {/* Media Viewer Modal */}
+                {viewerOpen && (
+                    <>
+                        {createPortal(<MediaViewerModal
+                            stories={displayStories}
+                            initialIndex={viewerIndex}
+                            onClose={() => setViewerIndex(null)}
+                        />, document.body)}
+                    </>
+                )}
             </main>
         </motion.div>
     );

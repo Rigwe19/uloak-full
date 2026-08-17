@@ -8,6 +8,7 @@ use App\Models\Story;
 use App\Models\Tribute;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Storage;
 
 class DashboardService
 {
@@ -70,9 +71,13 @@ class DashboardService
             'recentStories' => $recentStories->map(fn ($story) => [
                 'id' => $story->id,
                 'title' => $story->title,
-                'thumbnail' => $story->thumbnail,
+                'thumbnail' => $story->thumbnail ? Storage::disk('public')->url($story->thumbnail) : null,
                 'type' => $story->type,
                 'date' => $story->created_at->format('M d, Y'),
+                'author' => $story->user?->name ?? $story->guest_name,
+                'description' => $story->description,
+                'file_url' => $story->file_url ? Storage::disk('public')->url($story->file_url) : null,
+                'assets' => $story->assets ?? [],
             ]),
             'stats' => $stats,
             'house_members' => $houseMemberData,

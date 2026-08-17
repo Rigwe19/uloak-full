@@ -23,7 +23,7 @@ import {
     User as UserIcon,
     X,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import CandleSVG from '@/components/candleSVG';
 import type { Candle } from '@/components/candleThemes';
@@ -34,6 +34,7 @@ import { AvatarGroup, Badge, Button } from '@/components/dashboard/ui';
 import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
 import StoryFeed from '@/components/feed/StoryFeed';
 import Hero from '@/components/hero';
+import { MediaViewerModal } from '@/components/media/MediaViewerModal';
 import { ResponsiveModal } from '@/components/responsive-modal';
 import {
     ApprovedTributesSection,
@@ -43,7 +44,6 @@ import {
 import { dashboard } from '@/routes';
 import { approve } from '@/routes/dashboard/candles';
 import roomsRoutes from '@/routes/dashboard/rooms';
-import storiesRoutes from '@/routes/dashboard/stories';
 import tributeRoutes from '@/routes/dashboard/tributes';
 import type { FeedStory } from '@/types/feed';
 
@@ -101,7 +101,9 @@ export default function RoomShow({ room, candles, stories: initialStories = [], 
     const [activeTab, setActiveTab] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
-console.log(allStories, 'allStories');
+    const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+    const viewerOpen = viewerIndex !== null;
+
     // Merge paginated stories & handle reset
     useEffect(() => {
         const handleAppended = (e: CustomEvent) => {
@@ -248,6 +250,34 @@ console.log(allStories, 'allStories');
 
         return '/logo-stacked.png';
     };
+
+    // Flatten collection stories into individual media items
+    const displayStories = useMemo(() => {
+        const flattened: (FeedStory & { assetIndex?: number })[] = [];
+        allStories.forEach((story) => {
+            if (story.type === 'collection' && story.assets && story.assets.length > 0) {
+                story.assets.forEach((asset, index) => {
+                    flattened.push({
+                        ...story,
+                        id: story.id * 1000 + index,
+                        type: asset.type === 'pdf' ? 'document' : asset.type,
+                        file_url: asset.url,
+                        thumbnail: getThumbnailUrl(asset.url) || story.thumbnail,
+                        title: asset.title || story.title,
+                        assetIndex: index,
+                    });
+                });
+            } else {
+                if (story.type !== 'video' && story.type !== 'audio' && story.file_url && !story.thumbnail) {
+                    flattened.push({ ...story, thumbnail: getThumbnailUrl(story.file_url) || story.thumbnail });
+                } else {
+                    flattened.push(story);
+                }
+            }
+        });
+
+        return flattened;
+    }, [allStories]);
 
     return (
         <motion.div
@@ -645,13 +675,11 @@ console.log(allStories, 'allStories');
                             </div>
                         ) : undefined}
                     >
-                        {(story) => {
-                            const link = story.type === 'video'
-                                ? roomsRoutes.feed(room.slug).url
-                                : storiesRoutes.show(story.uuid).url;
-
-                            return (
-                                <Link href={link} className="group block h-full">
+                        {(story) => (
+                            <div
+                                onClick={() => setViewerIndex(displayStories.findIndex((s) => s.id === story.id))}
+                                className="group block h-full cursor-pointer"
+                            >
                                     {viewMode === 'grid' ? (
                                         <div className="surface-glow flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20">
                                             {story.type === 'audio' ? (
@@ -806,12 +834,11 @@ console.log(allStories, 'allStories');
                                                 <div className="text-[8px] md:text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase flex items-center gap-2">
                                                     <UserIcon size={12} className="text-accent-gold" /> {story.author}
                                                 </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </Link>
-                            );
-                        }}
+</div>
+                                </div>
+                            )}
+                                </div>
+                        )}
                     </StoryFeed>
                 )}
             </main>
@@ -825,6 +852,17 @@ console.log(allStories, 'allStories');
                 room={room as any}
                 onClose={() => setIsEditRoomModalOpen(false)}
             />
+
+            {/* Media Viewer Modal */}
+            {viewerOpen && (
+                <>
+                    {createPortal(<MediaViewerModal
+                        stories={displayStories}
+                        initialIndex={viewerIndex}
+                        onClose={() => setViewerIndex(null)}
+                    />, document.body)}
+                </>
+            )}
 
             {/* Delete Confirmation Modal */}
             {createPortal(<AnimatePresence>

@@ -24,6 +24,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
 import { RoomCard } from '@/components/dashboard/room-card';
 import { Button, Badge, AvatarGroup } from '@/components/dashboard/ui';
+import { MediaViewerModal } from '@/components/media/MediaViewerModal';
 import { Portal } from '@/components/portal';
 import { Label } from '@/components/ui/label';
 import {
@@ -65,6 +66,8 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
     const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
+    const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+    const viewerOpen = viewerIndex !== null;
     const INITIAL_MODE = auth.user.role === 'business_admin' ? 'event' : 'room';
     const [createMode, setCreateMode] = useState<'room' | 'event'>(INITIAL_MODE);
 
@@ -435,11 +438,11 @@ return;
                 </div>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                     {recentStories.map((story) => (
-                        <Link
-                            key={story.id}
-                            href={`/dashboard/stories/${story.id}`}
-                            className="group relative aspect-square overflow-hidden rounded-[32px] border border-white/5 bg-surface/40"
-                        >
+                            <div
+                                key={story.id}
+                                onClick={() => setViewerIndex(recentStories.findIndex((s) => s.id === story.id))}
+                                className="group relative aspect-square overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 cursor-pointer"
+                            >
                                 <img
                                     src={story.thumbnail}
                                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -455,7 +458,7 @@ return;
                                     </h3>
                                     <span className="text-[10px] text-text-muted">{story.date}</span>
                                 </div>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 </section>
@@ -996,6 +999,17 @@ return;
                     </Portal>
                 )}
             </AnimatePresence>
+
+            {/* Recent Stories Media Viewer Modal */}
+            {viewerOpen && (
+                <Portal>
+                    <MediaViewerModal
+                        stories={recentStories}
+                        initialIndex={viewerIndex}
+                        onClose={() => setViewerIndex(null)}
+                    />
+                </Portal>
+            )}
         </div>
     );
 }
