@@ -16,20 +16,32 @@ export default function Status({ payment, room }: CheckoutStatusProps) {
     const isFailed = status === 'failed';
 
     useEffect(() => {
-        if (!isPending) return;
+        if (!isPending) {
+return;
+}
+
         const interval = setInterval(async () => {
             try {
                 const res = await fetch(`/billing/payments/${payment.id}/status`, {
                     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 });
-                if (!res.ok) return;
+
+                if (!res.ok) {
+return;
+}
+
                 const data = await res.json();
+
                 if (data.status && data.status !== status) {
                     setStatus(data.status);
-                    if (data.status !== 'pending') clearInterval(interval);
+
+                    if (data.status !== 'pending') {
+clearInterval(interval);
+}
                 }
             } catch {}
         }, 3000);
+
         return () => clearInterval(interval);
     }, [isPending, payment.id, status]);
 

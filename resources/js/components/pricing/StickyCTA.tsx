@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from 'motion/react';
-import { ExternalLink } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { ExternalLink } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useEffect, useState } from 'react';
 
 interface StickyCTAProps {
     price: string;

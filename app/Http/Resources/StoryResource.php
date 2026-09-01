@@ -16,17 +16,17 @@ class StoryResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id"=> $this->id,
-            "uuid"=> $this->uuid,
-            "title"=> $this->title,
-            "description"=> $this->description,
-            "type"=> $this->type,
-            "thumbnail"=> Storage::disk('public')->url($this->thumbnail),
-            "file_url"=> Storage::disk('public')->url($this->file_url),
-            "duration"=> $this->duration,
-            "assets"=> $this->assets,
-            "created_at"=> $this->created_at?->format('M d, Y'),
-            "user"=> $this->user?->name,
+            'id' => $this->id,
+            'uuid' => $this->uuid,
+            'title' => $this->title,
+            'description' => $this->description,
+            'type' => $this->type,
+            'thumbnail' => Storage::disk('public')->url($this->thumbnail),
+            'file_url' => Storage::disk('public')->url($this->file_url),
+            'duration' => $this->duration,
+            'assets' => $this->assets,
+            'created_at' => $this->created_at?->format('M d, Y'),
+            'user' => $this->user?->name,
         ];
     }
 }

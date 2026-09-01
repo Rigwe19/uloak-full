@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 type Story = {
   id: string | number;
@@ -19,22 +19,30 @@ export function useStoryMediaSync() {
       const page = usePage();
       const stories = page.props.stories as Story[] | undefined;
       
-      if (!stories) return;
+      if (!stories) {
+return;
+}
 
       let hasPending = false;
       
       for (const story of stories) {
         const assets = story.assets || [];
+
         for (const asset of assets) {
           if (asset.status === 'pending' || asset.status === 'processing') {
             hasPending = true;
             break;
           }
         }
-        if (hasPending) break;
+
+        if (hasPending) {
+break;
+}
       }
 
-      if (!hasPending) return;
+      if (!hasPending) {
+return;
+}
 
       // Poll for media updates every 10 seconds
       const interval = setInterval(async () => {
@@ -44,7 +52,9 @@ export function useStoryMediaSync() {
             (a) => a.status === 'pending' || a.status === 'processing'
           );
           
-          if (pendingAssets.length === 0) continue;
+          if (pendingAssets.length === 0) {
+continue;
+}
           
           // Check each pending asset
           for (const asset of pendingAssets) {
@@ -56,7 +66,9 @@ export function useStoryMediaSync() {
                 },
               });
               
-              if (!res.ok) continue;
+              if (!res.ok) {
+continue;
+}
               
               const { data } = await res.json();
               
@@ -91,10 +103,14 @@ function updateStoryWithMedia(
   const page = usePage();
   const stories = page.props.stories as Story[] | undefined;
   
-  if (!stories) return;
+  if (!stories) {
+return;
+}
 
   const updatedStories = stories.map((story) => {
-    if (story.id !== storyId) return story;
+    if (story.id !== storyId) {
+return story;
+}
 
     const assets = story.assets || [];
     const updatedAssets = assets.map((asset) => {
@@ -107,10 +123,12 @@ function updateStoryWithMedia(
           updated_at: new Date().toISOString(),
         };
       }
+
       return asset;
     });
 
     let updatedThumbnail = story.thumbnail;
+
     if (story.thumbnail && story.thumbnail.includes(mediaData.id)) {
       updatedThumbnail = mediaData.thumbnail || updatedThumbnail;
     }

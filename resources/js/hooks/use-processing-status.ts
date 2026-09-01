@@ -26,7 +26,7 @@ export function useProcessingStatus(
             return;
         }
 
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+         
         setIsProcessing(true);
 
         setError(null);

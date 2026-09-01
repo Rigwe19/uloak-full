@@ -1,11 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { Camera, QrCode, Share2, Heart, Users, Shield, ChevronDown, ChevronUp, Check, Image, Video, Mic, MessageSquare, Gift, Link2, Lock } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import GuestLayout from '@/layouts/guest-layout';
-import { RegionOption } from '@/components/pricing/RegionSelector';
+import { Camera, Check, ChevronDown, ChevronUp, Gift, Heart, Image, Link2, Lock, MessageSquare, Mic, QrCode, Share2, Shield, Users, Video } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import type { RegionOption } from '@/components/pricing/RegionSelector';
 import { StickyCTA } from '@/components/pricing/StickyCTA';
-import { cinematicText, fadeUp, staggerContainer, viewportOnce, parallaxFloat } from '@/lib/animations';
+import { cinematicText, fadeUp, parallaxFloat, staggerContainer, viewportOnce } from '@/lib/animations';
 interface WeddingsProps {
     pricing: Record<string, RegionOption>;
     defaultRegion: string;
@@ -31,13 +31,26 @@ export default function Weddings({ pricing, defaultRegion }: WeddingsProps) {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const ref = params.get('ref');
+
         if (ref) {
-            try { localStorage.setItem('ulo_ref', ref); } catch {}
+            try {
+                localStorage.setItem('ulo_ref', ref);
+            } catch {
+                // ignore storage errors
+            }
         }
+
         // Preserve UTM through session for analytics parity
-        ['utm_source','utm_medium','utm_campaign'].forEach((k) => {
+        ['utm_source', 'utm_medium', 'utm_campaign'].forEach((k) => {
             const v = params.get(k);
-            if (v) try { sessionStorage.setItem(k, v); } catch {}
+
+            if (v) {
+                try {
+                    sessionStorage.setItem(k, v);
+                } catch {
+                    // ignore storage errors
+                }
+            }
         });
     }, []);
 

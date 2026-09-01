@@ -4,8 +4,8 @@ import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
-import { register } from '@/routes';
 import { cinematicText, fadeUp, parallaxFloat, staggerContainer } from '@/lib/animations';
+import { register } from '@/routes';
 
 interface Plan {
     name: string;

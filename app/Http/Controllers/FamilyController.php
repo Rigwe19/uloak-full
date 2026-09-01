@@ -45,7 +45,7 @@ class FamilyController extends Controller
             ->withCount('stories')
             ->latest()
             ->get()
-            ->map(fn($room) => [
+            ->map(fn ($room) => [
                 'id' => $room->id,
                 'slug' => $room->slug,
                 'name' => $room->name,
@@ -80,11 +80,11 @@ class FamilyController extends Controller
                 'comments' => function ($q) {
                     $q->latest();
                 },
-                'followUpStories'
+                'followUpStories',
             ])
             ->latest()
             ->cursorPaginate(24)
-            ->through(fn($story) => [
+            ->through(fn ($story) => [
                 'id' => $story->id,
                 'title' => $story->title,
                 'type' => $story->type,
@@ -94,14 +94,14 @@ class FamilyController extends Controller
                 'file_url' => $story->file_url,
                 'assets' => $story->assets ?? [],
                 'room_member_id' => $story->room_member_id,
-                'comments' => $story->comments->map(fn($c) => [
+                'comments' => $story->comments->map(fn ($c) => [
                     'id' => $c->id,
                     'content' => $c->content,
                     'author' => $c->authorName(),
                     'date' => $c->created_at->diffForHumans(),
                 ]),
                 'comments_count' => $story->comments()->count(),
-                'follow_ups' => $story->followUpStories->map(fn($fs) => [
+                'follow_ups' => $story->followUpStories->map(fn ($fs) => [
                     'id' => $fs->id,
                     'type' => $fs->type,
                     'file_url' => $fs->file_url,
@@ -134,7 +134,7 @@ class FamilyController extends Controller
                 'email' => $member->email,
                 'relationship' => $member->relationship,
             ],
-            'title' => $room->name . ' - Ulo of Stories',
+            'title' => $room->name.' - Ulo of Stories',
         ]);
     }
 
@@ -165,7 +165,7 @@ class FamilyController extends Controller
 
         if ($request->hasFile('recording')) {
             $recording = $request->file('recording');
-            $path = $recording->store('stories/rooms/' . $room->id . '/family-media', 'public');
+            $path = $recording->store('stories/rooms/'.$room->id.'/family-media', 'public');
             $fileUrl = Storage::url($path);
             $type = $validated['type'];
             $validated['type'] = $type;
@@ -178,7 +178,7 @@ class FamilyController extends Controller
 
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
-                $path = $file->store('stories/rooms/' . $room->id . '/family-assets', 'public');
+                $path = $file->store('stories/rooms/'.$room->id.'/family-assets', 'public');
                 $url = Storage::url($path);
                 $mime = $file->getMimeType();
                 $type = 'photo';
@@ -192,7 +192,7 @@ class FamilyController extends Controller
                     'type' => $type,
                     'title' => $file->getClientOriginalName(),
                 ];
-                if (!$fileUrl) {
+                if (! $fileUrl) {
                     $fileUrl = $url;
                     $validated['type'] = $type;
                 }
@@ -200,7 +200,7 @@ class FamilyController extends Controller
         }
 
         if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('stories/rooms/' . $room->id . '/family-thumbnails', 'public');
+            $path = $request->file('thumbnail')->store('stories/rooms/'.$room->id.'/family-thumbnails', 'public');
             $validated['thumbnail'] = Storage::url($path);
         }
 
@@ -277,27 +277,27 @@ class FamilyController extends Controller
         $paths = [];
 
         // Main media file
-        if (!empty($media->path)) {
+        if (! empty($media->path)) {
             $paths[] = $this->storagePath($media->path);
         }
 
         // Thumbnail
-        if (!empty($media->thumbnail)) {
+        if (! empty($media->thumbnail)) {
             $paths[] = $this->storagePath($media->thumbnail);
         }
 
         // Sprite can be an array containing image + VTT
-        if (!empty($media->sprite)) {
+        if (! empty($media->sprite)) {
             $sprite = $media->sprite;
 
             if (is_string($sprite)) {
                 $paths[] = $this->storagePath($sprite);
             } elseif (is_array($sprite)) {
-                if (!empty($sprite['image'])) {
+                if (! empty($sprite['image'])) {
                     $paths[] = $this->storagePath($sprite['image']);
                 }
 
-                if (!empty($sprite['vtt'])) {
+                if (! empty($sprite['vtt'])) {
                     $paths[] = $this->storagePath($sprite['vtt']);
                 }
             }

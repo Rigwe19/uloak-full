@@ -35,6 +35,7 @@ export function RegionSelector({ regions, selectedRegion, onChange, className = 
         };
 
         document.addEventListener('mousedown', handleClickOutside);
+
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 

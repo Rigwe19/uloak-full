@@ -103,6 +103,7 @@ export default function EventShow({ event, stories: initialStories = [], paginat
         if(story.type === 'video' && story.thumbnail) {
             return story.thumbnail;
         }
+
         if(story.type === 'photo'){
             return story.thumbnail || story.file_url || '/logo-stacked.png';
         }

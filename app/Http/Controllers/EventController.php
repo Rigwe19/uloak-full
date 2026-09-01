@@ -19,8 +19,7 @@ class EventController extends Controller
     public function __construct(
         protected StoryService $storyService,
         protected ActivityLogger $activityLogger
-    ) {
-    }
+    ) {}
 
     /**
      * Display the specified event with all its stories.
@@ -43,7 +42,7 @@ class EventController extends Controller
                 'location' => $event->location,
                 'created_at' => $event->created_at->format('M d, Y'),
             ],
-            'stories' => $stories->map(fn($story) => [
+            'stories' => $stories->map(fn ($story) => [
                 'id' => $story->id,
                 'uuid' => $story->uuid,
                 'title' => $story->title,
@@ -56,7 +55,7 @@ class EventController extends Controller
                 'created_at' => $story->created_at->format('M d, Y'),
                 'user' => $story->user?->name,
             ]),
-            'clients' => $event->clients->map(fn($client) => [
+            'clients' => $event->clients->map(fn ($client) => [
                 'id' => $client->id,
                 'name' => $client->name,
                 'email' => $client->email,
@@ -105,13 +104,13 @@ class EventController extends Controller
         $files = [];
 
         foreach ($stories as $story) {
-            $storyPrefix = 'story_' . $story->id . '_';
+            $storyPrefix = 'story_'.$story->id.'_';
             $media = $story->media;
 
             if ($media) {
                 $localPath = $this->storyService->downloadMedia($media);
                 if ($localPath) {
-                    $files[$storyPrefix . $media->original_name] = $localPath;
+                    $files[$storyPrefix.$media->original_name] = $localPath;
                 }
             }
 
@@ -122,7 +121,7 @@ class EventController extends Controller
                         if ($assetMedia) {
                             $localPath = $this->storyService->downloadMedia($assetMedia);
                             if ($localPath) {
-                                $files[$storyPrefix . '_' . $assetMedia->original_name] = $localPath;
+                                $files[$storyPrefix.'_'.$assetMedia->original_name] = $localPath;
                             }
                         }
                     }
@@ -135,8 +134,8 @@ class EventController extends Controller
         }
 
         $zip = new ZipArchive;
-        $zipName = 'event_' . $event->slug . '_media_' . now()->format('Y_m_d_H_i_s') . '.zip';
-        $zipPath = storage_path('app/temp/' . $zipName);
+        $zipName = 'event_'.$event->slug.'_media_'.now()->format('Y_m_d_H_i_s').'.zip';
+        $zipPath = storage_path('app/temp/'.$zipName);
 
         if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
             return back()->with('error', 'Could not create ZIP file.');

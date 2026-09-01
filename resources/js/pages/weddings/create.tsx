@@ -14,7 +14,7 @@ export default function WeddingsCreate({ pricing, defaultRegion, refCode }: Wedd
     const region = pricing[defaultRegion] ?? pricing['nigeria'];
     const priceLabel = region?.full_room_formatted ?? '₦15,000';
 
-    const [regionKey, setRegionKey] = useState(defaultRegion);
+    const [regionKey] = useState(defaultRegion);
     const currentPrice = pricing[regionKey]?.full_room_formatted ?? priceLabel;
 
     const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');

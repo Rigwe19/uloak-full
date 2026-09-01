@@ -46,7 +46,10 @@ export function ResponsiveModal({
     titleHidden = false,
 }: ResponsiveModalProps) {
     const isMobile = useIsMobile();
-    if(!document) return null;
+
+    if(!document) {
+return null;
+}
 
     // ── Mobile: shadcn Sheet ──────────────────────────────────────────────────
     if (isMobile) {

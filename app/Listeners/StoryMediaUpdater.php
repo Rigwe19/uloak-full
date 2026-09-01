@@ -27,7 +27,7 @@ class StoryMediaUpdater implements ShouldQueue
         }
 
         // Find stories that reference this media in their assets array
-        $stories = Story::where("uuid", $media->uuid)
+        $stories = Story::where('uuid', $media->uuid)
             ->get();
 
         foreach ($stories as $story) {

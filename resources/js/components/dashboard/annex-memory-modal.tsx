@@ -120,11 +120,25 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
             uuids.forEach((uuid, index) => {
                 const formData = new FormData();
                 formData.append('title', data.title || `${selectedRoom.name} Memory ${index + 1}`);
-                if (data.description) formData.append('description', data.description);
+
+                if (data.description) {
+formData.append('description', data.description);
+}
+
                 formData.append('type', data.type || 'photo');
-                if (data.thumbnail) formData.append('thumbnail', data.thumbnail);
-                if (data.recording) formData.append('recording', data.recording);
-                if (data.duration) formData.append('duration', data.duration);
+
+                if (data.thumbnail) {
+formData.append('thumbnail', data.thumbnail);
+}
+
+                if (data.recording) {
+formData.append('recording', data.recording);
+}
+
+                if (data.duration) {
+formData.append('duration', data.duration);
+}
+
                 formData.append('media_uuids[]', uuid);
 
                 router.post(
@@ -152,17 +166,35 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
                     },
                 );
             });
+
             return;
         }
 
         // Single story submission
         const formData = new FormData();
-        if (data.title) formData.append('title', data.title);
-        if (data.description) formData.append('description', data.description);
+
+        if (data.title) {
+formData.append('title', data.title);
+}
+
+        if (data.description) {
+formData.append('description', data.description);
+}
+
         formData.append('type', data.type || 'photo');
-        if (data.thumbnail) formData.append('thumbnail', data.thumbnail);
-        if (data.recording) formData.append('recording', data.recording);
-        if (data.duration) formData.append('duration', data.duration);
+
+        if (data.thumbnail) {
+formData.append('thumbnail', data.thumbnail);
+}
+
+        if (data.recording) {
+formData.append('recording', data.recording);
+}
+
+        if (data.duration) {
+formData.append('duration', data.duration);
+}
+
         uuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
 
         router.post(
@@ -341,6 +373,7 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
                                         placeholder="Paste a Google Drive share link..."
                                         onPaste={async (e) => {
                                             const link = e.clipboardData.getData('text');
+
                                             if (link.includes('drive.google.com')) {
                                                 try {
                                                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -351,10 +384,15 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
                                                         body: JSON.stringify({ url: link }),
                                                     });
                                                     const data = await res.json();
+
                                                     if (data.success) {
                                                         const byteStr = atob(data.body);
                                                         const bytes = new Uint8Array(byteStr.length);
-                                                        for (let i = 0; i < byteStr.length; i++) bytes[i] = byteStr.charCodeAt(i);
+
+                                                        for (let i = 0; i < byteStr.length; i++) {
+bytes[i] = byteStr.charCodeAt(i);
+}
+
                                                         const blob = new Blob([bytes], { type: data.content_type });
                                                         const file = new File([blob], data.name, { type: data.content_type });
                                                         addToQueue(file, mediaType || 'photo');

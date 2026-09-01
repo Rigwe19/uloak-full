@@ -25,13 +25,13 @@ import React from 'react';
 
 import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
-import { login } from '@/routes';
 import {
     cinematicText,
     fadeUp,
     parallaxFloat,
     staggerContainer,
 } from '@/lib/animations';
+import { login } from '@/routes';
 
 interface Props {
     page?: {

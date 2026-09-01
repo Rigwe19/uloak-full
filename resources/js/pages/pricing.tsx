@@ -2,9 +2,10 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Check, ChevronDown, ChevronUp, Shield, Users, Heart, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import GuestLayout from '@/layouts/guest-layout';
-import { RegionSelector, type RegionOption } from '@/components/pricing/RegionSelector';
+import { RegionSelector  } from '@/components/pricing/RegionSelector';
+import type {RegionOption} from '@/components/pricing/RegionSelector';
 import { StickyCTA } from '@/components/pricing/StickyCTA';
+import GuestLayout from '@/layouts/guest-layout';
 import { cinematicText, fadeUp, staggerContainer, viewportOnce } from '@/lib/animations';
 import { register, privacy } from '@/routes';
 
@@ -33,9 +34,11 @@ function usePersistedRegion(defaultRegion: string, regions: Record<string, Regio
 
     useEffect(() => {
         const stored = typeof window !== 'undefined' ? localStorage.getItem('ulo_region') : null;
+
         if (stored && regions[stored]) {
             setRegion(stored);
         }
+
         // Auto-detect via Intl if no stored value and default is nigeria
         if (!stored) {
             try {
@@ -47,7 +50,10 @@ function usePersistedRegion(defaultRegion: string, regions: Record<string, Regio
 
     const update = (key: string) => {
         setRegion(key);
-        try { localStorage.setItem('ulo_region', key); } catch {}
+
+        try {
+ localStorage.setItem('ulo_region', key);
+} catch {}
     };
 
     return [region, update] as const;
@@ -63,9 +69,12 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
     const startFamilyArchive = async (tier: string) => {
         if (!auth?.user) {
             router.visit(`${register().url}?tier=${tier}&region=${selectedRegion}`);
+
             return;
         }
+
         setSubscribing(tier);
+
         try {
             const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
             const res = await fetch('/billing/subscriptions', {
@@ -79,6 +88,7 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
                 body: JSON.stringify({ region: selectedRegion, tier }),
             });
             const data = await res.json();
+
             if (data.authorization_url) {
                 window.location.href = data.authorization_url;
             } else if (data.message) {
@@ -130,7 +140,7 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
             </section>
 
             {/* Three cards */}
-            <section className="px-6 pb-16 md:px-12 lg:px-24">
+            <section className="px-6 pb-16 md:px-12 lg:px-24 mt-12">
                 <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-3">
                     {/* Starter */}
                     <motion.div initial="hidden" whileInView="show" viewport={viewportOnce} variants={fadeUp} className="relative flex flex-col rounded-3xl border border-border-subtle bg-surface/30 p-8">

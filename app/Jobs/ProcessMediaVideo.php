@@ -29,14 +29,13 @@ class ProcessMediaVideo implements ShouldQueue
         public int $mediaId,
         public string $action = 'transcode',
         public array $options = [],
-    ) {
-    }
+    ) {}
 
     public function handle(MediaRepository $repository): void
     {
         $media = $repository->findById($this->mediaId);
 
-        if (!$media) {
+        if (! $media) {
             return;
         }
 
@@ -103,8 +102,8 @@ class ProcessMediaVideo implements ShouldQueue
         $diskName = $media->disk;
         $disk = Storage::disk($diskName);
 
-        $processedFilename = Str::uuid() . '.mp4';
-        $processedPath = $this->processedPath() . '/' . $processedFilename;
+        $processedFilename = Str::uuid().'.mp4';
+        $processedPath = $this->processedPath().'/'.$processedFilename;
 
         $originalVideo = FFMpegFacade::fromDisk($diskName)
             ->open($media->path);
@@ -119,14 +118,14 @@ class ProcessMediaVideo implements ShouldQueue
 
         $this->updateProgress($media, 80);
 
-        $posterPath = $this->thumbnailsPath() . '/' . pathinfo($processedFilename, PATHINFO_FILENAME) . '.jpg';
+        $posterPath = $this->thumbnailsPath().'/'.pathinfo($processedFilename, PATHINFO_FILENAME).'.jpg';
 
         $this->generatePoster($diskName, $processedPath, $posterPath);
 
         $this->updateProgress($media, 90);
 
-        $spriteImage = $this->spritesPath() . '/' . pathinfo($processedFilename, PATHINFO_FILENAME) . '.jpg';
-        $spriteVtt = $this->spritesPath() . '/' . pathinfo($processedFilename, PATHINFO_FILENAME) . '.vtt';
+        $spriteImage = $this->spritesPath().'/'.pathinfo($processedFilename, PATHINFO_FILENAME).'.jpg';
+        $spriteVtt = $this->spritesPath().'/'.pathinfo($processedFilename, PATHINFO_FILENAME).'.vtt';
 
         $this->generateSprite($diskName, $processedPath, $spriteImage, $spriteVtt, $metadata['duration'] ?? 0);
 
@@ -153,8 +152,8 @@ class ProcessMediaVideo implements ShouldQueue
     {
         $disk = Storage::disk($media->disk);
         $inputPath = $media->path;
-        $outputFilename = Str::uuid()->toString() . '.mp4';
-        $outputPath = $this->processedPath() . '/' . $outputFilename;
+        $outputFilename = Str::uuid()->toString().'.mp4';
+        $outputPath = $this->processedPath().'/'.$outputFilename;
 
         $crf = $options['crf'] ?? 23;
         $preset = $options['preset'] ?? 'slow';
@@ -176,8 +175,8 @@ class ProcessMediaVideo implements ShouldQueue
     {
         $disk = Storage::disk($media->disk);
         $inputPath = $media->path;
-        $outputFilename = Str::uuid()->toString() . '.mp4';
-        $outputPath = $this->processedPath() . '/' . $outputFilename;
+        $outputFilename = Str::uuid()->toString().'.mp4';
+        $outputPath = $this->processedPath().'/'.$outputFilename;
 
         FFMpegFacade::open($disk->path($inputPath))
             ->export()
@@ -206,7 +205,7 @@ class ProcessMediaVideo implements ShouldQueue
         $inputPath = $storage->path($input);
         $outputPath = $storage->path($output);
 
-        if (!is_dir(dirname($outputPath))) {
+        if (! is_dir(dirname($outputPath))) {
             mkdir(dirname($outputPath), 0755, true);
         }
 
@@ -278,7 +277,7 @@ class ProcessMediaVideo implements ShouldQueue
                 $line = trim(substr($buffer, 0, $newline));
                 $buffer = substr($buffer, $newline + 1);
 
-                if (!str_starts_with($line, 'out_time_ms=')) {
+                if (! str_starts_with($line, 'out_time_ms=')) {
                     continue;
                 }
 
@@ -322,7 +321,7 @@ class ProcessMediaVideo implements ShouldQueue
 
         if ($result->exitCode() !== 0) {
             throw new \RuntimeException(
-                'FFmpeg transcoding failed: ' . $result->errorOutput()
+                'FFmpeg transcoding failed: '.$result->errorOutput()
             );
         }
     }
@@ -365,7 +364,7 @@ class ProcessMediaVideo implements ShouldQueue
         $videoPath = $storage->path($video);
         $spritePath = $storage->path($sprite);
 
-        if (!is_dir(dirname($spritePath))) {
+        if (! is_dir(dirname($spritePath))) {
             mkdir(dirname($spritePath), 0755, true);
         }
 
@@ -397,7 +396,7 @@ class ProcessMediaVideo implements ShouldQueue
         int $columns,
     ): void {
         $storage = Storage::disk($disk);
-        $filename = basename($output, '.vtt') . '.jpg';
+        $filename = basename($output, '.vtt').'.jpg';
 
         $lines = ['WEBVTT', ''];
         $frames = max(1, (int) ceil($duration / $interval));
@@ -410,12 +409,12 @@ class ProcessMediaVideo implements ShouldQueue
             $x = $column * $thumbWidth;
             $y = $row * $thumbHeight;
 
-            $lines[] = $this->formatTimestamp($start) . ' --> ' . $this->formatTimestamp($end);
-            $lines[] = basename($output, '.vtt') . '.jpg#xywh='
-                . $x . ','
-                . $y . ','
-                . $thumbWidth . ','
-                . $thumbHeight;
+            $lines[] = $this->formatTimestamp($start).' --> '.$this->formatTimestamp($end);
+            $lines[] = basename($output, '.vtt').'.jpg#xywh='
+                .$x.','
+                .$y.','
+                .$thumbWidth.','
+                .$thumbHeight;
             $lines[] = '';
         }
 

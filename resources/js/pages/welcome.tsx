@@ -95,6 +95,7 @@ export default function Welcome({
         const timer = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % heroImages.length);
         }, 6000);
+
         return () => clearInterval(timer);
     }, [heroImages.length]);
 

@@ -1,7 +1,7 @@
 import { Check, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
-import { RegionOption } from './RegionSelector';
 import { cardReveal, cardHover, viewportOnce } from '@/lib/animations';
+import type { RegionOption } from './RegionSelector';
 
 interface PricingCardProps {
     region: RegionOption;

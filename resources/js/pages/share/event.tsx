@@ -1,4 +1,3 @@
-import eventsRoutes from '@/routes/share/events';
 import { Head, Link, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -24,12 +23,13 @@ import {
     Loader,
 } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, Badge } from '@/components/dashboard/ui';
 import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
 import StoryFeed from '@/components/feed/StoryFeed';
 import { VideoPlayer } from '@/components/media/VideoPlayer';
+import eventsRoutes from '@/routes/share/events';
 import type { FeedStory } from '@/types/feed';
-import { createPortal } from 'react-dom';
 
 /* ─── animations ─────────────────────────────────────────── */
 const fadeInUp = {
@@ -134,16 +134,20 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
     // Preload adjacent images for instant navigation
     useEffect(() => {
         const urls: string[] = [];
+
         for (const offset of [-2, -1, 1, 2]) {
             const idx = currentIdx + offset;
+
             if (idx >= 0 && idx < stories.length) {
                 const s = stories[idx];
                 const url = s?.file_url || s?.assets?.[0]?.url || null;
+
                 if (url && (s?.type === 'photo' || (!s?.type?.startsWith('video') && !s?.type?.startsWith('audio')))) {
                     urls.push(url);
                 }
             }
         }
+
         urls.forEach((url) => {
             const img = new Image();
             img.src = url;
@@ -152,11 +156,20 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
 
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-            if (e.key === 'ArrowLeft' && hasPrev) setCurrentIdx((p) => p - 1);
-            if (e.key === 'ArrowRight' && hasNext) setCurrentIdx((p) => p + 1);
+            if (e.key === 'Escape') {
+onClose();
+}
+
+            if (e.key === 'ArrowLeft' && hasPrev) {
+setCurrentIdx((p) => p - 1);
+}
+
+            if (e.key === 'ArrowRight' && hasNext) {
+setCurrentIdx((p) => p + 1);
+}
         };
         window.addEventListener('keydown', handleKey);
+
         return () => window.removeEventListener('keydown', handleKey);
     }, [onClose, hasPrev, hasNext]);
 
@@ -164,7 +177,9 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
         setIsPlaying(false);
     }, [currentIdx]);
 
-    if (!story) return null;
+    if (!story) {
+return null;
+}
 
     return (
         <AnimatePresence>
@@ -306,6 +321,7 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
             setAllStories((prev) => {
                 const existingIds = new Set(prev.map((s) => s.id));
                 const unique = newStories.filter((s: FeedStory) => !existingIds.has(s.id));
+
                 return [...prev, ...unique];
             });
         };
@@ -314,6 +330,7 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
         };
         window.addEventListener('feed:appended', handleAppended as EventListener);
         window.addEventListener('feed:reset', handleReset as EventListener);
+
         return () => {
             window.removeEventListener('feed:appended', handleAppended as EventListener);
             window.removeEventListener('feed:reset', handleReset as EventListener);
@@ -323,6 +340,7 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
     const allTags = useMemo(() => {
         const tags = new Set<string>();
         (allStories || []).forEach((s) => s.tags?.forEach((t: string) => tags.add(t)));
+
         return Array.from(tags);
     }, [allStories]);
 
@@ -334,10 +352,14 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
 
     // Derive Cloudinary thumbnail URL by adding transformation params
     function getThumbnailUrl(url: string | null): string | null {
-        if (!url) return null;
+        if (!url) {
+return null;
+}
+
         if (url.includes('/image/upload/')) {
             return url.replace('/image/upload/', '/image/upload/w_640,h_640,c_limit,q_auto,f_auto/');
         }
+
         return url;
     }
 
@@ -365,6 +387,7 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
                 }
             }
         });
+
         return flattened;
     }, [allStories]);
 
@@ -510,7 +533,9 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
                                                     src={story.thumbnail || '/logo-stacked.png'}
                                                     alt={story.title}
                                                     loading="lazy"
-                                                    onError={(e) => { e.currentTarget.src = '/logo-stacked.png'; }}
+                                                    onError={(e) => {
+ e.currentTarget.src = '/logo-stacked.png'; 
+}}
                                                     className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/40 opacity-0 transition-opacity group-hover:opacity-100">
@@ -558,7 +583,9 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
                                                 <img
                                                     src={story.thumbnail || '/logo-stacked.png'}
                                                     alt={story.title}
-                                                    onError={(e) => { e.currentTarget.src = '/logo-stacked.png'; }}
+                                                    onError={(e) => {
+ e.currentTarget.src = '/logo-stacked.png'; 
+}}
                                                     className="h-full w-full object-cover"
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/20">

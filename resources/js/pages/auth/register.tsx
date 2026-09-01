@@ -24,7 +24,9 @@ function PasswordStrengthMeter({ password }: { password: string }) {
 
     const satisfiedCount = requirements.filter((r) => r.test).length;
 
-    if (!password) return null;
+    if (!password) {
+return null;
+}
 
     return (
         <div className="mt-2 space-y-2">

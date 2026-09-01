@@ -12,7 +12,6 @@ use App\Models\Media;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Image;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class LaravelImageProcessor implements ImageProcessor
@@ -31,14 +30,13 @@ class LaravelImageProcessor implements ImageProcessor
         protected MediaRepository $repository,
         protected StorageManager $storage,
         protected array $config = [],
-    ) {
-    }
+    ) {}
 
     public function upload(UploadedFile $file): Media
     {
         $mimeType = $file->getMimeType() ?: $file->getClientMimeType();
 
-        if (!$this->supports($mimeType)) {
+        if (! $this->supports($mimeType)) {
             throw new UnsupportedFormatException(
                 mimeType: $mimeType,
                 driver: 'laravel-image',
@@ -69,21 +67,21 @@ class LaravelImageProcessor implements ImageProcessor
         /*
          * Original WebP
          */
-        $originalPath = $this->originalsPath() . '/' . $uuid . '.webp';
+        $originalPath = $this->originalsPath().'/'.$uuid.'.webp';
 
         $image
             ->toWebp()
             ->quality($this->config['quality'] ?? 85)
             ->storeAs(
                 $this->originalsPath(),
-                $uuid . '.webp',
+                $uuid.'.webp',
                 $disk,
             );
 
         /*
          * Thumbnail WebP
          */
-        $thumbnailPath = $this->thumbnailsPath() . '/' . $uuid . '.webp';
+        $thumbnailPath = $this->thumbnailsPath().'/'.$uuid.'.webp';
 
         Image::fromUpload($file)
             ->cover(800, 800)
@@ -91,7 +89,7 @@ class LaravelImageProcessor implements ImageProcessor
             ->quality($this->config['thumbnail_quality'] ?? 80)
             ->storeAs(
                 $this->thumbnailsPath(),
-                $uuid . '.webp',
+                $uuid.'.webp',
                 $disk,
             );
 
@@ -141,7 +139,7 @@ class LaravelImageProcessor implements ImageProcessor
         $originalPath = $media->path;
         $originalDisk = $media->disk ?? 'public';
 
-        if (!$this->storage->exists($originalPath, $originalDisk)) {
+        if (! $this->storage->exists($originalPath, $originalDisk)) {
             throw new RuntimeException("Original file not found for media [{$media->id}].");
         }
 

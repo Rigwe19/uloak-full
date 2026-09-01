@@ -15,8 +15,7 @@ class StoryService
 {
     public function __construct(
         protected MediaManager $mediaManager,
-    ) {
-    }
+    ) {}
 
     public function createStory(User $user, Room|Event $room, array $data): Story
     {
@@ -60,7 +59,7 @@ class StoryService
                 }
             }
 
-            if (!empty($assets)) {
+            if (! empty($assets)) {
                 $story->update(['assets' => $assets]);
             }
         }
@@ -72,7 +71,7 @@ class StoryService
             foreach ($data['media_uuids'] as $uuid) {
                 $media = Media::where('uuid', $uuid)->first();
 
-                if (!$media) {
+                if (! $media) {
                     continue;
                 }
 
@@ -99,7 +98,7 @@ class StoryService
                 ]);
             }
 
-            if (!empty($assets)) {
+            if (! empty($assets)) {
                 $story->update([
                     'assets' => $assets,
                 ]);
@@ -163,18 +162,18 @@ class StoryService
             Storage::disk($disk)->delete($media->thumbnail);
         }
 
-        if (!empty($media->sprite)) {
+        if (! empty($media->sprite)) {
             logger()->info("Deleting sprite media for media UUID: {$media->uuid}");
             $sprite = $media->sprite;
 
             if (is_string($sprite)) {
                 $paths[] = $this->storagePath($sprite);
             } elseif (is_array($sprite)) {
-                if (!empty($sprite['image'])) {
+                if (! empty($sprite['image'])) {
                     $paths[] = $this->storagePath($sprite['image']);
                 }
 
-                if (!empty($sprite['vtt'])) {
+                if (! empty($sprite['vtt'])) {
                     $paths[] = $this->storagePath($sprite['vtt']);
                 }
             }
@@ -197,7 +196,7 @@ class StoryService
         $disk = $media->disk ?? 'public';
         $path = $media->path;
 
-        if (!$path || !Storage::disk($disk)->exists($path)) {
+        if (! $path || ! Storage::disk($disk)->exists($path)) {
             return null;
         }
 
