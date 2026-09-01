@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Page;
+use App\Models\Partner;
 use App\Models\Room;
+use App\Services\PricingService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
@@ -62,6 +65,50 @@ class PageController extends Controller
             'meta_description' => $page?->meta_description ?? ($descriptions[$slug] ?? 'Preserve your family stories, heritage, and memories with Ulo of Stories.'),
             'meta_image' => url('/images/og-image.webp'),
             'meta_url' => url()->current(),
+        ]);
+    }
+
+    public function weddings(Request $request)
+    {
+        $pricingService = app(PricingService::class);
+        $pricing = $pricingService->allRegionPricing();
+        $partners = Partner::where('is_active', true)->get(['name', 'ref_code']);
+        $detected = $pricingService->detectRegion($request);
+        if (! $request->session()->has('pricing_region')) {
+            $request->session()->put('pricing_region', $detected->value);
+        } else {
+            $detected = $pricingService->resolveRegion($request->session()->get('pricing_region'));
+        }
+
+        return Inertia::render('weddings', [
+            'title' => 'Ulo Weddings | One Wedding. One Room. Everyone\'s Memories.',
+            'meta_description' => 'Bring the photos, videos and stories your guests capture into one Ulo Wedding Room. ₦15,000 one-off per wedding.',
+            'meta_image' => url('/images/og-weddings.webp'),
+            'meta_url' => url()->current(),
+            'pricing' => $pricing,
+            'partners' => $partners,
+            'defaultRegion' => $detected->value,
+        ]);
+    }
+
+    public function pricing(Request $request)
+    {
+        $pricingService = app(PricingService::class);
+        $pricing = $pricingService->allRegionPricing();
+        $detected = $pricingService->detectRegion($request);
+        if (! $request->session()->has('pricing_region')) {
+            $request->session()->put('pricing_region', $detected->value);
+        } else {
+            $detected = $pricingService->resolveRegion($request->session()->get('pricing_region'));
+        }
+
+        return Inertia::render('pricing', [
+            'title' => 'Pricing | Ulo of Stories',
+            'meta_description' => 'Simple pricing for stories that matter. Start free, pay once for a complete occasion, or subscribe for a Family Archive.',
+            'meta_image' => url('/images/og-pricing.webp'),
+            'meta_url' => url()->current(),
+            'pricing' => $pricing,
+            'defaultRegion' => $detected->value,
         ]);
     }
 }

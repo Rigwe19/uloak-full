@@ -52,10 +52,9 @@ export function Navbar() {
     }, []);
 
     const links = [
+        { name: 'Weddings', path: '/weddings' },
+        { name: 'Pricing', path: '/pricing' },
         { name: 'How Ulo Works', path: '/#how-it-works' },
-        { name: 'Families', path: '/#rooms' },
-        { name: 'Events & Tributes', path: '/#rooms' },
-        { name: 'Communities', path: '/#rooms' },
         { name: 'Ulo Studio', path: '/services' },
         { name: 'About', path: '/about' },
     ];
@@ -221,6 +220,22 @@ export function Footer() {
                         <ul className="flex flex-col gap-3">
                             <li>
                                 <Link
+                                    href="/weddings"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
+                                >
+                                    Weddings
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="/pricing"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
+                                >
+                                    Pricing
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
                                     href="/#how-it-works"
                                     className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
@@ -233,22 +248,6 @@ export function Footer() {
                                     className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
                                     Families
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/#rooms"
-                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
-                                >
-                                    Events & Tributes
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/#rooms"
-                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
-                                >
-                                    Communities
                                 </Link>
                             </li>
                         </ul>

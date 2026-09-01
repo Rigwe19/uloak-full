@@ -150,7 +150,7 @@ export default function SettingsAbout({ person, identity, heritage, languages, r
                         <div className="flex flex-col items-center gap-6 sm:flex-row">
                             <div className="group relative">
                                 <img
-                                    src={preview || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop'}
+                                    src={preview || '/images/01-ulo-team-studio.jpg'}
                                     className="h-20 w-20 rounded-[32px] object-cover ring-4 ring-border-subtle md:h-24 md:w-24"
                                     alt=""
                                 />

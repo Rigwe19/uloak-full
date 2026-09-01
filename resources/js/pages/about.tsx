@@ -82,7 +82,7 @@ export default function About({ page }: Props) {
     const founder = content.founder || {
         name: 'Nnanna Adim',
         role: 'Founder & Creative Director',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
+        image: '/images/01-ulo-team-studio.jpg',
         title: 'Archiving the Unseen.',
         quote: '"I built Ulo of Stories because I believe every person contains a world. Our job is to help that world survive."',
         paragraphs: [

@@ -126,7 +126,7 @@ export default function HouseSettings({ member }: SettingsProps) {
                         <div className="flex items-center gap-5">
                             <div className="group relative shrink-0">
                                 <img
-                                    src={avatarPreview || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop'}
+                                    src={avatarPreview || '/images/01-ulo-team-studio.jpg'}
                                     className="h-20 w-20 rounded-[28px] object-cover ring-4 ring-border-subtle"
                                     alt=""
                                 />

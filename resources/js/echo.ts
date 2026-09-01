@@ -15,7 +15,7 @@ window.Pusher = Pusher;
 let echoInstance: ReverbEcho | null = null;
 
 export function initEcho(): ReverbEcho | null {
-    console.log('🔥 initEcho() called');
+    // console.log('🔥 initEcho() called');
 
     if (echoInstance) {
         return echoInstance;
@@ -35,13 +35,13 @@ export function initEcho(): ReverbEcho | null {
 
     const useTLS = scheme === 'https';
 
-    console.log('Initializing Reverb:', {
-        key,
-        host,
-        port,
-        scheme,
-        useTLS,
-    });
+    // console.log('Initializing Reverb:', {
+    //     key,
+    //     host,
+    //     port,
+    //     scheme,
+    //     useTLS,
+    // });
 
     echoInstance = new Echo({
         broadcaster: 'reverb',
@@ -66,6 +66,6 @@ export function getEcho(): ReverbEcho | null {
 }
 
 if (typeof window !== 'undefined') {
-    console.log('🔥 ECHO MODULE LOADED');
+    // console.log('🔥 ECHO MODULE LOADED');
     initEcho();
 }

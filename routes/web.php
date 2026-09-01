@@ -3,7 +3,11 @@
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\AnalyticsEventController;
 use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\Billing\CheckoutController;
+use App\Http\Controllers\Billing\SubscriptionController;
+use App\Http\Controllers\Billing\WebhookController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
@@ -21,8 +25,11 @@ use App\Http\Controllers\ShareController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\TributeController;
 use App\Http\Controllers\WaitingListController;
+use App\Http\Controllers\WeddingsController;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', [PageController::class, 'welcome'])->name('home');
 Route::get('/about', [PageController::class, 'show'])->defaults('slug', 'about')->name('about');
@@ -32,6 +39,10 @@ Route::get('/community-projects', [PageController::class, 'show'])->defaults('sl
 Route::get('/contact', [PageController::class, 'show'])->defaults('slug', 'contact')->name('contact');
 Route::get('/privacy', [PageController::class, 'show'])->defaults('slug', 'privacy')->name('privacy');
 Route::get('/membership', [PageController::class, 'show'])->defaults('slug', 'membership')->name('membership');
+Route::get('/weddings', [PageController::class, 'weddings'])->name('weddings');
+Route::get('/weddings/create', [WeddingsController::class, 'create'])->middleware(['auth'])->name('weddings.create');
+Route::post('/weddings/create', [WeddingsController::class, 'create'])->middleware(['auth'])->name('weddings.store');
+Route::get('/pricing', [PageController::class, 'pricing'])->name('pricing');
 
 // Waiting List
 Route::get('/waiting-list', [WaitingListController::class, 'index'])->name('waiting-list.index');
@@ -43,8 +54,8 @@ Route::get('/share/events/{slug}', [ShareController::class, 'showEvent'])->name(
 Route::post('/share/send-link', [ShareController::class, 'sendMagicLink'])->name('share.send-link');
 Route::post('/share/rooms/{room}/tributes', [TributeController::class, 'store'])->name('share.rooms.tributes.store');
 Route::post('/share/rooms/{room}/candles', [TributeController::class, 'lightCandle'])->name('share.rooms.candles.store');
-Route::post('/share/rooms/{room}/stories', [ShareController::class, 'storeRoomContribution'])->name('share.rooms.stories.store');
-Route::post('/share/rooms/{room}/stories/followup', [ShareController::class, 'storeRoomFollowUpMedia'])->name('share.rooms.stories.followup');
+Route::post('/share/rooms/{room}/stories', [ShareController::class, 'storeRoomContribution'])->middleware('contributions.open')->name('share.rooms.stories.store');
+Route::post('/share/rooms/{room}/stories/followup', [ShareController::class, 'storeRoomFollowUpMedia'])->middleware('contributions.open')->name('share.rooms.stories.followup');
 Route::post('/share/rooms/{room}/subscribe', [ShareController::class, 'storeGuestSubscription'])->name('share.rooms.subscribe');
 Route::post('/share/rooms/{room}/comments', [ShareController::class, 'storeRoomComment'])->name('share.rooms.comments.store');
 Route::delete('/share/rooms/{room}/stories/{story}', [ShareController::class, 'destroyStory'])->name('share.rooms.stories.destroy');
@@ -71,7 +82,7 @@ Route::middleware(['house-member'])->prefix('house')->name('house.')->group(func
     Route::get('/rooms/{room}', [HouseAccessController::class, 'showRoom'])->name('rooms.show');
     Route::post('/rooms', [HouseAccessController::class, 'storeRoom'])->name('rooms.store');
     Route::post('/rooms/{room}', [HouseAccessController::class, 'updateRoom'])->name('rooms.update');
-    Route::post('/rooms/{room}/stories', [HouseAccessController::class, 'storeStory'])->name('rooms.stories.store');
+    Route::post('/rooms/{room}/stories', [HouseAccessController::class, 'storeStory'])->middleware('contributions.open')->name('rooms.stories.store');
     Route::delete('/rooms/{room}', [HouseAccessController::class, 'destroyRoom'])->name('rooms.destroy');
     Route::patch('/tributes/{tribute}/approve', [TributeController::class, 'approve'])->name('tributes.approve');
     Route::patch('/candles/{candle}/approve', [TributeController::class, 'approveCandle'])->name('candles.approve');
@@ -81,7 +92,7 @@ Route::middleware(['house-member'])->prefix('house')->name('house.')->group(func
 Route::middleware(['family-member'])->prefix('family')->name('family.')->group(function () {
     Route::get('/dashboard', [FamilyController::class, 'dashboard'])->name('dashboard');
     Route::get('/rooms/{room}', [FamilyController::class, 'showRoom'])->name('rooms.show');
-    Route::post('/rooms/{room}/stories', [FamilyController::class, 'storeStory'])->name('rooms.stories.store');
+    Route::post('/rooms/{room}/stories', [FamilyController::class, 'storeStory'])->middleware('contributions.open')->name('rooms.stories.store');
     Route::delete('/rooms/{room}/stories/{story}', [FamilyController::class, 'destroyStory'])->name('rooms.stories.destroy');
 });
 
@@ -123,8 +134,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('rooms/{room}/members/{member}', [RoomController::class, 'destroyMember'])->name('rooms.members.destroy');
         Route::post('rooms/{room}/members/{member}/regenerate-token', [RoomController::class, 'regenerateMemberToken'])->name('rooms.members.regenerate-token');
 
-        Route::post('rooms/{room}/stories', [StoryController::class, 'store'])->name('rooms.stories.store');
-        Route::post('rooms/{room}/tributes', [TributeController::class, 'store'])->name('rooms.tributes.store');
+        Route::post('rooms/{room}/stories', [StoryController::class, 'store'])->middleware('contributions.open')->name('rooms.stories.store');
+        Route::post('rooms/{room}/tributes', [TributeController::class, 'store'])->middleware('contributions.open')->name('rooms.tributes.store');
         Route::get('rooms/{room}/tributes', [TributeController::class, 'index'])->name('rooms.tributes.index');
         Route::get('rooms/{room}/tributes/pending', [TributeController::class, 'pending'])->name('rooms.tributes.pending');
         Route::patch('tributes/{tribute}/approve', [TributeController::class, 'approve'])->name('tributes.approve');
@@ -189,6 +200,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Download Routes
 Route::post('/downloads/request', [DownloadController::class, 'requestDownload'])->name('downloads.request');
 Route::get('/downloads/{token}', [DownloadController::class, 'download'])->name('downloads.download');
+
+Route::post('/analytics/event', [AnalyticsEventController::class, 'store'])->name('analytics.event');
+
+// Billing — Checkout, Callbacks & Webhooks
+Route::post('/webhooks/{provider}', [WebhookController::class, 'handle'])->name('webhooks.handle');
+
+Route::get('/checkout/{payment}', function (Request $request, Payment $payment) {
+    abort_unless($payment->user_id === $request->user()?->id, 403);
+    $payment->load('room');
+
+    return Inertia::render('checkout/status', [
+        'payment' => ['id' => $payment->id, 'status' => $payment->status->value, 'provider' => $payment->provider->value, 'amount' => $payment->amount, 'currency' => $payment->currency],
+        'room' => $payment->room ? ['id' => $payment->room->id, 'slug' => $payment->room->slug, 'name' => $payment->room->name] : null,
+    ]);
+})->middleware(['auth', 'verified'])->name('checkout.status');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/billing/checkout', [CheckoutController::class, 'store'])->name('billing.checkout');
+    Route::get('/billing/callback/{provider}', [CheckoutController::class, 'callback'])->name('billing.callback');
+    Route::get('/billing/payments/{payment}/status', [CheckoutController::class, 'status'])->name('billing.status');
+
+    Route::post('/billing/subscriptions', [SubscriptionController::class, 'store'])->name('billing.subscriptions.store');
+    Route::get('/billing/subscriptions', [SubscriptionController::class, 'index'])->name('billing.subscriptions.index');
+    Route::post('/billing/subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->name('billing.subscriptions.cancel');
+    Route::post('/billing/rooms/{room}/move-to-archive', [SubscriptionController::class, 'moveRoom'])->name('billing.rooms.move-to-archive');
+});
 
 require __DIR__.'/people.php';
 require __DIR__.'/settings.php';

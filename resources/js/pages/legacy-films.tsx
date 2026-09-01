@@ -40,7 +40,7 @@ export default function LegacyFilms({ page }: Props) {
     const heroContent = page?.content?.hero || {
         title: 'Every life is a story worth telling.',
         subtitle: 'Premium storytelling services — documentary film, oral history, heritage photography, and more. We come to you, wherever you are.',
-        image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1600&q=80',
+        image: '/images/10-ulo-corporate-gala.jpg',
     };
 
     const displayServices = page?.content?.services || [

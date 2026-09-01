@@ -214,6 +214,7 @@ class RoomController extends Controller
             'media_items.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm', 'max:10240'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date'],
+            'tier_type' => ['nullable', 'string', 'in:starter,full_room,family_archive'],
         ]);
 
         if ($request->hasFile('thumbnail')) {
@@ -236,6 +237,17 @@ class RoomController extends Controller
                 ];
             }
             $validated['media_items'] = $mediaItems;
+        }
+
+        // Paywall: only "general" stays free (Starter). Every other occasion type is a paid Full Room.
+        // Wedding has its own dedicated funnel; the rest go to /pricing. Redirect instead of 422 so
+        // the user actually lands on the paywall instead of seeing a dashboard validation error.
+        $paywalledTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
+        $requestedType = $validated['room_type'] ?? 'general';
+        $requestedTier = $validated['tier_type'] ?? null;
+
+        if (in_array($requestedType, $paywalledTypes, true) || $requestedTier === 'full_room' || $requestedTier === 'family_archive') {
+            return redirect()->route('weddings.create', ['type' => $requestedType !== 'general' ? $requestedType : 'wedding'])->with('info', 'This occasion requires a paid Full Room — pick the type on the next page and checkout at the same price.');
         }
 
         $room = $this->roomService->createRoom($request->user(), $validated);

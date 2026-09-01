@@ -239,7 +239,7 @@ export function AnnexMemoryModal({ isOpen, onClose, room: initialRoom, rooms = [
                                 >
                                     <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl md:h-12 md:w-12">
                                         <img
-                                            src={r.thumbnail || 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=200&h=200&fit=crop'}
+                                            src={r.thumbnail || '/images/03-ulo-family-reunion.jpg'}
                                             className="h-full w-full object-cover"
                                             alt=""
                                         />

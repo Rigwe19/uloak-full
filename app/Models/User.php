@@ -165,6 +165,25 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(Client::class, 'business_user_id');
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscription(): ?Subscription
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->where('current_period_end', '>', now())
+            ->latest('current_period_end')
+            ->first();
+    }
+
     public function person(): HasOne
     {
         return $this->hasOne(Person::class);

@@ -58,6 +58,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 ## Documentation Files
 
 - You must only create documentation files if explicitly requested by the user.
+- **After any change that should be noted (features, billing, routes, env vars, architecture, design system, brand, or setup steps), always update `README.md` (project reality) and `APP.md` (AI primer) before considering the task complete. Keep them in sync with `config/pricing.php`, `app/Services/RoomService.php`, `routes/web.php`, and the current brand package.**
 
 ## Replies
 

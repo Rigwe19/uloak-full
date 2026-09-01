@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\RoomStatus;
+use App\Enums\RoomTier;
 use Database\Factories\RoomFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +25,8 @@ class Room extends Model
         'start_date',
         'end_date',
         'allow_download',
+        'tier_type', 'storage_limit_bytes', 'expires_at', 'contributions_closed_at',
+        'status', 'welcome_message', 'wedding_dates', 'referral_partner_id',
     ];
 
     protected static function booted(): void
@@ -64,6 +68,13 @@ class Room extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'allow_download' => 'boolean',
+            'tier_type' => RoomTier::class,
+            'status' => RoomStatus::class,
+            'expires_at' => 'datetime',
+            'contributions_closed_at' => 'datetime',
+            'wedding_dates' => 'array',
+            'storage_used_bytes' => 'integer',
+            'storage_limit_bytes' => 'integer',
         ];
     }
 
@@ -100,5 +111,98 @@ class Room extends Model
     public function clients(): BelongsToMany
     {
         return $this->belongsToMany(Client::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function referralPartner(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class, 'referral_partner_id');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Billing & Limit Helpers
+    |--------------------------------------------------------------------------
+    |
+    | Rooms with a null tier are legacy rooms created before monetization.
+    | They remain unlimited and unaffected by tier limits.
+    |
+    */
+
+    public function isLegacy(): bool
+    {
+        return $this->tier_type === null;
+    }
+
+    public function isActivePaidRoom(): bool
+    {
+        return $this->status === RoomStatus::Active;
+    }
+
+    /**
+     * Remaining storage in bytes, or null for unlimited (legacy) rooms.
+     */
+    public function remainingStorageBytes(): ?int
+    {
+        if ($this->storage_limit_bytes === null) {
+            return null;
+        }
+
+        return max(0, $this->storage_limit_bytes - $this->storage_used_bytes);
+    }
+
+    public function hasStorageRemaining(int $incomingBytes = 0): bool
+    {
+        $remaining = $this->remainingStorageBytes();
+
+        return $remaining === null || $remaining >= $incomingBytes;
+    }
+
+    public function contributionsOpen(): bool
+    {
+        return $this->contributionBlockReason() === null;
+    }
+
+    public function contributionBlockReason(): ?string
+    {
+        if ($this->status === RoomStatus::Draft) {
+            return 'draft';
+        }
+
+        if ($this->contributions_closed_at !== null) {
+            return 'closed';
+        }
+
+        if ($this->expires_at !== null && $this->expires_at->isPast()) {
+            return 'expired';
+        }
+
+        if (! $this->hasStorageRemaining(1)) {
+            return 'storage_full';
+        }
+
+        return null;
+    }
+
+    public function addStorageBytes(int $bytes): void
+    {
+        if ($bytes <= 0) {
+            return;
+        }
+
+        $this->increment('storage_used_bytes', $bytes);
+    }
+
+    public function removeStorageBytes(int $bytes): void
+    {
+        if ($bytes <= 0) {
+            return;
+        }
+
+        $this->decrement('storage_used_bytes', min($bytes, $this->storage_used_bytes));
     }
 }

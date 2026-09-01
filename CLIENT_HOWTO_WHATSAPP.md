@@ -1,0 +1,59 @@
+How to use Ulo of Stories — Quick guide for the client (send as WhatsApp message)
+
+Hi! Here's how Ulo works now. You can copy/paste the steps below for anyone on your team.
+
+---
+*What Ulo is:* a private home for Stories. Each occasion (wedding, burial, birthday, memorial) lives in its own Room. Only the organiser pays — guests never pay to contribute.
+
+*Where to find things:*
+- Weddings: open uloofstories.com/weddings — One wedding. One payment.
+- Prices for everything: uloofstories.com/pricing
+- After you sign in: Dashboard shows all your Rooms.
+
+---
+*1) CREATE YOUR ACCOUNT (30 seconds)*
+Go to uloofstories.com/weddings → tap Create My Wedding Room. If you're not logged in you'll be taken to sign up / login, then returned automatically to the form. Your location (Nigeria, UK, US, Canada, Europe, Rest of Africa) is detected automatically — you can change it on the pricing cards if needed. Your vendor referral (?ref=CODE) and ad (UTM) are saved for you.
+
+*2) CREATE A ROOM — ONLY ONE FREE ROOM*
+- On your Dashboard, “Create Room” without choosing a type gives you a Starter Room (Free) — 1 Room only, 50 contributions, 1GB, 30 days, download one by one.
+- If you pick Wedding, Birthday, Burial, Memorial, Anniversary or Graduation there, you'll be sent to the paid page instead — that's normal. Those occasions are not free.
+- For any paid occasion: go to Weddings (or Pricing → Create a Full Room). You'll see a form:
+  - Occasion → choose Wedding / Birthday / Burial / Memorial / Anniversary / Graduation (use ?type=burial in the link to pre-select Burial, e.g. uloofstories.com/weddings/create?type=burial)
+  - Title → e.g. “In memory of Papa — Burial Room” or “Amaka & Chidi's Wedding”
+  - Couple/celebrant names, first date, extra dates if needed (traditional + white wedding = one Room), and a welcome message for guests.
+
+Tap Continue to payment. You'll see the order summary (e.g. Nigeria 15,000 Naira one-off) then go to Paystack (Nigeria) or Stripe/PayPal (UK, US, Canada, Europe, Rest of Africa). One payment = one Room. No subscription for a Full Room. After payment your Room becomes Active (10GB, 12 months, unlimited guests, QR + share link, bulk download, slideshow).
+
+*3) BURIAL / BIRTHDAY / MEMORIAL?*
+Exactly the same flow as a wedding. Don't use the Dashboard free form. Go to:
+- uloofstories.com/weddings/create?type=burial  (or ?type=birthday, ?type=memorial)
+- Or uloofstories.com/pricing → Create a Full Room → on the next page pick Burial / Birthday from the Occasion dropdown.
+Same price as a wedding for your region.
+
+*4) SHARE WITH GUESTS*
+After payment, open the Room in your Dashboard → you'll get a private link + QR code. Put it on the programme, table card, welcome sign, WhatsApp group or screen. Guests open it on their phone (no app, no payment):
+1 Scan QR / tap link → 2 See your cover + names → 3 Choose Photos / Videos / Written message → 4 Confirm they have permission → 5 Upload (you see progress) → 6 “Add another memory”
+
+*5) MANAGE & DOWNLOAD*
+You stay in control — who can view, who can contribute, which contributions stay. Starter: download one by one. Full Rooms & Archives: Download all as a zip. You're reminded before a Starter closes (30 days) and before a Full Room's 12 months end — then you can download or Move it into your Family Archive.
+
+*6) FAMILY ARCHIVE (ongoing, not per occasion)*
+For the family's long-term home: Pricing → Family Archive. Pick Monthly or Yearly for your region:
+- Nigeria 3,500 Naira / 35,000 Naira (save 7,000) • Rest of Africa $4.99 / $49 • UK £7.99 / £79 • US/Canada/Rest of world $9.99 / $99 • Europe 9.99 Euros / 99 Euros
+Renews automatically until you cancel (access stays to the end of what you paid for). 25GB, invite the whole family (no per-person fee), organise by person/generation/theme. A completed Wedding/Burial/Birthday Room can be moved into an active Archive.
+
+*PRICES are shown in ONE currency* — change the location selector at the top of Pricing and every card updates. Tax is shown before you pay; your bank may add a small currency-conversion fee.
+
+*NEED A VENDOR LINK?*
+Give vendors a link like uloofstories.com/weddings?ref=WED123. Their referrals are tracked automatically (and you see the ?ref= saved). Commission is 20% (Nigeria floor 3,000 Naira).
+
+---
+Quick links to save:
+- Create Wedding/Burial/Birthday Room: uloofstories.com/weddings/create (add ?type=burial for burial)
+- Prices: uloofstories.com/pricing
+- Support: uloofstories.com/contact
+
+Guests never pay. You pay once per Room. Start free with one General story Room if you just want to try.
+
+---
+NOTE FOR WHATSAPP: The file CLIENT_HOWTO_WHATSAPP.txt in the same folder is the plain-text version with no markdown (no ** or backticks) — use that one for direct copy-paste to WhatsApp. WhatsApp renders *word* as bold, so **word** would show extra stars.

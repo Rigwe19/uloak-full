@@ -86,9 +86,9 @@ export default function Welcome({
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const heroImages = [
-        '/images/hero-1.webp',
-        '/images/hero-2.webp',
-        '/images/hero-3.webp'
+        '/images/01-ulo-team-studio.jpg',
+        '/images/03-ulo-family-reunion.jpg',
+        '/images/10-ulo-corporate-gala.jpg',
     ];
 
     useEffect(() => {
@@ -259,32 +259,32 @@ export default function Welcome({
                                 title="Family House"
                                 description="Bring generations, photographs, voices and family stories together in one place."
                                 tag="Generations"
-                                imageUrl="https://images.unsplash.com/photo-1528605248644-14dd04cb220b?w=600&q=80"
+                                imageUrl="/images/03-ulo-family-reunion.jpg"
                             />
                             <StoryTypeCard
                                 title="Event Room"
                                 description="Keep the stories, photographs and memories from important family occasions together."
                                 tag="Celebrations"
-                                imageUrl="https://images.unsplash.com/photo-1489710437720-ebb67ec84dd2?w=600&q=80"
+                                imageUrl="/images/02-ulo-event-phone-tablet-guidance.jpg"
                             />
                             <StoryTypeCard
                                 title="Tribute Room"
                                 description="Create a meaningful, respectful space to gather memories and celebrate someone's life journey."
                                 tag="In Memoriam"
-                                imageUrl="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80"
+                                imageUrl="/images/09-ulo-tribute-host.jpg"
                             />
                             <StoryTypeCard
                                 title="Life Story Room"
                                 description="Build a rich chronological collection around one person's journey, memories and life experiences."
                                 tag="Milestones"
-                                imageUrl="https://images.unsplash.com/photo-1444840535719-195841cb6e2b?w=600&q=80"
+                                imageUrl="/images/07-ulo-story-box.jpg"
                             />
                             <div className="md:col-span-2 lg:col-span-1">
                                 <StoryTypeCard
                                     title="Community Room"
                                     description="Bring shared histories, traditions, oral records and community stories together in a safe space."
                                     tag="Heritage"
-                                    imageUrl="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80"
+                                    imageUrl="/images/04-ulo-community-event.jpg"
                                 />
                             </div>
                         </motion.div>
@@ -438,7 +438,7 @@ export default function Welcome({
                                         <div className="space-y-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-lg bg-surface overflow-hidden">
-                                                    <img src="https://images.unsplash.com/photo-1528605248644-14dd04cb220b?w=100&q=80" className="object-cover h-full w-full" alt="Thumbnail" />
+                                                    <img src="/images/07-ulo-story-box.jpg" className="object-cover h-full w-full" alt="Thumbnail" />
                                                 </div>
                                                 <div>
                                                     <h4 className="text-xs font-bold text-text-primary">Egusi Soup Lesson</h4>
@@ -589,9 +589,9 @@ export default function Welcome({
                             >
                                 <motion.img
                                     variants={fadeFromLeft}
-                                    src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80"
+                                    src="/images/06-ulo-uniform-lifestyle.jpg"
                                     alt="Ulo of Stories background"
-                                    className="h-full w-full object-cover grayscale opacity-80"
+                                    className="h-full w-full object-cover opacity-90"
                                 />
                             </motion.div>
                             <motion.div

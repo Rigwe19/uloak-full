@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoomTier;
 use App\Models\HouseMember;
 use App\Models\Room;
 use App\Models\Story;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\RoomService;
 use App\Services\StoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -216,6 +219,7 @@ class HouseAccessController extends Controller
             'media_items.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm', 'max:10240'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date'],
+            'tier_type' => ['nullable', 'string', 'in:starter,full_room,family_archive'],
         ]);
 
         if ($request->hasFile('thumbnail')) {
@@ -240,12 +244,33 @@ class HouseAccessController extends Controller
             $validated['media_items'] = $mediaUrls;
         }
 
-        $room = Room::create([
-            ...$validated,
-            'created_by' => $ownerId,
-            'created_by_house_member_id' => $houseMemberId,
-            'slug' => Str::slug($validated['name']).'-'.Str::random(6),
-        ]);
+        // House follows the same paywall as dashboard: only "general" is free.
+        $paywalledTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
+        $requestedType = $validated['room_type'] ?? 'general';
+        $requestedTier = $validated['tier_type'] ?? null;
+        if (in_array($requestedType, $paywalledTypes, true) || $requestedTier === 'full_room' || $requestedTier === 'family_archive') {
+            return redirect()->route('weddings.create', ['type' => $requestedType !== 'general' ? $requestedType : 'wedding'])->with('info', 'This occasion requires a paid Full Room — pick the type and checkout at the same price.');
+        }
+
+        $owner = User::findOrFail($ownerId);
+        $tier = RoomTier::tryFrom($validated['tier_type'] ?? RoomTier::Starter->value) ?? RoomTier::Starter;
+        unset($validated['tier_type']);
+
+        // Enforce tier gating via RoomService (1 active Starter per owner; full_room/family_archive blocked here).
+        try {
+            $room = app(RoomService::class)->createRoom($owner, [
+                ...$validated,
+                'tier_type' => $tier->value,
+                'created_by_house_member_id' => $houseMemberId,
+                'slug' => Str::slug($validated['name']).'-'.Str::random(6),
+            ], $tier);
+        } catch (ValidationException $e) {
+            throw $e;
+        }
+        // Attach with idempotent check.
+        if (! $room->members()->where('users.id', $ownerId)->exists()) {
+            $room->members()->attach($ownerId);
+        }
 
         $room->members()->attach($ownerId);
 
