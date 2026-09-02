@@ -171,7 +171,7 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
             <Head title="Pricing — Ulo of Stories" />
 
             {/* Hero */}
-            <section className="relative px-6 pt-32 pb-12 md:px-12 lg:px-24">
+            <section className="relative px-6 pt-32 pb-12 md:px-12 lg:px-24 overflow-hidden">
                 <div
                     className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]"
                     aria-hidden

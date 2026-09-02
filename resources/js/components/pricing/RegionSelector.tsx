@@ -1,5 +1,6 @@
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface RegionOption {
     key: string;
@@ -69,7 +70,7 @@ export function RegionSelector({
                 />
             </button>
 
-            {isOpen && (
+            {isOpen && createPortal(
                 <ul
                     role="listbox"
                     className="absolute top-full left-0 z-50 mt-2 w-64 animate-in rounded-xl border border-border-subtle bg-surface py-2 shadow-lg duration-200 fade-in-0 zoom-in-95"
@@ -98,7 +99,8 @@ export function RegionSelector({
                             )}
                         </li>
                     ))}
-                </ul>
+                </ul>,
+                document.body,
             )}
         </div>
     );
