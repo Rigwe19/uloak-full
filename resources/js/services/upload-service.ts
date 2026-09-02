@@ -10,14 +10,20 @@ const API_BASE = '/api';
 export async function requestSignedUpload(
     file: File,
     mediaType: 'photo' | 'video' | 'audio' | 'document',
-): Promise<{ media_uuid: string; media_id: number; thumbnail_url: string | null; status: string }> {
+): Promise<{
+    media_uuid: string;
+    media_id: number;
+    thumbnail_url: string | null;
+    status: string;
+}> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
     try {
-        const endpoint = mediaType === 'video'
-            ? `${API_BASE}/media/videos/upload`
-            : `${API_BASE}/media/images/upload`;
+        const endpoint =
+            mediaType === 'video'
+                ? `${API_BASE}/media/videos/upload`
+                : `${API_BASE}/media/images/upload`;
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -88,7 +94,10 @@ export async function pollMediaStatus(
                 return status;
             } else if (status.status === 'failed') {
                 throw new Error(status.failed_reason || 'Processing failed');
-            } else if (status.status === 'processing' || status.status === 'uploading') {
+            } else if (
+                status.status === 'processing' ||
+                status.status === 'uploading'
+            ) {
                 percentage = status.progress ?? 50;
                 onProgress(percentage);
             } else if (status.status === 'queued') {
@@ -101,7 +110,7 @@ export async function pollMediaStatus(
             if (signal.aborted) {
                 throw new Error('Upload polling cancelled');
             }
-            
+
             throw error;
         }
     }

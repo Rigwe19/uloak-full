@@ -27,7 +27,10 @@ export const ShareQRCode: React.FC<ShareQRCodeProps> = ({
     const [activeTab, setActiveTab] = useState<'qr' | 'link' | 'email'>('qr');
 
     // Create shared URL
-    const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/share/${roomId}` : "";
+    const shareUrl =
+        typeof window !== 'undefined'
+            ? `${window.location.origin}/share/${roomId}`
+            : '';
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(shareUrl);

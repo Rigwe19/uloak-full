@@ -20,7 +20,14 @@ interface MediaRendererProps {
     mode?: 'card' | 'player';
 }
 
-export function MediaRenderer({ type, video, asset, story, onVideoClick, mode = 'card' }: MediaRendererProps) {
+export function MediaRenderer({
+    type,
+    video,
+    asset,
+    story,
+    onVideoClick,
+    mode = 'card',
+}: MediaRendererProps) {
     if (type === 'video' && video) {
         if (mode === 'player') {
             return (
@@ -72,10 +79,15 @@ export function MediaRenderer({ type, video, asset, story, onVideoClick, mode = 
         }
 
         return (
-            <div className="flex items-center justify-center h-full bg-gradient-to-br from-accent-gold/5 to-surface">
+            <div className="flex h-full items-center justify-center bg-gradient-to-br from-accent-gold/5 to-surface">
                 <div className="text-center">
-                    <Music size={40} className="text-accent-gold/60 mx-auto mb-2" />
-                    <span className="text-[10px] font-mono tracking-wider text-accent-gold uppercase block">Voice Recording</span>
+                    <Music
+                        size={40}
+                        className="mx-auto mb-2 text-accent-gold/60"
+                    />
+                    <span className="block font-mono text-[10px] tracking-wider text-accent-gold uppercase">
+                        Voice Recording
+                    </span>
                 </div>
             </div>
         );
@@ -95,7 +107,9 @@ export function MediaRenderer({ type, video, asset, story, onVideoClick, mode = 
                                 Archived Document
                             </p>
                             <h2 className="mb-4 text-2xl font-bold text-white">
-                                {asset?.title || story?.title || 'Untitled Document'}
+                                {asset?.title ||
+                                    story?.title ||
+                                    'Untitled Document'}
                             </h2>
                             <a
                                 href={asset?.url || story?.fileUrl}
@@ -113,7 +127,7 @@ export function MediaRenderer({ type, video, asset, story, onVideoClick, mode = 
         }
 
         return (
-            <div className="flex items-center justify-center h-full bg-gradient-to-br from-accent-gold/5 to-surface">
+            <div className="flex h-full items-center justify-center bg-gradient-to-br from-accent-gold/5 to-surface">
                 <FileText size={32} className="text-accent-gold/40" />
             </div>
         );
@@ -122,12 +136,17 @@ export function MediaRenderer({ type, video, asset, story, onVideoClick, mode = 
     if (type === 'photo' || type === 'image') {
         return (
             <img
-                src={asset?.url || story?.fileUrl || story?.thumbnail || '/logo-stacked.png'}
+                src={
+                    asset?.url ||
+                    story?.fileUrl ||
+                    story?.thumbnail ||
+                    '/logo-stacked.png'
+                }
                 alt={asset?.title || story?.title || ''}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 onError={(e) => {
- e.currentTarget.src = '/logo-stacked.png'; 
-}}
+                    e.currentTarget.src = '/logo-stacked.png';
+                }}
             />
         );
     }

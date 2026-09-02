@@ -14,7 +14,9 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage().props as any;
-    const [preview, setPreview] = React.useState<string | null>(auth.user.avatar_url);
+    const [preview, setPreview] = React.useState<string | null>(
+        auth.user.avatar_url,
+    );
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -54,7 +56,7 @@ export default function Profile({
                             className="h-20 w-20 rounded-[32px] object-cover ring-4 ring-border-subtle md:h-24 md:w-24"
                             alt=""
                         />
-                        <div 
+                        <div
                             onClick={() => fileInputRef.current?.click()}
                             className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-[32px] bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
                         >
@@ -73,9 +75,10 @@ export default function Profile({
                             {auth.user.name}
                         </h3>
                         <p className="text-xs text-text-muted md:text-sm">
-                            Custodian since {new Date(auth.user.created_at).getFullYear()}
+                            Custodian since{' '}
+                            {new Date(auth.user.created_at).getFullYear()}
                         </p>
-                        <button 
+                        <button
                             onClick={() => fileInputRef.current?.click()}
                             className="mt-2 text-[10px] font-bold tracking-widest text-accent-gold uppercase hover:underline"
                         >
@@ -84,10 +87,7 @@ export default function Profile({
                     </div>
                 </div>
 
-                <form
-                    onSubmit={submit}
-                    className="space-y-8"
-                >
+                <form onSubmit={submit} className="space-y-8">
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div className="space-y-2">
                             <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
@@ -96,7 +96,9 @@ export default function Profile({
                             <input
                                 name="name"
                                 value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
+                                onChange={(e) =>
+                                    setData('name', e.target.value)
+                                }
                                 required
                                 autoComplete="name"
                                 className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-5 py-3.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold/50 md:px-6 md:py-4"
@@ -111,7 +113,9 @@ export default function Profile({
                                 type="email"
                                 name="email"
                                 value={data.email}
-                                onChange={(e) => setData('email', e.target.value)}
+                                onChange={(e) =>
+                                    setData('email', e.target.value)
+                                }
                                 required
                                 autoComplete="username"
                                 className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-5 py-3.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold/50 md:px-6 md:py-4"
@@ -157,9 +161,12 @@ export default function Profile({
 
             <div className="space-y-6">
                 <div className="space-y-1">
-                    <h4 className="text-lg font-bold text-red-500">Danger Zone</h4>
+                    <h4 className="text-lg font-bold text-red-500">
+                        Danger Zone
+                    </h4>
                     <p className="text-sm text-text-muted">
-                        Once you delete your account, there is no going back. Please be certain.
+                        Once you delete your account, there is no going back.
+                        Please be certain.
                     </p>
                 </div>
                 <DeleteUser />

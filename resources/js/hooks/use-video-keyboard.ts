@@ -18,15 +18,19 @@ export function useVideoKeyboard({ onClose }: UseVideoKeyboardOptions = {}) {
         const handleKey = (e: KeyboardEvent) => {
             const target = e.target as HTMLElement;
 
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+            if (
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.isContentEditable
+            ) {
                 return;
             }
 
             const el = getActiveVideoElement();
 
             if (!el) {
-return;
-}
+                return;
+            }
 
             switch (e.key) {
                 case ' ':
@@ -62,5 +66,13 @@ return;
         window.addEventListener('keydown', handleKey);
 
         return () => window.removeEventListener('keydown', handleKey);
-    }, [togglePlay, toggleMute, toggleFullscreen, currentTime, seek, isFullscreen, onClose]);
+    }, [
+        togglePlay,
+        toggleMute,
+        toggleFullscreen,
+        currentTime,
+        seek,
+        isFullscreen,
+        onClose,
+    ]);
 }

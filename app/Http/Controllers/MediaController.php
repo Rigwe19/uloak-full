@@ -21,6 +21,74 @@ class MediaController extends Controller
         protected MediaManager $mediaManager,
     ) {}
 
+    public function upload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:512000'],
+            'type' => ['nullable', 'string', 'in:video,image,audio,document'],
+        ]);
+
+        $file = $request->file('file');
+        $type = $request->input('type');
+        $mime = $file->getMimeType() ?: $file->getClientMimeType();
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        $isVideo = $type === 'video'
+            || str_starts_with((string) $mime, 'video/')
+            || in_array($ext, ['mp4', 'mov', 'avi', 'mkv', 'webm'], true);
+
+        try {
+            $media = $isVideo
+                ? $this->mediaManager->uploadVideo($file)
+                : $this->mediaManager->uploadImage($file);
+        } catch (UnsupportedFormatException $e) {
+            // Try the alternative processor before failing
+            try {
+                $media = $isVideo
+                    ? $this->mediaManager->uploadImage($file)
+                    : $this->mediaManager->uploadVideo($file);
+            } catch (\Throwable $inner) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'mime_type' => $e->mimeType,
+                ], 415);
+            }
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
+        MediaProcessingStarted::dispatch($media);
+
+        $thumb = $media->attributes['thumbnail'] ?? $media->thumbnail ?? null;
+        if (is_string($thumb) && str_starts_with($thumb, 'http')) {
+            $thumbUrl = $thumb;
+        } elseif (is_string($thumb) && $thumb !== '' && $thumb !== null) {
+            try {
+                $thumbUrl = Storage::disk($media->disk)->url($thumb);
+            } catch (\Throwable) {
+                $thumbUrl = $thumb;
+            }
+        } else {
+            $thumbUrl = null;
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $media->uuid,
+                'uuid' => $media->uuid,
+                'url' => $media->url(),
+                'type' => $media->type,
+                'mime_type' => $media->mime_type,
+                'status' => $media->status,
+                'provider' => $media->provider,
+                'thumbnail_url' => $thumbUrl,
+                'sprite' => $media->sprite,
+            ],
+        ], 200);
+    }
+
     public function uploadImage(Request $request): JsonResponse
     {
         $request->validate([
@@ -42,7 +110,7 @@ class MediaController extends Controller
 
         return response()->json([
             'data' => [
-                'id' => $media->id,
+                'id' => $media->uuid,
                 'uuid' => $media->uuid,
                 'url' => $media->url(),
                 'type' => $media->type,
@@ -77,17 +145,29 @@ class MediaController extends Controller
 
         MediaProcessingStarted::dispatch($media);
 
+        $thumb = $media->attributes['thumbnail'] ?? $media->thumbnail ?? null;
+        if (is_string($thumb) && str_starts_with($thumb, 'http')) {
+            $thumbUrl = $thumb;
+        } elseif (is_string($thumb) && $thumb !== '' && $thumb !== null) {
+            try {
+                $thumbUrl = Storage::disk($media->disk)->url($thumb);
+            } catch (\Throwable) {
+                $thumbUrl = $thumb;
+            }
+        } else {
+            $thumbUrl = null;
+        }
+
         return response()->json([
             'data' => [
-                'id' => $media->id,
+                'id' => $media->uuid,
                 'uuid' => $media->uuid,
                 'url' => $media->url(),
                 'type' => $media->type,
                 'mime_type' => $media->mime_type,
                 'status' => $media->status,
-                'thumbnail_url' => $media->thumbnail
-                    ? Storage::disk($media->disk)->url($media->thumbnail)
-                    : null,
+                'provider' => $media->provider,
+                'thumbnail_url' => $thumbUrl,
                 'sprite' => $media->sprite,
             ],
         ], 201);

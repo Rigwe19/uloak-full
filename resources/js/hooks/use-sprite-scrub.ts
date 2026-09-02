@@ -9,25 +9,36 @@ interface UseSpriteScrubOptions {
 export function useSpriteScrub({ sprite, duration }: UseSpriteScrubOptions) {
     const frames = useMemo(() => {
         if (!sprite || !duration || duration <= 0) {
-return null;
-}
+            return null;
+        }
 
         const cols = sprite.columns || 1;
         const rows = sprite.rows || 1;
         const total = sprite.total_frames || cols * rows;
         const frameW = sprite.frame_width || 160;
         const frameH = sprite.frame_height || 90;
-        const interval = sprite.interval || (duration / total);
+        const interval = sprite.interval || duration / total;
 
-        return { cols, rows, total, frameW, frameH, interval, imageUrl: sprite.image_url || '' };
+        return {
+            cols,
+            rows,
+            total,
+            frameW,
+            frameH,
+            interval,
+            imageUrl: sprite.image_url || '',
+        };
     }, [sprite, duration]);
 
     const getFrameAtTime = (time: number): ScrubFrame | null => {
         if (!frames || !duration) {
-return null;
-}
+            return null;
+        }
 
-        const idx = Math.min(Math.floor(time / frames.interval), frames.total - 1);
+        const idx = Math.min(
+            Math.floor(time / frames.interval),
+            frames.total - 1,
+        );
         const col = idx % frames.cols;
         const row = Math.floor(idx / frames.cols);
 
@@ -44,8 +55,8 @@ return null;
         const frame = getFrameAtTime(time);
 
         if (!frame || !frames?.imageUrl) {
-return null;
-}
+            return null;
+        }
 
         return {
             backgroundImage: `url(${frames.imageUrl})`,

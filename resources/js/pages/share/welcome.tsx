@@ -25,7 +25,11 @@ interface ShareWelcomeProps {
     };
 }
 
-export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) {
+export default function ShareWelcome({
+    type,
+    space,
+    flash,
+}: ShareWelcomeProps) {
     const [submitted, setSubmitted] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -63,7 +67,7 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                 )}
                 {/* Golden ambient blobs */}
                 <div className="absolute top-1/4 left-1/4 h-[400px] w-[400px] rounded-full bg-accent-gold/5 blur-[120px]" />
-                <div className="absolute bottom-1/4 right-1/4 h-[400px] w-[400px] rounded-full bg-accent-gold/5 blur-[120px]" />
+                <div className="absolute right-1/4 bottom-1/4 h-[400px] w-[400px] rounded-full bg-accent-gold/5 blur-[120px]" />
             </div>
 
             <main className="relative z-10 w-full max-w-lg">
@@ -75,7 +79,7 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                         transition={{ duration: 0.8 }}
                         className="flex flex-col items-center"
                     >
-                        <span className="text-3xl font-extrabold tracking-[0.25em] text-text-primary uppercase md:text-4xl text-glow">
+                        <span className="text-glow text-3xl font-extrabold tracking-[0.25em] text-text-primary uppercase md:text-4xl">
                             Ulo of Stories
                         </span>
                         <div className="mt-2 h-0.5 w-16 bg-accent-gold/30" />
@@ -111,7 +115,8 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                             Step Into the Homestead
                                         </h1>
                                         <p className="text-sm font-light text-text-muted">
-                                            You are invited to contribute to and explore the{' '}
+                                            You are invited to contribute to and
+                                            explore the{' '}
                                             <span className="font-semibold text-accent-gold">
                                                 {space.name}
                                             </span>{' '}
@@ -119,15 +124,18 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                         </p>
                                     </div>
                                     {space.description && (
-                                        <div className="rounded-2xl bg-black/20 p-4 border border-white/5">
-                                            <p className="text-xs italic leading-relaxed text-text-muted">
+                                        <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                                            <p className="text-xs leading-relaxed text-text-muted italic">
                                                 "{space.description}"
                                             </p>
                                         </div>
                                     )}
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="space-y-6">
+                                <form
+                                    onSubmit={handleSubmit}
+                                    className="space-y-6"
+                                >
                                     <div className="space-y-4">
                                         {/* Name Input */}
                                         <div className="space-y-2">
@@ -135,7 +143,7 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                                 Your Full Name
                                             </label>
                                             <div className="group relative">
-                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-text-muted group-focus-within:text-accent-gold transition-colors">
+                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-text-muted transition-colors group-focus-within:text-accent-gold">
                                                     <UserIcon size={18} />
                                                 </div>
                                                 <input
@@ -143,12 +151,19 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                                     required
                                                     placeholder="Enter your name"
                                                     value={data.name}
-                                                    onChange={(e) => setData('name', e.target.value)}
-                                                    className="w-full rounded-2xl border border-border-subtle bg-bg-dark/85 py-4 pl-12 pr-6 text-sm text-text-primary placeholder:text-text-muted/65 transition-all focus:border-accent-gold/50 focus:outline-none focus:ring-1 focus:ring-accent-gold/30"
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'name',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="w-full rounded-2xl border border-border-subtle bg-bg-dark/85 py-4 pr-6 pl-12 text-sm text-text-primary transition-all placeholder:text-text-muted/65 focus:border-accent-gold/50 focus:ring-1 focus:ring-accent-gold/30 focus:outline-none"
                                                 />
                                             </div>
                                             {errors.name && (
-                                                <p className="mt-1 text-xs text-red-400">{errors.name}</p>
+                                                <p className="mt-1 text-xs text-red-400">
+                                                    {errors.name}
+                                                </p>
                                             )}
                                         </div>
 
@@ -158,7 +173,7 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                                 Your Email Address
                                             </label>
                                             <div className="group relative">
-                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-text-muted group-focus-within:text-accent-gold transition-colors">
+                                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-text-muted transition-colors group-focus-within:text-accent-gold">
                                                     <MailIcon size={18} />
                                                 </div>
                                                 <input
@@ -166,12 +181,19 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                                     required
                                                     placeholder="name@example.com"
                                                     value={data.email}
-                                                    onChange={(e) => setData('email', e.target.value)}
-                                                    className="w-full rounded-2xl border border-border-subtle bg-bg-dark/85 py-4 pl-12 pr-6 text-sm text-text-primary placeholder:text-text-muted/65 transition-all focus:border-accent-gold/50 focus:outline-none focus:ring-1 focus:ring-accent-gold/30"
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'email',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="w-full rounded-2xl border border-border-subtle bg-bg-dark/85 py-4 pr-6 pl-12 text-sm text-text-primary transition-all placeholder:text-text-muted/65 focus:border-accent-gold/50 focus:ring-1 focus:ring-accent-gold/30 focus:outline-none"
                                                 />
                                             </div>
                                             {errors.email && (
-                                                <p className="mt-1 text-xs text-red-400">{errors.email}</p>
+                                                <p className="mt-1 text-xs text-red-400">
+                                                    {errors.email}
+                                                </p>
                                             )}
                                         </div>
                                     </div>
@@ -186,8 +208,14 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                             {processing ? (
                                                 <div className="flex items-center gap-2">
                                                     <motion.div
-                                                        animate={{ rotate: 360 }}
-                                                        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                                                        animate={{
+                                                            rotate: 360,
+                                                        }}
+                                                        transition={{
+                                                            repeat: Infinity,
+                                                            duration: 1,
+                                                            ease: 'linear',
+                                                        }}
                                                         className="h-4 w-4 rounded-full border-2 border-bg-dark border-t-transparent"
                                                     />
                                                     Verifying...
@@ -203,8 +231,13 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                 </form>
 
                                 <div className="flex items-center justify-center gap-2 border-t border-white/5 pt-6 text-[10px] font-semibold tracking-wider text-text-muted/60 uppercase">
-                                    <Lock size={12} className="text-accent-gold/50" />
-                                    <span>Secure Magic Link Authentication</span>
+                                    <Lock
+                                        size={12}
+                                        className="text-accent-gold/50"
+                                    />
+                                    <span>
+                                        Secure Magic Link Authentication
+                                    </span>
                                 </div>
                             </motion.div>
                         ) : (
@@ -212,10 +245,14 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                 key="success-screen"
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                                className="text-center space-y-8"
+                                transition={{
+                                    type: 'spring',
+                                    damping: 25,
+                                    stiffness: 200,
+                                }}
+                                className="space-y-8 text-center"
                             >
-                                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 ring-8 ring-emerald-500/5 shadow-2xl">
+                                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 shadow-2xl ring-8 ring-emerald-500/5">
                                     <Check size={40} className="stroke-[3]" />
                                 </div>
 
@@ -223,15 +260,23 @@ export default function ShareWelcome({ type, space, flash }: ShareWelcomeProps) 
                                     <h2 className="text-2xl font-bold tracking-tight text-text-primary md:text-3xl">
                                         Gateway Opened
                                     </h2>
-                                    <p className="mx-auto max-w-sm text-sm font-light leading-relaxed text-text-muted">
+                                    <p className="mx-auto max-w-sm text-sm leading-relaxed font-light text-text-muted">
                                         A secure magic link has been sent to{' '}
-                                        <span className="font-semibold text-accent-gold">{data.email}</span>.
-                                        Check your inbox and click the link to enter the homestead.
+                                        <span className="font-semibold text-accent-gold">
+                                            {data.email}
+                                        </span>
+                                        . Check your inbox and click the link to
+                                        enter the homestead.
                                     </p>
                                 </div>
 
-                                <div className="rounded-2xl bg-accent-gold/5 p-5 border border-accent-gold/10 text-xs leading-relaxed text-text-muted">
-                                    <span className="font-medium text-accent-gold">Note:</span> The magic link is valid for 30 minutes. If you do not receive the email within a few minutes, please check your spam folder.
+                                <div className="rounded-2xl border border-accent-gold/10 bg-accent-gold/5 p-5 text-xs leading-relaxed text-text-muted">
+                                    <span className="font-medium text-accent-gold">
+                                        Note:
+                                    </span>{' '}
+                                    The magic link is valid for 30 minutes. If
+                                    you do not receive the email within a few
+                                    minutes, please check your spam folder.
                                 </div>
                             </motion.div>
                         )}

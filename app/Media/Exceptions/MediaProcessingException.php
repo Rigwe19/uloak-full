@@ -3,6 +3,7 @@
 namespace App\Media\Exceptions;
 
 use Exception;
+use Throwable;
 
 class MediaProcessingException extends Exception
 {

@@ -12,7 +12,7 @@ export default function AuthLayout({
     const { url } = usePage();
 
     return (
-        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg-dark md:p-8 p-4">
+        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg-dark p-4 md:p-8">
             {/* Background Ambience */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-1/2 left-1/2 h-200 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-gold/5 blur-[120px]" />
@@ -28,12 +28,12 @@ export default function AuthLayout({
                         <img
                             src="/logo-dark.png"
                             alt="ULO OF STORIES"
-                            className="h-16 mx-auto mb-18 dark:hidden object-contain"
+                            className="mx-auto mb-18 h-16 object-contain dark:hidden"
                         />
                         <img
                             src="/logo.png"
                             alt="ULO OF STORIES"
-                            className="h-16 mx-auto mb-18 dark:block hidden object-contain"
+                            className="mx-auto mb-18 hidden h-16 object-contain dark:block"
                         />
                     </Link>
                     <AnimatePresence mode="wait" initial={false}>

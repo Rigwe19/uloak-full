@@ -20,7 +20,7 @@ import {
     Briefcase,
     FileText,
     Coffee,
-    Lock
+    Lock,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import React from 'react';
@@ -63,13 +63,14 @@ export default function CommunityProjects({ page }: Props) {
         Briefcase,
         FileText,
         Coffee,
-        Lock
+        Lock,
     };
 
     const content = page?.content || {};
     const hero = content.hero || {
         title: 'Impact through storytelling.',
-        subtitle: 'Ulo of Stories partners with community organizations, charities, and institutions to preserve collective memory and foster intergenerational connection.',
+        subtitle:
+            'Ulo of Stories partners with community organizations, charities, and institutions to preserve collective memory and foster intergenerational connection.',
     };
 
     const impactAreas = content.focus_areas || [
@@ -105,7 +106,7 @@ export default function CommunityProjects({ page }: Props) {
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
                 {/* Hero Section */}
-                                <section className="relative min-h-[80vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
+                <section className="relative min-h-[80vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
                     <motion.div
                         className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]"
                         variants={parallaxFloat}
@@ -132,8 +133,11 @@ export default function CommunityProjects({ page }: Props) {
                                 className="lg:w-1/2"
                             >
                                 <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-accent-gold/20 bg-accent-gold/10 px-4 py-2">
-                                    <Globe className="text-accent-gold" size={16} />
-                                                                        <span className="text-[10px] font-bold tracking-widest text-accent-gold uppercase">
+                                    <Globe
+                                        className="text-accent-gold"
+                                        size={16}
+                                    />
+                                    <span className="text-[10px] font-bold tracking-widest text-accent-gold uppercase">
                                         Community & Impact
                                     </span>
                                 </div>
@@ -193,15 +197,20 @@ export default function CommunityProjects({ page }: Props) {
                 <section className="px-6 py-32 md:px-12 lg:px-24">
                     <div className="mx-auto max-w-7xl">
                         <div className="mb-24 max-w-2xl">
-                            <h2 className="mb-8 text-xs font-bold tracking-[0.4em] text-accent-gold uppercase">Our Focus Areas</h2>
-                            <p className="text-4xl font-bold tracking-tight text-text-primary md:text-5xl leading-[1.1]">
+                            <h2 className="mb-8 text-xs font-bold tracking-[0.4em] text-accent-gold uppercase">
+                                Our Focus Areas
+                            </h2>
+                            <p className="text-4xl leading-[1.1] font-bold tracking-tight text-text-primary md:text-5xl">
                                 Measuring the power of resonance and belonging.
                             </p>
                         </div>
 
                         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {impactAreas.map((area: any, i: number) => {
-                                const IconComponent = iconMap[area.icon as keyof typeof iconMap] || Heart;
+                                const IconComponent =
+                                    iconMap[
+                                        area.icon as keyof typeof iconMap
+                                    ] || Heart;
 
                                 return (
                                     <motion.div
@@ -213,7 +222,10 @@ export default function CommunityProjects({ page }: Props) {
                                         className="group rounded-3xl border border-white/5 bg-surface/20 p-12 transition-all hover:border-accent-gold/20 hover:bg-surface/40"
                                     >
                                         <div className="mb-8 inline-flex rounded-2xl bg-accent-gold/10 p-4 transition-transform group-hover:scale-110">
-                                            <IconComponent className="text-accent-gold" size={32} />
+                                            <IconComponent
+                                                className="text-accent-gold"
+                                                size={32}
+                                            />
                                         </div>
                                         <h3 className="mb-6 text-2xl font-bold text-text-primary">
                                             {area.title}
@@ -229,14 +241,24 @@ export default function CommunityProjects({ page }: Props) {
                 </section>
 
                 {/* Partners Section */}
-                <section className="bg-surface/10 py-32 px-6">
+                <section className="bg-surface/10 px-6 py-32">
                     <div className="mx-auto max-w-7xl text-center">
-                        <p className="mb-16 text-xs font-bold tracking-[0.3em] text-text-muted uppercase">Institutional Partners</p>
+                        <p className="mb-16 text-xs font-bold tracking-[0.3em] text-text-muted uppercase">
+                            Institutional Partners
+                        </p>
                         <div className="flex flex-wrap items-center justify-center gap-12 opacity-30 grayscale md:gap-24">
-                            <span className="text-3xl font-bold">NHS TRUSTS</span>
-                            <span className="text-3xl font-bold">OXFORD UNIVERSITY</span>
-                            <span className="text-3xl font-bold">HERITAGE FUND</span>
-                            <span className="text-3xl font-bold">UK COUNCILS</span>
+                            <span className="text-3xl font-bold">
+                                NHS TRUSTS
+                            </span>
+                            <span className="text-3xl font-bold">
+                                OXFORD UNIVERSITY
+                            </span>
+                            <span className="text-3xl font-bold">
+                                HERITAGE FUND
+                            </span>
+                            <span className="text-3xl font-bold">
+                                UK COUNCILS
+                            </span>
                         </div>
                     </div>
                 </section>
@@ -249,9 +271,13 @@ export default function CommunityProjects({ page }: Props) {
                         viewport={{ once: true }}
                         className="mx-auto max-w-5xl rounded-[60px] bg-accent-gold p-16 text-center text-black md:p-24"
                     >
-                        <h2 className="text-4xl font-bold tracking-tight md:text-6xl">Interested in collaborating?</h2>
-                        <p className="mx-auto mt-8 max-w-2xl text-xl font-medium opacity-80 leading-relaxed">
-                            If you're a researcher, care provider, funder, or community organisation interested in the power of storytelling — we'd love to hear from you.
+                        <h2 className="text-4xl font-bold tracking-tight md:text-6xl">
+                            Interested in collaborating?
+                        </h2>
+                        <p className="mx-auto mt-8 max-w-2xl text-xl leading-relaxed font-medium opacity-80">
+                            If you're a researcher, care provider, funder, or
+                            community organisation interested in the power of
+                            storytelling — we'd love to hear from you.
                         </p>
                         <div className="mt-12 flex flex-wrap justify-center gap-6">
                             <Button className="h-16 rounded-full bg-black px-12 text-lg font-bold text-white transition-transform hover:scale-105">

@@ -5,19 +5,22 @@ interface UseVideoMobilePreviewOptions {
     enabled?: boolean;
 }
 
-export function useVideoMobilePreview({ previewUrl, enabled = true }: UseVideoMobilePreviewOptions) {
+export function useVideoMobilePreview({
+    previewUrl,
+    enabled = true,
+}: UseVideoMobilePreviewOptions) {
     const previewRef = useRef<HTMLVideoElement | null>(null);
     const isLongPress = useRef(false);
     const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const startPreview = useCallback(() => {
         if (!enabled || !previewUrl) {
-return;
-}
+            return;
+        }
 
         if (previewRef.current) {
-return;
-}
+            return;
+        }
 
         const video = document.createElement('video');
         video.src = previewUrl;
@@ -44,8 +47,8 @@ return;
 
     const handleTouchStart = useCallback(() => {
         if (!enabled || !previewUrl) {
-return;
-}
+            return;
+        }
 
         pressTimer.current = setTimeout(() => {
             isLongPress.current = true;
@@ -78,8 +81,8 @@ return;
     useEffect(() => {
         return () => {
             if (pressTimer.current) {
-clearTimeout(pressTimer.current);
-}
+                clearTimeout(pressTimer.current);
+            }
 
             stopPreview();
         };

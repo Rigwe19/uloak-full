@@ -22,9 +22,27 @@ export function PageTransition({
             exit: { opacity: 0, scale: 1.02, y: -20 },
         },
         door: {
-            initial: { opacity: 0, rotateY: 90, scale: 0.9, transformOrigin: 'left center', z: -500 },
-            animate: { opacity: 1, rotateY: 0, scale: 1, transformOrigin: 'left center', z: 0 },
-            exit: { opacity: 0, rotateY: -90, scale: 0.9, transformOrigin: 'right center', z: -500 },
+            initial: {
+                opacity: 0,
+                rotateY: 90,
+                scale: 0.9,
+                transformOrigin: 'left center',
+                z: -500,
+            },
+            animate: {
+                opacity: 1,
+                rotateY: 0,
+                scale: 1,
+                transformOrigin: 'left center',
+                z: 0,
+            },
+            exit: {
+                opacity: 0,
+                rotateY: -90,
+                scale: 0.9,
+                transformOrigin: 'right center',
+                z: -500,
+            },
         },
     };
 

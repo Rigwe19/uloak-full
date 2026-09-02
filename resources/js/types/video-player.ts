@@ -1,6 +1,8 @@
 export type PlaybackSpeed = 0.25 | 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2;
 
-export const PLAYBACK_SPEEDS: PlaybackSpeed[] = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+export const PLAYBACK_SPEEDS: PlaybackSpeed[] = [
+    0.25, 0.5, 0.75, 1, 1.25, 1.5, 2,
+];
 
 export const SPEED_LABELS: Record<PlaybackSpeed, string> = {
     0.25: '0.25x',

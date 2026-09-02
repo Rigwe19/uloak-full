@@ -19,7 +19,11 @@ type Props = {
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
     const { props } = usePage();
-    const authPerson = (props as any).auth?.person as { id: number; uuid: string; name: string } | null;
+    const authPerson = (props as any).auth?.person as {
+        id: number;
+        uuid: string;
+        name: string;
+    } | null;
 
     const handleLogout = () => {
         cleanup();

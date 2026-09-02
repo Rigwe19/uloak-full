@@ -32,7 +32,7 @@ createInertiaApp({
                 'community-projects',
                 'contact',
                 'privacy',
-                'share'
+                'share',
             ].includes(name):
                 return GuestLayout;
             case name.startsWith('auth/'):

@@ -8,8 +8,14 @@ interface VideoHoverPreviewProps {
     className?: string;
 }
 
-export function VideoHoverPreview({ previewUrl, enabled = true, children, className = '' }: VideoHoverPreviewProps) {
-    const { previewRef, handleMouseEnter, handleMouseLeave } = useVideoHoverPreview({ previewUrl, enabled });
+export function VideoHoverPreview({
+    previewUrl,
+    enabled = true,
+    children,
+    className = '',
+}: VideoHoverPreviewProps) {
+    const { previewRef, handleMouseEnter, handleMouseLeave } =
+        useVideoHoverPreview({ previewUrl, enabled });
 
     return (
         <div

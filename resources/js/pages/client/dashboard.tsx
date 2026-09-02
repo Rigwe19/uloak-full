@@ -50,9 +50,24 @@ export default function ClientDashboard({ client_name, rooms, events }: Props) {
                             Browse your projects and events.
                         </p>
                     </div>
-                    <form action={logoutRoute().url} method="POST" className="hidden md:block">
-                        <input type="hidden" name="_token" value={document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''} />
-                        <button type="submit" className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs font-bold tracking-widest text-text-muted uppercase transition-all hover:border-red-500/30 hover:text-red-400">
+                    <form
+                        action={logoutRoute().url}
+                        method="POST"
+                        className="hidden md:block"
+                    >
+                        <input
+                            type="hidden"
+                            name="_token"
+                            value={
+                                document
+                                    .querySelector('meta[name="csrf-token"]')
+                                    ?.getAttribute('content') ?? ''
+                            }
+                        />
+                        <button
+                            type="submit"
+                            className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs font-bold tracking-widest text-text-muted uppercase transition-all hover:border-red-500/30 hover:text-red-400"
+                        >
                             <LogOut size={14} /> Logout
                         </button>
                     </form>
@@ -61,14 +76,23 @@ export default function ClientDashboard({ client_name, rooms, events }: Props) {
                 {/* My Projects */}
                 <section className="mb-16">
                     <div className="mb-8 flex items-center gap-3">
-                        <h2 className="text-xl font-bold text-text-primary md:text-2xl">My Projects</h2>
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-gold/20 text-[10px] text-accent-gold">{rooms.length}</span>
+                        <h2 className="text-xl font-bold text-text-primary md:text-2xl">
+                            My Projects
+                        </h2>
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-gold/20 text-[10px] text-accent-gold">
+                            {rooms.length}
+                        </span>
                     </div>
 
                     {rooms.length === 0 ? (
                         <div className="flex flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 py-16">
-                            <MapPin size={40} className="mb-4 text-text-muted/50" />
-                            <p className="text-sm text-text-muted">No projects assigned yet.</p>
+                            <MapPin
+                                size={40}
+                                className="mb-4 text-text-muted/50"
+                            />
+                            <p className="text-sm text-text-muted">
+                                No projects assigned yet.
+                            </p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -80,23 +104,38 @@ export default function ClientDashboard({ client_name, rooms, events }: Props) {
                                 >
                                     <div className="relative aspect-video overflow-hidden">
                                         {room.thumbnail ? (
-                                            <img src={room.thumbnail} alt={room.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                            <img
+                                                src={room.thumbnail}
+                                                alt={room.name}
+                                                className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                                            />
                                         ) : (
                                             <div className="flex h-full w-full items-center justify-center bg-bg-dark">
-                                                <Image size={32} className="text-text-muted/30" />
+                                                <Image
+                                                    size={32}
+                                                    className="text-text-muted/30"
+                                                />
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex grow flex-col justify-between gap-4 p-6">
                                         <div>
-                                            <h3 className="text-lg font-bold text-text-primary transition-colors group-hover:text-accent-gold">{room.name}</h3>
+                                            <h3 className="text-lg font-bold text-text-primary transition-colors group-hover:text-accent-gold">
+                                                {room.name}
+                                            </h3>
                                             {room.description && (
-                                                <p className="mt-1 line-clamp-2 text-sm text-text-muted">{room.description}</p>
+                                                <p className="mt-1 line-clamp-2 text-sm text-text-muted">
+                                                    {room.description}
+                                                </p>
                                             )}
                                         </div>
                                         <div className="flex items-center justify-between text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                            <span>{room.stories_count} Memories</span>
-                                            <span className="text-accent-gold">View Project</span>
+                                            <span>
+                                                {room.stories_count} Memories
+                                            </span>
+                                            <span className="text-accent-gold">
+                                                View Project
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>
@@ -108,14 +147,23 @@ export default function ClientDashboard({ client_name, rooms, events }: Props) {
                 {/* My Events */}
                 <section>
                     <div className="mb-8 flex items-center gap-3">
-                        <h2 className="text-xl font-bold text-text-primary md:text-2xl">My Events</h2>
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-gold/20 text-[10px] text-accent-gold">{events.length}</span>
+                        <h2 className="text-xl font-bold text-text-primary md:text-2xl">
+                            My Events
+                        </h2>
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-gold/20 text-[10px] text-accent-gold">
+                            {events.length}
+                        </span>
                     </div>
 
                     {events.length === 0 ? (
                         <div className="flex flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 py-16">
-                            <Calendar size={40} className="mb-4 text-text-muted/50" />
-                            <p className="text-sm text-text-muted">No events assigned yet.</p>
+                            <Calendar
+                                size={40}
+                                className="mb-4 text-text-muted/50"
+                            />
+                            <p className="text-sm text-text-muted">
+                                No events assigned yet.
+                            </p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -127,28 +175,47 @@ export default function ClientDashboard({ client_name, rooms, events }: Props) {
                                 >
                                     <div className="relative aspect-video overflow-hidden">
                                         {event.thumbnail ? (
-                                            <img src={event.thumbnail} alt={event.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                            <img
+                                                src={event.thumbnail}
+                                                alt={event.name}
+                                                className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                                            />
                                         ) : (
                                             <div className="flex h-full w-full items-center justify-center bg-bg-dark">
-                                                <Calendar size={32} className="text-text-muted/30" />
+                                                <Calendar
+                                                    size={32}
+                                                    className="text-text-muted/30"
+                                                />
                                             </div>
                                         )}
                                         {event.event_date && (
                                             <div className="absolute top-4 left-4 rounded-full border border-white/10 bg-bg-dark/60 px-3 py-1 text-[10px] font-bold tracking-widest text-accent-gold uppercase backdrop-blur-md">
-                                                {new Date(event.event_date).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+                                                {new Date(
+                                                    event.event_date,
+                                                ).toLocaleDateString('en-US', {
+                                                    dateStyle: 'medium',
+                                                })}
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex grow flex-col justify-between gap-4 p-6">
                                         <div>
-                                            <h3 className="text-lg font-bold text-text-primary transition-colors group-hover:text-accent-gold">{event.name}</h3>
+                                            <h3 className="text-lg font-bold text-text-primary transition-colors group-hover:text-accent-gold">
+                                                {event.name}
+                                            </h3>
                                             {event.description && (
-                                                <p className="mt-1 line-clamp-2 text-sm text-text-muted">{event.description}</p>
+                                                <p className="mt-1 line-clamp-2 text-sm text-text-muted">
+                                                    {event.description}
+                                                </p>
                                             )}
                                         </div>
                                         <div className="flex items-center justify-between text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                            <span>{event.stories_count} Memories</span>
-                                            <span className="text-accent-gold">View Event</span>
+                                            <span>
+                                                {event.stories_count} Memories
+                                            </span>
+                                            <span className="text-accent-gold">
+                                                View Event
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>
@@ -160,8 +227,19 @@ export default function ClientDashboard({ client_name, rooms, events }: Props) {
                 {/* Mobile Logout */}
                 <div className="mt-12 block md:hidden">
                     <form action={logoutRoute().url} method="POST">
-                        <input type="hidden" name="_token" value={document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''} />
-                        <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 py-4 text-xs font-bold tracking-widest text-text-muted uppercase transition-all hover:border-red-500/30 hover:text-red-400">
+                        <input
+                            type="hidden"
+                            name="_token"
+                            value={
+                                document
+                                    .querySelector('meta[name="csrf-token"]')
+                                    ?.getAttribute('content') ?? ''
+                            }
+                        />
+                        <button
+                            type="submit"
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 py-4 text-xs font-bold tracking-widest text-text-muted uppercase transition-all hover:border-red-500/30 hover:text-red-400"
+                        >
                             <LogOut size={14} /> Logout
                         </button>
                     </form>

@@ -17,7 +17,11 @@ interface Props {
     memberEmail: string;
 }
 
-export default function FamilyDashboard({ rooms, memberName, memberEmail }: Props) {
+export default function FamilyDashboard({
+    rooms,
+    memberName,
+    memberEmail,
+}: Props) {
     return (
         <>
             <Head title="My Rooms" />
@@ -27,7 +31,10 @@ export default function FamilyDashboard({ rooms, memberName, memberEmail }: Prop
                 <header className="border-b border-white/5">
                     <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
                         <div className="flex items-center gap-4">
-                            <Link href="/" className="text-xl font-bold tracking-tight text-text-primary">
+                            <Link
+                                href="/"
+                                className="text-xl font-bold tracking-tight text-text-primary"
+                            >
                                 Ulo of Stories
                             </Link>
                             <span className="rounded-full border border-accent-gold/20 bg-accent-gold/5 px-3 py-1 text-[10px] font-bold tracking-widest text-accent-gold uppercase">
@@ -35,7 +42,9 @@ export default function FamilyDashboard({ rooms, memberName, memberEmail }: Prop
                             </span>
                         </div>
                         <div className="flex items-center gap-4">
-                            <span className="text-sm text-text-muted">{memberName}</span>
+                            <span className="text-sm text-text-muted">
+                                {memberName}
+                            </span>
                             <a
                                 href="/family/logout"
                                 className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs font-bold tracking-widest text-text-muted uppercase transition-all hover:border-red-500/30 hover:text-red-400"
@@ -59,9 +68,12 @@ export default function FamilyDashboard({ rooms, memberName, memberEmail }: Prop
 
                     {rooms.length === 0 ? (
                         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-surface/20 px-6 py-20 text-center">
-                            <p className="text-lg text-text-muted">No rooms shared with you yet.</p>
+                            <p className="text-lg text-text-muted">
+                                No rooms shared with you yet.
+                            </p>
                             <p className="mt-2 text-sm text-text-muted">
-                                When a family member adds you to their room, it will appear here.
+                                When a family member adds you to their room, it
+                                will appear here.
                             </p>
                         </div>
                     ) : (
@@ -81,7 +93,7 @@ export default function FamilyDashboard({ rooms, memberName, memberEmail }: Prop
                                             />
                                         </div>
                                     ) : (
-                                        <div className="aspect-video flex items-center justify-center bg-surface/60">
+                                        <div className="flex aspect-video items-center justify-center bg-surface/60">
                                             <span className="text-4xl font-bold text-accent-gold/30">
                                                 {room.name.charAt(0)}
                                             </span>
@@ -97,11 +109,15 @@ export default function FamilyDashboard({ rooms, memberName, memberEmail }: Prop
                                             </p>
                                         )}
                                         <div className="mt-4 flex items-center gap-3 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                            <span>{room.stories_count} memories</span>
+                                            <span>
+                                                {room.stories_count} memories
+                                            </span>
                                             {room.room_type && (
                                                 <>
                                                     <span className="h-1 w-1 rounded-full bg-white/10" />
-                                                    <span>{room.room_type}</span>
+                                                    <span>
+                                                        {room.room_type}
+                                                    </span>
                                                 </>
                                             )}
                                         </div>

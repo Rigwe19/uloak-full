@@ -9,7 +9,12 @@ interface ReelsFeedOptions {
     initialHasMore: boolean;
 }
 
-export function useReelsFeed({ roomId, initialVideos, initialCursor, initialHasMore }: ReelsFeedOptions) {
+export function useReelsFeed({
+    roomId,
+    initialVideos,
+    initialCursor,
+    initialHasMore,
+}: ReelsFeedOptions) {
     const [videos, setVideos] = useState<FeedVideoData[]>(initialVideos);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFetching, setIsFetching] = useState(false);
@@ -24,17 +29,19 @@ export function useReelsFeed({ roomId, initialVideos, initialCursor, initialHasM
 
     const fetchMore = async () => {
         if (!hasMore || isFetching) {
-return;
-}
+            return;
+        }
 
         setIsFetching(true);
 
         try {
-            const response = await fetch(`/dashboard/rooms/${roomId}/feed?cursor=${nextCursor}`);
+            const response = await fetch(
+                `/dashboard/rooms/${roomId}/feed?cursor=${nextCursor}`,
+            );
             const data = await response.json();
-            
+
             if (data.videos?.length) {
-                setVideos(prev => [...prev, ...data.videos]);
+                setVideos((prev) => [...prev, ...data.videos]);
                 setNextCursor(data.nextCursor);
                 setHasMore(data.hasMore);
             }
@@ -47,7 +54,7 @@ return;
 
     const goNext = () => {
         if (currentIndex < videos.length - 1) {
-            setCurrentIndex(prev => prev + 1);
+            setCurrentIndex((prev) => prev + 1);
         } else if (hasMore) {
             fetchMore();
         }
@@ -55,7 +62,7 @@ return;
 
     const goPrev = () => {
         if (currentIndex > 0) {
-            setCurrentIndex(prev => prev - 1);
+            setCurrentIndex((prev) => prev - 1);
         }
     };
 

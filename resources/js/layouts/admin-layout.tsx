@@ -1,6 +1,18 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, BarChart3, CreditCard, DoorOpen, FileText, LayoutDashboard, LogOut, MessageSquare, MoreHorizontal, Settings, Users } from 'lucide-react';
+import {
+    Activity,
+    BarChart3,
+    CreditCard,
+    DoorOpen,
+    FileText,
+    LayoutDashboard,
+    LogOut,
+    MessageSquare,
+    MoreHorizontal,
+    Settings,
+    Users,
+} from 'lucide-react';
 import React from 'react';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { PageTransition } from '@/components/page-transition';
@@ -36,13 +48,48 @@ export default function AdminLayout({
             href: admin.dashboard().url,
         },
         { id: 'users', icon: Users, label: 'Users', href: admin.users().url },
-        { id: 'rooms', icon: DoorOpen, label: 'Rooms', href: admin.rooms().url },
-        { id: 'enquiries', icon: MessageSquare, label: 'Enquiries', href: admin.enquiries().url },
-        { id: 'analytics', icon: BarChart3, label: 'Analytics', href: admin.analytics().url },
-        { id: 'pages', icon: FileText, label: 'Pages', href: admin.pages().url },
-        { id: 'memberships', icon: CreditCard, label: 'Memberships', href: admin.memberships().url },
-        { id: 'activity-logs', icon: Activity, label: 'Activity Logs', href: admin.activityLogs().url },
-        { id: 'settings', icon: Settings, label: 'Settings', href: admin.settings().url },
+        {
+            id: 'rooms',
+            icon: DoorOpen,
+            label: 'Rooms',
+            href: admin.rooms().url,
+        },
+        {
+            id: 'enquiries',
+            icon: MessageSquare,
+            label: 'Enquiries',
+            href: admin.enquiries().url,
+        },
+        {
+            id: 'analytics',
+            icon: BarChart3,
+            label: 'Analytics',
+            href: admin.analytics().url,
+        },
+        {
+            id: 'pages',
+            icon: FileText,
+            label: 'Pages',
+            href: admin.pages().url,
+        },
+        {
+            id: 'memberships',
+            icon: CreditCard,
+            label: 'Memberships',
+            href: admin.memberships().url,
+        },
+        {
+            id: 'activity-logs',
+            icon: Activity,
+            label: 'Activity Logs',
+            href: admin.activityLogs().url,
+        },
+        {
+            id: 'settings',
+            icon: Settings,
+            label: 'Settings',
+            href: admin.settings().url,
+        },
     ];
 
     const handleLogout = () => {
@@ -61,12 +108,12 @@ export default function AdminLayout({
                     <img
                         src="/logo-stacked-dark.png"
                         alt="ULO OF STORIES"
-                        className="h-auto dark:hidden w-full object-contain"
+                        className="h-auto w-full object-contain dark:hidden"
                     />
                     <img
                         src="/logo-stacked.png"
                         alt="ULO OF STORIES"
-                        className="h-auto dark:block hidden w-full object-contain"
+                        className="hidden h-auto w-full object-contain dark:block"
                     />
                 </Link>
 
@@ -103,13 +150,13 @@ export default function AdminLayout({
             {/* Mobile Bottom Nav */}
             <nav className="fixed right-0 bottom-0 left-0 z-60 bg-linear-to-t from-bg-dark via-bg-dark/95 to-transparent px-3 pt-4 pb-2 md:hidden">
                 <div className="flex items-center justify-around rounded-[28px] border border-white/10 bg-surface/80 px-1 py-1 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl">
-
                     <Link
                         href={admin.dashboard().url}
-                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(admin.dashboard().url)
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${
+                            isActive(admin.dashboard().url)
                                 ? 'bg-accent-gold/10 text-accent-gold'
                                 : 'text-text-muted'
-                            }`}
+                        }`}
                     >
                         <LayoutDashboard size={20} />
                         <span className="text-[9px] font-medium tracking-wider uppercase">
@@ -119,10 +166,11 @@ export default function AdminLayout({
 
                     <Link
                         href={admin.users().url}
-                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(admin.users().url)
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${
+                            isActive(admin.users().url)
                                 ? 'bg-accent-gold/10 text-accent-gold'
                                 : 'text-text-muted'
-                            }`}
+                        }`}
                     >
                         <Users size={20} />
                         <span className="text-[9px] font-medium tracking-wider uppercase">
@@ -132,10 +180,11 @@ export default function AdminLayout({
 
                     <Link
                         href={admin.rooms().url}
-                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(admin.rooms().url)
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${
+                            isActive(admin.rooms().url)
                                 ? 'bg-accent-gold/10 text-accent-gold'
                                 : 'text-text-muted'
-                            }`}
+                        }`}
                     >
                         <DoorOpen size={20} />
                         <span className="text-[9px] font-medium tracking-wider uppercase">
@@ -145,10 +194,11 @@ export default function AdminLayout({
 
                     <Link
                         href={admin.enquiries().url}
-                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(admin.enquiries().url)
+                        className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${
+                            isActive(admin.enquiries().url)
                                 ? 'bg-accent-gold/10 text-accent-gold'
                                 : 'text-text-muted'
-                            }`}
+                        }`}
                     >
                         <MessageSquare size={20} />
                         <span className="text-[9px] font-medium tracking-wider uppercase">
@@ -175,7 +225,6 @@ export default function AdminLayout({
                             </SheetHeader>
 
                             <div className="space-y-2">
-
                                 <Link
                                     href={admin.analytics().url}
                                     className="flex items-center gap-3 rounded-xl p-4 hover:bg-surface"
@@ -234,11 +283,9 @@ export default function AdminLayout({
             </nav>
 
             {/* Main Content */}
-            <main className="min-w-0 w-full grow overflow-x-hidden overflow-y-auto mb-18 md:pb-8">
+            <main className="mb-18 w-full min-w-0 grow overflow-x-hidden overflow-y-auto md:pb-8">
                 <AnimatePresence mode="wait" initial={false}>
-                    <PageTransition key={url}>
-                        {children}
-                    </PageTransition>
+                    <PageTransition key={url}>{children}</PageTransition>
                 </AnimatePresence>
             </main>
         </div>

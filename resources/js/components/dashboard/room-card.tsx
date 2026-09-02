@@ -35,7 +35,7 @@ interface Room {
 export function RoomCard({ room, roomUrl }: { room: Room; roomUrl?: string }) {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
-    
+
     const mouseX = useSpring(x, { stiffness: 500, damping: 50 });
     const mouseY = useSpring(y, { stiffness: 500, damping: 50 });
 
@@ -49,8 +49,8 @@ export function RoomCard({ room, roomUrl }: { room: Room; roomUrl?: string }) {
 
     function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
         if (isEntering) {
-return;
-}
+            return;
+        }
 
         const rect = e.currentTarget.getBoundingClientRect();
         const width = rect.width;
@@ -129,7 +129,8 @@ return;
                 >
                     <div className="flex items-center justify-between">
                         <Badge className="bg-accent-gold/20 text-accent-gold transition-colors duration-500 group-hover:bg-accent-gold group-hover:text-bg-dark">
-                            {room.stories_count || room?.tributes_count || 0} {room?.enable_tributes ? 'TRIBUTES' : 'STORIES'}
+                            {room.stories_count || room?.tributes_count || 0}{' '}
+                            {room?.enable_tributes ? 'TRIBUTES' : 'STORIES'}
                         </Badge>
                         <div className="flex gap-2">
                             <button
@@ -137,10 +138,10 @@ return;
                                     e.stopPropagation();
                                     setShowDetail(true);
                                 }}
-                                className="flex md:h-10 md:w-10 scale-50 items-center justify-center rounded-full text-primary md:opacity-0 shadow-xl backdrop-blur-md transition-all duration-300 md:group-hover:scale-100 md:group-hover:opacity-100 md:hover:bg-accent-gold md:hover:text-bg-dark"
+                                className="flex scale-50 items-center justify-center rounded-full text-primary shadow-xl backdrop-blur-md transition-all duration-300 md:h-10 md:w-10 md:opacity-0 md:group-hover:scale-100 md:group-hover:opacity-100 md:hover:bg-accent-gold md:hover:text-bg-dark"
                                 title="View Details"
                             >
-                                <Info className='size-10 md:size-4' />
+                                <Info className="size-10 md:size-4" />
                             </button>
                         </div>
                     </div>
@@ -198,194 +199,250 @@ return;
                     showHandle
                 >
                     {/* Mobile layout: stacked, scrollable */}
-                    <div className="flex flex-col h-full">
-                        <div className="relative h-56 w-full overflow-hidden shrink-0">
+                    <div className="flex h-full flex-col">
+                        <div className="relative h-56 w-full shrink-0 overflow-hidden">
                             {room.thumbnail ? (
-                                <img src={room.thumbnail} className="h-full w-full object-cover" alt={room.name} />
+                                <img
+                                    src={room.thumbnail}
+                                    className="h-full w-full object-cover"
+                                    alt={room.name}
+                                />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center bg-surface">
-                                    <span className="text-6xl font-bold text-text-muted opacity-20">{room.name.charAt(0)}</span>
+                                    <span className="text-6xl font-bold text-text-muted opacity-20">
+                                        {room.name.charAt(0)}
+                                    </span>
                                 </div>
                             )}
                             <div className="vignette absolute inset-0" />
                         </div>
-                        <div className="flex flex-col gap-6 p-6 overflow-y-auto flex-1">
+                        <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
                             <div>
-                                <Badge className="mb-4 border border-accent-gold/20 bg-accent-gold/10 text-accent-gold">Legacy Chamber</Badge>
-                                <h2 className="mb-3 text-3xl font-bold tracking-tight text-text-primary">{room.name}</h2>
-                                <p className="leading-relaxed font-light text-text-muted">{room.description}</p>
+                                <Badge className="mb-4 border border-accent-gold/20 bg-accent-gold/10 text-accent-gold">
+                                    Legacy Chamber
+                                </Badge>
+                                <h2 className="mb-3 text-3xl font-bold tracking-tight text-text-primary">
+                                    {room.name}
+                                </h2>
+                                <p className="leading-relaxed font-light text-text-muted">
+                                    {room.description}
+                                </p>
                             </div>
                             <div className="grid grid-cols-2 gap-6 border-y border-border-subtle py-6">
                                 <div>
-                                    <span className="mb-3 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">Guardians</span>
-                                    <AvatarGroup users={room.members.map((u) => ({ avatar: u.avatar, avatar_url: (u as any).avatar_url, name: u.name }))} />
+                                    <span className="mb-3 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
+                                        Guardians
+                                    </span>
+                                    <AvatarGroup
+                                        users={room.members.map((u) => ({
+                                            avatar: u.avatar,
+                                            avatar_url: (u as any).avatar_url,
+                                            name: u.name,
+                                        }))}
+                                    />
                                 </div>
                                 <div>
-                                    <span className="mb-3 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">Stored Memories</span>
+                                    <span className="mb-3 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
+                                        Stored Memories
+                                    </span>
                                     <div className="flex items-baseline gap-2">
-                                        <span className="font-outfit text-3xl font-bold text-text-primary">{room.stories_count || room?.tributes_count || 0}</span>
-                                        <span className="text-sm tracking-tighter text-text-muted uppercase">Collections</span>
+                                        <span className="font-outfit text-3xl font-bold text-text-primary">
+                                            {room.stories_count ||
+                                                room?.tributes_count ||
+                                                0}
+                                        </span>
+                                        <span className="text-sm tracking-tighter text-text-muted uppercase">
+                                            Collections
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                             <div className="flex flex-col gap-3 pb-4">
-                            <Link href={roomUrl ?? dashboardShow(room.slug).url}>
-                                <Button className="w-full rounded-2xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">Step Inside Room <ArrowRight /></Button>
-                            </Link>
-                                <Button variant="secondary" icon={Share2} className="w-full rounded-2xl font-bold border-border-subtle">Invite Kin</Button>
+                                <Link
+                                    href={
+                                        roomUrl ?? dashboardShow(room.slug).url
+                                    }
+                                >
+                                    <Button className="w-full rounded-2xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">
+                                        Step Inside Room <ArrowRight />
+                                    </Button>
+                                </Link>
+                                <Button
+                                    variant="secondary"
+                                    icon={Share2}
+                                    className="w-full rounded-2xl border-border-subtle font-bold"
+                                >
+                                    Invite Kin
+                                </Button>
                             </div>
                         </div>
                     </div>
                 </ResponsiveModal>
             ) : (
-                createPortal(<AnimatePresence>
-                {showDetail && (
-                    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 lg:p-8">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setShowDetail(false)}
-                            className="absolute inset-0 bg-bg-dark/65 backdrop-blur-2xl"
-                        />
-
-                        <motion.div
-                            layoutId={`room-peek-${room.id}`}
-                            initial={{
-                                opacity: 0,
-                                scale: 0.85,
-                                rotateX: 10,
-                                y: 40,
-                            }}
-                            animate={{ opacity: 1, scale: 1, rotateX: 0, y: 0 }}
-                            exit={{
-                                opacity: 0,
-                                scale: 0.85,
-                                rotateX: -10,
-                                y: 40,
-                            }}
-                            transition={{
-                                type: 'spring',
-                                damping: 25,
-                                stiffness: 200,
-                            }}
-                            className="perspective-1000 relative flex h-auto max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[40px] border border-border-subtle bg-surface shadow-[0_0_100px_rgba(0,0,0,0.8)] lg:flex-row"
-                        >
-                            <div className="relative h-80 w-full overflow-hidden font-bold text-white lg:h-auto lg:w-1/2">
-                                {room.thumbnail ? (
-                                    <motion.img
-                                        initial={{ scale: 1.2 }}
-                                        animate={{ scale: 1 }}
-                                        src={room.thumbnail}
-                                        className="h-full w-full object-cover"
-                                        alt={room.name}
-                                    />
-                                ) : (
-                                    <div className="bg-surface-light flex h-full w-full items-center justify-center">
-                                        <span className="text-6xl font-bold text-text-muted opacity-20">
-                                            {room.name.charAt(0)}
-                                        </span>
-                                    </div>
-                                )}
-                                <div className="absolute inset-0 bg-linear-to-r from-transparent via-transparent to-surface/40" />
-                                <div className="vignette absolute inset-0" />
-
+                createPortal(
+                    <AnimatePresence>
+                        {showDetail && (
+                            <div className="fixed inset-0 z-100 flex items-center justify-center p-4 lg:p-8">
                                 <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                    className="absolute inset-0 flex items-center justify-center"
-                                >
-                                    <div className="flex h-24 w-24 items-center justify-center rounded-full border border-accent-gold/20 bg-accent-gold/10 text-accent-gold shadow-[0_0_40px_rgba(198,161,91,0.2)] backdrop-blur-xl">
-                                        <Play
-                                            size={40}
-                                            fill="currentColor"
-                                            className="ml-1"
-                                        />
-                                    </div>
-                                </motion.div>
-                            </div>
-
-                            <div className="md:relative flex grow flex-col justify-center bg-surface p-4 lg:p-16 lg:w-1/2">
-                                <button
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
                                     onClick={() => setShowDetail(false)}
-                                    className="absolute top-10 right-10 flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-surface font-bold text-text-muted transition-all hover:bg-surface/80 hover:text-text-primary"
-                                >
-                                    <X size={24} />
-                                </button>
+                                    className="absolute inset-0 bg-bg-dark/65 backdrop-blur-2xl"
+                                />
 
                                 <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="flex flex-col gap-4 md:gap-10"
+                                    layoutId={`room-peek-${room.id}`}
+                                    initial={{
+                                        opacity: 0,
+                                        scale: 0.85,
+                                        rotateX: 10,
+                                        y: 40,
+                                    }}
+                                    animate={{
+                                        opacity: 1,
+                                        scale: 1,
+                                        rotateX: 0,
+                                        y: 0,
+                                    }}
+                                    exit={{
+                                        opacity: 0,
+                                        scale: 0.85,
+                                        rotateX: -10,
+                                        y: 40,
+                                    }}
+                                    transition={{
+                                        type: 'spring',
+                                        damping: 25,
+                                        stiffness: 200,
+                                    }}
+                                    className="perspective-1000 relative flex h-auto max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[40px] border border-border-subtle bg-surface shadow-[0_0_100px_rgba(0,0,0,0.8)] lg:flex-row"
                                 >
-                                    <div>
-                                        <Badge className="mb-6 border border-accent-gold/20 bg-accent-gold/10 text-accent-gold">
-                                            Legacy Chamber
-                                        </Badge>
-                                        <h2 className="mb-6 text-4xl leading-none font-bold tracking-tight text-text-primary md:text-6xl">
-                                            {room.name}
-                                        </h2>
-                                        <p className="text-xl leading-relaxed font-light text-text-muted">
-                                            {room.description}
-                                        </p>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-12 border-y border-border-subtle py-8">
-                                        <div>
-                                            <span className="mb-4 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
-                                                Guardians
-                                            </span>
-                                            <AvatarGroup
-                                                users={room.members.map(
-                                                    (u) => ({
-                                                        avatar: u.avatar,
-                                                        avatar_url: (u as any).avatar_url,
-                                                        name: u.name,
-                                                    }),
-                                                )}
+                                    <div className="relative h-80 w-full overflow-hidden font-bold text-white lg:h-auto lg:w-1/2">
+                                        {room.thumbnail ? (
+                                            <motion.img
+                                                initial={{ scale: 1.2 }}
+                                                animate={{ scale: 1 }}
+                                                src={room.thumbnail}
+                                                className="h-full w-full object-cover"
+                                                alt={room.name}
                                             />
-                                        </div>
-                                        <div>
-                                            <span className="mb-4 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
-                                                Stored Memories
-                                            </span>
-                                            <div className="flex items-baseline gap-2">
-                                                <span className="font-outfit text-4xl font-bold text-text-primary">
-                                                    {room.stories_count || room?.tributes_count || 0}
-                                                </span>
-                                                <span className="text-sm tracking-tighter text-text-muted uppercase">
-                                                    Collections
+                                        ) : (
+                                            <div className="bg-surface-light flex h-full w-full items-center justify-center">
+                                                <span className="text-6xl font-bold text-text-muted opacity-20">
+                                                    {room.name.charAt(0)}
                                                 </span>
                                             </div>
-                                        </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-transparent to-surface/40" />
+                                        <div className="vignette absolute inset-0" />
+
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.3 }}
+                                            className="absolute inset-0 flex items-center justify-center"
+                                        >
+                                            <div className="flex h-24 w-24 items-center justify-center rounded-full border border-accent-gold/20 bg-accent-gold/10 text-accent-gold shadow-[0_0_40px_rgba(198,161,91,0.2)] backdrop-blur-xl">
+                                                <Play
+                                                    size={40}
+                                                    fill="currentColor"
+                                                    className="ml-1"
+                                                />
+                                            </div>
+                                        </motion.div>
                                     </div>
 
-                                    <div className="flex flex-wrap gap-2 md:gap-5 pt-4">
-                                        <Link
-                                            href={roomUrl ?? dashboardShow(room.slug).url}
-                                            className="md:min-w-60 flex-1"
+                                    <div className="flex grow flex-col justify-center bg-surface p-4 md:relative lg:w-1/2 lg:p-16">
+                                        <button
+                                            onClick={() => setShowDetail(false)}
+                                            className="absolute top-10 right-10 flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-surface font-bold text-text-muted transition-all hover:bg-surface/80 hover:text-text-primary"
                                         >
-                                            <Button className="group w-full rounded-2xl md:py-5 text-sm md:text-xl font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)]">
-                                                Step Inside Room
-                                                <ArrowRight className="transition-transform group-hover:translate-x-2" />
-                                            </Button>
-                                        </Link>
-                                        <Button
-                                            variant="secondary"
-                                            icon={Share2}
-                                            className="rounded-2xl text-sm md:text-base border-border-subtle md:px-8 md:py-5 font-bold"
+                                            <X size={24} />
+                                        </button>
+
+                                        <motion.div
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.2 }}
+                                            className="flex flex-col gap-4 md:gap-10"
                                         >
-                                            Invite Kin
-                                        </Button>
+                                            <div>
+                                                <Badge className="mb-6 border border-accent-gold/20 bg-accent-gold/10 text-accent-gold">
+                                                    Legacy Chamber
+                                                </Badge>
+                                                <h2 className="mb-6 text-4xl leading-none font-bold tracking-tight text-text-primary md:text-6xl">
+                                                    {room.name}
+                                                </h2>
+                                                <p className="text-xl leading-relaxed font-light text-text-muted">
+                                                    {room.description}
+                                                </p>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-12 border-y border-border-subtle py-8">
+                                                <div>
+                                                    <span className="mb-4 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
+                                                        Guardians
+                                                    </span>
+                                                    <AvatarGroup
+                                                        users={room.members.map(
+                                                            (u) => ({
+                                                                avatar: u.avatar,
+                                                                avatar_url: (
+                                                                    u as any
+                                                                ).avatar_url,
+                                                                name: u.name,
+                                                            }),
+                                                        )}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <span className="mb-4 block text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
+                                                        Stored Memories
+                                                    </span>
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span className="font-outfit text-4xl font-bold text-text-primary">
+                                                            {room.stories_count ||
+                                                                room?.tributes_count ||
+                                                                0}
+                                                        </span>
+                                                        <span className="text-sm tracking-tighter text-text-muted uppercase">
+                                                            Collections
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2 pt-4 md:gap-5">
+                                                <Link
+                                                    href={
+                                                        roomUrl ??
+                                                        dashboardShow(room.slug)
+                                                            .url
+                                                    }
+                                                    className="flex-1 md:min-w-60"
+                                                >
+                                                    <Button className="group w-full rounded-2xl text-sm font-bold shadow-[0_20px_40px_rgba(198,161,91,0.15)] md:py-5 md:text-xl">
+                                                        Step Inside Room
+                                                        <ArrowRight className="transition-transform group-hover:translate-x-2" />
+                                                    </Button>
+                                                </Link>
+                                                <Button
+                                                    variant="secondary"
+                                                    icon={Share2}
+                                                    className="rounded-2xl border-border-subtle text-sm font-bold md:px-8 md:py-5 md:text-base"
+                                                >
+                                                    Invite Kin
+                                                </Button>
+                                            </div>
+                                        </motion.div>
                                     </div>
                                 </motion.div>
                             </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>, document.body)
+                        )}
+                    </AnimatePresence>,
+                    document.body,
+                )
             )}
         </>
     );

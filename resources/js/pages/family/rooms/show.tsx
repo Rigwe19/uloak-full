@@ -54,18 +54,25 @@ export default function FamilyRoomShow({ room, stories, member }: Props) {
     const [deleting, setDeleting] = useState(false);
     const confirmDeleteStory = useCallback(() => {
         if (!storyToDelete) {
-return;
-}
+            return;
+        }
 
         setDeleting(true);
-        router.delete(`/family/rooms/${room.slug}/stories/${storyToDelete.id}`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setStoryToDelete(null);
-                router.visit(window.location.pathname, { only: ['stories'], preserveScroll: true, preserveState: true });
+        router.delete(
+            `/family/rooms/${room.slug}/stories/${storyToDelete.id}`,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setStoryToDelete(null);
+                    router.visit(window.location.pathname, {
+                        only: ['stories'],
+                        preserveScroll: true,
+                        preserveState: true,
+                    });
+                },
+                onFinish: () => setDeleting(false),
             },
-            onFinish: () => setDeleting(false)
-        });
+        );
     }, [storyToDelete, room.slug]);
 
     return (
@@ -94,8 +101,13 @@ return;
                                 href="/family/dashboard"
                                 className="group inline-flex items-center gap-2 text-text-muted transition-colors hover:text-text-primary"
                             >
-                                <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
-                                <span className="text-sm font-bold tracking-widest uppercase">Rooms</span>
+                                <ArrowLeft
+                                    size={18}
+                                    className="transition-transform group-hover:-translate-x-1"
+                                />
+                                <span className="text-sm font-bold tracking-widest uppercase">
+                                    Rooms
+                                </span>
                             </Link>
                         </div>
 
@@ -109,7 +121,9 @@ return;
                                 {room.name}
                             </h1>
                             {room.description && (
-                                <p className="max-w-2xl text-lg text-text-muted">{room.description}</p>
+                                <p className="max-w-2xl text-lg text-text-muted">
+                                    {room.description}
+                                </p>
                             )}
                         </div>
                     </header>
@@ -131,8 +145,13 @@ return;
 
                         {stories.length === 0 ? (
                             <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-surface/20 px-6 py-20 text-center">
-                                <Upload size={40} className="mb-4 text-text-muted/50" />
-                                <p className="text-lg text-text-muted">No memories yet.</p>
+                                <Upload
+                                    size={40}
+                                    className="mb-4 text-text-muted/50"
+                                />
+                                <p className="text-lg text-text-muted">
+                                    No memories yet.
+                                </p>
                                 <p className="mt-2 text-sm text-text-muted">
                                     Be the first to share a memory in this room.
                                 </p>
@@ -172,21 +191,30 @@ return;
                                             )}
                                             <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
                                                 <div className="flex items-center gap-2">
-                                                    <UserIcon size={12} className="text-accent-gold" />
+                                                    <UserIcon
+                                                        size={12}
+                                                        className="text-accent-gold"
+                                                    />
                                                     {story.author}
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <span className="flex items-center gap-1">
-                                                        <Clock size={12} className="text-accent-gold" />
+                                                        <Clock
+                                                            size={12}
+                                                            className="text-accent-gold"
+                                                        />
                                                         {story.date}
                                                     </span>
-                                                    {story.room_member_id === member.id && (
+                                                    {story.room_member_id ===
+                                                        member.id && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.preventDefault();
-                                                                setStoryToDelete(story);
+                                                                setStoryToDelete(
+                                                                    story,
+                                                                );
                                                             }}
-                                                            className="text-text-muted hover:text-red-400 transition-colors"
+                                                            className="text-text-muted transition-colors hover:text-red-400"
                                                         >
                                                             <Trash2 size={12} />
                                                         </button>
@@ -213,56 +241,73 @@ return;
                 </AnimatePresence>
 
                 {/* Delete Confirmation Modal */}
-                {createPortal(<AnimatePresence>
-                    {storyToDelete && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-150 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-                            onClick={() => setStoryToDelete(null)}
-                        >
+                {createPortal(
+                    <AnimatePresence>
+                        {storyToDelete && (
                             <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
-                                className="w-full max-w-sm bg-surface border border-white/10 rounded-3xl p-6 shadow-2xl"
-                                onClick={(e) => e.stopPropagation()}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 z-150 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+                                onClick={() => setStoryToDelete(null)}
                             >
-                                <div className="text-center space-y-4">
-                                    <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
-                                        <Trash2 size={24} className="text-red-400" />
+                                <motion.div
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.9, opacity: 0 }}
+                                    className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6 shadow-2xl"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <div className="space-y-4 text-center">
+                                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10">
+                                            <Trash2
+                                                size={24}
+                                                className="text-red-400"
+                                            />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-text-primary">
+                                                Delete Memory?
+                                            </h3>
+                                            <p className="mt-1 text-sm text-text-muted">
+                                                This action cannot be undone.
+                                            </p>
+                                        </div>
+                                        {storyToDelete && (
+                                            <p className="rounded-xl border border-white/5 bg-bg-dark/40 px-3 py-2 text-xs text-text-muted italic">
+                                                "{storyToDelete.title}"
+                                            </p>
+                                        )}
                                     </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-text-primary">Delete Memory?</h3>
-                                        <p className="text-sm text-text-muted mt-1">This action cannot be undone.</p>
+                                    <div className="mt-6 flex gap-3">
+                                        <button
+                                            onClick={() =>
+                                                setStoryToDelete(null)
+                                            }
+                                            className="flex-1 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-bold tracking-widest text-text-muted uppercase transition-all hover:text-text-primary"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={confirmDeleteStory}
+                                            disabled={deleting}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-xs font-bold tracking-widest text-white uppercase transition-all hover:bg-red-600"
+                                        >
+                                            {deleting && (
+                                                <Loader
+                                                    size={14}
+                                                    className="animate-spin"
+                                                />
+                                            )}
+                                            {deleting ? 'Deleting' : 'Delete'}
+                                        </button>
                                     </div>
-                                    {storyToDelete && (
-                                        <p className="text-xs text-text-muted italic bg-bg-dark/40 rounded-xl px-3 py-2 border border-white/5">
-                                            "{storyToDelete.title}"
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex gap-3 mt-6">
-                                    <button
-                                        onClick={() => setStoryToDelete(null)}
-                                        className="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-text-muted hover:text-text-primary border border-white/10 rounded-xl transition-all"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={confirmDeleteStory}
-                                        disabled={deleting}
-                                        className="flex-1 flex gap-2 justify-center items-center px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all"
-                                    >
-                                        {deleting && <Loader size={14} className='animate-spin' />}
-                                        {deleting ? 'Deleting' : 'Delete'}
-                                    </button>
-                                </div>
+                                </motion.div>
                             </motion.div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>, document.body)}
+                        )}
+                    </AnimatePresence>,
+                    document.body,
+                )}
             </div>
         </>
     );
@@ -313,19 +358,24 @@ function AddMemoryModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
             onClick={onClose}
         >
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-lg bg-surface border border-white/10 rounded-3xl p-8 shadow-2xl"
+                className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface p-8 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-text-primary">Share a Memory</h2>
-                    <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors">
+                    <h2 className="text-xl font-bold text-text-primary">
+                        Share a Memory
+                    </h2>
+                    <button
+                        onClick={onClose}
+                        className="text-text-muted transition-colors hover:text-text-primary"
+                    >
                         <X size={20} />
                     </button>
                 </div>
@@ -342,10 +392,11 @@ function AddMemoryModal({
                                     key={t}
                                     type="button"
                                     onClick={() => handleTypeChange(t)}
-                                    className={`flex-1 rounded-xl border px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${type === t
+                                    className={`flex-1 rounded-xl border px-4 py-3 text-xs font-bold tracking-widest uppercase transition-all ${
+                                        type === t
                                             ? 'border-accent-gold bg-accent-gold/10 text-accent-gold'
                                             : 'border-white/10 text-text-muted hover:border-accent-gold/40'
-                                        }`}
+                                    }`}
                                 >
                                     {t}
                                 </button>
@@ -365,7 +416,11 @@ function AddMemoryModal({
                             placeholder="Give this memory a title..."
                             className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/50 focus:border-accent-gold/40 focus:outline-none"
                         />
-                        {errors.title && <p className="mt-1 text-xs text-red-400">{errors.title}</p>}
+                        {errors.title && (
+                            <p className="mt-1 text-xs text-red-400">
+                                {errors.title}
+                            </p>
+                        )}
                     </div>
 
                     {/* Description */}
@@ -375,24 +430,38 @@ function AddMemoryModal({
                         </label>
                         <textarea
                             value={data.description}
-                            onChange={(e) => setData('description', e.target.value)}
+                            onChange={(e) =>
+                                setData('description', e.target.value)
+                            }
                             placeholder="Tell the story behind this memory..."
                             rows={3}
-                            className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/50 focus:border-accent-gold/40 focus:outline-none resize-none"
+                            className="w-full resize-none rounded-xl border border-white/10 bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/50 focus:border-accent-gold/40 focus:outline-none"
                         />
-                        {errors.description && <p className="mt-1 text-xs text-red-400">{errors.description}</p>}
+                        {errors.description && (
+                            <p className="mt-1 text-xs text-red-400">
+                                {errors.description}
+                            </p>
+                        )}
                     </div>
 
                     {/* File upload */}
                     <div>
                         <label className="mb-2 block text-xs font-bold tracking-widest text-text-muted uppercase">
-                            Upload {type === 'photo' ? 'Photos' : type === 'video' ? 'Videos' : 'Audio'}
+                            Upload{' '}
+                            {type === 'photo'
+                                ? 'Photos'
+                                : type === 'video'
+                                  ? 'Videos'
+                                  : 'Audio'}
                         </label>
                         <div
                             onClick={() => fileInputRef.current?.click()}
                             className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-bg-dark px-6 py-8 transition-all hover:border-accent-gold/40"
                         >
-                            <Upload size={24} className="mb-2 text-text-muted" />
+                            <Upload
+                                size={24}
+                                className="mb-2 text-text-muted"
+                            />
                             <span className="text-xs text-text-muted">
                                 Click to select files
                             </span>
@@ -401,7 +470,13 @@ function AddMemoryModal({
                             ref={fileInputRef}
                             type="file"
                             multiple
-                            accept={type === 'photo' ? 'image/*' : type === 'video' ? 'video/*' : 'audio/*'}
+                            accept={
+                                type === 'photo'
+                                    ? 'image/*'
+                                    : type === 'video'
+                                      ? 'video/*'
+                                      : 'audio/*'
+                            }
                             onChange={handleFileChange}
                             className="hidden"
                         />
@@ -410,7 +485,11 @@ function AddMemoryModal({
                                 {data.files.length} file(s) selected
                             </p>
                         )}
-                        {errors.files && <p className="mt-1 text-xs text-red-400">{errors.files}</p>}
+                        {errors.files && (
+                            <p className="mt-1 text-xs text-red-400">
+                                {errors.files}
+                            </p>
+                        )}
                     </div>
 
                     {/* Submit */}

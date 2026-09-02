@@ -17,7 +17,12 @@ import React from 'react';
 
 import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
-import { cinematicText, fadeUp, parallaxFloat, staggerContainer } from '@/lib/animations';
+import {
+    cinematicText,
+    fadeUp,
+    parallaxFloat,
+    staggerContainer,
+} from '@/lib/animations';
 
 interface Props {
     page?: {
@@ -39,7 +44,8 @@ export default function LegacyFilms({ page }: Props) {
 
     const heroContent = page?.content?.hero || {
         title: 'Every life is a story worth telling.',
-        subtitle: 'Premium storytelling services — documentary film, oral history, heritage photography, and more. We come to you, wherever you are.',
+        subtitle:
+            'Premium storytelling services — documentary film, oral history, heritage photography, and more. We come to you, wherever you are.',
         image: '/images/10-ulo-corporate-gala.jpg',
     };
 
@@ -119,7 +125,7 @@ export default function LegacyFilms({ page }: Props) {
             <Head title="Legacy Films & Services - ULO OF STORIES" />
             <div className="bg-bg-dark pt-20">
                 {/* Hero Section */}
-                                <section className="relative flex h-[80vh] items-center overflow-hidden">
+                <section className="relative flex h-[80vh] items-center overflow-hidden">
                     <motion.div
                         className="absolute inset-0 z-0"
                         variants={parallaxFloat}
@@ -154,8 +160,16 @@ export default function LegacyFilms({ page }: Props) {
                             >
                                 {heroContent.title.includes('story') ? (
                                     <>
-                                        {heroContent.title.split('story')[0]} <br />
-                                        <span className="text-accent-gold italic">story {heroContent.title.split('story')[1]}</span>
+                                        {heroContent.title.split('story')[0]}{' '}
+                                        <br />
+                                        <span className="text-accent-gold italic">
+                                            story{' '}
+                                            {
+                                                heroContent.title.split(
+                                                    'story',
+                                                )[1]
+                                            }
+                                        </span>
                                     </>
                                 ) : (
                                     heroContent.title
@@ -199,7 +213,8 @@ export default function LegacyFilms({ page }: Props) {
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                             {displayServices.map((service: any, i: number) => {
-                                const IconComponent = iconMap[service.icon] || Film;
+                                const IconComponent =
+                                    iconMap[service.icon] || Film;
 
                                 return (
                                     <motion.div

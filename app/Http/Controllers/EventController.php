@@ -151,6 +151,38 @@ class EventController extends Controller
     }
 
     /**
+     * Store a newly created event.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'privacy' => ['required', 'string', 'in:public,private'],
+            'event_date' => ['nullable', 'date'],
+            'thumbnail' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        if ($request->hasFile('thumbnail')) {
+            $path = $request->file('thumbnail')->store('events/thumbnails', 'public');
+            $validated['thumbnail'] = Storage::url($path);
+        }
+
+        $validated['created_by'] = $request->user()->id;
+
+        $event = Event::create($validated);
+
+        $this->activityLogger->log(
+            "Created event: {$event->name}",
+            Event::class,
+            (string) $event->id,
+            ['event_name' => $event->name]
+        );
+
+        return redirect()->route('dashboard.events.show', $event->slug);
+    }
+
+    /**
      * Store a new story for an event.
      */
     public function storeStory(Request $request, Event $event): RedirectResponse

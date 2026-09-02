@@ -24,7 +24,14 @@ interface VideoTimelineProps {
 const THUMB_WIDTH = 160;
 const THUMB_HEIGHT = 90;
 
-export function VideoTimeline({ duration, currentTime, buffered, onSeek, showScrub = false, sprite }: VideoTimelineProps) {
+export function VideoTimeline({
+    duration,
+    currentTime,
+    buffered,
+    onSeek,
+    showScrub = false,
+    sprite,
+}: VideoTimelineProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const [hoverTime, setHoverTime] = useState<number | null>(null);
     const [hoverX, setHoverX] = useState(0);
@@ -45,8 +52,8 @@ export function VideoTimeline({ duration, currentTime, buffered, onSeek, showScr
             .then((r) => r.text())
             .then((text) => {
                 if (cancelled) {
-return;
-}
+                    return;
+                }
 
                 const parsed: VttCue[] = [];
                 const lines = text.split('\n');
@@ -59,8 +66,12 @@ return;
                     );
 
                     if (timing) {
-                        const toMs = (h: number, m: number, s: number, ms: number) =>
-                            h * 3600 + m * 60 + s + ms / 1000;
+                        const toMs = (
+                            h: number,
+                            m: number,
+                            s: number,
+                            ms: number,
+                        ) => h * 3600 + m * 60 + s + ms / 1000;
 
                         currentTiming = {
                             start: toMs(
@@ -112,8 +123,8 @@ return;
             const rect = trackRef.current?.getBoundingClientRect();
 
             if (!rect || !duration) {
-return 0;
-}
+                return 0;
+            }
 
             const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
 
@@ -127,8 +138,8 @@ return 0;
             const rect = trackRef.current?.getBoundingClientRect();
 
             if (!rect) {
-return;
-}
+                return;
+            }
 
             setHoverX(e.clientX - rect.left);
             setHoverTime(getTimeFromPosition(e.clientX));
@@ -176,23 +187,26 @@ return;
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
-    const activeCue = hoverTime !== null
-        ? cues.find((c) => hoverTime >= c.start && hoverTime <= c.end)
-        : null;
+    const activeCue =
+        hoverTime !== null
+            ? cues.find((c) => hoverTime >= c.start && hoverTime <= c.end)
+            : null;
 
     const leftPx = Math.min(
         Math.max(hoverX - THUMB_WIDTH / 2, 4),
-        (trackRef.current?.getBoundingClientRect()?.width ?? THUMB_WIDTH) - THUMB_WIDTH - 4,
+        (trackRef.current?.getBoundingClientRect()?.width ?? THUMB_WIDTH) -
+            THUMB_WIDTH -
+            4,
     );
 
     return (
-        <div className="relative flex items-center w-full pt-6">
+        <div className="relative flex w-full items-center pt-6">
             {/* Sprite thumbnail preview */}
             {showScrub && hoverTime !== null && !isDragging && spriteImage && (
                 <motion.div
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute bottom-full mb-2 pointer-events-none z-30"
+                    className="pointer-events-none absolute bottom-full z-30 mb-2"
                     style={{ left: leftPx }}
                 >
                     <div
@@ -222,7 +236,7 @@ return;
                         )}
                     </div>
                     <div className="mt-1 rounded bg-black/80 px-2 py-0.5 text-center">
-                        <span className="text-[10px] font-mono text-white/90">
+                        <span className="font-mono text-[10px] text-white/90">
                             {formatTime(hoverTime)}
                         </span>
                     </div>
@@ -231,34 +245,34 @@ return;
 
             <div
                 ref={trackRef}
-                className="relative h-1 w-full cursor-pointer rounded-full bg-white/20 group/track"
+                className="group/track relative h-1 w-full cursor-pointer rounded-full bg-white/20"
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
                 onMouseDown={handleMouseDown}
             >
                 {/* Buffered */}
                 <div
-                    className="absolute left-0 top-0 h-full rounded-full bg-white/30 transition-all"
+                    className="absolute top-0 left-0 h-full rounded-full bg-white/30 transition-all"
                     style={{ width: `${bufferedPercent}%` }}
                 />
 
                 {/* Played */}
                 <div
-                    className="absolute left-0 top-0 h-full rounded-full bg-accent-gold"
+                    className="absolute top-0 left-0 h-full rounded-full bg-accent-gold"
                     style={{ width: `${playedPercent}%` }}
                 />
 
                 {/* Hover indicator */}
                 {hoverTime !== null && !isDragging && (
                     <div
-                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white/80 -translate-x-1/2 pointer-events-none z-10"
+                        className="pointer-events-none absolute top-1/2 z-10 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80"
                         style={{ left: `${(hoverTime / duration) * 100}%` }}
                     />
                 )}
 
                 {/* Thumb */}
                 <div
-                    className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-accent-gold -translate-x-1/2 shadow-lg shadow-accent-gold/30 transition-opacity ${isDragging ? 'opacity-100 scale-125' : 'opacity-0 group-hover/track:opacity-100'}`}
+                    className={`absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-gold shadow-lg shadow-accent-gold/30 transition-opacity ${isDragging ? 'scale-125 opacity-100' : 'opacity-0 group-hover/track:opacity-100'}`}
                     style={{ left: `${Math.min(playedPercent, 100)}%` }}
                 />
             </div>

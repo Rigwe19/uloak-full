@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import type { PlayerState as PlayerStateType, PlayerActions } from '@/types/video-player';
+import type {
+    PlayerState as PlayerStateType,
+    PlayerActions,
+} from '@/types/video-player';
 
 interface VideoPlayerStoreState extends PlayerStateType {
     activeVideoElement: HTMLVideoElement | null;
@@ -10,7 +13,9 @@ interface VideoPlayerStoreActions extends PlayerActions {
     setActiveVideoElement: (el: HTMLVideoElement | null) => void;
 }
 
-const usePlayerStoreBase = create<VideoPlayerStoreState & VideoPlayerStoreActions>((set) => ({
+const usePlayerStoreBase = create<
+    VideoPlayerStoreState & VideoPlayerStoreActions
+>((set) => ({
     // State
     activeVideoId: null,
     isPlaying: false,
@@ -40,7 +45,8 @@ const usePlayerStoreBase = create<VideoPlayerStoreState & VideoPlayerStoreAction
     setCurrentTime: (time) => set({ currentTime: time }),
     setDuration: (dur) => set({ duration: dur }),
     setBuffered: (buffered) => set({ buffered }),
-    toggleFullscreen: () => set((state) => ({ isFullscreen: !state.isFullscreen })),
+    toggleFullscreen: () =>
+        set((state) => ({ isFullscreen: !state.isFullscreen })),
     setIsFullscreen: (val) => set({ isFullscreen: val }),
     togglePip: () => set((state) => ({ isPip: !state.isPip })),
     showOverlay: () => set({ overlayVisible: true }),
@@ -48,24 +54,25 @@ const usePlayerStoreBase = create<VideoPlayerStoreState & VideoPlayerStoreAction
     setLoading: (val) => set({ isLoading: val }),
     setError: (msg) => set({ hasError: !!msg, errorMessage: msg }),
     stop: () => set({ isPlaying: false, currentTime: 0 }),
-    reset: () => set({
-        activeVideoId: null,
-        isPlaying: false,
-        isMuted: false,
-        volume: 1,
-        speed: 1,
-        currentTime: 0,
-        duration: 0,
-        buffered: 0,
-        isFullscreen: false,
-        isPip: false,
-        overlayVisible: true,
-        showPreview: false,
-        isLoading: false,
-        hasError: false,
-        errorMessage: null,
-        activeVideoElement: null,
-    }),
+    reset: () =>
+        set({
+            activeVideoId: null,
+            isPlaying: false,
+            isMuted: false,
+            volume: 1,
+            speed: 1,
+            currentTime: 0,
+            duration: 0,
+            buffered: 0,
+            isFullscreen: false,
+            isPip: false,
+            overlayVisible: true,
+            showPreview: false,
+            isLoading: false,
+            hasError: false,
+            errorMessage: null,
+            activeVideoElement: null,
+        }),
     setOverlayVisible: (visible) => set({ overlayVisible: visible }),
     setActiveVideoElement: (el) => set({ activeVideoElement: el }),
 }));

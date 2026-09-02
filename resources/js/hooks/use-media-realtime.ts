@@ -7,8 +7,8 @@ import { useUploadStore } from '@/stores/upload-store';
 import type { ProcessingState } from '@/types/media';
 
 interface MediaRealtimeCallbacks {
-    onStatusChange?: (status: string) => void
-    onProgress?: (progress: number) => void
+    onStatusChange?: (status: string) => void;
+    onProgress?: (progress: number) => void;
 }
 
 type ProgressCallback = (progress: number) => void;
@@ -42,16 +42,19 @@ function ensureEchoSubscription(): void {
 
     const channel = echo.channel('media');
 
-    channel.listen('.media.processing.progress', (e: { id: string; progress?: number }) => {
-        if (!e.id) {
-            return;
-        }
+    channel.listen(
+        '.media.processing.progress',
+        (e: { id: string; progress?: number }) => {
+            if (!e.id) {
+                return;
+            }
 
-        const progress = e.progress ?? 0;
+            const progress = e.progress ?? 0;
 
-        useUploadStore.getState().updateProgressByUuid(e.id, progress);
-        progressCallbacks.get(e.id)?.forEach((cb) => cb(progress));
-    });
+            useUploadStore.getState().updateProgressByUuid(e.id, progress);
+            progressCallbacks.get(e.id)?.forEach((cb) => cb(progress));
+        },
+    );
 
     channel.listen('.media.processing.started', (e: { id: string }) => {
         if (!e.id) {
@@ -139,12 +142,20 @@ export function useMediaRealtime(
         if (echo) {
             ensureEchoSubscription();
 
-            const unsubProgress = registerCallback(progressCallbacks, uuid, (progress: number) => {
-                onProgress?.(progress);
-            });
-            const unsubStatus = registerCallback(statusCallbacks, uuid, (status: string) => {
-                onStatusChange?.(status);
-            });
+            const unsubProgress = registerCallback(
+                progressCallbacks,
+                uuid,
+                (progress: number) => {
+                    onProgress?.(progress);
+                },
+            );
+            const unsubStatus = registerCallback(
+                statusCallbacks,
+                uuid,
+                (status: string) => {
+                    onStatusChange?.(status);
+                },
+            );
 
             // Seed current state so late-mounting components reflect server truth.
             fetchMediaStatus(uuid).catch(() => {
@@ -167,7 +178,9 @@ export function useMediaRealtime(
                 const media = await fetchMediaStatus(uuid);
 
                 if (media.progress != null) {
-                    useUploadStore.getState().updateProgressByUuid(uuid, media.progress);
+                    useUploadStore
+                        .getState()
+                        .updateProgressByUuid(uuid, media.progress);
                 }
 
                 const status = media.status;
@@ -183,7 +196,9 @@ export function useMediaRealtime(
                         .updateStatusByUuid(uuid, status as ProcessingState);
 
                     if (status === 'ready') {
-                        useUploadStore.getState().updateProgressByUuid(uuid, 100);
+                        useUploadStore
+                            .getState()
+                            .updateProgressByUuid(uuid, 100);
                     }
                 }
             } catch {

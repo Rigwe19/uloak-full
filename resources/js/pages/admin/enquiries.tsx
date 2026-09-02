@@ -1,14 +1,14 @@
 import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { 
-    MessageSquare, 
+import {
+    MessageSquare,
     Search,
     Filter,
     CheckCircle2,
     Clock,
     Mail,
     ArrowUpRight,
-    Trash2
+    Trash2,
 } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/dashboard/ui';
@@ -32,7 +32,7 @@ export default function AdminEnquiries({ enquiries }: Props) {
     return (
         <AdminLayout>
             <Head title="Enquiries" />
-            
+
             <div className="space-y-10 p-6 md:p-10">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
@@ -40,16 +40,20 @@ export default function AdminEnquiries({ enquiries }: Props) {
                             Inbound Enquiries
                         </h1>
                         <p className="mt-2 text-text-muted">
-                            Review and respond to messages from the Ulo of Storiesf Stories community.
+                            Review and respond to messages from the Ulo of
+                            Storiesf Stories community.
                         </p>
                     </div>
                     <div className="flex gap-3">
                         <div className="relative">
-                            <Search className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted" size={16} />
-                            <input 
+                            <Search
+                                className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted"
+                                size={16}
+                            />
+                            <input
                                 type="text"
                                 placeholder="Search enquiries..."
-                                className="h-10 w-64 rounded-xl border border-border-subtle bg-surface/50 pl-10 pr-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
+                                className="h-10 w-64 rounded-xl border border-border-subtle bg-surface/50 pr-4 pl-10 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                             />
                         </div>
                         <Button variant="outline" size="sm" className="gap-2">
@@ -72,32 +76,50 @@ export default function AdminEnquiries({ enquiries }: Props) {
                                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3">
-                                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase ${
-                                                enquiry.status === 'new' 
-                                                    ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30' 
-                                                    : 'bg-green-400/20 text-green-400 border border-green-400/30'
-                                            }`}>
-                                                {enquiry.status === 'new' ? <Clock size={12} /> : <CheckCircle2 size={12} />}
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase ${
+                                                    enquiry.status === 'new'
+                                                        ? 'border border-accent-gold/30 bg-accent-gold/20 text-accent-gold'
+                                                        : 'border border-green-400/30 bg-green-400/20 text-green-400'
+                                                }`}
+                                            >
+                                                {enquiry.status === 'new' ? (
+                                                    <Clock size={12} />
+                                                ) : (
+                                                    <CheckCircle2 size={12} />
+                                                )}
                                                 {enquiry.status}
                                             </span>
                                             <span className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                                {new Date(enquiry.created_at).toLocaleDateString(undefined, { 
-                                                    month: 'long', 
-                                                    day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
+                                                {new Date(
+                                                    enquiry.created_at,
+                                                ).toLocaleDateString(
+                                                    undefined,
+                                                    {
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    },
+                                                )}
                                             </span>
                                         </div>
-                                        
+
                                         <div>
-                                            <h3 className="text-xl font-bold text-text-primary group-hover:text-accent-gold transition-colors">
+                                            <h3 className="text-xl font-bold text-text-primary transition-colors group-hover:text-accent-gold">
                                                 {enquiry.subject}
                                             </h3>
                                             <div className="mt-2 flex items-center gap-2 text-sm text-text-muted">
-                                                <span className="font-bold text-text-primary">{enquiry.name}</span>
-                                                <span className="opacity-50">&bull;</span>
-                                                <span className="flex items-center gap-1"><Mail size={12} /> {enquiry.email}</span>
+                                                <span className="font-bold text-text-primary">
+                                                    {enquiry.name}
+                                                </span>
+                                                <span className="opacity-50">
+                                                    &bull;
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Mail size={12} />{' '}
+                                                    {enquiry.email}
+                                                </span>
                                             </div>
                                         </div>
 
@@ -107,7 +129,11 @@ export default function AdminEnquiries({ enquiries }: Props) {
                                     </div>
 
                                     <div className="flex shrink-0 gap-2">
-                                        <Button variant="outline" size="sm" className="gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-2"
+                                        >
                                             Reply <ArrowUpRight size={14} />
                                         </Button>
                                         <button className="rounded-xl border border-border-subtle bg-surface/50 p-2.5 text-text-muted transition-all hover:border-red-400/30 hover:bg-red-400/10 hover:text-red-400">
@@ -115,9 +141,12 @@ export default function AdminEnquiries({ enquiries }: Props) {
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 {/* Background Decorative Icon */}
-                                <MessageSquare size={120} className="pointer-events-none absolute -right-8 -bottom-8 opacity-[0.03] transition-transform group-hover:scale-110" />
+                                <MessageSquare
+                                    size={120}
+                                    className="pointer-events-none absolute -right-8 -bottom-8 opacity-[0.03] transition-transform group-hover:scale-110"
+                                />
                             </motion.div>
                         ))
                     ) : (
@@ -126,8 +155,13 @@ export default function AdminEnquiries({ enquiries }: Props) {
                                 <MessageSquare size={48} />
                             </div>
                             <div className="text-center">
-                                <p className="text-lg font-bold text-text-primary">No enquiries yet</p>
-                                <p className="text-sm text-text-muted">When users send messages, they will appear here.</p>
+                                <p className="text-lg font-bold text-text-primary">
+                                    No enquiries yet
+                                </p>
+                                <p className="text-sm text-text-muted">
+                                    When users send messages, they will appear
+                                    here.
+                                </p>
                             </div>
                         </div>
                     )}

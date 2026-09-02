@@ -1,5 +1,12 @@
 // candleThemes.ts
-export type CandleType = 'amber' | 'golden' | 'rose' | 'classic' | 'violet' | 'teal' | 'midnight';
+export type CandleType =
+    | 'amber'
+    | 'golden'
+    | 'rose'
+    | 'classic'
+    | 'violet'
+    | 'teal'
+    | 'midnight';
 
 export interface CandleTheme {
     glow: string;

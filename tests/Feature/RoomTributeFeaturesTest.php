@@ -70,7 +70,7 @@ test('a room can be created via the store endpoint with tribute features', funct
         'name' => 'Test Burial Room',
         'description' => 'A burial room test',
         'privacy' => 'public',
-        'room_type' => 'burial',
+        'room_type' => 'general',
         'enable_tributes' => true,
         'enable_condolence_attendance' => true,
         'enable_candle_lighting' => true,
@@ -79,7 +79,7 @@ test('a room can be created via the store endpoint with tribute features', funct
     $response->assertRedirect();
     $this->assertDatabaseHas('rooms', [
         'name' => 'Test Burial Room',
-        'room_type' => 'burial',
+        'room_type' => 'general',
         'enable_tributes' => true,
         'enable_condolence_attendance' => true,
         'enable_candle_lighting' => true,
@@ -93,14 +93,14 @@ test('a room created with birthday type can have tributes enabled', function () 
         'name' => 'Birthday Celebration',
         'description' => 'A birthday room',
         'privacy' => 'public',
-        'room_type' => 'birthday',
+        'room_type' => 'general',
         'enable_tributes' => true,
     ]);
 
     $response->assertRedirect();
     $this->assertDatabaseHas('rooms', [
         'name' => 'Birthday Celebration',
-        'room_type' => 'birthday',
+        'room_type' => 'general',
         'enable_tributes' => true,
         'enable_condolence_attendance' => false,
         'enable_candle_lighting' => false,

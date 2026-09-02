@@ -39,14 +39,14 @@ export function StickyCTA({ price, label, href }: StickyCTAProps) {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: 100, opacity: 0 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className="fixed bottom-0 left-0 right-0 z-40 pb-4 px-4 md:hidden"
+                    className="fixed right-0 bottom-0 left-0 z-40 px-4 pb-4 md:hidden"
                 >
                     <div className="mx-auto max-w-sm">
                         <motion.a
                             href={href}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="flex items-center justify-center gap-2 w-full rounded-full bg-accent-gold px-6 py-3.5 text-base font-semibold text-bg-dark shadow-lg hover:bg-opacity-90 transition-all"
+                            className="hover:bg-opacity-90 flex w-full items-center justify-center gap-2 rounded-full bg-accent-gold px-6 py-3.5 text-base font-semibold text-bg-dark shadow-lg transition-all"
                         >
                             <span className="flex items-center gap-2">
                                 {label}

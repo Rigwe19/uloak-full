@@ -65,19 +65,19 @@ export function Navbar() {
 
     return (
         <nav
-            className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${isScrolled ? 'border-b border-border-subtle bg-bg-dark/95 py-3 backdrop-blur-md shadow-xs' : 'bg-transparent py-5'}`}
+            className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${isScrolled ? 'border-b border-border-subtle bg-bg-dark/95 py-3 shadow-xs backdrop-blur-md' : 'bg-transparent py-5'}`}
         >
             <div className="mx-auto flex max-w-7xl items-center justify-between px-6 md:px-8">
                 <Link href={home().url} className="flex items-center gap-3">
                     <img
                         src="/logo.png"
                         alt="Ulo of Stories"
-                        className="h-10 dark:block hidden w-auto object-contain md:h-12"
+                        className="hidden h-10 w-auto object-contain md:h-12 dark:block"
                     />
                     <img
                         src="/logo-dark.png"
                         alt="Ulo of Stories"
-                        className="h-10 dark:hidden w-auto object-contain md:h-12"
+                        className="h-10 w-auto object-contain md:h-12 dark:hidden"
                     />
                 </Link>
 
@@ -104,7 +104,10 @@ export function Navbar() {
                     ) : (
                         <div className="flex items-center gap-4">
                             <Link href={login().url}>
-                                <Button variant="outline" className="px-5 py-2 text-sm border-text-primary/10 text-text-primary hover:bg-text-primary/5">
+                                <Button
+                                    variant="outline"
+                                    className="border-text-primary/10 px-5 py-2 text-sm text-text-primary hover:bg-text-primary/5"
+                                >
                                     Sign in
                                 </Button>
                             </Link>
@@ -121,7 +124,7 @@ export function Navbar() {
                 <div className="flex items-center gap-4 lg:hidden">
                     <ThemeToggle />
                     <button
-                        className="text-text-primary p-2"
+                        className="p-2 text-text-primary"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         aria-label="Toggle menu"
                     >
@@ -145,7 +148,7 @@ export function Navbar() {
                                 key={link.name}
                                 href={link.path}
                                 onClick={() => setIsMenuOpen(false)}
-                                className={`text-base font-medium transition-colors py-1 ${url === link.path ? 'text-accent-gold' : 'text-text-muted'}`}
+                                className={`py-1 text-base font-medium transition-colors ${url === link.path ? 'text-accent-gold' : 'text-text-muted'}`}
                             >
                                 {link.name}
                             </Link>
@@ -166,7 +169,10 @@ export function Navbar() {
                                         href={login().url}
                                         onClick={() => setIsMenuOpen(false)}
                                     >
-                                        <Button variant="outline" className="w-full">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full"
+                                        >
                                             Sign in
                                         </Button>
                                     </Link>
@@ -209,7 +215,9 @@ export function Footer() {
                             />
                         </Link>
                         <p className="max-w-xs text-sm leading-relaxed text-text-muted">
-                            Every story has a home. A private digital home where families gather, organise, and preserve their heritage.
+                            Every story has a home. A private digital home where
+                            families gather, organise, and preserve their
+                            heritage.
                         </p>
                     </div>
 
@@ -322,13 +330,16 @@ export function Footer() {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-between gap-6 border-t border-border-subtle pt-10 md:flex-row text-center md:text-left">
+                <div className="flex flex-col items-center justify-between gap-6 border-t border-border-subtle pt-10 text-center md:flex-row md:text-left">
                     <div className="space-y-1">
                         <p className="text-xs text-text-muted">
-                            &copy; {new Date().getFullYear()} Ulo of Stories. All rights reserved.
+                            &copy; {new Date().getFullYear()} Ulo of Stories.
+                            All rights reserved.
                         </p>
                         <p className="text-xs text-text-muted">
-                            Ulo is a trading name of My Story House Limited. Registered in England and Wales. Company number 16756288.
+                            Ulo is a trading name of My Story House Limited.
+                            Registered in England and Wales. Company number
+                            16756288.
                         </p>
                     </div>
                     <p className="text-xs text-text-muted italic">

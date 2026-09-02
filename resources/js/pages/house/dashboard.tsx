@@ -82,12 +82,14 @@ export default function HouseDashboard({
         end_date: '',
     });
 
-    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
+        null,
+    );
 
     useEffect(() => {
         if (!isCreateRoomOpen) {
-return;
-}
+            return;
+        }
 
         const original = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
@@ -123,13 +125,36 @@ return;
         });
     };
 
-    const categories = useMemo(() => [
-        { name: 'Photos', icon: Camera, count: stats.find(s => s.name === 'Photos')?.count || 0 },
-        { name: 'Videos', icon: Video, count: stats.find(s => s.name === 'Videos')?.count || 0 },
-        { name: 'Voices', icon: MessageSquare, count: stats.find(s => s.name === 'Voices')?.count || 0 },
-        { name: 'Members', icon: Share2, count: stats.find(s => s.name === 'Members')?.count || 0 },
-        { name: 'Documents', icon: Files, count: stats.find(s => s.name === 'Documents')?.count || 0 },
-    ], [stats]);
+    const categories = useMemo(
+        () => [
+            {
+                name: 'Photos',
+                icon: Camera,
+                count: stats.find((s) => s.name === 'Photos')?.count || 0,
+            },
+            {
+                name: 'Videos',
+                icon: Video,
+                count: stats.find((s) => s.name === 'Videos')?.count || 0,
+            },
+            {
+                name: 'Voices',
+                icon: MessageSquare,
+                count: stats.find((s) => s.name === 'Voices')?.count || 0,
+            },
+            {
+                name: 'Members',
+                icon: Share2,
+                count: stats.find((s) => s.name === 'Members')?.count || 0,
+            },
+            {
+                name: 'Documents',
+                icon: Files,
+                count: stats.find((s) => s.name === 'Documents')?.count || 0,
+            },
+        ],
+        [stats],
+    );
 
     const filteredRooms = useMemo(() => {
         const query = searchQuery.toLowerCase();
@@ -145,8 +170,10 @@ return;
                 (activeCategory === 'Photos' && (room.photos_count ?? 0) > 0) ||
                 (activeCategory === 'Videos' && (room.videos_count ?? 0) > 0) ||
                 (activeCategory === 'Voices' && (room.audios_count ?? 0) > 0) ||
-                (activeCategory === 'Documents' && (room.documents_count ?? 0) > 0) ||
-                (activeCategory === 'Members' && (room.members?.length ?? 0) > 0);
+                (activeCategory === 'Documents' &&
+                    (room.documents_count ?? 0) > 0) ||
+                (activeCategory === 'Members' &&
+                    (room.members?.length ?? 0) > 0);
 
             return matchesSearch && matchesCategory;
         });
@@ -248,7 +275,9 @@ return;
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-3">
                             <h2 className="text-xl font-bold text-text-primary md:text-2xl">
-                                {searchQuery ? 'Search Results' : 'Preservation Chambers'}
+                                {searchQuery
+                                    ? 'Search Results'
+                                    : 'Preservation Chambers'}
                             </h2>
                             <Badge>{filteredRooms.length}</Badge>
                         </div>
@@ -262,12 +291,16 @@ return;
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
                     {filteredRooms.map((room) => (
-                        <RoomCard key={room.id} room={room} roomUrl={show(room.slug).url} />
+                        <RoomCard
+                            key={room.id}
+                            room={room}
+                            roomUrl={show(room.slug).url}
+                        />
                     ))}
                     <motion.div
                         layout
                         onClick={() => setIsCreateRoomOpen(true)}
-                        className="group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 h-[400px]"
+                        className="group flex h-[400px] cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40"
                     >
                         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold">
                             <Plus size={32} />
@@ -284,8 +317,12 @@ return;
                 <section className="mt-20">
                     <div className="mb-10 flex items-center justify-between">
                         <div className="flex flex-col gap-1">
-                            <h2 className="text-xl font-bold text-text-primary md:text-2xl">Recent Echoes</h2>
-                            <p className="text-xs text-text-muted md:text-sm">The latest artifacts preserved in this heritage.</p>
+                            <h2 className="text-xl font-bold text-text-primary md:text-2xl">
+                                Recent Echoes
+                            </h2>
+                            <p className="text-xs text-text-muted md:text-sm">
+                                The latest artifacts preserved in this heritage.
+                            </p>
                         </div>
                     </div>
 
@@ -306,10 +343,12 @@ return;
                                     <Badge className="mb-2 border-white/10 bg-bg-dark/60 text-[8px] tracking-[0.2em] uppercase backdrop-blur-md">
                                         {story.type}
                                     </Badge>
-                                    <h3 className="text-lg font-bold text-text-primary line-clamp-1 group-hover:text-accent-gold transition-colors">
+                                    <h3 className="line-clamp-1 text-lg font-bold text-text-primary transition-colors group-hover:text-accent-gold">
                                         {story.title}
                                     </h3>
-                                    <span className="text-[10px] text-text-muted">{story.date}</span>
+                                    <span className="text-[10px] text-text-muted">
+                                        {story.date}
+                                    </span>
                                 </div>
                             </Link>
                         ))}
@@ -325,7 +364,7 @@ return;
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-50 grid place-items-end md:place-items-center bg-black/80 p-4 backdrop-blur-md"
+                            className="fixed inset-0 z-50 grid place-items-end bg-black/80 p-4 backdrop-blur-md md:place-items-center"
                             onClick={() => {
                                 setIsCreateRoomOpen(false);
                             }}
@@ -335,12 +374,12 @@ return;
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.98, y: 20 }}
                                 transition={{
-                                    type: "spring",
+                                    type: 'spring',
                                     damping: 28,
                                     stiffness: 260,
                                 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="relative w-full max-w-xl max-h-[80vh] md:max-h-[85vh] overflow-y-auto overscroll-contain rounded-[32px] border border-white/10 bg-surface p-8 shadow-2xl ring-1 ring-white/5 md:p-10"
+                                className="relative max-h-[80vh] w-full max-w-xl overflow-y-auto overscroll-contain rounded-[32px] border border-white/10 bg-surface p-8 shadow-2xl ring-1 ring-white/5 md:max-h-[85vh] md:p-10"
                             >
                                 <div className="absolute top-4 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-white/10 md:hidden" />
 
@@ -358,11 +397,15 @@ return;
                                         Open a New Room
                                     </h2>
                                     <p className="text-sm leading-relaxed text-text-muted">
-                                        Each room is a dedicated sanctuary for a family branch or heritage collection.
+                                        Each room is a dedicated sanctuary for a
+                                        family branch or heritage collection.
                                     </p>
                                 </div>
 
-                                <form onSubmit={handleCreate} className="flex flex-col gap-6">
+                                <form
+                                    onSubmit={handleCreate}
+                                    className="flex flex-col gap-6"
+                                >
                                     <div className="space-y-2">
                                         <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
                                             Room Name
@@ -371,11 +414,17 @@ return;
                                             type="text"
                                             placeholder="e.g., The Heritage Hall"
                                             value={data.name}
-                                            onChange={(e) => setData('name', e.target.value)}
+                                            onChange={(e) =>
+                                                setData('name', e.target.value)
+                                            }
                                             className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
                                             required
                                         />
-                                        {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+                                        {errors.name && (
+                                            <p className="mt-1 text-xs text-red-500">
+                                                {errors.name}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -386,10 +435,19 @@ return;
                                             placeholder="Describe the purpose of this space..."
                                             rows={3}
                                             value={data.description}
-                                            onChange={(e) => setData('description', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'description',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="w-full resize-none rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
                                         />
-                                        {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
+                                        {errors.description && (
+                                            <p className="mt-1 text-xs text-red-500">
+                                                {errors.description}
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Room Type */}
@@ -400,26 +458,62 @@ return;
                                         </label>
                                         <div className="grid grid-cols-2 gap-3">
                                             {[
-                                                { value: 'general', label: 'General', icon: Files },
-                                                { value: 'birthday', label: 'Birthday', icon: Heart },
-                                                { value: 'burial', label: 'Burial', icon: BookOpen },
-                                                { value: 'wedding', label: 'Wedding', icon: Heart },
-                                                { value: 'anniversary', label: 'Anniversary', icon: Heart },
-                                                { value: 'memorial', label: 'Memorial', icon: BookOpen },
-                                                { value: 'graduation', label: 'Graduation', icon: Heart },
+                                                {
+                                                    value: 'general',
+                                                    label: 'General',
+                                                    icon: Files,
+                                                },
+                                                {
+                                                    value: 'birthday',
+                                                    label: 'Birthday',
+                                                    icon: Heart,
+                                                },
+                                                {
+                                                    value: 'burial',
+                                                    label: 'Burial',
+                                                    icon: BookOpen,
+                                                },
+                                                {
+                                                    value: 'wedding',
+                                                    label: 'Wedding',
+                                                    icon: Heart,
+                                                },
+                                                {
+                                                    value: 'anniversary',
+                                                    label: 'Anniversary',
+                                                    icon: Heart,
+                                                },
+                                                {
+                                                    value: 'memorial',
+                                                    label: 'Memorial',
+                                                    icon: BookOpen,
+                                                },
+                                                {
+                                                    value: 'graduation',
+                                                    label: 'Graduation',
+                                                    icon: Heart,
+                                                },
                                             ].map((type) => {
                                                 const Icon = type.icon;
-                                                const isSelected = data.room_type === type.value;
+                                                const isSelected =
+                                                    data.room_type ===
+                                                    type.value;
 
                                                 return (
                                                     <button
                                                         key={type.value}
                                                         type="button"
-                                                        onClick={() => setData('room_type', type.value)}
-                                                        className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-xs transition-all ${isSelected
-                                                            ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
-                                                            : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
-                                                            }`}
+                                                        onClick={() =>
+                                                            setData(
+                                                                'room_type',
+                                                                type.value,
+                                                            )
+                                                        }
+                                                        className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-xs transition-all ${
+                                                            isSelected
+                                                                ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
+                                                                : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
+                                                        }`}
                                                     >
                                                         <Icon size={16} />
                                                         {type.label}
@@ -427,7 +521,11 @@ return;
                                                 );
                                             })}
                                         </div>
-                                        {errors.room_type && <p className="mt-1 text-xs text-red-500">{errors.room_type}</p>}
+                                        {errors.room_type && (
+                                            <p className="mt-1 text-xs text-red-500">
+                                                {errors.room_type}
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Background Music */}
@@ -436,17 +534,25 @@ return;
                                             <Music size={12} />
                                             Background Music (Optional)
                                         </label>
-                                        <div className="relative border border-dashed border-accent-gold/20 rounded-xl bg-bg-dark p-4 transition-all hover:border-accent-gold text-center cursor-pointer">
+                                        <div className="relative cursor-pointer rounded-xl border border-dashed border-accent-gold/20 bg-bg-dark p-4 text-center transition-all hover:border-accent-gold">
                                             <input
                                                 type="file"
                                                 accept=".mp3,.wav,.ogg"
-                                                onChange={(e) => setData('tribute_song', e.target.files?.[0] || null)}
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'tribute_song',
+                                                        e.target.files?.[0] ||
+                                                            null,
+                                                    )
+                                                }
+                                                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                                             />
                                             <div className="flex flex-col items-center gap-1">
-                                                <Music className="w-5 h-5 text-accent-gold" />
+                                                <Music className="h-5 w-5 text-accent-gold" />
                                                 <span className="text-[11px] font-medium text-text-muted">
-                                                    {data.tribute_song ? data.tribute_song.name : 'Upload background music (mp3, wav, ogg)'}
+                                                    {data.tribute_song
+                                                        ? data.tribute_song.name
+                                                        : 'Upload background music (mp3, wav, ogg)'}
                                                 </span>
                                             </div>
                                         </div>
@@ -461,48 +567,96 @@ return;
 
                                         <label className="flex cursor-pointer items-center justify-between gap-4">
                                             <div className="flex flex-col gap-0.5">
-                                                <span className="text-sm font-semibold text-text-primary">Accept Tributes</span>
-                                                <span className="text-xs text-text-muted">Allow visitors to leave tribute messages</span>
+                                                <span className="text-sm font-semibold text-text-primary">
+                                                    Accept Tributes
+                                                </span>
+                                                <span className="text-xs text-text-muted">
+                                                    Allow visitors to leave
+                                                    tribute messages
+                                                </span>
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={() => setData('enable_tributes', !data.enable_tributes)}
+                                                onClick={() =>
+                                                    setData(
+                                                        'enable_tributes',
+                                                        !data.enable_tributes,
+                                                    )
+                                                }
                                                 className={`relative h-7 w-12 shrink-0 rounded-full transition-all ${data.enable_tributes ? 'bg-accent-gold' : 'bg-white/10'}`}
                                             >
-                                                <span className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_tributes ? 'translate-x-5' : ''}`}>
-                                                    {data.enable_tributes && <span className="text-[8px] text-accent-gold">✓</span>}
+                                                <span
+                                                    className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_tributes ? 'translate-x-5' : ''}`}
+                                                >
+                                                    {data.enable_tributes && (
+                                                        <span className="text-[8px] text-accent-gold">
+                                                            ✓
+                                                        </span>
+                                                    )}
                                                 </span>
                                             </button>
                                         </label>
 
                                         <label className="flex cursor-pointer items-center justify-between gap-4">
                                             <div className="flex flex-col gap-0.5">
-                                                <span className="text-sm font-semibold text-text-primary">Condolence Attendance</span>
-                                                <span className="text-xs text-text-muted">Allow visitors to sign condolence attendance</span>
+                                                <span className="text-sm font-semibold text-text-primary">
+                                                    Condolence Attendance
+                                                </span>
+                                                <span className="text-xs text-text-muted">
+                                                    Allow visitors to sign
+                                                    condolence attendance
+                                                </span>
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={() => setData('enable_condolence_attendance', !data.enable_condolence_attendance)}
+                                                onClick={() =>
+                                                    setData(
+                                                        'enable_condolence_attendance',
+                                                        !data.enable_condolence_attendance,
+                                                    )
+                                                }
                                                 className={`relative h-7 w-12 shrink-0 rounded-full transition-all ${data.enable_condolence_attendance ? 'bg-accent-gold' : 'bg-white/10'}`}
                                             >
-                                                <span className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_condolence_attendance ? 'translate-x-5' : ''}`}>
-                                                    {data.enable_condolence_attendance && <span className="text-[8px] text-accent-gold">✓</span>}
+                                                <span
+                                                    className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_condolence_attendance ? 'translate-x-5' : ''}`}
+                                                >
+                                                    {data.enable_condolence_attendance && (
+                                                        <span className="text-[8px] text-accent-gold">
+                                                            ✓
+                                                        </span>
+                                                    )}
                                                 </span>
                                             </button>
                                         </label>
 
                                         <label className="flex cursor-pointer items-center justify-between gap-4">
                                             <div className="flex flex-col gap-0.5">
-                                                <span className="text-sm font-semibold text-text-primary">Light a Candle</span>
-                                                <span className="text-xs text-text-muted">Allow visitors to light a virtual candle</span>
+                                                <span className="text-sm font-semibold text-text-primary">
+                                                    Light a Candle
+                                                </span>
+                                                <span className="text-xs text-text-muted">
+                                                    Allow visitors to light a
+                                                    virtual candle
+                                                </span>
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={() => setData('enable_candle_lighting', !data.enable_candle_lighting)}
+                                                onClick={() =>
+                                                    setData(
+                                                        'enable_candle_lighting',
+                                                        !data.enable_candle_lighting,
+                                                    )
+                                                }
                                                 className={`relative h-7 w-12 shrink-0 rounded-full transition-all ${data.enable_candle_lighting ? 'bg-accent-gold' : 'bg-white/10'}`}
                                             >
-                                                <span className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_candle_lighting ? 'translate-x-5' : ''}`}>
-                                                    {data.enable_candle_lighting && <span className="text-[8px] text-accent-gold">✓</span>}
+                                                <span
+                                                    className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-bg-dark shadow transition-transform ${data.enable_candle_lighting ? 'translate-x-5' : ''}`}
+                                                >
+                                                    {data.enable_candle_lighting && (
+                                                        <span className="text-[8px] text-accent-gold">
+                                                            ✓
+                                                        </span>
+                                                    )}
                                                 </span>
                                             </button>
                                         </label>
@@ -511,13 +665,27 @@ return;
                                     {/* Name of Celebrant/Deceased */}
                                     <div className="space-y-2">
                                         <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                            Name of {data.room_type === 'burial' || data.room_type === 'memorial' ? 'Deceased' : 'Celebrant'}
+                                            Name of{' '}
+                                            {data.room_type === 'burial' ||
+                                            data.room_type === 'memorial'
+                                                ? 'Deceased'
+                                                : 'Celebrant'}
                                         </label>
                                         <input
                                             type="text"
-                                            placeholder={data.room_type === 'burial' || data.room_type === 'memorial' ? "e.g., John Doe" : "e.g., Jane Smith"}
+                                            placeholder={
+                                                data.room_type === 'burial' ||
+                                                data.room_type === 'memorial'
+                                                    ? 'e.g., John Doe'
+                                                    : 'e.g., Jane Smith'
+                                            }
                                             value={data.tribute_name}
-                                            onChange={(e) => setData('tribute_name', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'tribute_name',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
                                         />
                                     </div>
@@ -531,7 +699,12 @@ return;
                                         <input
                                             type="date"
                                             value={data.start_date}
-                                            onChange={(e) => setData('start_date', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'start_date',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
                                         />
                                     </div>
@@ -545,7 +718,12 @@ return;
                                         <input
                                             type="date"
                                             value={data.end_date}
-                                            onChange={(e) => setData('end_date', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'end_date',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="w-full rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
                                         />
                                     </div>
@@ -556,44 +734,78 @@ return;
                                             <Image size={12} />
                                             Media Gallery (Carousel)
                                         </label>
-                                        <p className="text-[10px] text-text-muted -mt-1 leading-snug ml-1">Images and videos shown as a carousel at the top of the room page.</p>
-                                        <div className="relative border border-dashed border-accent-gold/20 rounded-xl bg-bg-dark p-4 transition-all hover:border-accent-gold text-center cursor-pointer">
+                                        <p className="-mt-1 ml-1 text-[10px] leading-snug text-text-muted">
+                                            Images and videos shown as a
+                                            carousel at the top of the room
+                                            page.
+                                        </p>
+                                        <div className="relative cursor-pointer rounded-xl border border-dashed border-accent-gold/20 bg-bg-dark p-4 text-center transition-all hover:border-accent-gold">
                                             <input
                                                 type="file"
                                                 multiple
                                                 accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.webm"
                                                 onChange={(e) => {
-                                                    const files = e.target.files;
+                                                    const files =
+                                                        e.target.files;
 
                                                     if (files) {
-                                                        setData('media_items', [...data.media_items, ...Array.from(files)]);
+                                                        setData('media_items', [
+                                                            ...data.media_items,
+                                                            ...Array.from(
+                                                                files,
+                                                            ),
+                                                        ]);
                                                     }
                                                 }}
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                                             />
                                             <div className="flex flex-col items-center gap-1">
-                                                <Image className="w-5 h-5 text-accent-gold" />
-                                                <span className="text-[11px] font-medium text-text-muted">Add images & videos (multiple)</span>
+                                                <Image className="h-5 w-5 text-accent-gold" />
+                                                <span className="text-[11px] font-medium text-text-muted">
+                                                    Add images & videos
+                                                    (multiple)
+                                                </span>
                                             </div>
                                         </div>
                                         {data.media_items.length > 0 && (
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {data.media_items.map((file, idx) => (
-                                                    <div key={idx} className="flex items-center gap-1.5 bg-surface/30 border border-white/5 px-2.5 py-1.5 rounded-lg text-[10px] text-text-muted">
-                                                        <Camera size={12} className="text-accent-gold shrink-0" />
-                                                        <span className="truncate max-w-[120px]">{file.name}</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const updated = data.media_items.filter((_, i) => i !== idx);
-                                                                setData('media_items', updated);
-                                                            }}
-                                                            className="text-red-400 hover:text-red-300 ml-1"
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {data.media_items.map(
+                                                    (file, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="flex items-center gap-1.5 rounded-lg border border-white/5 bg-surface/30 px-2.5 py-1.5 text-[10px] text-text-muted"
                                                         >
-                                                            <X size={12} />
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                                            <Camera
+                                                                size={12}
+                                                                className="shrink-0 text-accent-gold"
+                                                            />
+                                                            <span className="max-w-[120px] truncate">
+                                                                {file.name}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const updated =
+                                                                        data.media_items.filter(
+                                                                            (
+                                                                                _,
+                                                                                i,
+                                                                            ) =>
+                                                                                i !==
+                                                                                idx,
+                                                                        );
+                                                                    setData(
+                                                                        'media_items',
+                                                                        updated,
+                                                                    );
+                                                                }}
+                                                                className="ml-1 text-red-400 hover:text-red-300"
+                                                            >
+                                                                <X size={12} />
+                                                            </button>
+                                                        </div>
+                                                    ),
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -606,34 +818,56 @@ return;
                                         <div className="flex gap-3">
                                             <button
                                                 type="button"
-                                                onClick={() => setData('privacy', 'public')}
-                                                className={`flex flex-1 items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm transition-all ${data.privacy === 'public'
-                                                    ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
-                                                    : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
-                                                    }`}
+                                                onClick={() =>
+                                                    setData('privacy', 'public')
+                                                }
+                                                className={`flex flex-1 items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm transition-all ${
+                                                    data.privacy === 'public'
+                                                        ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
+                                                        : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
+                                                }`}
                                             >
                                                 <Globe size={18} />
                                                 <div className="flex flex-col items-start">
-                                                    <span className="text-xs font-semibold">Public</span>
-                                                    <span className="text-[10px] text-text-muted">Anyone with the link can view</span>
+                                                    <span className="text-xs font-semibold">
+                                                        Public
+                                                    </span>
+                                                    <span className="text-[10px] text-text-muted">
+                                                        Anyone with the link can
+                                                        view
+                                                    </span>
                                                 </div>
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => setData('privacy', 'private')}
-                                                className={`flex flex-1 items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm transition-all ${data.privacy === 'private'
-                                                    ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
-                                                    : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
-                                                    }`}
+                                                onClick={() =>
+                                                    setData(
+                                                        'privacy',
+                                                        'private',
+                                                    )
+                                                }
+                                                className={`flex flex-1 items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm transition-all ${
+                                                    data.privacy === 'private'
+                                                        ? 'border-accent-gold/50 bg-accent-gold/5 text-accent-gold'
+                                                        : 'border-border-subtle bg-bg-dark text-text-muted hover:border-accent-gold/30'
+                                                }`}
                                             >
                                                 <Lock size={18} />
                                                 <div className="flex flex-col items-start">
-                                                    <span className="text-xs font-semibold">Private</span>
-                                                    <span className="text-[10px] text-text-muted">Only invited members</span>
+                                                    <span className="text-xs font-semibold">
+                                                        Private
+                                                    </span>
+                                                    <span className="text-[10px] text-text-muted">
+                                                        Only invited members
+                                                    </span>
                                                 </div>
                                             </button>
                                         </div>
-                                        {errors.privacy && <p className="mt-1 text-xs text-red-500">{errors.privacy}</p>}
+                                        {errors.privacy && (
+                                            <p className="mt-1 text-xs text-red-500">
+                                                {errors.privacy}
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Thumbnail */}
@@ -642,15 +876,27 @@ return;
                                             Room Thumbnail
                                         </label>
                                         <div
-                                            onClick={() => document.getElementById('create-thumbnail-input')?.click()}
+                                            onClick={() =>
+                                                document
+                                                    .getElementById(
+                                                        'create-thumbnail-input',
+                                                    )
+                                                    ?.click()
+                                            }
                                             className="relative aspect-video w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border-subtle bg-bg-dark transition-all hover:border-accent-gold/40"
                                         >
                                             {thumbnailPreview ? (
-                                                <img src={thumbnailPreview} className="h-full w-full object-cover" alt="Preview" />
+                                                <img
+                                                    src={thumbnailPreview}
+                                                    className="h-full w-full object-cover"
+                                                    alt="Preview"
+                                                />
                                             ) : (
                                                 <div className="flex h-full flex-col items-center justify-center gap-2 text-text-muted">
                                                     <Camera size={24} />
-                                                    <span className="text-xs">Add a cover image</span>
+                                                    <span className="text-xs">
+                                                        Add a cover image
+                                                    </span>
                                                 </div>
                                             )}
                                             <input
@@ -661,14 +907,20 @@ return;
                                                 accept="image/*"
                                             />
                                         </div>
-                                        {errors.thumbnail && <p className="mt-1 text-xs text-red-500">{errors.thumbnail}</p>}
+                                        {errors.thumbnail && (
+                                            <p className="mt-1 text-xs text-red-500">
+                                                {errors.thumbnail}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="flex flex-col gap-4 pt-2 sm:flex-row">
                                         <Button
                                             variant="outline"
                                             className="w-full"
-                                            onClick={() => setIsCreateRoomOpen(false)}
+                                            onClick={() =>
+                                                setIsCreateRoomOpen(false)
+                                            }
                                             type="button"
                                         >
                                             Cancel

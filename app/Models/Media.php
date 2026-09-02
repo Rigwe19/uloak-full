@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Database\Factories\MediaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property-read int $id
@@ -60,6 +61,7 @@ class Media extends Model
         'progress',
         'provider',
         'provider_id',
+        'cloudinary_public_id',
         'thumbnail',
         'preview',
         'sprite',
@@ -95,14 +97,70 @@ class Media extends Model
         ];
     }
 
-    public function url(): string
+    public function getAttribute($key)
     {
-        return app(MediaManager::class)->forMedia($this)->url();
+        if (in_array($key, ['thumbnail', 'thumbnail_url', 'url'], true)) {
+            if (array_key_exists($key, $this->attributes)) {
+                return $this->getAttributeValue($key);
+            }
+
+            if ($key === 'url') {
+                return $this->url();
+            }
+
+            if ($key === 'thumbnail_url') {
+                $raw = $this->attributes['thumbnail'] ?? null;
+
+                if (is_string($raw) && $raw !== '') {
+                    return $raw;
+                }
+
+                return $this->thumbnail();
+            }
+
+            return null;
+        }
+
+        return parent::getAttribute($key);
     }
 
-    public function thumbnail(?int $width = 300, ?int $height = 300, array $options = []): string
+    public function url(): string
     {
-        return app(MediaManager::class)->forMedia($this)->thumbnail($width, $height, $options);
+        if ($this->isCloudinary()) {
+            if (str_starts_with($this->path, 'http')) {
+                return $this->path;
+            }
+            if ($this->cloudinary_public_id) {
+                return 'https://res.cloudinary.com/demo/video/upload/'.$this->cloudinary_public_id;
+            }
+
+            return 'https://res.cloudinary.com/demo/'.$this->path;
+        }
+
+        try {
+            return app(MediaManager::class)->forMedia($this)->url();
+        } catch (\Throwable) {
+            return Storage::disk($this->disk)->url($this->path);
+        }
+    }
+
+    public function thumbnail(?int $width = 300, ?int $height = 300, array $options = []): ?string
+    {
+        $rawThumb = $this->attributes['thumbnail'] ?? null;
+
+        if ($this->isCloudinary() && is_string($rawThumb) && $rawThumb !== '') {
+            return $rawThumb;
+        }
+
+        try {
+            return app(MediaManager::class)->forMedia($this)->thumbnail($width, $height, $options);
+        } catch (\Throwable) {
+            if (is_string($rawThumb) && $rawThumb !== '') {
+                return $rawThumb;
+            }
+
+            return $rawThumb;
+        }
     }
 
     public function resize(int $width, int $height, array $options = []): string
@@ -138,5 +196,25 @@ class Media extends Model
     public function isFailed(): bool
     {
         return $this->status === 'failed';
+    }
+
+    public function isCloudinary(): bool
+    {
+        return $this->provider === 'cloudinary';
+    }
+
+    public function scopeCloudinary($query)
+    {
+        return $query->where('provider', 'cloudinary');
+    }
+
+    public function scopeReady($query)
+    {
+        return $query->where('status', 'ready');
+    }
+
+    public function scopeProcessing($query)
+    {
+        return $query->whereIn('status', ['uploading', 'processing']);
     }
 }

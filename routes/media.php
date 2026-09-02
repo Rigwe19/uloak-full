@@ -4,6 +4,7 @@ use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('api')->prefix('api')->group(function () {
+    Route::post('/media/upload', [MediaController::class, 'upload'])->name('api.media.upload');
     Route::post('/media/images/upload', [MediaController::class, 'uploadImage'])->name('api.media.images.upload');
     Route::post('/media/videos/upload', [MediaController::class, 'uploadVideo'])->name('api.media.videos.upload');
     Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('api.media.show');

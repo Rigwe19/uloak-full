@@ -1,13 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Globe,
-    Shield,
-    Bell,
-    Mail,
-    Cpu,
-    Save
-} from 'lucide-react';
+import { Globe, Shield, Bell, Mail, Cpu, Save } from 'lucide-react';
 import React, { useState } from 'react';
 import { Button } from '@/components/dashboard/ui';
 import AdminLayout from '@/layouts/admin-layout';
@@ -26,8 +19,8 @@ export default function AdminSettings() {
     return (
         <AdminLayout>
             <Head title="Global Settings" />
-            
-            <div className="mx-auto w-full max-w-5xl space-y-6 px-4 pb-32 pt-4 md:p-8 md:pb-8 lg:p-10">
+
+            <div className="mx-auto w-full max-w-5xl space-y-6 px-4 pt-4 pb-32 md:p-8 md:pb-8 lg:p-10">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-text-primary md:text-3xl">
                         System Configuration
@@ -91,34 +84,45 @@ export default function AdminSettings() {
                                                 <Globe size={24} />
                                             </div>
                                             <div>
-                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">General Configuration</h2>
-                                                <p className="text-xs text-text-muted">Core platform metadata and defaults.</p>
+                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">
+                                                    General Configuration
+                                                </h2>
+                                                <p className="text-xs text-text-muted">
+                                                    Core platform metadata and
+                                                    defaults.
+                                                </p>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Platform Name</label>
-                                                <input 
-                                                    type="text" 
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    Platform Name
+                                                </label>
+                                                <input
+                                                    type="text"
                                                     defaultValue="ULO OF STORIES"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Support Email</label>
-                                                <input 
-                                                    type="email" 
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    Support Email
+                                                </label>
+                                                <input
+                                                    type="email"
                                                     defaultValue="support@ulo of stories.com"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>
                                             <div className="space-y-2 md:col-span-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Platform Description</label>
-                                                <textarea 
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    Platform Description
+                                                </label>
+                                                <textarea
                                                     rows={4}
                                                     defaultValue="The House of Stories. A spatial memory platform for preserving legacy."
-                                                    className="w-full rounded-xl border border-border-subtle bg-bg-dark p-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden resize-none"
+                                                    className="w-full resize-none rounded-xl border border-border-subtle bg-bg-dark p-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>
                                         </div>
@@ -138,24 +142,33 @@ export default function AdminSettings() {
                                                 <Shield size={24} />
                                             </div>
                                             <div>
-                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">Security & Auth</h2>
-                                                <p className="text-xs text-text-muted">Authentication and access control settings.</p>
+                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">
+                                                    Security & Auth
+                                                </h2>
+                                                <p className="text-xs text-text-muted">
+                                                    Authentication and access
+                                                    control settings.
+                                                </p>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Session Lifetime (minutes)</label>
-                                                <input 
-                                                    type="number" 
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    Session Lifetime (minutes)
+                                                </label>
+                                                <input
+                                                    type="number"
                                                     defaultValue="120"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Max Login Attempts</label>
-                                                <input 
-                                                    type="number" 
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    Max Login Attempts
+                                                </label>
+                                                <input
+                                                    type="number"
                                                     defaultValue="5"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
@@ -166,7 +179,10 @@ export default function AdminSettings() {
                                                     defaultChecked
                                                     className="rounded border-border-subtle bg-surface text-accent-gold focus:ring-accent-gold/20"
                                                 />
-                                                <span className="text-sm text-text-primary">Require email verification for new accounts</span>
+                                                <span className="text-sm text-text-primary">
+                                                    Require email verification
+                                                    for new accounts
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-3 md:col-span-2">
                                                 <input
@@ -174,7 +190,10 @@ export default function AdminSettings() {
                                                     defaultChecked
                                                     className="rounded border-border-subtle bg-surface text-accent-gold focus:ring-accent-gold/20"
                                                 />
-                                                <span className="text-sm text-text-primary">Enable two-factor authentication</span>
+                                                <span className="text-sm text-text-primary">
+                                                    Enable two-factor
+                                                    authentication
+                                                </span>
                                             </div>
                                         </div>
 
@@ -193,16 +212,27 @@ export default function AdminSettings() {
                                                 <Bell size={24} />
                                             </div>
                                             <div>
-                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">Notifications</h2>
-                                                <p className="text-xs text-text-muted">Configure platform notification channels and defaults.</p>
+                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">
+                                                    Notifications
+                                                </h2>
+                                                <p className="text-xs text-text-muted">
+                                                    Configure platform
+                                                    notification channels and
+                                                    defaults.
+                                                </p>
                                             </div>
                                         </div>
 
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-bg-dark/50 p-4">
                                                 <div>
-                                                    <p className="text-sm font-medium text-text-primary">Email Notifications</p>
-                                                    <p className="text-xs text-text-muted">Send notifications via email</p>
+                                                    <p className="text-sm font-medium text-text-primary">
+                                                        Email Notifications
+                                                    </p>
+                                                    <p className="text-xs text-text-muted">
+                                                        Send notifications via
+                                                        email
+                                                    </p>
                                                 </div>
                                                 <input
                                                     type="checkbox"
@@ -212,8 +242,13 @@ export default function AdminSettings() {
                                             </div>
                                             <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-bg-dark/50 p-4">
                                                 <div>
-                                                    <p className="text-sm font-medium text-text-primary">In-App Notifications</p>
-                                                    <p className="text-xs text-text-muted">Show notifications within the dashboard</p>
+                                                    <p className="text-sm font-medium text-text-primary">
+                                                        In-App Notifications
+                                                    </p>
+                                                    <p className="text-xs text-text-muted">
+                                                        Show notifications
+                                                        within the dashboard
+                                                    </p>
                                                 </div>
                                                 <input
                                                     type="checkbox"
@@ -238,14 +273,21 @@ export default function AdminSettings() {
                                                 <Mail size={24} />
                                             </div>
                                             <div>
-                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">Email Configuration</h2>
-                                                <p className="text-xs text-text-muted">Configure email sending settings.</p>
+                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">
+                                                    Email Configuration
+                                                </h2>
+                                                <p className="text-xs text-text-muted">
+                                                    Configure email sending
+                                                    settings.
+                                                </p>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">Mail Driver</label>
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    Mail Driver
+                                                </label>
                                                 <select className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden">
                                                     <option>SMTP</option>
                                                     <option>Mailgun</option>
@@ -254,25 +296,31 @@ export default function AdminSettings() {
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">From Address</label>
-                                                <input 
-                                                    type="email" 
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    From Address
+                                                </label>
+                                                <input
+                                                    type="email"
                                                     defaultValue="noreply@ulo of stories.com"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">SMTP Host</label>
-                                                <input 
-                                                    type="text" 
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    SMTP Host
+                                                </label>
+                                                <input
+                                                    type="text"
                                                     defaultValue="smtp.mailtrap.io"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">SMTP Port</label>
-                                                <input 
-                                                    type="number" 
+                                                <label className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                    SMTP Port
+                                                </label>
+                                                <input
+                                                    type="number"
                                                     defaultValue="587"
                                                     className="h-12 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                                                 />
@@ -294,36 +342,73 @@ export default function AdminSettings() {
                                                 <Cpu size={24} />
                                             </div>
                                             <div>
-                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">System Maintenance</h2>
-                                                <p className="text-xs text-text-muted">System tools and maintenance actions.</p>
+                                                <h2 className="text-lg font-bold text-text-primary md:text-xl">
+                                                    System Maintenance
+                                                </h2>
+                                                <p className="text-xs text-text-muted">
+                                                    System tools and maintenance
+                                                    actions.
+                                                </p>
                                             </div>
                                         </div>
 
                                         <div className="space-y-4">
                                             <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border-subtle bg-bg-dark/50 p-4 md:flex-row md:items-center">
                                                 <div>
-                                                    <p className="text-sm font-medium text-text-primary">Clear Application Cache</p>
-                                                    <p className="text-xs text-text-muted">Remove cached views, routes, and config files.</p>
+                                                    <p className="text-sm font-medium text-text-primary">
+                                                        Clear Application Cache
+                                                    </p>
+                                                    <p className="text-xs text-text-muted">
+                                                        Remove cached views,
+                                                        routes, and config
+                                                        files.
+                                                    </p>
                                                 </div>
-                                                <Button variant="outline" size="sm">Clear Cache</Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    Clear Cache
+                                                </Button>
                                             </div>
                                             <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border-subtle bg-bg-dark/50 p-4 md:flex-row md:items-center">
                                                 <div>
-                                                    <p className="text-sm font-medium text-text-primary">Optimize Application</p>
-                                                    <p className="text-xs text-text-muted">Cache routes, config, and views for better performance.</p>
+                                                    <p className="text-sm font-medium text-text-primary">
+                                                        Optimize Application
+                                                    </p>
+                                                    <p className="text-xs text-text-muted">
+                                                        Cache routes, config,
+                                                        and views for better
+                                                        performance.
+                                                    </p>
                                                 </div>
-                                                <Button variant="outline" size="sm">Optimize</Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    Optimize
+                                                </Button>
                                             </div>
                                         </div>
 
                                         <div className="space-y-6 rounded-3xl border border-red-500/10 bg-red-500/5 p-6 md:p-8">
-                                            <h3 className="text-sm font-bold text-red-400">Danger Zone</h3>
+                                            <h3 className="text-sm font-bold text-red-400">
+                                                Danger Zone
+                                            </h3>
                                             <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
                                                 <div>
-                                                    <p className="text-sm font-bold text-red-400">Maintenance Mode</p>
-                                                    <p className="text-xs text-text-muted">Take the entire platform offline for updates.</p>
+                                                    <p className="text-sm font-bold text-red-400">
+                                                        Maintenance Mode
+                                                    </p>
+                                                    <p className="text-xs text-text-muted">
+                                                        Take the entire platform
+                                                        offline for updates.
+                                                    </p>
                                                 </div>
-                                                <Button variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10 shrink-0">
+                                                <Button
+                                                    variant="outline"
+                                                    className="shrink-0 border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                                >
                                                     Enable Maintenance
                                                 </Button>
                                             </div>

@@ -45,8 +45,8 @@ export const ShareQRCode: React.FC<ShareQRCodeProps> = ({
     const setOpen = (v: boolean) => {
         if (isControlled) {
             if (!v && onClose) {
-onClose();
-}
+                onClose();
+            }
         } else {
             setIsOpen(v);
         }
@@ -54,11 +54,11 @@ onClose();
 
     const displayName = entityName || roomName;
 
-    const shareUrl = externalShareUrl || (
-        typeof window !== 'undefined'
+    const shareUrl =
+        externalShareUrl ||
+        (typeof window !== 'undefined'
             ? `${window.location.origin}/share/${roomType}/${roomSlug}`
-            : ''
-    );
+            : '');
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(shareUrl);
@@ -69,26 +69,36 @@ onClose();
     const shareMessage = `I'm inviting you to step into our heritage space: ${displayName}.\n\nEnter the gateway here: ${shareUrl}`;
 
     const sendEmail = () => {
-        const subject = encodeURIComponent(`Welcome to the ${displayName} Homestead`);
+        const subject = encodeURIComponent(
+            `Welcome to the ${displayName} Homestead`,
+        );
         const body = encodeURIComponent(shareMessage);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     };
 
     const shareWhatsApp = () => {
-        window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, '_blank');
+        window.open(
+            `https://wa.me/?text=${encodeURIComponent(shareMessage)}`,
+            '_blank',
+        );
     };
 
     const shareTelegram = () => {
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`Welcome to ${displayName}`)}`, '_blank');
+        window.open(
+            `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`Welcome to ${displayName}`)}`,
+            '_blank',
+        );
     };
 
     const shareNative = useCallback(() => {
         if (navigator.share) {
-            navigator.share({
-                title: displayName,
-                text: shareMessage,
-                url: shareUrl,
-            }).catch(() => {});
+            navigator
+                .share({
+                    title: displayName,
+                    text: shareMessage,
+                    url: shareUrl,
+                })
+                .catch(() => {});
         } else {
             copyToClipboard();
         }
@@ -98,21 +108,27 @@ onClose();
         const canvas = qrContainerRef.current?.querySelector('canvas');
 
         if (!canvas) {
-return null;
-}
+            return null;
+        }
 
         const tempCanvas = document.createElement('canvas');
         const ctx = tempCanvas.getContext('2d');
 
         if (!ctx) {
-return null;
-}
+            return null;
+        }
 
         tempCanvas.width = 600;
         tempCanvas.height = 600;
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, 600, 600);
-        ctx.drawImage(canvas, Math.round((600 - canvas.width) / 2), Math.round((600 - canvas.height) / 2), canvas.width, canvas.height);
+        ctx.drawImage(
+            canvas,
+            Math.round((600 - canvas.width) / 2),
+            Math.round((600 - canvas.height) / 2),
+            canvas.width,
+            canvas.height,
+        );
 
         return tempCanvas.toDataURL('image/png');
     }, []);
@@ -121,8 +137,8 @@ return null;
         const dataUrl = await getQRImageData();
 
         if (!dataUrl) {
-return;
-}
+            return;
+        }
 
         const link = document.createElement('a');
         link.download = `${displayName.replace(/\s+/g, '-').toLowerCase()}-access-qr.png`;
@@ -134,11 +150,15 @@ return;
         const dataUrl = await getQRImageData();
 
         if (!dataUrl) {
-return;
-}
+            return;
+        }
 
         const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], `${displayName.replace(/\s+/g, '-').toLowerCase()}-access-qr.png`, { type: 'image/png' });
+        const file = new File(
+            [blob],
+            `${displayName.replace(/\s+/g, '-').toLowerCase()}-access-qr.png`,
+            { type: 'image/png' },
+        );
 
         if (navigator.share && navigator.canShare?.({ files: [file] })) {
             await navigator.share({
@@ -156,11 +176,11 @@ return;
             {!isControlled && (
                 <Button
                     variant="outline"
-                    className="flex items-center md:gap-2 px-3! rounded-full border-accent-gold/20 hover:border-accent-gold/40"
+                    className="flex items-center rounded-full border-accent-gold/20 px-3! hover:border-accent-gold/40 md:gap-2"
                     onClick={() => setOpen(true)}
                 >
                     <Share2 size={18} />
-                    <span className='hidden md:inline'>Share Room</span>
+                    <span className="hidden md:inline">Share Room</span>
                 </Button>
             )}
 
@@ -200,13 +220,23 @@ return;
 
                             <div className="mb-6 flex rounded-2xl bg-bg-dark/50 p-1">
                                 {[
-                                    { id: 'qr', label: 'QR Code', icon: QrCode },
-                                    { id: 'link', label: 'Link', icon: LinkIcon },
+                                    {
+                                        id: 'qr',
+                                        label: 'QR Code',
+                                        icon: QrCode,
+                                    },
+                                    {
+                                        id: 'link',
+                                        label: 'Link',
+                                        icon: LinkIcon,
+                                    },
                                     { id: 'email', label: 'Email', icon: Mail },
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveTab(tab.id as any)}
+                                        onClick={() =>
+                                            setActiveTab(tab.id as any)
+                                        }
                                         className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${activeTab === tab.id ? 'bg-accent-gold text-bg-dark shadow-lg' : 'text-text-muted hover:text-white'}`}
                                     >
                                         <tab.icon size={14} />
@@ -217,34 +247,36 @@ return;
 
                             {/* Mobile share bar */}
                             <div className="mb-6 flex items-center justify-center gap-3">
-                                <span className="text-[9px] font-mono tracking-wider text-text-muted uppercase">Share via</span>
+                                <span className="font-mono text-[9px] tracking-wider text-text-muted uppercase">
+                                    Share via
+                                </span>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={shareWhatsApp}
-                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366] transition-all hover:bg-[#25D366]/20 hover:scale-110"
+                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366] transition-all hover:scale-110 hover:bg-[#25D366]/20"
                                         title="Share on WhatsApp"
                                     >
                                         <MessageCircle size={18} />
                                     </button>
                                     <button
                                         onClick={shareTelegram}
-                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0088CC]/10 text-[#0088CC] transition-all hover:bg-[#0088CC]/20 hover:scale-110"
+                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0088CC]/10 text-[#0088CC] transition-all hover:scale-110 hover:bg-[#0088CC]/20"
                                         title="Share on Telegram"
                                     >
                                         <Send size={18} />
                                     </button>
                                     <button
                                         onClick={shareNative}
-                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold/10 text-accent-gold transition-all hover:bg-accent-gold/20 hover:scale-110"
+                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold/10 text-accent-gold transition-all hover:scale-110 hover:bg-accent-gold/20"
                                         title="Share"
                                     >
                                         <Smartphone size={18} />
                                     </button>
                                     <a
                                         href={shareUrl}
-                                        rel='noreferrer noopener'
-                                        target='_blank'
-                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold/10 text-accent-gold transition-all hover:bg-accent-gold/20 hover:scale-110"
+                                        rel="noreferrer noopener"
+                                        target="_blank"
+                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold/10 text-accent-gold transition-all hover:scale-110 hover:bg-accent-gold/20"
                                         title="Open"
                                     >
                                         <Smartphone size={18} />
@@ -259,7 +291,10 @@ return;
                                         animate={{ opacity: 1, scale: 1 }}
                                         className="text-center"
                                     >
-                                        <div ref={qrContainerRef} className="mx-auto mb-6 inline-block rounded-3xl bg-white p-6 shadow-inner ring-8 ring-accent-gold/5">
+                                        <div
+                                            ref={qrContainerRef}
+                                            className="mx-auto mb-6 inline-block rounded-3xl bg-white p-6 shadow-inner ring-8 ring-accent-gold/5"
+                                        >
                                             <QRCodeCanvas
                                                 value={shareUrl}
                                                 size={200}
@@ -277,17 +312,17 @@ return;
                                                 }}
                                             />
                                         </div>
-                                        <div className="flex items-center justify-center gap-3 mb-4">
+                                        <div className="mb-4 flex items-center justify-center gap-3">
                                             <button
                                                 onClick={shareQRAsImage}
-                                                className="flex items-center gap-2 rounded-xl bg-accent-gold/10 text-accent-gold px-4 py-2 text-[10px] font-bold tracking-widest uppercase transition-all hover:bg-accent-gold/20 border border-accent-gold/20"
+                                                className="flex items-center gap-2 rounded-xl border border-accent-gold/20 bg-accent-gold/10 px-4 py-2 text-[10px] font-bold tracking-widest text-accent-gold uppercase transition-all hover:bg-accent-gold/20"
                                             >
                                                 <Smartphone size={14} />
                                                 Share as Image
                                             </button>
                                             <button
                                                 onClick={downloadQRCode}
-                                                className="flex items-center gap-2 rounded-xl bg-white/5 text-text-muted px-4 py-2 text-[10px] font-bold tracking-widest uppercase transition-all hover:bg-white/10 border border-white/10"
+                                                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-all hover:bg-white/10"
                                             >
                                                 <Download size={14} />
                                                 Download
@@ -327,7 +362,11 @@ return;
                                                     onClick={copyToClipboard}
                                                     className="absolute top-1/2 right-4 -translate-y-1/2 text-accent-gold transition-transform hover:scale-110"
                                                 >
-                                                    {copied ? <Check size={20} /> : <Copy size={20} />}
+                                                    {copied ? (
+                                                        <Check size={20} />
+                                                    ) : (
+                                                        <Copy size={20} />
+                                                    )}
                                                 </button>
                                             </div>
                                         </div>

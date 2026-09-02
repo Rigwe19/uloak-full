@@ -56,25 +56,27 @@ export function VideoSocialOverlay({
             initial={false}
             animate={{ opacity: overlayVisible ? 1 : 0.6 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-3 bottom-20 z-20 flex flex-col items-center gap-5 pointer-events-none"
+            className="pointer-events-none absolute right-3 bottom-20 z-20 flex flex-col items-center gap-5"
         >
             {actions.map((action) => (
                 <button
                     key={action.label}
                     onClick={action.onClick}
-                    className="pointer-events-auto flex flex-col items-center gap-1 group"
+                    className="group pointer-events-auto flex flex-col items-center gap-1"
                     aria-label={action.label}
                 >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/10 group-hover:bg-white/20 transition-all">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 backdrop-blur-md transition-all group-hover:bg-white/20">
                         <action.icon
                             size={18}
                             className={`transition-all ${
-                                action.active ? action.activeColor + ' fill-current' : 'text-white group-hover:text-white'
+                                action.active
+                                    ? action.activeColor + ' fill-current'
+                                    : 'text-white group-hover:text-white'
                             }`}
                         />
                     </div>
                     {action.count !== undefined && (
-                        <span className="text-[10px] font-mono text-white/60">
+                        <span className="font-mono text-[10px] text-white/60">
                             {action.count}
                         </span>
                     )}

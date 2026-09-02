@@ -40,7 +40,10 @@ interface PlayableVideo {
     date: string;
 }
 
-export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoPlaylistPlayerProps) {
+export function VideoPlaylistPlayer({
+    stories = [],
+    fullscreen = false,
+}: VideoPlaylistPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [currentIdx, setCurrentIdx] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -74,7 +77,9 @@ export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoP
                         list.push({
                             id: `story-${story.id}-asset-${aIdx}`,
                             storyId: story.id,
-                            title: asset.title || `${story.title} - Video ${aIdx + 1}`,
+                            title:
+                                asset.title ||
+                                `${story.title} - Video ${aIdx + 1}`,
                             description: story.description || '',
                             url: asset.url,
                             thumbnail: story.thumbnail || '/logo-stacked.png',
@@ -97,7 +102,8 @@ export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoP
 
         if (videoRef.current) {
             videoRef.current.load();
-            videoRef.current.play()
+            videoRef.current
+                .play()
                 .then(() => setIsPlaying(true))
                 .catch((e) => {
                     console.log('Autoplay prevented or failed:', e);
@@ -108,14 +114,15 @@ export function VideoPlaylistPlayer({ stories = [], fullscreen = false }: VideoP
 
     const handlePlayPause = () => {
         if (!videoRef.current) {
-return;
-}
+            return;
+        }
 
         if (isPlaying) {
             videoRef.current.pause();
             setIsPlaying(false);
         } else {
-            videoRef.current.play()
+            videoRef.current
+                .play()
                 .then(() => setIsPlaying(true))
                 .catch((e) => console.log('Playback error:', e));
         }
@@ -123,8 +130,8 @@ return;
 
     const handleMuteToggle = () => {
         if (!videoRef.current) {
-return;
-}
+            return;
+        }
 
         videoRef.current.muted = !isMuted;
         setIsMuted(!isMuted);
@@ -132,8 +139,8 @@ return;
 
     const handleTimeUpdate = () => {
         if (!videoRef.current) {
-return;
-}
+            return;
+        }
 
         const cur = videoRef.current.currentTime;
         const dur = videoRef.current.duration || 0;
@@ -142,16 +149,16 @@ return;
 
     const handleLoadedMetadata = () => {
         if (!videoRef.current) {
-return;
-}
+            return;
+        }
 
         setDuration(videoRef.current.duration || 0);
     };
 
     const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!videoRef.current || duration === 0) {
-return;
-}
+            return;
+        }
 
         const rect = e.currentTarget.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
@@ -169,8 +176,8 @@ return;
 
     const formatTime = (time: number) => {
         if (isNaN(time)) {
-return '00:00';
-}
+            return '00:00';
+        }
 
         const mins = Math.floor(time / 60);
         const secs = Math.floor(time % 60);
@@ -180,8 +187,8 @@ return '00:00';
 
     const handleFullscreen = () => {
         if (!videoRef.current) {
-return;
-}
+            return;
+        }
 
         if (videoRef.current.requestFullscreen) {
             videoRef.current.requestFullscreen();
@@ -202,7 +209,9 @@ return;
                     Cinema Hall is Quiet
                 </h3>
                 <p className="mx-auto max-w-md text-sm leading-relaxed text-text-muted">
-                    No video memories have been preserved in this homestead yet. Click the "Upload" button below to add your first legacy film.
+                    No video memories have been preserved in this homestead yet.
+                    Click the "Upload" button below to add your first legacy
+                    film.
                 </p>
                 <div className="absolute inset-x-0 bottom-0 h-1 bg-linear-to-r from-transparent via-accent-gold/10 to-transparent" />
             </motion.div>
@@ -215,11 +224,13 @@ return;
             animate={{ opacity: 1 }}
             className={`overflow-hidden ${!fullscreen ? 'rounded-4xl' : ''} border border-white/10 bg-surface/40 backdrop-blur-xl`}
         >
-            <div className={`relative flex flex-col justify-between bg-black/60 w-full ${!fullscreen?'h-75 sm:h-112.5 md:h-137.5 lg:h-150':'aspect-video'} group`}>
+            <div
+                className={`relative flex w-full flex-col justify-between bg-black/60 ${!fullscreen ? 'h-75 sm:h-112.5 md:h-137.5 lg:h-150' : 'aspect-video'} group`}
+            >
                 <video
                     ref={videoRef}
                     src={activeVideo?.url}
-                    className="w-full h-full object-contain"
+                    className="h-full w-full object-contain"
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleLoadedMetadata}
                     onEnded={handleVideoEnded}
@@ -230,16 +241,16 @@ return;
                 />
 
                 {/* Ambient Light/Backdrop Glow from Active Video */}
-                <div className="absolute inset-0 -z-10 pointer-events-none opacity-20 blur-[60px]">
+                <div className="pointer-events-none absolute inset-0 -z-10 opacity-20 blur-[60px]">
                     <img
                         src={activeVideo?.thumbnail}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                         alt=""
                     />
                 </div>
 
                 {/* Custom Premium Golden Controls Bar Overlay */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-4">
+                <div className="absolute inset-x-0 bottom-0 flex flex-col gap-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                     {/* Progress Bar */}
                     <div
                         onClick={handleProgressBarClick}
@@ -252,16 +263,20 @@ return;
                     </div>
 
                     {/* Control Buttons */}
-                    <div className="flex items-center justify-between text-white text-xs">
+                    <div className="flex items-center justify-between text-xs text-white">
                         <div className="flex items-center gap-6">
                             <button
                                 onClick={handlePlayPause}
-                                className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold text-bg-dark hover:scale-105 transition-transform"
+                                className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold text-bg-dark transition-transform hover:scale-105"
                             >
                                 {isPlaying ? (
                                     <Pause size={18} fill="currentColor" />
                                 ) : (
-                                    <Play size={18} fill="currentColor" className="ml-0.5" />
+                                    <Play
+                                        size={18}
+                                        fill="currentColor"
+                                        className="ml-0.5"
+                                    />
                                 )}
                             </button>
 
@@ -269,7 +284,7 @@ return;
                                 <button
                                     onClick={handleVideoEnded}
                                     title="Skip to next"
-                                    className="text-text-muted hover:text-white transition-colors"
+                                    className="text-text-muted transition-colors hover:text-white"
                                 >
                                     <SkipForward size={18} />
                                 </button>
@@ -278,21 +293,26 @@ return;
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleMuteToggle}
-                                    className="text-text-muted hover:text-white transition-colors"
+                                    className="text-text-muted transition-colors hover:text-white"
                                 >
-                                    {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                                    {isMuted ? (
+                                        <VolumeX size={18} />
+                                    ) : (
+                                        <Volume2 size={18} />
+                                    )}
                                 </button>
                             </div>
 
                             <span className="font-mono text-text-muted">
-                                {formatTime(videoRef.current?.currentTime || 0)} / {formatTime(duration)}
+                                {formatTime(videoRef.current?.currentTime || 0)}{' '}
+                                / {formatTime(duration)}
                             </span>
                         </div>
 
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={handleFullscreen}
-                                className="text-text-muted hover:text-white transition-colors"
+                                className="text-text-muted transition-colors hover:text-white"
                             >
                                 <Maximize size={18} />
                             </button>
@@ -301,11 +321,15 @@ return;
                 </div>
 
                 {/* Quick Title overlay when controls are hidden */}
-                <div className="absolute top-6 left-6 pointer-events-none bg-black/60 backdrop-blur-md border border-white/5 rounded-full px-4 py-2 text-xs font-semibold tracking-wider text-text-primary flex items-center gap-2">
-                    <span className="text-accent-gold font-mono">NOW PLAYING:</span>
-                    <span className='flex-1 w-1/3 truncate'>{activeVideo?.title}</span>
+                <div className="pointer-events-none absolute top-6 left-6 flex items-center gap-2 rounded-full border border-white/5 bg-black/60 px-4 py-2 text-xs font-semibold tracking-wider text-text-primary backdrop-blur-md">
+                    <span className="font-mono text-accent-gold">
+                        NOW PLAYING:
+                    </span>
+                    <span className="w-1/3 flex-1 truncate">
+                        {activeVideo?.title}
+                    </span>
                     {playlist.length > 1 && (
-                        <span className="ml-2 rounded-full bg-accent-gold/10 px-2.5 py-0.5 text-[9px] font-bold text-accent-gold border border-accent-gold/20">
+                        <span className="ml-2 rounded-full border border-accent-gold/20 bg-accent-gold/10 px-2.5 py-0.5 text-[9px] font-bold text-accent-gold">
                             {currentIdx + 1} of {playlist.length}
                         </span>
                     )}
@@ -313,24 +337,28 @@ return;
             </div>
 
             {/* Description Details bar at the bottom */}
-            {!fullscreen && <div className="border-t border-white/5 bg-black/20 p-6 flex flex-col md:flex-row justify-between gap-6">
-                <div className="space-y-2">
-                    <h4 className="text-xl font-bold text-text-primary">{activeVideo?.title}</h4>
-                    <p className="text-xs font-light text-text-muted leading-relaxed max-w-3xl italic">
-                        "{activeVideo?.description}"
-                    </p>
-                </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-6 border-t md:border-t-0 md:border-l border-white/5 pt-4 md:pt-0 md:pl-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
-                    <div className="flex items-center gap-2">
-                        <User size={12} className="text-accent-gold" />
-                        <span>Preserved by {activeVideo?.author}</span>
+            {!fullscreen && (
+                <div className="flex flex-col justify-between gap-6 border-t border-white/5 bg-black/20 p-6 md:flex-row">
+                    <div className="space-y-2">
+                        <h4 className="text-xl font-bold text-text-primary">
+                            {activeVideo?.title}
+                        </h4>
+                        <p className="max-w-3xl text-xs leading-relaxed font-light text-text-muted italic">
+                            "{activeVideo?.description}"
+                        </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Calendar size={12} className="text-accent-gold" />
-                        <span>{activeVideo?.date}</span>
+                    <div className="flex shrink-0 flex-wrap items-center gap-6 border-t border-white/5 pt-4 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase md:border-t-0 md:border-l md:pt-0 md:pl-6">
+                        <div className="flex items-center gap-2">
+                            <User size={12} className="text-accent-gold" />
+                            <span>Preserved by {activeVideo?.author}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Calendar size={12} className="text-accent-gold" />
+                            <span>{activeVideo?.date}</span>
+                        </div>
                     </div>
                 </div>
-            </div>}
+            )}
         </motion.div>
     );
 }

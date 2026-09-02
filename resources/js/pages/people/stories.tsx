@@ -13,32 +13,53 @@ interface StoriesProps {
 export default function Stories({ person, stories }: StoriesProps) {
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Stories') + ' - Ulo of Storiesf Stories'} />
+            <Head
+                title={
+                    (person.name || 'Stories') + ' - Ulo of Storiesf Stories'
+                }
+            />
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-3"
+            >
                 {stories?.data?.length > 0 ? (
                     stories.data.map((link: any) => (
                         <a
                             key={link.id}
-                            href={link.story ? `/dashboard/rooms/${link.story.room?.slug}/stories/${link.story.id}` : '#'}
+                            href={
+                                link.story
+                                    ? `/dashboard/rooms/${link.story.room?.slug}/stories/${link.story.id}`
+                                    : '#'
+                            }
                             className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface p-4 transition-all hover:border-accent-gold/30"
                         >
-                            <BookOpen size={20} className="shrink-0 text-accent-gold" />
+                            <BookOpen
+                                size={20}
+                                className="shrink-0 text-accent-gold"
+                            />
                             <div className="min-w-0 grow">
-                                <p className="text-sm font-bold text-text-primary truncate">
+                                <p className="truncate text-sm font-bold text-text-primary">
                                     {link.story?.title || 'Untitled Story'}
                                 </p>
                                 <p className="text-xs text-text-muted capitalize">
-                                    Role: {link.role} · {link.story?.type || 'story'}
+                                    Role: {link.role} ·{' '}
+                                    {link.story?.type || 'story'}
                                 </p>
                             </div>
-                            <ChevronRight size={16} className="shrink-0 text-text-muted" />
+                            <ChevronRight
+                                size={16}
+                                className="shrink-0 text-text-muted"
+                            />
                         </a>
                     ))
                 ) : (
                     <div className="flex flex-col items-center gap-3 py-16">
                         <BookOpen size={40} className="text-text-muted/30" />
-                        <p className="text-sm text-text-muted italic">No stories connected yet.</p>
+                        <p className="text-sm text-text-muted italic">
+                            No stories connected yet.
+                        </p>
                     </div>
                 )}
             </motion.div>

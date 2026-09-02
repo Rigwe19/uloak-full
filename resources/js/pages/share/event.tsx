@@ -34,7 +34,11 @@ import type { FeedStory } from '@/types/feed';
 /* ─── animations ─────────────────────────────────────────── */
 const fadeInUp = {
     hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 60, damping: 15 } },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { type: 'spring', stiffness: 60, damping: 15 },
+    },
 };
 
 /* ─── Props ───────────────────────────────────────────────── */
@@ -67,25 +71,28 @@ interface ShareEventProps {
 /* ─── Ad Banner Section ─────────────────────────────────────── */
 function AdBanner() {
     return (
-        <section className="relative z-10 mx-auto max-w-7xl px-5 md:px-8 lg:px-16 mt-8 mb-8">
+        <section className="relative z-10 mx-auto mt-8 mb-8 max-w-7xl px-5 md:px-8 lg:px-16">
             <Link
                 href="/register"
-                className="group relative block overflow-hidden rounded-3xl border border-accent-gold/20 bg-gradient-to-br from-accent-gold/10 via-bg-dark to-accent-gold/5 p-8 md:p-12 transition-all hover:border-accent-gold/40"
+                className="group relative block overflow-hidden rounded-3xl border border-accent-gold/20 bg-gradient-to-br from-accent-gold/10 via-bg-dark to-accent-gold/5 p-8 transition-all hover:border-accent-gold/40 md:p-12"
             >
                 <div className="absolute top-0 right-0 h-64 w-64 translate-x-16 -translate-y-16 rounded-full bg-accent-gold/10 blur-[80px]" />
                 <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-8 translate-y-8 rounded-full bg-accent-gold/5 blur-[60px]" />
 
-                <div className="relative flex flex-col items-center gap-6 text-center md:flex-row md:text-left md:justify-between">
+                <div className="relative flex flex-col items-center gap-6 text-center md:flex-row md:justify-between md:text-left">
                     <div className="space-y-3">
-                        <div className="flex items-center gap-2 justify-center md:justify-start">
+                        <div className="flex items-center justify-center gap-2 md:justify-start">
                             <Sparkles size={16} className="text-accent-gold" />
-                            <span className="text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">Create Your Own</span>
+                            <span className="text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
+                                Create Your Own
+                            </span>
                         </div>
-                        <h3 className="text-2xl md:text-3xl font-bold text-text-primary">
+                        <h3 className="text-2xl font-bold text-text-primary md:text-3xl">
                             Your stories deserve a home.
                         </h3>
-                        <p className="max-w-lg text-sm text-text-muted leading-relaxed">
-                            Preserve your family's legacy, share memories, and create a lasting digital heritage — for free.
+                        <p className="max-w-lg text-sm leading-relaxed text-text-muted">
+                            Preserve your family's legacy, share memories, and
+                            create a lasting digital heritage — for free.
                         </p>
                     </div>
                     <div className="shrink-0">
@@ -120,7 +127,11 @@ interface MediaViewerModalProps {
     onClose: () => void;
 }
 
-function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalProps) {
+function MediaViewerModal({
+    stories,
+    initialIndex,
+    onClose,
+}: MediaViewerModalProps) {
     const [currentIdx, setCurrentIdx] = useState(initialIndex);
     const [isPlaying, setIsPlaying] = useState(false);
 
@@ -129,7 +140,8 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
     const hasNext = currentIdx < stories.length - 1;
 
     const mediaUrl = story?.file_url || story?.assets?.[0]?.url || null;
-    const isDocument = story?.type === 'document' || story?.type === 'collection';
+    const isDocument =
+        story?.type === 'document' || story?.type === 'collection';
 
     // Preload adjacent images for instant navigation
     useEffect(() => {
@@ -142,7 +154,12 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
                 const s = stories[idx];
                 const url = s?.file_url || s?.assets?.[0]?.url || null;
 
-                if (url && (s?.type === 'photo' || (!s?.type?.startsWith('video') && !s?.type?.startsWith('audio')))) {
+                if (
+                    url &&
+                    (s?.type === 'photo' ||
+                        (!s?.type?.startsWith('video') &&
+                            !s?.type?.startsWith('audio')))
+                ) {
                     urls.push(url);
                 }
             }
@@ -157,16 +174,16 @@ function MediaViewerModal({ stories, initialIndex, onClose }: MediaViewerModalPr
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-onClose();
-}
+                onClose();
+            }
 
             if (e.key === 'ArrowLeft' && hasPrev) {
-setCurrentIdx((p) => p - 1);
-}
+                setCurrentIdx((p) => p - 1);
+            }
 
             if (e.key === 'ArrowRight' && hasNext) {
-setCurrentIdx((p) => p + 1);
-}
+                setCurrentIdx((p) => p + 1);
+            }
         };
         window.addEventListener('keydown', handleKey);
 
@@ -178,8 +195,8 @@ setCurrentIdx((p) => p + 1);
     }, [currentIdx]);
 
     if (!story) {
-return null;
-}
+        return null;
+    }
 
     return (
         <AnimatePresence>
@@ -192,19 +209,19 @@ return null;
                 {/* Close button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-6 right-6 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all cursor-pointer"
+                    className="absolute top-6 right-6 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white"
                 >
                     <X size={24} />
                 </button>
 
-                <div className="absolute top-6 left-6 z-10 rounded-full bg-white/10 backdrop-blur-md px-4 py-2 text-xs font-mono tracking-wider text-white/80">
+                <div className="absolute top-6 left-6 z-10 rounded-full bg-white/10 px-4 py-2 font-mono text-xs tracking-wider text-white/80 backdrop-blur-md">
                     {currentIdx + 1} / {stories.length}
                 </div>
 
                 {hasPrev && (
                     <button
                         onClick={() => setCurrentIdx((p) => p - 1)}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                        className="absolute top-1/2 left-4 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white"
                     >
                         <ChevronLeft size={28} />
                     </button>
@@ -213,21 +230,25 @@ return null;
                 {hasNext && (
                     <button
                         onClick={() => setCurrentIdx((p) => p + 1)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                        className="absolute top-1/2 right-4 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white"
                     >
                         <ChevronRight size={28} />
                     </button>
                 )}
 
-                <div className="w-full max-w-5xl mx-auto px-4 md:px-16 flex flex-col items-center">
-                    <div className="text-center mb-6 w-full">
-                        <h3 className="text-xl md:text-2xl font-bold text-white">{story.title}</h3>
-                        <p className="text-sm text-white/50 mt-1">{story.author} · {story.date}</p>
+                <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 md:px-16">
+                    <div className="mb-6 w-full text-center">
+                        <h3 className="text-xl font-bold text-white md:text-2xl">
+                            {story.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-white/50">
+                            {story.author} · {story.date}
+                        </p>
                     </div>
 
-                    <div className="w-full flex items-center justify-center">
-                        {(story.type === 'video' && mediaUrl) ? (
-                            <div className="relative w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl">
+                    <div className="flex w-full items-center justify-center">
+                        {story.type === 'video' && mediaUrl ? (
+                            <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl shadow-2xl">
                                 <VideoPlayer
                                     video={{
                                         id: story.id,
@@ -243,31 +264,47 @@ return null;
                                     showSpeedControl
                                     showPip
                                     showVolumeSlider
-                                    className="w-full max-h-[60vh]"
+                                    className="max-h-[60vh] w-full"
                                     videoClassName="w-full max-h-[60vh] object-contain"
                                     onEnded={() => setIsPlaying(false)}
                                 />
                             </div>
-                        ) : (story.type === 'audio' && mediaUrl) ? (
+                        ) : story.type === 'audio' && mediaUrl ? (
                             <div className="w-full max-w-lg">
-                                <div className="flex flex-col items-center gap-6 p-8 rounded-2xl bg-white/5 border border-white/10">
-                                    <div className="w-24 h-24 rounded-full bg-accent-gold/20 border-2 border-accent-gold/40 flex items-center justify-center">
-                                        <Music size={40} className="text-accent-gold" />
+                                <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/10 bg-white/5 p-8">
+                                    <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-accent-gold/40 bg-accent-gold/20">
+                                        <Music
+                                            size={40}
+                                            className="text-accent-gold"
+                                        />
                                     </div>
-                                    <audio src={mediaUrl} controls autoPlay className="w-full" />
-                                    {story.description && <p className="text-sm text-white/60 italic text-center">"{story.description}"</p>}
+                                    <audio
+                                        src={mediaUrl}
+                                        controls
+                                        autoPlay
+                                        className="w-full"
+                                    />
+                                    {story.description && (
+                                        <p className="text-center text-sm text-white/60 italic">
+                                            "{story.description}"
+                                        </p>
+                                    )}
                                 </div>
                             </div>
-                        ) : (story.type === 'photo' && mediaUrl) ? (
-                            <div className="relative max-w-full max-h-[65vh]">
-                                <img src={mediaUrl} alt={story.title} className="max-w-full max-h-[65vh] object-contain rounded-2xl shadow-2xl" />
+                        ) : story.type === 'photo' && mediaUrl ? (
+                            <div className="relative max-h-[65vh] max-w-full">
+                                <img
+                                    src={mediaUrl}
+                                    alt={story.title}
+                                    className="max-h-[65vh] max-w-full rounded-2xl object-contain shadow-2xl"
+                                />
                                 {/* Download button overlay */}
                                 <a
                                     href={mediaUrl}
                                     download
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white/80 hover:bg-black/60 transition-all backdrop-blur-sm"
+                                    className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white/80 backdrop-blur-sm transition-all hover:bg-black/60"
                                     title="Download"
                                 >
                                     <Download size={18} />
@@ -275,14 +312,28 @@ return null;
                             </div>
                         ) : isDocument ? (
                             <div className="w-full max-w-lg text-center">
-                                <div className="flex flex-col items-center gap-6 p-12 rounded-2xl bg-white/5 border border-white/10">
-                                    <div className="w-24 h-24 rounded-2xl bg-accent-gold/10 border border-accent-gold/30 flex items-center justify-center">
-                                        <FileIcon size={40} className="text-accent-gold" />
+                                <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/10 bg-white/5 p-12">
+                                    <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-accent-gold/30 bg-accent-gold/10">
+                                        <FileIcon
+                                            size={40}
+                                            className="text-accent-gold"
+                                        />
                                     </div>
-                                    <h3 className="text-lg text-white font-bold">{story.title}</h3>
-                                    {story.description && <p className="text-sm text-white/60 italic">"{story.description}"</p>}
+                                    <h3 className="text-lg font-bold text-white">
+                                        {story.title}
+                                    </h3>
+                                    {story.description && (
+                                        <p className="text-sm text-white/60 italic">
+                                            "{story.description}"
+                                        </p>
+                                    )}
                                     {mediaUrl && (
-                                        <a href={mediaUrl} target="_blank" rel="noopener noreferrer" className="bg-accent-gold hover:bg-accent-gold/80 text-bg-dark font-mono text-xs font-bold py-3 px-6 rounded-xl uppercase tracking-widest transition-all inline-flex items-center gap-2">
+                                        <a
+                                            href={mediaUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 rounded-xl bg-accent-gold px-6 py-3 font-mono text-xs font-bold tracking-widest text-bg-dark uppercase transition-all hover:bg-accent-gold/80"
+                                        >
                                             <Download size={14} /> View Document
                                         </a>
                                     )}
@@ -290,16 +341,23 @@ return null;
                             </div>
                         ) : (
                             <div className="w-full max-w-lg text-center">
-                                <div className="flex flex-col items-center gap-4 p-12 rounded-2xl bg-white/5 border border-white/10">
-                                    <FileText size={48} className="text-white/30" />
-                                    <p className="text-white/50">No media available for this story.</p>
+                                <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-12">
+                                    <FileText
+                                        size={48}
+                                        className="text-white/30"
+                                    />
+                                    <p className="text-white/50">
+                                        No media available for this story.
+                                    </p>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {story.description && story.type !== 'audio' && (
-                        <p className="mt-6 text-sm text-white/50 italic text-center max-w-2xl">"{story.description}"</p>
+                        <p className="mt-6 max-w-2xl text-center text-sm text-white/50 italic">
+                            "{story.description}"
+                        </p>
                     )}
                 </div>
             </motion.div>
@@ -308,7 +366,11 @@ return null;
 }
 
 /* ─── Main Page ──────────────────────────────────────────── */
-export default function ShareEvent({ event, stories: initialStories = [], pagination }: ShareEventProps) {
+export default function ShareEvent({
+    event,
+    stories: initialStories = [],
+    pagination,
+}: ShareEventProps) {
     const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [activeTab, setActiveTab] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -320,7 +382,9 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
             const { stories: newStories } = e.detail;
             setAllStories((prev) => {
                 const existingIds = new Set(prev.map((s) => s.id));
-                const unique = newStories.filter((s: FeedStory) => !existingIds.has(s.id));
+                const unique = newStories.filter(
+                    (s: FeedStory) => !existingIds.has(s.id),
+                );
 
                 return [...prev, ...unique];
             });
@@ -328,18 +392,29 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
         const handleReset = (e: CustomEvent) => {
             setAllStories(e.detail.stories);
         };
-        window.addEventListener('feed:appended', handleAppended as EventListener);
+        window.addEventListener(
+            'feed:appended',
+            handleAppended as EventListener,
+        );
         window.addEventListener('feed:reset', handleReset as EventListener);
 
         return () => {
-            window.removeEventListener('feed:appended', handleAppended as EventListener);
-            window.removeEventListener('feed:reset', handleReset as EventListener);
+            window.removeEventListener(
+                'feed:appended',
+                handleAppended as EventListener,
+            );
+            window.removeEventListener(
+                'feed:reset',
+                handleReset as EventListener,
+            );
         };
     }, []);
 
     const allTags = useMemo(() => {
         const tags = new Set<string>();
-        (allStories || []).forEach((s) => s.tags?.forEach((t: string) => tags.add(t)));
+        (allStories || []).forEach((s) =>
+            s.tags?.forEach((t: string) => tags.add(t)),
+        );
 
         return Array.from(tags);
     }, [allStories]);
@@ -353,11 +428,14 @@ export default function ShareEvent({ event, stories: initialStories = [], pagina
     // Derive Cloudinary thumbnail URL by adding transformation params
     function getThumbnailUrl(url: string | null): string | null {
         if (!url) {
-return null;
-}
+            return null;
+        }
 
         if (url.includes('/image/upload/')) {
-            return url.replace('/image/upload/', '/image/upload/w_640,h_640,c_limit,q_auto,f_auto/');
+            return url.replace(
+                '/image/upload/',
+                '/image/upload/w_640,h_640,c_limit,q_auto,f_auto/',
+            );
         }
 
         return url;
@@ -367,21 +445,35 @@ return null;
     const displayStories = useMemo(() => {
         const flattened: (FeedStory & { assetIndex?: number })[] = [];
         allStories.forEach((story) => {
-            if (story.type === 'collection' && story.assets && story.assets.length > 0) {
+            if (
+                story.type === 'collection' &&
+                story.assets &&
+                story.assets.length > 0
+            ) {
                 story.assets.forEach((asset, index) => {
                     flattened.push({
                         ...story,
                         id: story.id * 1000 + index,
                         type: asset.type === 'pdf' ? 'document' : asset.type,
                         file_url: asset.url,
-                        thumbnail: getThumbnailUrl(asset.url) || story.thumbnail,
+                        thumbnail:
+                            getThumbnailUrl(asset.url) || story.thumbnail,
                         title: asset.title || story.title,
                         assetIndex: index,
                     });
                 });
             } else {
-                if (story.type !== 'video' && story.type !== 'audio' && story.file_url && !story.thumbnail) {
-                    flattened.push({ ...story, thumbnail: getThumbnailUrl(story.file_url) || story.thumbnail });
+                if (
+                    story.type !== 'video' &&
+                    story.type !== 'audio' &&
+                    story.file_url &&
+                    !story.thumbnail
+                ) {
+                    flattened.push({
+                        ...story,
+                        thumbnail:
+                            getThumbnailUrl(story.file_url) || story.thumbnail,
+                    });
                 } else {
                     flattened.push(story);
                 }
@@ -393,7 +485,11 @@ return null;
 
     return (
         <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative min-h-screen bg-bg-dark">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="relative min-h-screen bg-bg-dark"
+            >
                 <Head title={`${event.name} - Ulo of Stories`} />
 
                 {/* Atmosphere background */}
@@ -410,7 +506,7 @@ return null;
                         />
                     )}
                     <div className="absolute top-1/4 left-1/4 h-[400px] w-[400px] rounded-full bg-accent-gold/5 blur-[120px]" />
-                    <div className="absolute bottom-1/4 right-1/4 h-[400px] w-[400px] rounded-full bg-accent-gold/5 blur-[120px]" />
+                    <div className="absolute right-1/4 bottom-1/4 h-[400px] w-[400px] rounded-full bg-accent-gold/5 blur-[120px]" />
                 </div>
 
                 {/* Video Playlist Player - full-width hero */}
@@ -419,71 +515,137 @@ return null;
                 </div>
 
                 <main className="relative z-10 mx-auto max-w-7xl p-5 pb-32 md:p-8 lg:p-16">
-                    <header className="mb-16 mt-10">
+                    <header className="mt-10 mb-16">
                         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
                             <div className="space-y-6">
                                 <div className="flex items-center gap-4">
                                     {event.stories_count > 0 && (
-                                        <><Badge>{event.stories_count} Memories</Badge><div className="h-px w-12 bg-accent-gold/30" /></>
+                                        <>
+                                            <Badge>
+                                                {event.stories_count} Memories
+                                            </Badge>
+                                            <div className="h-px w-12 bg-accent-gold/30" />
+                                        </>
                                     )}
-                                    <span className="text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">Public Event</span>
+                                    <span className="text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
+                                        Public Event
+                                    </span>
                                 </div>
                                 <div className="space-y-4">
-                                    <h1 className="text-4xl leading-none font-bold tracking-tight text-text-primary md:text-7xl">{event.name}</h1>
-                                    <p className="max-w-2xl text-lg leading-relaxed font-light text-text-muted">{event.description}</p>
+                                    <h1 className="text-4xl leading-none font-bold tracking-tight text-text-primary md:text-7xl">
+                                        {event.name}
+                                    </h1>
+                                    <p className="max-w-2xl text-lg leading-relaxed font-light text-text-muted">
+                                        {event.description}
+                                    </p>
                                     {event.event_date && (
                                         <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-accent-gold uppercase">
                                             <Calendar size={14} />
-                                            <span>Event Date: {new Date(event.event_date).toLocaleDateString('en-US', { dateStyle: 'long' })}</span>
+                                            <span>
+                                                Event Date:{' '}
+                                                {new Date(
+                                                    event.event_date,
+                                                ).toLocaleDateString('en-US', {
+                                                    dateStyle: 'long',
+                                                })}
+                                            </span>
                                         </div>
                                     )}
                                 </div>
                                 {/* Download ZIP button */}
-                                {event.allow_download && <div className="flex items-center gap-3 pt-2">
-                                    <button
-                                        onClick={() => setShowDownloadModal(true)}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-accent-gold/20 hover:border-accent-gold/40 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-accent-gold transition-all"
-                                    >
-                                        <DownloadCloud size={14} />
-                                        Download All Media
-                                    </button>
-                                </div>}
+                                {event.allow_download && (
+                                    <div className="flex items-center gap-3 pt-2">
+                                        <button
+                                            onClick={() =>
+                                                setShowDownloadModal(true)
+                                            }
+                                            className="inline-flex items-center gap-2 rounded-xl border border-accent-gold/20 px-4 py-2.5 text-xs font-bold tracking-widest text-accent-gold uppercase transition-all hover:border-accent-gold/40"
+                                        >
+                                            <DownloadCloud size={14} />
+                                            Download All Media
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Email download modal */}
                                 {showDownloadModal && (
                                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-                                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6">
-                                            <h3 className="text-lg font-bold text-text-primary">Download All Media</h3>
-                                            <p className="mt-1 text-sm text-text-muted">Enter your email and we'll send you a download link.</p>
-                                            <form onSubmit={(e) => {
-                                                e.preventDefault();
-                                                setSubmitting(true);
-                                                router.post('/downloads/request', {
-                                                    email,
-                                                    type: 'event',
-                                                    slug: event.slug,
-                                                }, {
-                                                    onSuccess: () => {
-                                                        setShowDownloadModal(false);
-                                                        setEmail('');
-                                                    },
-                                                    onFinish: () => setSubmitting(false),
-                                                });
-                                            }} className="mt-4 space-y-3">
+                                        <motion.div
+                                            initial={{
+                                                scale: 0.95,
+                                                opacity: 0,
+                                            }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6"
+                                        >
+                                            <h3 className="text-lg font-bold text-text-primary">
+                                                Download All Media
+                                            </h3>
+                                            <p className="mt-1 text-sm text-text-muted">
+                                                Enter your email and we'll send
+                                                you a download link.
+                                            </p>
+                                            <form
+                                                onSubmit={(e) => {
+                                                    e.preventDefault();
+                                                    setSubmitting(true);
+                                                    router.post(
+                                                        '/downloads/request',
+                                                        {
+                                                            email,
+                                                            type: 'event',
+                                                            slug: event.slug,
+                                                        },
+                                                        {
+                                                            onSuccess: () => {
+                                                                setShowDownloadModal(
+                                                                    false,
+                                                                );
+                                                                setEmail('');
+                                                            },
+                                                            onFinish: () =>
+                                                                setSubmitting(
+                                                                    false,
+                                                                ),
+                                                        },
+                                                    );
+                                                }}
+                                                className="mt-4 space-y-3"
+                                            >
                                                 <input
                                                     type="email"
                                                     required
                                                     value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setEmail(e.target.value)
+                                                    }
                                                     placeholder="you@example.com"
                                                     className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted"
                                                 />
-                                                <button type="submit" disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-accent-gold px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-bg-dark">
-                                                    {submitting && <Loader size={14} className="animate-spin" />}
-                                                    {submitting ? 'Sending...' : 'Send Link'}
+                                                <button
+                                                    type="submit"
+                                                    disabled={submitting}
+                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent-gold px-4 py-2.5 text-xs font-bold tracking-widest text-bg-dark uppercase"
+                                                >
+                                                    {submitting && (
+                                                        <Loader
+                                                            size={14}
+                                                            className="animate-spin"
+                                                        />
+                                                    )}
+                                                    {submitting
+                                                        ? 'Sending...'
+                                                        : 'Send Link'}
                                                 </button>
                                             </form>
-                                            <button onClick={() => setShowDownloadModal(false)} className="mt-3 w-full text-center text-xs text-text-muted">Cancel</button>
+                                            <button
+                                                onClick={() =>
+                                                    setShowDownloadModal(false)
+                                                }
+                                                className="mt-3 w-full text-center text-xs text-text-muted"
+                                            >
+                                                Cancel
+                                            </button>
                                         </motion.div>
                                     </div>
                                 )}
@@ -496,10 +658,14 @@ return null;
 
                     {/* Stories Grid */}
                     <section>
-                        <div className="text-center space-y-3 mb-10">
-                            <span className="text-[11px] font-mono tracking-[0.25em] text-accent-gold uppercase block">📖 Memory Archive</span>
-                            <h2 className="font-serif text-3xl md:text-4xl text-text-primary font-light">All Memories</h2>
-                            <div className="h-px w-20 bg-accent-gold/30 mx-auto mt-4" />
+                        <div className="mb-10 space-y-3 text-center">
+                            <span className="block font-mono text-[11px] tracking-[0.25em] text-accent-gold uppercase">
+                                📖 Memory Archive
+                            </span>
+                            <h2 className="font-serif text-3xl font-light text-text-primary md:text-4xl">
+                                All Memories
+                            </h2>
+                            <div className="mx-auto mt-4 h-px w-20 bg-accent-gold/30" />
                         </div>
 
                         <StoryFeed
@@ -507,10 +673,18 @@ return null;
                             nextCursor={pagination?.next_cursor ?? null}
                             routeParams={{ slug: event.slug }}
                             filters={{
-                                tabs: ['All', 'Photo Gallery', 'Cinema Hall', 'Whispering Voices', 'Manuscripts'],
+                                tabs: [
+                                    'All',
+                                    'Photo Gallery',
+                                    'Cinema Hall',
+                                    'Whispering Voices',
+                                    'Manuscripts',
+                                ],
                                 activeTab,
                                 onTabChange: setActiveTab,
-                                tags: allTags.filter((t) => t !== 'guest-contribution'),
+                                tags: allTags.filter(
+                                    (t) => t !== 'guest-contribution',
+                                ),
                                 selectedTag,
                                 onTagChange: setSelectedTag,
                                 viewMode,
@@ -520,46 +694,72 @@ return null;
                         >
                             {(story) => (
                                 <div
-                                    onClick={() => setViewerIndex(displayStories.findIndex((s) => s.id === story.id))}
-                                    className={`${viewMode === 'grid'
-                                        ? 'surface-glow flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20 cursor-pointer'
-                                        : 'surface-glow flex items-center gap-8 rounded-3xl border border-white/5 bg-surface/40 p-6 transition-all hover:border-accent-gold/20 cursor-pointer'
-                                        }`}
+                                    onClick={() =>
+                                        setViewerIndex(
+                                            displayStories.findIndex(
+                                                (s) => s.id === story.id,
+                                            ),
+                                        )
+                                    }
+                                    className={`${
+                                        viewMode === 'grid'
+                                            ? 'surface-glow flex h-full cursor-pointer flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20'
+                                            : 'surface-glow flex cursor-pointer items-center gap-8 rounded-3xl border border-white/5 bg-surface/40 p-6 transition-all hover:border-accent-gold/20'
+                                    }`}
                                 >
                                     {viewMode === 'grid' ? (
                                         <>
-                                            <div className="relative aspect-4/3 overflow-hidden group">
+                                            <div className="group relative aspect-4/3 overflow-hidden">
                                                 <img
-                                                    src={story.thumbnail || '/logo-stacked.png'}
+                                                    src={
+                                                        story.thumbnail ||
+                                                        '/logo-stacked.png'
+                                                    }
                                                     alt={story.title}
                                                     loading="lazy"
                                                     onError={(e) => {
- e.currentTarget.src = '/logo-stacked.png'; 
-}}
+                                                        e.currentTarget.src =
+                                                            '/logo-stacked.png';
+                                                    }}
                                                     className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/40 opacity-0 transition-opacity group-hover:opacity-100">
                                                     <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl transition-transform duration-500 group-hover:scale-100">
-                                                        <Play size={24} fill="currentColor" className="ml-1" />
+                                                        <Play
+                                                            size={24}
+                                                            fill="currentColor"
+                                                            className="ml-1"
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="absolute top-6 left-6 flex items-center gap-2">
-                                                    <Badge className="border-white/10 flex bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">
-                                                        <MediaTypeIcon type={story.type} /><span className="ml-1.5">{story.type}</span>
+                                                    <Badge className="flex border-white/10 bg-bg-dark/60 text-[10px] tracking-widest uppercase backdrop-blur-md">
+                                                        <MediaTypeIcon
+                                                            type={story.type}
+                                                        />
+                                                        <span className="ml-1.5">
+                                                            {story.type}
+                                                        </span>
                                                     </Badge>
-                                                    {story.tags?.includes('guest-contribution') && (
-                                                        <Badge className="border-accent-gold/20 bg-accent-gold/10 text-[9px] text-accent-gold tracking-widest uppercase backdrop-blur-md">Guest</Badge>
+                                                    {story.tags?.includes(
+                                                        'guest-contribution',
+                                                    ) && (
+                                                        <Badge className="border-accent-gold/20 bg-accent-gold/10 text-[9px] tracking-widest text-accent-gold uppercase backdrop-blur-md">
+                                                            Guest
+                                                        </Badge>
                                                     )}
                                                 </div>
                                                 {/* Individual download button overlay */}
-                                                {(story.file_url) && (
+                                                {story.file_url && (
                                                     <a
                                                         href={story.file_url.replace(
-                                                            "/image/upload/",
-                                                            "/image/upload/fl_attachment/"
+                                                            '/image/upload/',
+                                                            '/image/upload/fl_attachment/',
                                                         )}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="absolute bottom-6 right-6 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 opacity-0 transition-all hover:bg-white/20 group-hover:opacity-100 backdrop-blur-md"
+                                                        onClick={(e) =>
+                                                            e.stopPropagation()
+                                                        }
+                                                        className="absolute right-6 bottom-6 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 opacity-0 backdrop-blur-md transition-all group-hover:opacity-100 hover:bg-white/20"
                                                         title="Download this media"
                                                     >
                                                         <Download size={14} />
@@ -581,40 +781,73 @@ return null;
                                         <>
                                             <div className="relative aspect-video w-48 shrink-0 overflow-hidden rounded-2xl">
                                                 <img
-                                                    src={story.thumbnail || '/logo-stacked.png'}
+                                                    src={
+                                                        story.thumbnail ||
+                                                        '/logo-stacked.png'
+                                                    }
                                                     alt={story.title}
                                                     onError={(e) => {
- e.currentTarget.src = '/logo-stacked.png'; 
-}}
+                                                        e.currentTarget.src =
+                                                            '/logo-stacked.png';
+                                                    }}
                                                     className="h-full w-full object-cover"
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/20">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md"><Play size={16} fill="white" className="ml-0.5" /></div>
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
+                                                        <Play
+                                                            size={16}
+                                                            fill="white"
+                                                            className="ml-0.5"
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="grow space-y-2">
                                                 <div className="flex items-center gap-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                                    <Badge className="border-white/10 bg-white/5"><MediaTypeIcon type={story.type} /><span className="ml-1.5">{story.type}</span></Badge>
-                                                    <span className="flex items-center gap-1"><Clock size={12} className="text-accent-gold" /> {story.date}</span>
+                                                    <Badge className="border-white/10 bg-white/5">
+                                                        <MediaTypeIcon
+                                                            type={story.type}
+                                                        />
+                                                        <span className="ml-1.5">
+                                                            {story.type}
+                                                        </span>
+                                                    </Badge>
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock
+                                                            size={12}
+                                                            className="text-accent-gold"
+                                                        />{' '}
+                                                        {story.date}
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center justify-between gap-4">
-                                                    <h3 className="text-2xl font-bold text-text-primary transition-colors">{story.title}</h3>
+                                                    <h3 className="text-2xl font-bold text-text-primary transition-colors">
+                                                        {story.title}
+                                                    </h3>
                                                     {/* Individual download button */}
                                                     {story.file_url && (
                                                         <a
-                                                            href={story.file_url}
+                                                            href={
+                                                                story.file_url
+                                                            }
                                                             download
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 text-text-muted hover:text-accent-gold hover:border-accent-gold/30 transition-all"
+                                                            onClick={(e) =>
+                                                                e.stopPropagation()
+                                                            }
+                                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 text-text-muted transition-all hover:border-accent-gold/30 hover:text-accent-gold"
                                                             title="Download"
                                                         >
-                                                            <Download size={14} />
+                                                            <Download
+                                                                size={14}
+                                                            />
                                                         </a>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-text-muted italic">"{story.description}"</p>
+                                                <p className="text-sm text-text-muted italic">
+                                                    "{story.description}"
+                                                </p>
                                             </div>
                                         </>
                                     )}
@@ -623,12 +856,15 @@ return null;
                         </StoryFeed>
                     </section>
 
-                    <section className="mt-20 max-w-4xl mx-auto text-center">
+                    <section className="mx-auto mt-20 max-w-4xl text-center">
                         <div className="space-y-2">
-                            <div className="h-px bg-accent-gold/40 w-full" />
-                            <div className="h-px bg-accent-gold/20 w-full" />
+                            <div className="h-px w-full bg-accent-gold/40" />
+                            <div className="h-px w-full bg-accent-gold/20" />
                         </div>
-                        <p className="mt-8 text-xs text-text-muted font-light">Every memory shared here becomes part of a lasting legacy.</p>
+                        <p className="mt-8 text-xs font-light text-text-muted">
+                            Every memory shared here becomes part of a lasting
+                            legacy.
+                        </p>
                     </section>
                 </main>
 
@@ -636,11 +872,14 @@ return null;
             </motion.div>
             {viewerOpen && (
                 <>
-                    {createPortal(<MediaViewerModal
-                        stories={displayStories}
-                        initialIndex={viewerIndex}
-                        onClose={() => setViewerIndex(null)}
-                    />, document.body)}
+                    {createPortal(
+                        <MediaViewerModal
+                            stories={displayStories}
+                            initialIndex={viewerIndex}
+                            onClose={() => setViewerIndex(null)}
+                        />,
+                        document.body,
+                    )}
                 </>
             )}
         </>

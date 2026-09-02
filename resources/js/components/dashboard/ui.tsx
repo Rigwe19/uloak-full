@@ -82,7 +82,11 @@ export function AvatarGroup({
     limit = 3,
     id,
 }: {
-    users: { avatar?: string | null; avatar_url?: string | null; name: string }[];
+    users: {
+        avatar?: string | null;
+        avatar_url?: string | null;
+        name: string;
+    }[];
     limit?: number;
     id?: string;
 }) {

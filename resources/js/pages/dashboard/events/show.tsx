@@ -47,7 +47,11 @@ interface EventShowProps {
     };
 }
 
-export default function EventShow({ event, stories: initialStories = [], pagination }: EventShowProps) {
+export default function EventShow({
+    event,
+    stories: initialStories = [],
+    pagination,
+}: EventShowProps) {
     const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [activeTab, setActiveTab] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -73,7 +77,9 @@ export default function EventShow({ event, stories: initialStories = [], paginat
             const { stories: newStories } = e.detail;
             setAllStories((prev) => {
                 const existingIds = new Set(prev.map((s) => s.id));
-                const unique = newStories.filter((s: FeedStory) => !existingIds.has(s.id));
+                const unique = newStories.filter(
+                    (s: FeedStory) => !existingIds.has(s.id),
+                );
 
                 return [...prev, ...unique];
             });
@@ -81,12 +87,21 @@ export default function EventShow({ event, stories: initialStories = [], paginat
         const handleReset = (e: CustomEvent) => {
             setAllStories(e.detail.stories);
         };
-        window.addEventListener('feed:appended', handleAppended as EventListener);
+        window.addEventListener(
+            'feed:appended',
+            handleAppended as EventListener,
+        );
         window.addEventListener('feed:reset', handleReset as EventListener);
 
         return () => {
-            window.removeEventListener('feed:appended', handleAppended as EventListener);
-            window.removeEventListener('feed:reset', handleReset as EventListener);
+            window.removeEventListener(
+                'feed:appended',
+                handleAppended as EventListener,
+            );
+            window.removeEventListener(
+                'feed:reset',
+                handleReset as EventListener,
+            );
         };
     }, []);
 
@@ -100,11 +115,11 @@ export default function EventShow({ event, stories: initialStories = [], paginat
     }
 
     const getStoryThumbnail = (story: FeedStory) => {
-        if(story.type === 'video' && story.thumbnail) {
+        if (story.type === 'video' && story.thumbnail) {
             return story.thumbnail;
         }
 
-        if(story.type === 'photo'){
+        if (story.type === 'photo') {
             return story.thumbnail || story.file_url || '/logo-stacked.png';
         }
 
@@ -119,21 +134,35 @@ export default function EventShow({ event, stories: initialStories = [], paginat
     const displayStories = useMemo(() => {
         const flattened: (FeedStory & { assetIndex?: number })[] = [];
         allStories.forEach((story) => {
-            if (story.type === 'collection' && story.assets && story.assets.length > 0) {
+            if (
+                story.type === 'collection' &&
+                story.assets &&
+                story.assets.length > 0
+            ) {
                 story.assets.forEach((asset, index) => {
                     flattened.push({
                         ...story,
                         id: story.id * 1000 + index,
                         type: asset.type === 'pdf' ? 'document' : asset.type,
                         file_url: asset.url,
-                        thumbnail: getThumbnailUrl(asset.url) || story.thumbnail,
+                        thumbnail:
+                            getThumbnailUrl(asset.url) || story.thumbnail,
                         title: asset.title || story.title,
                         assetIndex: index,
                     });
                 });
             } else {
-                if (story.type !== 'video' && story.type !== 'audio' && story.file_url && !story.thumbnail) {
-                    flattened.push({ ...story, thumbnail: getThumbnailUrl(story.file_url) || story.thumbnail });
+                if (
+                    story.type !== 'video' &&
+                    story.type !== 'audio' &&
+                    story.file_url &&
+                    !story.thumbnail
+                ) {
+                    flattened.push({
+                        ...story,
+                        thumbnail:
+                            getThumbnailUrl(story.file_url) || story.thumbnail,
+                    });
                 } else {
                     flattened.push(story);
                 }
@@ -160,7 +189,13 @@ export default function EventShow({ event, stories: initialStories = [], paginat
             preserveScroll: true,
             onSuccess: () => {
                 setStoryToDelete(null);
-                setAllStories((prev) => prev.filter((s) => s.id !== storyToDelete.id && s.uuid !== storyToDelete.uuid));
+                setAllStories((prev) =>
+                    prev.filter(
+                        (s) =>
+                            s.id !== storyToDelete.id &&
+                            s.uuid !== storyToDelete.uuid,
+                    ),
+                );
             },
             onFinish: () => setDeletingStory(false),
         });
@@ -181,14 +216,18 @@ export default function EventShow({ event, stories: initialStories = [], paginat
     const handleDownloadRequest = (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
-        router.post('/downloads/request', {
-            email,
-            type: 'event',
-            slug: event.slug,
-        }, {
-            onSuccess: () => setShowDownloadModal(false),
-            onFinish: () => setSubmitting(false),
-        });
+        router.post(
+            '/downloads/request',
+            {
+                email,
+                type: 'event',
+                slug: event.slug,
+            },
+            {
+                onSuccess: () => setShowDownloadModal(false),
+                onFinish: () => setSubmitting(false),
+            },
+        );
     };
 
     return (
@@ -230,18 +269,22 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                         </Link>
                         <div className="flex gap-4">
                             <div className="flex flex-wrap items-center gap-4">
-                                <ShareQRCode roomType='events' roomSlug={event.slug} roomName={event.name} />
+                                <ShareQRCode
+                                    roomType="events"
+                                    roomSlug={event.slug}
+                                    roomName={event.name}
+                                />
 
                                 <button
                                     onClick={() => setShowDownloadModal(true)}
-                                    className="hidden md:inline-flex items-center gap-2 rounded-xl border border-accent-gold/20 hover:border-accent-gold/40 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-accent-gold transition-all"
+                                    className="hidden items-center gap-2 rounded-xl border border-accent-gold/20 px-4 py-2.5 text-xs font-bold tracking-widest text-accent-gold uppercase transition-all hover:border-accent-gold/40 md:inline-flex"
                                 >
                                     <DownloadCloud size={14} />
                                     Download All
                                 </button>
                                 <button
                                     onClick={() => setShowDownloadModal(true)}
-                                    className="md:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-accent-gold/20 text-accent-gold hover:border-accent-gold/40 transition-all"
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-accent-gold/20 text-accent-gold transition-all hover:border-accent-gold/40 md:hidden"
                                     title="Download all media"
                                 >
                                     <DownloadCloud size={16} />
@@ -250,39 +293,79 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                                 {/* Email download modal */}
                                 {showDownloadModal && (
                                     <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/70 p-4">
-                                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6">
-                                            <h3 className="text-lg font-bold text-text-primary">Download All Media</h3>
-                                            <p className="mt-1 text-sm text-text-muted">Enter your email and we'll send you a download link.</p>
-                                            <form onSubmit={handleDownloadRequest} className="mt-4 space-y-3">
+                                        <motion.div
+                                            initial={{
+                                                scale: 0.95,
+                                                opacity: 0,
+                                            }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6"
+                                        >
+                                            <h3 className="text-lg font-bold text-text-primary">
+                                                Download All Media
+                                            </h3>
+                                            <p className="mt-1 text-sm text-text-muted">
+                                                Enter your email and we'll send
+                                                you a download link.
+                                            </p>
+                                            <form
+                                                onSubmit={handleDownloadRequest}
+                                                className="mt-4 space-y-3"
+                                            >
                                                 <input
                                                     type="email"
                                                     required
                                                     value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setEmail(e.target.value)
+                                                    }
                                                     placeholder="you@example.com"
                                                     className="w-full rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted"
                                                 />
-                                                <button type="submit" disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-accent-gold px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-bg-dark">
-                                                    {submitting && <Loader size={14} className="animate-spin" />}
-                                                    {submitting ? 'Sending...' : 'Send Link'}
+                                                <button
+                                                    type="submit"
+                                                    disabled={submitting}
+                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent-gold px-4 py-2.5 text-xs font-bold tracking-widest text-bg-dark uppercase"
+                                                >
+                                                    {submitting && (
+                                                        <Loader
+                                                            size={14}
+                                                            className="animate-spin"
+                                                        />
+                                                    )}
+                                                    {submitting
+                                                        ? 'Sending...'
+                                                        : 'Send Link'}
                                                 </button>
                                             </form>
-                                            <button type="button" onClick={() => setShowDownloadModal(false)} className="mt-3 w-full text-center text-xs text-text-muted">Cancel</button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setShowDownloadModal(false)
+                                                }
+                                                className="mt-3 w-full text-center text-xs text-text-muted"
+                                            >
+                                                Cancel
+                                            </button>
                                         </motion.div>
                                     </div>
                                 )}
 
                                 {/* Delete Event Button */}
                                 <button
-                                    onClick={() => setShowDeleteEventConfirm(true)}
-                                    className="hidden md:inline-flex items-center gap-2 rounded-xl border border-red-500/20 hover:border-red-500/40 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-red-400 transition-all"
+                                    onClick={() =>
+                                        setShowDeleteEventConfirm(true)
+                                    }
+                                    className="hidden items-center gap-2 rounded-xl border border-red-500/20 px-4 py-2.5 text-xs font-bold tracking-widest text-red-400 uppercase transition-all hover:border-red-500/40 md:inline-flex"
                                 >
                                     <Trash2 size={14} />
                                     Delete Project
                                 </button>
                                 <button
-                                    onClick={() => setShowDeleteEventConfirm(true)}
-                                    className="md:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-red-500/20 text-red-400 hover:border-red-500/40 transition-all"
+                                    onClick={() =>
+                                        setShowDeleteEventConfirm(true)
+                                    }
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition-all hover:border-red-500/40 md:hidden"
                                     title="Delete project"
                                 >
                                     <Trash2 size={16} />
@@ -312,7 +395,14 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                             {event.event_date && (
                                 <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-accent-gold uppercase">
                                     <Calendar size={14} />
-                                    <span>Event Date: {new Date(event.event_date).toLocaleDateString('en-US', { dateStyle: 'long' })}</span>
+                                    <span>
+                                        Event Date:{' '}
+                                        {new Date(
+                                            event.event_date,
+                                        ).toLocaleDateString('en-US', {
+                                            dateStyle: 'long',
+                                        })}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -338,13 +428,28 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                     <StoryFeed
                         stories={displayStories}
                         nextCursor={pagination?.next_cursor ?? null}
-                        urlBuilder={(...args) => eventsRoutes.show.url(args[0] as any, args[1] as any)}
+                        urlBuilder={(...args) =>
+                            eventsRoutes.show.url(
+                                args[0] as any,
+                                args[1] as any,
+                            )
+                        }
                         routeParams={{ event: event.slug }}
                         filters={{
-                            tabs: ['All', 'Photo Gallery', 'Cinema Hall', 'Whispering Voices', 'Manuscripts'],
+                            tabs: [
+                                'All',
+                                'Photo Gallery',
+                                'Cinema Hall',
+                                'Whispering Voices',
+                                'Manuscripts',
+                            ],
                             activeTab,
                             onTabChange: setActiveTab,
-                            tags: Array.from(new Set(allStories.flatMap((s) => s.tags ?? []))),
+                            tags: Array.from(
+                                new Set(
+                                    allStories.flatMap((s) => s.tags ?? []),
+                                ),
+                            ),
                             selectedTag,
                             onTagChange: setSelectedTag,
                             viewMode,
@@ -352,8 +457,10 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                         }}
                         emptyLabel="No memories have been shared yet."
                         addCard={
-                            <div onClick={() => setIsAnnexModalOpen(true)}
-                                className={`group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 ${viewMode === 'grid' ? 'aspect-4/3' : 'h-32 flex-row gap-6'}`}>
+                            <div
+                                onClick={() => setIsAnnexModalOpen(true)}
+                                className={`group flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-white/10 bg-surface/20 transition-all hover:border-accent-gold/40 hover:bg-surface/40 ${viewMode === 'grid' ? 'aspect-4/3' : 'h-32 flex-row gap-6'}`}
+                            >
                                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-bg-dark text-text-muted transition-all group-hover:scale-110 group-hover:text-accent-gold">
                                     <Plus size={32} />
                                 </div>
@@ -365,15 +472,22 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                     >
                         {(story) => (
                             <div
-                                onClick={() => setViewerIndex(displayStories.findIndex((s) => s.id === story.id))}
-                                className={`${viewMode === 'grid'
-                                    ? 'surface-glow flex h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20 cursor-pointer'
-                                    : 'surface-glow flex items-center gap-8 rounded-3xl border border-white/5 bg-surface/40 p-6 transition-all hover:border-accent-gold/20 cursor-pointer'
-                                    }`}
+                                onClick={() =>
+                                    setViewerIndex(
+                                        displayStories.findIndex(
+                                            (s) => s.id === story.id,
+                                        ),
+                                    )
+                                }
+                                className={`${
+                                    viewMode === 'grid'
+                                        ? 'surface-glow flex h-full cursor-pointer flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20'
+                                        : 'surface-glow flex cursor-pointer items-center gap-8 rounded-3xl border border-white/5 bg-surface/40 p-6 transition-all hover:border-accent-gold/20'
+                                }`}
                             >
                                 {viewMode === 'grid' ? (
-                                    <div className="surface-glow flex h-full aspect-4/3 flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20">
-                                        <div className="relative aspect-4/3 overflow-hidden group">
+                                    <div className="surface-glow flex aspect-4/3 h-full flex-col overflow-hidden rounded-[32px] border border-white/5 bg-surface/40 transition-all duration-500 hover:border-accent-gold/20">
+                                        <div className="group relative aspect-4/3 overflow-hidden">
                                             <img
                                                 src={getStoryThumbnail(story)}
                                                 alt={story.title}
@@ -384,7 +498,11 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                                             />
                                             <div className="absolute inset-0 flex items-center justify-center bg-bg-dark/40 opacity-0 transition-opacity group-hover:opacity-100">
                                                 <div className="flex h-16 w-16 scale-75 items-center justify-center rounded-full bg-accent-gold text-bg-dark shadow-2xl transition-transform duration-500 group-hover:scale-100">
-                                                    <Play size={24} fill="currentColor" className="ml-1" />
+                                                    <Play
+                                                        size={24}
+                                                        fill="currentColor"
+                                                        className="ml-1"
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="absolute top-6 left-6">
@@ -394,21 +512,25 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                                             </div>
                                             {/* Delete button overlay */}
                                             <button
-                                                onClick={(e) => handleDeleteStory(story, e)}
-                                                className="absolute top-6 right-6 flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 text-red-400 opacity-0 transition-all hover:bg-red-500/40 group-hover:opacity-100 backdrop-blur-md"
+                                                onClick={(e) =>
+                                                    handleDeleteStory(story, e)
+                                                }
+                                                className="absolute top-6 right-6 flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 text-red-400 opacity-0 backdrop-blur-md transition-all group-hover:opacity-100 hover:bg-red-500/40"
                                                 title="Delete this memory"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
                                             {/* Download button overlay */}
-                                            {(story.file_url) && (
+                                            {story.file_url && (
                                                 <a
                                                     href={story.file_url}
                                                     download
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="absolute bottom-6 right-6 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 opacity-0 transition-all hover:bg-white/20 group-hover:opacity-100 backdrop-blur-md"
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
+                                                    className="absolute right-6 bottom-6 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 opacity-0 backdrop-blur-md transition-all group-hover:opacity-100 hover:bg-white/20"
                                                     title="Download this media"
                                                 >
                                                     <Download size={14} />
@@ -423,7 +545,8 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                                                 src={getStoryThumbnail(story)}
                                                 alt={story.title}
                                                 onError={(e) => {
-                                                    e.currentTarget.src = '/logo-stacked.png';
+                                                    e.currentTarget.src =
+                                                        '/logo-stacked.png';
                                                 }}
                                                 className="h-full w-full object-cover"
                                             />
@@ -442,7 +565,7 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                                                 <Badge className="border-white/10 bg-white/5">
                                                     {story.type}
                                                 </Badge>
-                                                <span className="flex items-center gap-1 w-fit">
+                                                <span className="flex w-fit items-center gap-1">
                                                     <Clock
                                                         size={12}
                                                         className="text-accent-gold"
@@ -451,26 +574,37 @@ export default function EventShow({ event, stories: initialStories = [], paginat
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between gap-4">
-                                                <div className="flex items-center gap-2 shrink-0">
+                                                <div className="flex shrink-0 items-center gap-2">
                                                     {/* Download button */}
                                                     {story.file_url && (
                                                         <a
-                                                            href={story.file_url}
+                                                            href={
+                                                                story.file_url
+                                                            }
                                                             download
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-text-muted hover:text-accent-gold hover:border-accent-gold/30 transition-all"
+                                                            onClick={(e) =>
+                                                                e.stopPropagation()
+                                                            }
+                                                            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-text-muted transition-all hover:border-accent-gold/30 hover:text-accent-gold"
                                                             title="Download"
                                                         >
-                                                            <Download size={14} />
+                                                            <Download
+                                                                size={14}
+                                                            />
                                                         </a>
                                                     )}
                                                     {/* Delete button */}
                                                     <button
                                                         type="button"
-                                                        onClick={(e) => handleDeleteStory(story, e)}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all"
+                                                        onClick={(e) =>
+                                                            handleDeleteStory(
+                                                                story,
+                                                                e,
+                                                            )
+                                                        }
+                                                        className="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/20 text-red-400 transition-all hover:bg-red-500/20"
                                                         title="Delete"
                                                     >
                                                         <Trash2 size={14} />
@@ -487,119 +621,171 @@ export default function EventShow({ event, stories: initialStories = [], paginat
             </main>
 
             {/* Annex Event Memory Modal */}
-            {createPortal(<AnnexEventMemoryModal
-                isOpen={isAnnexModalOpen}
-                onClose={() => setIsAnnexModalOpen(false)}
-                event={event}
-            />, document.body)}
+            {createPortal(
+                <AnnexEventMemoryModal
+                    isOpen={isAnnexModalOpen}
+                    onClose={() => setIsAnnexModalOpen(false)}
+                    event={event}
+                />,
+                document.body,
+            )}
 
             {/* Media Viewer Modal */}
             {viewerOpen && (
                 <>
-                    {createPortal(<MediaViewerModal
-                        stories={displayStories}
-                        initialIndex={viewerIndex}
-                        onClose={() => setViewerIndex(null)}
-                    />, document.body)}
+                    {createPortal(
+                        <MediaViewerModal
+                            stories={displayStories}
+                            initialIndex={viewerIndex}
+                            onClose={() => setViewerIndex(null)}
+                        />,
+                        document.body,
+                    )}
                 </>
             )}
 
             {/* Delete Story Confirmation Modal */}
-            {createPortal(<AnimatePresence>
-                {storyToDelete && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-150 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-                        onClick={() => setStoryToDelete(null)}
-                    >
+            {createPortal(
+                <AnimatePresence>
+                    {storyToDelete && (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="w-full max-w-sm bg-surface border border-white/10 rounded-3xl p-6 shadow-2xl"
-                            onClick={(e) => e.stopPropagation()}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-150 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+                            onClick={() => setStoryToDelete(null)}
                         >
-                            <div className="text-center space-y-4">
-                                <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
-                                    <Trash2 size={24} className="text-red-400" />
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="w-full max-w-sm rounded-3xl border border-white/10 bg-surface p-6 shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="space-y-4 text-center">
+                                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10">
+                                        <Trash2
+                                            size={24}
+                                            className="text-red-400"
+                                        />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary">
+                                            Delete Memory?
+                                        </h3>
+                                        <p className="mt-1 text-sm text-text-muted">
+                                            This action cannot be undone. The
+                                            memory and all its associated media
+                                            will be permanently deleted from
+                                            Cloudinary too.
+                                        </p>
+                                    </div>
+                                    {storyToDelete && (
+                                        <p className="rounded-xl border border-white/5 bg-bg-dark/40 px-3 py-2 text-xs text-text-muted italic">
+                                            "{storyToDelete.title}"
+                                        </p>
+                                    )}
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-text-primary">Delete Memory?</h3>
-                                    <p className="text-sm text-text-muted mt-1">This action cannot be undone. The memory and all its associated media will be permanently deleted from Cloudinary too.</p>
+                                <div className="mt-6 flex gap-3">
+                                    <button
+                                        onClick={() => setStoryToDelete(null)}
+                                        className="flex-1 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-bold tracking-widest text-text-muted uppercase transition-all hover:text-text-primary"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDeleteStory}
+                                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-xs font-bold tracking-widest text-white uppercase transition-all hover:bg-red-600"
+                                    >
+                                        {deletingStory && (
+                                            <Loader
+                                                size={14}
+                                                className="animate-spin"
+                                            />
+                                        )}
+                                        {deletingStory
+                                            ? 'Deleting...'
+                                            : 'Delete'}
+                                    </button>
                                 </div>
-                                {storyToDelete && (
-                                    <p className="text-xs text-text-muted italic bg-bg-dark/40 rounded-xl px-3 py-2 border border-white/5">"{storyToDelete.title}"</p>
-                                )}
-                            </div>
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={() => setStoryToDelete(null)}
-                                    className="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-text-muted hover:text-text-primary border border-white/10 rounded-xl transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmDeleteStory}
-                                    className="flex-1 flex gap-2 justify-center items-center px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all"
-                                >
-                                    {deletingStory && <Loader size={14} className='animate-spin' />}
-                                    {deletingStory ? 'Deleting...' : 'Delete'}
-                                </button>
-                            </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>, document.body)}
+                    )}
+                </AnimatePresence>,
+                document.body,
+            )}
 
             {/* Delete Event Confirmation Modal */}
-            {createPortal(<AnimatePresence>
-                {showDeleteEventConfirm && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-150 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-                        onClick={() => setShowDeleteEventConfirm(false)}
-                    >
+            {createPortal(
+                <AnimatePresence>
+                    {showDeleteEventConfirm && (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="w-full max-w-md bg-surface border border-white/10 rounded-3xl p-6 shadow-2xl"
-                            onClick={(e) => e.stopPropagation()}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-150 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+                            onClick={() => setShowDeleteEventConfirm(false)}
                         >
-                            <div className="text-center space-y-4">
-                                <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
-                                    <Trash2 size={24} className="text-red-400" />
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="w-full max-w-md rounded-3xl border border-white/10 bg-surface p-6 shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="space-y-4 text-center">
+                                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10">
+                                        <Trash2
+                                            size={24}
+                                            className="text-red-400"
+                                        />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary">
+                                            Delete Project?
+                                        </h3>
+                                        <p className="mt-2 text-sm text-text-muted">
+                                            This will permanently delete the
+                                            entire project{' '}
+                                            <strong>"{event.name}"</strong> and{' '}
+                                            <strong>all</strong> of its
+                                            memories, comments, and media files
+                                            — including those stored on
+                                            Cloudinary. This action cannot be
+                                            undone.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-text-primary">Delete Project?</h3>
-                                    <p className="text-sm text-text-muted mt-2">
-                                        This will permanently delete the entire project <strong>"{event.name}"</strong> and <strong>all</strong> of its memories, comments, and media files — including those stored on Cloudinary. This action cannot be undone.
-                                    </p>
+                                <div className="mt-6 flex gap-3">
+                                    <button
+                                        onClick={() =>
+                                            setShowDeleteEventConfirm(false)
+                                        }
+                                        className="flex-1 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-bold tracking-widest text-text-muted uppercase transition-all hover:text-text-primary"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleDeleteEvent}
+                                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-xs font-bold tracking-widest text-white uppercase transition-all hover:bg-red-600"
+                                    >
+                                        {deletingEvent && (
+                                            <Loader
+                                                size={14}
+                                                className="animate-spin"
+                                            />
+                                        )}
+                                        {deletingEvent
+                                            ? 'Deleting...'
+                                            : 'Delete Project'}
+                                    </button>
                                 </div>
-                            </div>
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={() => setShowDeleteEventConfirm(false)}
-                                    className="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-text-muted hover:text-text-primary border border-white/10 rounded-xl transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleDeleteEvent}
-                                    className="flex-1 flex gap-2 justify-center items-center px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all"
-                                >
-                                    {deletingEvent && <Loader size={14} className='animate-spin' />}
-                                    {deletingEvent ? 'Deleting...' : 'Delete Project'}
-                                </button>
-                            </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>, document.body)}
+                    )}
+                </AnimatePresence>,
+                document.body,
+            )}
         </motion.div>
     );
 }

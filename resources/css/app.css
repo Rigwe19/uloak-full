@@ -9,9 +9,8 @@
 
 @theme {
     --font-sans:
-        'Poppins', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --font-serif: 'Lora', Georgia, ui-serif, serif;
 
@@ -147,17 +146,21 @@
     }
 
     .mask-edge {
-        mask-image: linear-gradient(to bottom,
-                transparent,
-                black 15%,
-                black 85%,
-                transparent);
+        mask-image: linear-gradient(
+            to bottom,
+            transparent,
+            black 15%,
+            black 85%,
+            transparent
+        );
     }
 
     .vignette {
-        background: radial-gradient(circle at center,
-                transparent 0%,
-                rgba(0, 0, 0, 0.4) 100%);
+        background: radial-gradient(
+            circle at center,
+            transparent 0%,
+            rgba(0, 0, 0, 0.4) 100%
+        );
     }
 }
 
@@ -172,7 +175,6 @@
 }
 
 @keyframes candleFlicker {
-
     0%,
     100% {
         transform: scaleX(1) scaleY(1) translateY(0);
@@ -206,7 +208,6 @@
 }
 
 @keyframes candleInner {
-
     0%,
     100% {
         transform: scaleX(1) scaleY(1);
@@ -225,7 +226,6 @@
 }
 
 @keyframes glowPulse {
-
     0%,
     100% {
         opacity: 0.38;

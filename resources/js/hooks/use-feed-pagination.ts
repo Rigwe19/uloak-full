@@ -24,12 +24,14 @@ export function useFeedPagination(
 
     const loadMore = useCallback(() => {
         if (state.loading || !state.hasMore) {
-return;
-}
+            return;
+        }
 
         setState((s) => ({ ...s, loading: true }));
 
-        const url = urlBuilder(routeParams, { query: { cursor: state.nextCursor } });
+        const url = urlBuilder(routeParams, {
+            query: { cursor: state.nextCursor },
+        });
 
         router.visit(url, {
             only: ['stories'],
@@ -38,7 +40,9 @@ return;
             onSuccess: (page) => {
                 const data = page.props as any;
                 const stories: any[] = data.stories ?? [];
-                const paginated = data.pagination as { next_cursor?: string | null } | undefined;
+                const paginated = data.pagination as
+                    | { next_cursor?: string | null }
+                    | undefined;
 
                 setState({
                     loading: false,
@@ -49,14 +53,23 @@ return;
                 if (typeof window !== 'undefined') {
                     window.dispatchEvent(
                         new CustomEvent('feed:appended', {
-                            detail: { stories, nextCursor: paginated?.next_cursor ?? null },
+                            detail: {
+                                stories,
+                                nextCursor: paginated?.next_cursor ?? null,
+                            },
                         }),
                     );
                 }
             },
             onError: () => setState((s) => ({ ...s, loading: false })),
         });
-    }, [urlBuilder, routeParams, state.loading, state.hasMore, state.nextCursor]);
+    }, [
+        urlBuilder,
+        routeParams,
+        state.loading,
+        state.hasMore,
+        state.nextCursor,
+    ]);
 
     const onScroll = useCallback(() => {
         const scrollBottom = window.innerHeight + window.scrollY;
@@ -65,8 +78,8 @@ return;
 
         if (scrollBottom >= threshold) {
             if (debounceRef.current) {
-clearTimeout(debounceRef.current);
-}
+                clearTimeout(debounceRef.current);
+            }
 
             debounceRef.current = setTimeout(loadMore, debounceMs);
         }
@@ -79,8 +92,8 @@ clearTimeout(debounceRef.current);
             window.removeEventListener('scroll', onScroll);
 
             if (debounceRef.current) {
-clearTimeout(debounceRef.current);
-}
+                clearTimeout(debounceRef.current);
+            }
         };
     }, [onScroll]);
 

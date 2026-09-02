@@ -9,7 +9,7 @@ use Inertia\Inertia;
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', '/settings/about');
-    Route::redirect('settings/profile', '/settings/about');
+    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 
     // Person section
     Route::get('settings/about', [PersonController::class, 'settingsAbout'])->name('settings.about');

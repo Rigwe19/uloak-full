@@ -21,7 +21,11 @@ const playerVideo = (v: FeedVideoData): PlayerVideo => ({
     date: v.date,
 });
 
-export function ReelVideo({ video, isActive, preload = 'metadata' }: ReelVideoProps) {
+export function ReelVideo({
+    video,
+    isActive,
+    preload = 'metadata',
+}: ReelVideoProps) {
     const playerVideoData = playerVideo(video);
 
     return (

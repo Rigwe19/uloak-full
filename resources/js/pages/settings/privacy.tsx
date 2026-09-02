@@ -27,20 +27,21 @@ export default function Privacy() {
 
     const toggleSetting = (id: string) => {
         setSettings((prev) =>
-            prev.map((s) => (s.id === id ? { ...s, active: !s.active } : s))
+            prev.map((s) => (s.id === id ? { ...s, active: !s.active } : s)),
         );
     };
 
     return (
         <div className="space-y-8">
             <Head title="Privacy & Access" />
-            
+
             <div>
                 <h3 className="mb-2 text-xl font-bold text-text-primary">
                     Privacy & Access
                 </h3>
                 <p className="text-sm text-text-muted">
-                    Control who can view, edit, and contribute to your family legacy.
+                    Control who can view, edit, and contribute to your family
+                    legacy.
                 </p>
             </div>
 
@@ -70,9 +71,9 @@ export default function Privacy() {
                 ))}
             </div>
 
-            <div className="pt-6 border-t border-border-subtle">
-                <Button 
-                    variant="primary" 
+            <div className="border-t border-border-subtle pt-6">
+                <Button
+                    variant="primary"
                     icon={Check}
                     className="w-full sm:w-auto"
                 >
@@ -82,4 +83,3 @@ export default function Privacy() {
         </div>
     );
 }
-

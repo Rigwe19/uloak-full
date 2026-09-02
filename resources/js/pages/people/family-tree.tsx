@@ -4,7 +4,14 @@ import { Users, Heart, ChevronRight } from 'lucide-react';
 import React from 'react';
 import RelationshipCard from '@/components/people/RelationshipCard';
 import PersonLayout from '@/layouts/person-layout';
-import type { Person, RelationshipNode, FamilyTree, TreeNode, SiblingNode, SpouseNode } from '@/types/person';
+import type {
+    Person,
+    RelationshipNode,
+    FamilyTree,
+    TreeNode,
+    SiblingNode,
+    SpouseNode,
+} from '@/types/person';
 
 interface FamilyTreeProps {
     person: Person;
@@ -20,9 +27,15 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
 
     return (
         <PersonLayout person={person}>
-            <Head title={(person.name || 'Family Tree') + ' - Ulo of Stories'} />
+            <Head
+                title={(person.name || 'Family Tree') + ' - Ulo of Stories'}
+            />
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-8"
+            >
                 {graph.graph.spouses.length > 0 && (
                     <section>
                         <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-text-primary">
@@ -30,9 +43,16 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
                         </h3>
                         <div className="grid gap-3 sm:grid-cols-2">
                             {graph.graph.spouses.map((s: SpouseNode) => (
-                                <div key={s.person.id} className="rounded-xl border border-border-subtle bg-surface p-3">
-                                    <p className="text-sm font-bold text-text-primary">{s.person.name}</p>
-                                    <p className="text-xs text-text-muted capitalize">{s.status}</p>
+                                <div
+                                    key={s.person.id}
+                                    className="rounded-xl border border-border-subtle bg-surface p-3"
+                                >
+                                    <p className="text-sm font-bold text-text-primary">
+                                        {s.person.name}
+                                    </p>
+                                    <p className="text-xs text-text-muted capitalize">
+                                        {s.status}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -46,9 +66,16 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
                         </h3>
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {graph.graph.siblings.map((s: SiblingNode) => (
-                                <div key={s.person.id} className="rounded-xl border border-border-subtle bg-surface p-3">
-                                    <p className="text-sm font-bold text-text-primary">{s.person.name}</p>
-                                    <p className="text-xs text-text-muted capitalize">{s.kind}</p>
+                                <div
+                                    key={s.person.id}
+                                    className="rounded-xl border border-border-subtle bg-surface p-3"
+                                >
+                                    <p className="text-sm font-bold text-text-primary">
+                                        {s.person.name}
+                                    </p>
+                                    <p className="text-xs text-text-muted capitalize">
+                                        {s.kind}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -57,23 +84,43 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
 
                 <div className="grid gap-6 md:grid-cols-2">
                     <section>
-                        <h3 className="mb-3 text-sm font-bold text-text-primary">Parents & Ancestors</h3>
-                        <TreeView nodes={graph.graph.ancestors} baseUrl={baseUrl} />
+                        <h3 className="mb-3 text-sm font-bold text-text-primary">
+                            Parents & Ancestors
+                        </h3>
+                        <TreeView
+                            nodes={graph.graph.ancestors}
+                            baseUrl={baseUrl}
+                        />
                     </section>
                     <section>
-                        <h3 className="mb-3 text-sm font-bold text-text-primary">Children & Descendants</h3>
-                        <TreeView nodes={graph.graph.descendants} baseUrl={baseUrl} />
+                        <h3 className="mb-3 text-sm font-bold text-text-primary">
+                            Children & Descendants
+                        </h3>
+                        <TreeView
+                            nodes={graph.graph.descendants}
+                            baseUrl={baseUrl}
+                        />
                     </section>
                 </div>
 
                 <section>
-                    <h3 className="mb-3 text-sm font-bold text-text-primary">All Relationships</h3>
+                    <h3 className="mb-3 text-sm font-bold text-text-primary">
+                        All Relationships
+                    </h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                         {graph.outgoing.map((rel) => (
-                            <RelationshipCard key={rel.id} rel={rel} baseUrl={baseUrl} />
+                            <RelationshipCard
+                                key={rel.id}
+                                rel={rel}
+                                baseUrl={baseUrl}
+                            />
                         ))}
                         {graph.incoming.map((rel) => (
-                            <RelationshipCard key={rel.id} rel={rel} baseUrl={baseUrl} />
+                            <RelationshipCard
+                                key={rel.id}
+                                rel={rel}
+                                baseUrl={baseUrl}
+                            />
                         ))}
                     </div>
                 </section>
@@ -88,12 +135,18 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
     );
 }
 
-function TreeView({ nodes, baseUrl, depth = 0 }: { nodes: TreeNode[]; baseUrl: string; depth?: number }) {
+function TreeView({
+    nodes,
+    baseUrl,
+    depth = 0,
+}: {
+    nodes: TreeNode[];
+    baseUrl: string;
+    depth?: number;
+}) {
     if (!nodes || nodes.length === 0) {
-return (
-        <p className="text-xs italic text-text-muted">None recorded</p>
-    );
-}
+        return <p className="text-xs text-text-muted italic">None recorded</p>;
+    }
 
     return (
         <div className="space-y-2" style={{ paddingLeft: depth > 0 ? 16 : 0 }}>
@@ -104,10 +157,18 @@ return (
                         className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm transition-colors hover:border-accent-gold/30"
                     >
                         <ChevronRight size={14} className="text-text-muted" />
-                        <span className="font-medium text-text-primary">{node.person.name}</span>
-                        <span className="text-xs text-text-muted capitalize">({node.kind})</span>
+                        <span className="font-medium text-text-primary">
+                            {node.person.name}
+                        </span>
+                        <span className="text-xs text-text-muted capitalize">
+                            ({node.kind})
+                        </span>
                     </a>
-                    <TreeView nodes={node.ancestors || node.descendants || []} baseUrl={baseUrl} depth={depth + 1} />
+                    <TreeView
+                        nodes={node.ancestors || node.descendants || []}
+                        baseUrl={baseUrl}
+                        depth={depth + 1}
+                    />
                 </div>
             ))}
         </div>

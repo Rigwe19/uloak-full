@@ -7,8 +7,8 @@ interface VideoLoadingProps {
 
 export function VideoLoading({ visible }: VideoLoadingProps) {
     if (!visible) {
-return null;
-}
+        return null;
+    }
 
     return (
         <motion.div
@@ -20,10 +20,16 @@ return null;
             <div className="flex flex-col items-center gap-3">
                 <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                    className="w-8 h-8 border-2 border-accent-gold/30 border-t-accent-gold rounded-full"
+                    transition={{
+                        repeat: Infinity,
+                        duration: 1,
+                        ease: 'linear',
+                    }}
+                    className="h-8 w-8 rounded-full border-2 border-accent-gold/30 border-t-accent-gold"
                 />
-                <span className="text-[10px] font-mono tracking-wider text-white/60 uppercase">Loading</span>
+                <span className="font-mono text-[10px] tracking-wider text-white/60 uppercase">
+                    Loading
+                </span>
             </div>
         </motion.div>
     );

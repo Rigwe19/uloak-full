@@ -93,8 +93,8 @@ export function VoiceRecorder({ onClose, onSave }: VoiceRecorderProps) {
 
             return () => {
                 if (animationFrameRef.current) {
-cancelAnimationFrame(animationFrameRef.current);
-}
+                    cancelAnimationFrame(animationFrameRef.current);
+                }
 
                 audioContext.close();
             };
@@ -137,7 +137,9 @@ cancelAnimationFrame(animationFrameRef.current);
             }, 1000);
         } catch (err) {
             console.error('Error accessing microphone:', err);
-            toast.error('Could not access microphone. Please check permissions.');
+            toast.error(
+                'Could not access microphone. Please check permissions.',
+            );
         }
     };
 
@@ -146,8 +148,8 @@ cancelAnimationFrame(animationFrameRef.current);
             mediaRecorderRef.current.stop();
 
             if (timerRef.current) {
-clearInterval(timerRef.current);
-}
+                clearInterval(timerRef.current);
+            }
         }
     };
 

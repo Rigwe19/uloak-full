@@ -9,13 +9,24 @@ import { validateFile } from '@/utils/media-validation';
 function uploadFileWithProgress(
     file: File,
     mediaType: 'photo' | 'video' | 'audio' | 'document',
-    onProgress: (percentage: number, speed: number, uploadedBytes: number, eta: number | null) => void,
+    onProgress: (
+        percentage: number,
+        speed: number,
+        uploadedBytes: number,
+        eta: number | null,
+    ) => void,
     signal: AbortSignal,
-): Promise<{ uuid: string; id: number; thumbnail_url: string | null; status: string }> {
+): Promise<{
+    uuid: string;
+    id: number;
+    thumbnail_url: string | null;
+    status: string;
+}> {
     return new Promise((resolve, reject) => {
-        const endpoint = mediaType === 'video'
-            ? '/api/media/videos/upload'
-            : '/api/media/images/upload';
+        const endpoint =
+            mediaType === 'video'
+                ? '/api/media/videos/upload'
+                : '/api/media/images/upload';
 
         const xhr = new XMLHttpRequest();
         const formData = new FormData();
@@ -57,12 +68,20 @@ function uploadFileWithProgress(
                 }
             } else {
                 const body = xhr.responseText;
-                reject(new Error(body || `Upload failed with status ${xhr.status}`));
+                reject(
+                    new Error(
+                        body || `Upload failed with status ${xhr.status}`,
+                    ),
+                );
             }
         });
 
-        xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
-        xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+        xhr.addEventListener('error', () =>
+            reject(new Error('Network error during upload')),
+        );
+        xhr.addEventListener('abort', () =>
+            reject(new Error('Upload cancelled')),
+        );
 
         signal.addEventListener('abort', () => xhr.abort());
 
@@ -99,11 +118,9 @@ export function useMediaUpload() {
                 throw new Error(validation.error);
             }
 
-            const controller =
-                useUploadStore
-                    .getState()
-                    .uploads.find((u) => u.id === id)
-                    ?.cancelController;
+            const controller = useUploadStore
+                .getState()
+                .uploads.find((u) => u.id === id)?.cancelController;
 
             if (!controller) {
                 throw new Error('Upload no longer exists.');
@@ -112,44 +129,49 @@ export function useMediaUpload() {
             try {
                 updateStatus(id, 'queued');
 
-            const media = await uploadFileWithProgress(
-                file,
-                mediaType,
-                (percentage, speed, uploadedBytes, eta) => {
-                    updateProgress(id, percentage, speed, uploadedBytes, eta);
-                },
-                controller.signal,
-            );
-
-            updateMediaRef(id, media.uuid, media.id);
-
-            // Initial state from upload response
-            const initialStatus = media.status === 'ready' ? 'ready' : 'processing';
-            updateStatus(id, initialStatus);
-
-            if (initialStatus === 'ready') {
-                updateProgress(id, 100, 0, file.size, null);
-            } else {
-                // Poll for processing completion
-                await pollMediaStatus(
-                    media.uuid,
-                    (percentage) => {
-                        updateProgress(id, percentage, 0, file.size, null);
+                const media = await uploadFileWithProgress(
+                    file,
+                    mediaType,
+                    (percentage, speed, uploadedBytes, eta) => {
+                        updateProgress(
+                            id,
+                            percentage,
+                            speed,
+                            uploadedBytes,
+                            eta,
+                        );
                     },
                     controller.signal,
                 );
 
-                updateStatus(id, 'ready');
-            }
+                updateMediaRef(id, media.uuid, media.id);
 
-            callbacks?.onStatusChange?.('ready');
+                // Initial state from upload response
+                const initialStatus =
+                    media.status === 'ready' ? 'ready' : 'processing';
+                updateStatus(id, initialStatus);
+
+                if (initialStatus === 'ready') {
+                    updateProgress(id, 100, 0, file.size, null);
+                } else {
+                    // Poll for processing completion
+                    await pollMediaStatus(
+                        media.uuid,
+                        (percentage) => {
+                            updateProgress(id, percentage, 0, file.size, null);
+                        },
+                        controller.signal,
+                    );
+
+                    updateStatus(id, 'ready');
+                }
+
+                callbacks?.onStatusChange?.('ready');
 
                 return id;
             } catch (error) {
                 const message =
-                    error instanceof Error
-                        ? error.message
-                        : 'Upload failed';
+                    error instanceof Error ? error.message : 'Upload failed';
 
                 setError(id, message);
                 callbacks?.onStatusChange?.('failed');
@@ -157,12 +179,7 @@ export function useMediaUpload() {
                 throw error;
             }
         },
-        [
-            updateProgress,
-            updateStatus,
-            updateMediaRef,
-            setError,
-        ],
+        [updateProgress, updateStatus, updateMediaRef, setError],
     );
 
     const cancelUpload = useCallback((id: string) => {

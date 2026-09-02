@@ -1,5 +1,12 @@
 import { Form, Head } from '@inertiajs/react';
-import { Check, Fingerprint, Lock, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import {
+    Check,
+    Fingerprint,
+    Lock,
+    Plus,
+    ShieldCheck,
+    Trash2,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import { Button } from '@/components/dashboard/ui';
@@ -30,14 +37,22 @@ function convertCredentialOptions(options: any): any {
     }
 
     if (converted.user?.id && typeof converted.user.id === 'string') {
-        converted.user = { ...converted.user, id: base64urlToArrayBuffer(converted.user.id) };
+        converted.user = {
+            ...converted.user,
+            id: base64urlToArrayBuffer(converted.user.id),
+        };
     }
 
     if (converted.excludeCredentials) {
-        converted.excludeCredentials = converted.excludeCredentials.map((cred: any) => ({
-            ...cred,
-            id: typeof cred.id === 'string' ? base64urlToArrayBuffer(cred.id) : cred.id,
-        }));
+        converted.excludeCredentials = converted.excludeCredentials.map(
+            (cred: any) => ({
+                ...cred,
+                id:
+                    typeof cred.id === 'string'
+                        ? base64urlToArrayBuffer(cred.id)
+                        : cred.id,
+            }),
+        );
     }
 
     return converted;
@@ -88,7 +103,9 @@ export default function Security({
     const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
     const [passkeyName, setPasskeyName] = useState('');
     const [showPasskeyNameInput, setShowPasskeyNameInput] = useState(false);
-    const [deletingPasskeyId, setDeletingPasskeyId] = useState<number | null>(null);
+    const [deletingPasskeyId, setDeletingPasskeyId] = useState<number | null>(
+        null,
+    );
 
     useEffect(() => {
         setIsPasskeySupported(
@@ -120,8 +137,8 @@ export default function Security({
 
     const handleRegisterPasskey = async () => {
         if (!isPasskeySupported || isRegisteringPasskey) {
-return;
-}
+            return;
+        }
 
         setIsRegisteringPasskey(true);
 
@@ -134,11 +151,15 @@ return;
             if (!optionsResponse.ok) {
                 const errorText = await optionsResponse.text();
 
-                throw new Error(`Failed to get registration options: ${errorText}`);
+                throw new Error(
+                    `Failed to get registration options: ${errorText}`,
+                );
             }
 
             const responseData = await optionsResponse.json();
-            const creationOptions = convertCredentialOptions(responseData.options);
+            const creationOptions = convertCredentialOptions(
+                responseData.options,
+            );
 
             const credential = await navigator.credentials.create({
                 publicKey: creationOptions,
@@ -149,26 +170,38 @@ return;
             }
 
             const pubKeyCred = credential as PublicKeyCredential;
-            const attestationResponse = pubKeyCred.response as AuthenticatorAttestationResponse;
+            const attestationResponse =
+                pubKeyCred.response as AuthenticatorAttestationResponse;
 
             const storeResponse = await fetch('/user/passkeys', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    'X-CSRF-TOKEN': document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') ?? '',
+                    'X-CSRF-TOKEN':
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute('content') ?? '',
                 },
                 body: JSON.stringify({
-                    name: passkeyName || `Passkey ${new Date().toLocaleDateString()}`,
+                    name:
+                        passkeyName ||
+                        `Passkey ${new Date().toLocaleDateString()}`,
                     id: pubKeyCred.id,
                     type: pubKeyCred.type,
                     rawId: Array.from(new Uint8Array(pubKeyCred.rawId)),
                     response: {
-                        clientDataJSON: Array.from(new Uint8Array(attestationResponse.clientDataJSON)),
-                        attestationObject: Array.from(new Uint8Array(attestationResponse.attestationObject)),
-                        transports: attestationResponse.getTransports ? attestationResponse.getTransports() : [],
+                        clientDataJSON: Array.from(
+                            new Uint8Array(attestationResponse.clientDataJSON),
+                        ),
+                        attestationObject: Array.from(
+                            new Uint8Array(
+                                attestationResponse.attestationObject,
+                            ),
+                        ),
+                        transports: attestationResponse.getTransports
+                            ? attestationResponse.getTransports()
+                            : [],
                     },
                 }),
             });
@@ -180,7 +213,9 @@ return;
             } else {
                 const errorData = await storeResponse.json();
 
-                throw new Error(errorData.message || 'Failed to register passkey');
+                throw new Error(
+                    errorData.message || 'Failed to register passkey',
+                );
             }
         } catch (error) {
             console.error('Passkey registration error:', error);
@@ -196,9 +231,10 @@ return;
             const response = await fetch(`/user/passkeys/${passkeyId}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') ?? '',
+                    'X-CSRF-TOKEN':
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute('content') ?? '',
                 },
             });
 
@@ -220,7 +256,9 @@ return;
             <div className="space-y-8">
                 <div className="flex items-center gap-3">
                     <Lock size={20} className="text-accent-gold" />
-                    <h3 className="text-xl font-bold text-text-primary">Update Password</h3>
+                    <h3 className="text-xl font-bold text-text-primary">
+                        Update Password
+                    </h3>
                 </div>
 
                 <Form
@@ -285,7 +323,9 @@ return;
                                     placeholder="••••••••"
                                     passwordrules={passwordRules}
                                 />
-                                <InputError message={errors.password_confirmation} />
+                                <InputError
+                                    message={errors.password_confirmation}
+                                />
                             </div>
 
                             <div className="pt-2 sm:col-span-2">
@@ -310,12 +350,18 @@ return;
                     <div className="h-px w-full bg-border-subtle" />
                     <div className="space-y-8">
                         <div className="flex items-center gap-3">
-                            <Fingerprint size={20} className="text-accent-gold" />
-                            <h3 className="text-xl font-bold text-text-primary">Passkeys</h3>
+                            <Fingerprint
+                                size={20}
+                                className="text-accent-gold"
+                            />
+                            <h3 className="text-xl font-bold text-text-primary">
+                                Passkeys
+                            </h3>
                         </div>
 
-                        <p className="text-sm text-text-muted leading-relaxed max-w-xl">
-                            Use your device's biometric or PIN to sign in quickly and securely.
+                        <p className="max-w-xl text-sm leading-relaxed text-text-muted">
+                            Use your device's biometric or PIN to sign in
+                            quickly and securely.
                         </p>
 
                         {passkeys.length > 0 && (
@@ -326,21 +372,34 @@ return;
                                         className="flex items-center justify-between rounded-2xl border border-border-subtle bg-bg-dark/50 p-4"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <Fingerprint size={18} className="text-accent-gold" />
+                                            <Fingerprint
+                                                size={18}
+                                                className="text-accent-gold"
+                                            />
                                             <div>
                                                 <p className="text-sm font-medium text-text-primary">
                                                     {passkey.name}
                                                 </p>
                                                 <p className="text-xs text-text-muted">
-                                                    {passkey.authenticator ?? 'Passkey'} &middot; Added {new Date(passkey.created_at).toLocaleDateString()}
-                                                    {passkey.last_used_at && ` · Last used ${new Date(passkey.last_used_at).toLocaleDateString()}`}
+                                                    {passkey.authenticator ??
+                                                        'Passkey'}{' '}
+                                                    &middot; Added{' '}
+                                                    {new Date(
+                                                        passkey.created_at,
+                                                    ).toLocaleDateString()}
+                                                    {passkey.last_used_at &&
+                                                        ` · Last used ${new Date(passkey.last_used_at).toLocaleDateString()}`}
                                                 </p>
                                             </div>
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => handleDeletePasskey(passkey.id)}
-                                            disabled={deletingPasskeyId === passkey.id}
+                                            onClick={() =>
+                                                handleDeletePasskey(passkey.id)
+                                            }
+                                            disabled={
+                                                deletingPasskeyId === passkey.id
+                                            }
                                             className="rounded-xl p-2 text-text-muted transition-all hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                                             title="Remove passkey"
                                         >
@@ -360,7 +419,9 @@ return;
                                     <input
                                         type="text"
                                         value={passkeyName}
-                                        onChange={(e) => setPasskeyName(e.target.value)}
+                                        onChange={(e) =>
+                                            setPasskeyName(e.target.value)
+                                        }
                                         placeholder="e.g., My iPhone, YubiKey"
                                         className="mt-2 w-full rounded-2xl border border-border-subtle bg-bg-dark px-5 py-3.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold/50"
                                     />
@@ -373,7 +434,9 @@ return;
                                         variant="primary"
                                         icon={Fingerprint}
                                     >
-                                        {isRegisteringPasskey ? 'Registering...' : 'Register Passkey'}
+                                        {isRegisteringPasskey
+                                            ? 'Registering...'
+                                            : 'Register Passkey'}
                                     </Button>
                                     <button
                                         type="button"
@@ -406,17 +469,28 @@ return;
                     <div className="h-px w-full bg-border-subtle" />
                     <div className="space-y-8">
                         <div className="flex items-center gap-3">
-                            <ShieldCheck size={20} className="text-accent-gold" />
-                            <h3 className="text-xl font-bold text-text-primary">Two-Factor Authentication</h3>
+                            <ShieldCheck
+                                size={20}
+                                className="text-accent-gold"
+                            />
+                            <h3 className="text-xl font-bold text-text-primary">
+                                Two-Factor Authentication
+                            </h3>
                         </div>
 
                         {twoFactorEnabled ? (
                             <div className="flex flex-col items-start space-y-6">
-                                <p className="text-sm text-text-muted leading-relaxed max-w-xl">
-                                    You will be prompted for a secure, random pin during login, which you can retrieve from the TOTP-supported application on your phone.
+                                <p className="max-w-xl text-sm leading-relaxed text-text-muted">
+                                    You will be prompted for a secure, random
+                                    pin during login, which you can retrieve
+                                    from the TOTP-supported application on your
+                                    phone.
                                 </p>
 
-                                <Form action={disable().url} method={disable().method}>
+                                <Form
+                                    action={disable().url}
+                                    method={disable().method}
+                                >
                                     {({ processing }) => (
                                         <Button
                                             variant="danger"
@@ -436,14 +510,19 @@ return;
                             </div>
                         ) : (
                             <div className="flex flex-col items-start space-y-6">
-                                <p className="text-sm text-text-muted leading-relaxed max-w-xl">
-                                    When you enable two-factor authentication, you will be prompted for a secure pin during login. This pin can be retrieved from a TOTP-supported application on your phone.
+                                <p className="max-w-xl text-sm leading-relaxed text-text-muted">
+                                    When you enable two-factor authentication,
+                                    you will be prompted for a secure pin during
+                                    login. This pin can be retrieved from a
+                                    TOTP-supported application on your phone.
                                 </p>
 
                                 <div>
                                     {hasSetupData ? (
                                         <Button
-                                            onClick={() => setShowSetupModal(true)}
+                                            onClick={() =>
+                                                setShowSetupModal(true)
+                                            }
                                             variant="primary"
                                             icon={ShieldCheck}
                                         >
@@ -453,7 +532,9 @@ return;
                                         <Form
                                             action={enable().url}
                                             method={enable().method}
-                                            onSuccess={() => setShowSetupModal(true)}
+                                            onSuccess={() =>
+                                                setShowSetupModal(true)
+                                            }
                                         >
                                             {({ processing }) => (
                                                 <Button

@@ -50,7 +50,7 @@ const applyTheme = (appearance: Appearance): void => {
 
     document.documentElement.classList.toggle('dark', isDark);
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-    
+
     if (!isDark) {
         document.documentElement.setAttribute('data-theme', 'light');
     } else {

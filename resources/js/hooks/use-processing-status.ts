@@ -26,7 +26,6 @@ export function useProcessingStatus(
             return;
         }
 
-         
         setIsProcessing(true);
 
         setError(null);

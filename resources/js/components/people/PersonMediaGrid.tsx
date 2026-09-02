@@ -31,7 +31,10 @@ export default function PersonMediaGrid({ items }: { items: any[] }) {
                         </div>
                     ) : (
                         <div className="flex h-full w-full items-center justify-center bg-surface">
-                            <FileText size={32} className="text-text-muted/50" />
+                            <FileText
+                                size={32}
+                                className="text-text-muted/50"
+                            />
                         </div>
                     )}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">

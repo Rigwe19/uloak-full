@@ -44,92 +44,148 @@ export default function Create({ personTypes, livingStatuses }: CreateProps) {
                 Dashboard
             </Link>
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <h1 className="mb-8 text-2xl font-bold text-text-primary">Create Person</h1>
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
+                <h1 className="mb-8 text-2xl font-bold text-text-primary">
+                    Create Person
+                </h1>
 
                 <form onSubmit={submit} className="space-y-8">
                     <section className="rounded-xl border border-border-subtle bg-surface p-6">
-                        <h2 className="mb-4 text-sm font-bold text-text-primary">Basic Information</h2>
+                        <h2 className="mb-4 text-sm font-bold text-text-primary">
+                            Basic Information
+                        </h2>
                         <div className="space-y-4">
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-text-muted">Legal Name *</label>
+                                <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                                    Legal Name *
+                                </label>
                                 <input
                                     value={data.legal_name}
-                                    onChange={(e) => setData('legal_name', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('legal_name', e.target.value)
+                                    }
                                     placeholder="Full legal name"
-                                    className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none transition-all focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
+                                    className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder-text-muted transition-all outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                                 />
                                 <InputError message={errors.legal_name} />
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-text-muted">Display Name</label>
+                                <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                                    Display Name
+                                </label>
                                 <input
                                     value={data.display_name}
-                                    onChange={(e) => setData('display_name', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('display_name', e.target.value)
+                                    }
                                     placeholder="Name shown on profile"
-                                    className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none transition-all focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
+                                    className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder-text-muted transition-all outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                                 />
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-text-muted">Type</label>
+                                    <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                                        Type
+                                    </label>
                                     <select
                                         value={data.type}
-                                        onChange={(e) => setData('type', e.target.value)}
-                                        className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-all focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
+                                        onChange={(e) =>
+                                            setData('type', e.target.value)
+                                        }
+                                        className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                                     >
                                         {personTypes.map((t) => (
-                                            <option key={t.value} value={t.value}>{t.label}</option>
+                                            <option
+                                                key={t.value}
+                                                value={t.value}
+                                            >
+                                                {t.label}
+                                            </option>
                                         ))}
                                     </select>
                                     <InputError message={errors.type} />
                                 </div>
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-text-muted">Living Status</label>
+                                    <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                                        Living Status
+                                    </label>
                                     <select
                                         value={data.living_status}
-                                        onChange={(e) => setData('living_status', e.target.value)}
-                                        className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-all focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
+                                        onChange={(e) =>
+                                            setData(
+                                                'living_status',
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                                     >
                                         {livingStatuses.map((s) => (
-                                            <option key={s.value} value={s.value}>{s.label}</option>
+                                            <option
+                                                key={s.value}
+                                                value={s.value}
+                                            >
+                                                {s.label}
+                                            </option>
                                         ))}
                                     </select>
-                                    <InputError message={errors.living_status} />
+                                    <InputError
+                                        message={errors.living_status}
+                                    />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-text-muted">Gender</label>
+                                <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                                    Gender
+                                </label>
                                 <input
                                     value={data.gender}
-                                    onChange={(e) => setData('gender', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('gender', e.target.value)
+                                    }
                                     placeholder="e.g. Male, Female, Non-binary"
-                                    className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none transition-all focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
+                                    className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary placeholder-text-muted transition-all outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                                 />
                                 <InputError message={errors.gender} />
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-text-muted">Birth Date</label>
+                                    <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                                        Birth Date
+                                    </label>
                                     <input
                                         type="date"
                                         value={data.birth_date}
-                                        onChange={(e) => setData('birth_date', e.target.value)}
-                                        className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-all focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
+                                        onChange={(e) =>
+                                            setData(
+                                                'birth_date',
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                                     />
                                     <InputError message={errors.birth_date} />
                                 </div>
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-text-muted">Death Date</label>
+                                    <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                                        Death Date
+                                    </label>
                                     <input
                                         type="date"
                                         value={data.death_date}
-                                        onChange={(e) => setData('death_date', e.target.value)}
-                                        className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-all focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
+                                        onChange={(e) =>
+                                            setData(
+                                                'death_date',
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="w-full rounded-lg border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                                     />
                                     <InputError message={errors.death_date} />
                                 </div>

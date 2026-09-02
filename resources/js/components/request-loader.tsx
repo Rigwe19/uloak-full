@@ -43,12 +43,12 @@ export function RequestLoader() {
                     <img
                         src="/logo-dark.png"
                         alt="ULO OF STORIES"
-                        className="h-12 dark:hidden w-auto opacity-80"
+                        className="h-12 w-auto opacity-80 dark:hidden"
                     />
                     <img
                         src="/logo.png"
                         alt="ULO OF STORIES"
-                        className="h-12 dark:block hidden w-auto opacity-80"
+                        className="hidden h-12 w-auto opacity-80 dark:block"
                     />
 
                     <div className="relative flex items-center justify-center">

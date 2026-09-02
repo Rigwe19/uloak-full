@@ -39,7 +39,7 @@ export default function Search({ results, query }: SearchProps) {
     return (
         <div className="mx-auto max-w-5xl p-5 pb-32 md:p-8 md:pb-8 lg:p-16">
             <Head title="Archive Search" />
-            
+
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -60,7 +60,9 @@ export default function Search({ results, query }: SearchProps) {
                             placeholder="Search for names, events, or members..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchTerm)}
+                            onKeyDown={(e) =>
+                                e.key === 'Enter' && handleSearch(searchTerm)
+                            }
                             className="w-full rounded-2xl border border-border-subtle bg-surface py-4 pr-12 pl-14 text-base text-text-primary shadow-xl transition-all focus:border-accent-gold/50 focus:outline-none md:rounded-3xl md:py-6 md:pl-16 md:text-lg"
                         />
                         {searchTerm && (
@@ -121,7 +123,11 @@ export default function Search({ results, query }: SearchProps) {
                                         count: 18,
                                         icon: Video,
                                     },
-                                    { label: 'Artifacts', count: 31, icon: Camera },
+                                    {
+                                        label: 'Artifacts',
+                                        count: 31,
+                                        icon: Camera,
+                                    },
                                 ].map((c) => (
                                     <div
                                         key={c.label}
@@ -154,13 +160,16 @@ export default function Search({ results, query }: SearchProps) {
                             </h3>
                             <div className="h-px grow bg-border-subtle" />
                             <span className="shrink-0 text-[10px] font-bold text-accent-gold md:text-xs">
-                                {results.rooms.length + results.stories.length} found
+                                {results.rooms.length + results.stories.length}{' '}
+                                found
                             </span>
                         </div>
 
                         {results.rooms.length > 0 && (
                             <div className="space-y-4">
-                                <h4 className="text-xs font-bold tracking-widest text-text-muted uppercase">Rooms</h4>
+                                <h4 className="text-xs font-bold tracking-widest text-text-muted uppercase">
+                                    Rooms
+                                </h4>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
                                     {results.rooms.map((room) => (
                                         <div key={room.id}>
@@ -173,19 +182,26 @@ export default function Search({ results, query }: SearchProps) {
 
                         {results.stories.length > 0 && (
                             <div className="space-y-4">
-                                <h4 className="text-xs font-bold tracking-widest text-text-muted uppercase">Stories</h4>
+                                <h4 className="text-xs font-bold tracking-widest text-text-muted uppercase">
+                                    Stories
+                                </h4>
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     {results.stories.map((story) => (
-                                        <div 
+                                        <div
                                             key={story.id}
                                             className="group flex items-center gap-4 rounded-2xl border border-border-subtle bg-surface p-4 transition-all hover:border-accent-gold/20"
                                         >
                                             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-bg-dark">
                                                 {story.media_url ? (
-                                                    <img src={story.media_url} className="h-full w-full object-cover" />
+                                                    <img
+                                                        src={story.media_url}
+                                                        className="h-full w-full object-cover"
+                                                    />
                                                 ) : (
                                                     <div className="flex h-full w-full items-center justify-center text-text-muted">
-                                                        <MessageSquare size={20} />
+                                                        <MessageSquare
+                                                            size={20}
+                                                        />
                                                     </div>
                                                 )}
                                             </div>
@@ -203,20 +219,20 @@ export default function Search({ results, query }: SearchProps) {
                             </div>
                         )}
 
-                        {results.rooms.length === 0 && results.stories.length === 0 && (
-                            <div className="py-20 text-center">
-                                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-border-subtle bg-surface text-text-muted opacity-50">
-                                    <SearchIcon size={32} />
+                        {results.rooms.length === 0 &&
+                            results.stories.length === 0 && (
+                                <div className="py-20 text-center">
+                                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-border-subtle bg-surface text-text-muted opacity-50">
+                                        <SearchIcon size={32} />
+                                    </div>
+                                    <p className="text-sm text-text-muted italic">
+                                        No results found matching "{query}"
+                                    </p>
                                 </div>
-                                <p className="text-sm text-text-muted italic">
-                                    No results found matching "{query}"
-                                </p>
-                            </div>
-                        )}
+                            )}
                     </div>
                 )}
             </motion.div>
         </div>
     );
 }
-

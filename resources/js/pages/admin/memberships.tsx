@@ -1,6 +1,15 @@
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { CreditCard, Users, TrendingUp, DollarSign, Settings, ArrowRight, Check, Plus } from 'lucide-react';
+import {
+    CreditCard,
+    Users,
+    TrendingUp,
+    DollarSign,
+    Settings,
+    ArrowRight,
+    Check,
+    Plus,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import PlanPerformanceModal from '@/components/admin/plan-performance-modal';
 import { Button } from '@/components/dashboard/ui';
@@ -30,32 +39,70 @@ export default function Memberships({ page }: MembershipProps) {
     const plans = page?.content.plans || [];
 
     const stats = [
-        { label: 'Total Members', value: '124', icon: Users, color: 'text-blue-400' },
-        { label: 'Active Subscriptions', value: '86', icon: Check, color: 'text-green-400' },
-        { label: 'Monthly Revenue', value: '£860', icon: DollarSign, color: 'text-accent-gold' },
-        { label: 'Growth', value: '+12%', icon: TrendingUp, color: 'text-purple-400' },
+        {
+            label: 'Total Members',
+            value: '124',
+            icon: Users,
+            color: 'text-blue-400',
+        },
+        {
+            label: 'Active Subscriptions',
+            value: '86',
+            icon: Check,
+            color: 'text-green-400',
+        },
+        {
+            label: 'Monthly Revenue',
+            value: '£860',
+            icon: DollarSign,
+            color: 'text-accent-gold',
+        },
+        {
+            label: 'Growth',
+            value: '+12%',
+            icon: TrendingUp,
+            color: 'text-purple-400',
+        },
     ];
 
     return (
         <AdminLayout>
             <Head title="Memberships Admin" />
-            
+
             <div className="p-6 md:p-10">
                 <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-text-primary">Memberships</h1>
-                        <p className="text-text-muted">Manage your plans and track subscription performance.</p>
+                        <h1 className="text-3xl font-bold tracking-tight text-text-primary">
+                            Memberships
+                        </h1>
+                        <p className="text-text-muted">
+                            Manage your plans and track subscription
+                            performance.
+                        </p>
                     </div>
                     <div className="flex gap-4">
                         {page && (
-                            <Link href={admin.pages.edit(page.id).url + '?section=plans'}>
-                                <Button variant="outline" className="gap-2 rounded-2xl border-white/10">
+                            <Link
+                                href={
+                                    admin.pages.edit(page.id).url +
+                                    '?section=plans'
+                                }
+                            >
+                                <Button
+                                    variant="outline"
+                                    className="gap-2 rounded-2xl border-white/10"
+                                >
                                     <Settings size={18} /> Edit Plans
                                 </Button>
                             </Link>
                         )}
                         {page && (
-                            <Link href={admin.pages.edit(page.id).url + '?section=plans'}>
+                            <Link
+                                href={
+                                    admin.pages.edit(page.id).url +
+                                    '?section=plans'
+                                }
+                            >
                                 <Button className="gap-2 rounded-2xl">
                                     <Plus size={18} /> New Plan
                                 </Button>
@@ -75,13 +122,19 @@ export default function Memberships({ page }: MembershipProps) {
                             className="rounded-3xl border border-white/5 bg-surface/30 p-6 backdrop-blur-sm"
                         >
                             <div className="mb-4 flex items-center justify-between">
-                                <div className={`rounded-2xl bg-white/5 p-3 ${stat.color}`}>
+                                <div
+                                    className={`rounded-2xl bg-white/5 p-3 ${stat.color}`}
+                                >
                                     <stat.icon size={24} />
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-xs font-medium text-text-muted uppercase tracking-widest">{stat.label}</p>
-                                <h3 className="text-3xl font-bold text-text-primary">{stat.value}</h3>
+                                <p className="text-xs font-medium tracking-widest text-text-muted uppercase">
+                                    {stat.label}
+                                </p>
+                                <h3 className="text-3xl font-bold text-text-primary">
+                                    {stat.value}
+                                </h3>
                             </div>
                         </motion.div>
                     ))}
@@ -91,52 +144,76 @@ export default function Memberships({ page }: MembershipProps) {
                     {/* Active Plans */}
                     <div className="lg:col-span-2">
                         <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-text-primary">
-                            <CreditCard size={20} className="text-accent-gold" />
+                            <CreditCard
+                                size={20}
+                                className="text-accent-gold"
+                            />
                             Active Plans
                         </h2>
-                        
+
                         <div className="grid gap-6 sm:grid-cols-2">
                             {plans.map((plan) => (
-                                <div 
+                                <div
                                     key={plan.name}
                                     className={`relative flex flex-col rounded-4xl border p-8 transition-all hover:bg-surface/40 ${
-                                        plan.highlight ? 'border-accent-gold/30 bg-accent-gold/5' : 'border-white/5 bg-surface/20'
+                                        plan.highlight
+                                            ? 'border-accent-gold/30 bg-accent-gold/5'
+                                            : 'border-white/5 bg-surface/20'
                                     }`}
                                 >
                                     <div className="mb-6 flex items-start justify-between">
                                         <div>
-                                            <h3 className="text-xl font-bold text-text-primary">{plan.name}</h3>
-                                            <p className="text-xs text-text-muted">{plan.desc}</p>
+                                            <h3 className="text-xl font-bold text-text-primary">
+                                                {plan.name}
+                                            </h3>
+                                            <p className="text-xs text-text-muted">
+                                                {plan.desc}
+                                            </p>
                                         </div>
                                         {plan.highlight && (
-                                            <span className="rounded-full bg-accent-gold/20 px-3 py-1 text-[10px] font-bold text-accent-gold">FEATURED</span>
+                                            <span className="rounded-full bg-accent-gold/20 px-3 py-1 text-[10px] font-bold text-accent-gold">
+                                                FEATURED
+                                            </span>
                                         )}
                                     </div>
-                                    
+
                                     <div className="mb-8 flex items-baseline gap-1">
-                                        <span className="text-3xl font-bold text-text-primary">{plan.price}</span>
-                                        <span className="text-sm text-text-muted">/{plan.interval}</span>
+                                        <span className="text-3xl font-bold text-text-primary">
+                                            {plan.price}
+                                        </span>
+                                        <span className="text-sm text-text-muted">
+                                            /{plan.interval}
+                                        </span>
                                     </div>
 
                                     <ul className="mb-8 flex flex-col gap-3">
                                         {plan.features.slice(0, 3).map((f) => (
-                                            <li key={f} className="flex items-center gap-2 text-sm text-text-muted">
+                                            <li
+                                                key={f}
+                                                className="flex items-center gap-2 text-sm text-text-muted"
+                                            >
                                                 <div className="h-1.5 w-1.5 rounded-full bg-accent-gold" />
                                                 {f}
                                             </li>
                                         ))}
                                         {plan.features.length > 3 && (
-                                            <li className="text-xs text-text-muted italic">+{plan.features.length - 3} more features</li>
+                                            <li className="text-xs text-text-muted italic">
+                                                +{plan.features.length - 3} more
+                                                features
+                                            </li>
                                         )}
                                     </ul>
 
                                     <div className="mt-auto">
-                                        <Button 
-                                            variant="ghost" 
+                                        <Button
+                                            variant="ghost"
                                             className="w-full gap-2 text-xs"
-                                            onClick={() => setSelectedPlan(plan)}
+                                            onClick={() =>
+                                                setSelectedPlan(plan)
+                                            }
                                         >
-                                            View Performance <ArrowRight size={14} />
+                                            View Performance{' '}
+                                            <ArrowRight size={14} />
                                         </Button>
                                     </div>
                                 </div>
@@ -147,28 +224,40 @@ export default function Memberships({ page }: MembershipProps) {
                     {/* Recent Activity */}
                     <div>
                         <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-text-primary">
-                            <TrendingUp size={20} className="text-accent-gold" />
+                            <TrendingUp
+                                size={20}
+                                className="text-accent-gold"
+                            />
                             Recent Activity
                         </h2>
                         <div className="rounded-4xl border border-white/5 bg-surface/20 p-8">
                             <div className="space-y-6">
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <div key={i} className="flex items-center gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0">
-                                        <div className="h-10 w-10 shrink-0 rounded-full bg-accent-gold/10 flex items-center justify-center text-accent-gold">
+                                    <div
+                                        key={i}
+                                        className="flex items-center gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0"
+                                    >
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-gold/10 text-accent-gold">
                                             <Users size={18} />
                                         </div>
                                         <div className="flex-1 overflow-hidden">
-                                            <p className="truncate text-sm font-medium text-text-primary">New Founding Member</p>
-                                            <p className="text-xs text-text-muted">2 hours ago</p>
+                                            <p className="truncate text-sm font-medium text-text-primary">
+                                                New Founding Member
+                                            </p>
+                                            <p className="text-xs text-text-muted">
+                                                2 hours ago
+                                            </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-sm font-bold text-green-400">+£10</p>
+                                            <p className="text-sm font-bold text-green-400">
+                                                +£10
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 className="mt-8 w-full rounded-2xl border-white/10 text-xs"
                                 onClick={() => setSelectedPlan(plans[0])}
                             >
@@ -179,7 +268,7 @@ export default function Memberships({ page }: MembershipProps) {
                 </div>
             </div>
 
-            <PlanPerformanceModal 
+            <PlanPerformanceModal
                 isOpen={!!selectedPlan}
                 onClose={() => setSelectedPlan(null)}
                 plan={selectedPlan}

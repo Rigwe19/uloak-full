@@ -1,14 +1,14 @@
 import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { 
-    Users as UsersIcon, 
-    DoorOpen, 
-    MessageSquare, 
-    Eye, 
+import {
+    Users as UsersIcon,
+    DoorOpen,
+    MessageSquare,
+    Eye,
     Bell,
     TrendingUp,
     ChevronRight,
-    ArrowUpRight
+    ArrowUpRight,
 } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/dashboard/ui';
@@ -60,7 +60,7 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
     return (
         <AdminLayout>
             <Head title="Admin Dashboard" />
-            
+
             <div className="space-y-10 p-6 md:p-10">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
@@ -68,7 +68,8 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                             Welcome back, Admin.
                         </h1>
                         <p className="mt-2 text-text-muted">
-                            Here is what's happening at Ulo of Stories right now.
+                            Here is what's happening at Ulo of Stories right
+                            now.
                         </p>
                     </div>
                     <Button variant="outline" size="sm">
@@ -87,10 +88,14 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                             className="group rounded-2xl border border-border-subtle bg-surface/30 p-6 transition-all hover:border-accent-gold/20"
                         >
                             <div className="mb-4 flex items-center justify-between">
-                                <div className={`rounded-xl border border-white/5 bg-bg-dark p-2.5 ${stat.color} shadow-inner`}>
+                                <div
+                                    className={`rounded-xl border border-white/5 bg-bg-dark p-2.5 ${stat.color} shadow-inner`}
+                                >
                                     <stat.icon size={20} />
                                 </div>
-                                <span className={`text-[10px] font-bold ${stat.urgent ? 'text-accent-gold' : 'text-green-400'} flex items-center gap-1`}>
+                                <span
+                                    className={`text-[10px] font-bold ${stat.urgent ? 'text-accent-gold' : 'text-green-400'} flex items-center gap-1`}
+                                >
                                     <TrendingUp size={10} />
                                     {stat.trend}
                                 </span>
@@ -118,49 +123,76 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                                 View All <ChevronRight size={14} />
                             </button>
                         </div>
-                        
+
                         <div className="overflow-hidden rounded-2xl border border-border-subtle bg-surface/20 backdrop-blur-sm">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead className="border-b border-border-subtle bg-surface/50">
                                         <tr>
-                                            <th className="px-6 py-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">Sender</th>
-                                            <th className="px-6 py-4 text-[10px] font-bold tracking-widest text-text-muted uppercase text-center">Status</th>
-                                            <th className="px-6 py-4 text-right text-[10px] font-bold tracking-widest text-text-muted uppercase">Actions</th>
+                                            <th className="px-6 py-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                Sender
+                                            </th>
+                                            <th className="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                Status
+                                            </th>
+                                            <th className="px-6 py-4 text-right text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                                Actions
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border-subtle/50">
                                         {recentEnquiries.length > 0 ? (
                                             recentEnquiries.map((enquiry) => (
-                                                <tr key={enquiry.id} className="group transition-colors hover:bg-white/5">
+                                                <tr
+                                                    key={enquiry.id}
+                                                    className="group transition-colors hover:bg-white/5"
+                                                >
                                                     <td className="px-6 py-4">
                                                         <div className="flex flex-col">
-                                                            <span className="text-sm font-bold text-text-primary">{enquiry.name}</span>
-                                                            <span className="text-xs text-text-muted">{enquiry.email}</span>
+                                                            <span className="text-sm font-bold text-text-primary">
+                                                                {enquiry.name}
+                                                            </span>
+                                                            <span className="text-xs text-text-muted">
+                                                                {enquiry.email}
+                                                            </span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 text-center">
-                                                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase ${
-                                                            enquiry.status === 'new' 
-                                                                ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30' 
-                                                                : 'bg-green-400/20 text-green-400 border border-green-400/30'
-                                                        }`}>
+                                                        <span
+                                                            className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase ${
+                                                                enquiry.status ===
+                                                                'new'
+                                                                    ? 'border border-accent-gold/30 bg-accent-gold/20 text-accent-gold'
+                                                                    : 'border border-green-400/30 bg-green-400/20 text-green-400'
+                                                            }`}
+                                                        >
                                                             {enquiry.status}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <button className="rounded-lg p-2 text-text-muted transition-all hover:bg-surface hover:text-accent-gold">
-                                                            <ArrowUpRight size={16} />
+                                                            <ArrowUpRight
+                                                                size={16}
+                                                            />
                                                         </button>
                                                     </td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={3} className="py-20 text-center">
+                                                <td
+                                                    colSpan={3}
+                                                    className="py-20 text-center"
+                                                >
                                                     <div className="flex flex-col items-center gap-4 text-text-muted">
-                                                        <MessageSquare size={40} className="opacity-20" />
-                                                        <p className="text-sm">No recent enquiries found.</p>
+                                                        <MessageSquare
+                                                            size={40}
+                                                            className="opacity-20"
+                                                        />
+                                                        <p className="text-sm">
+                                                            No recent enquiries
+                                                            found.
+                                                        </p>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -178,19 +210,42 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                         </h3>
                         <div className="space-y-6 rounded-3xl border border-accent-gold/10 bg-accent-gold/5 p-8 shadow-xl shadow-accent-gold/5">
                             {[
-                                { label: 'Database Service', value: 'Operational', status: 'healthy' },
-                                { label: 'Storage Cluster', value: 'Operational', status: 'healthy' },
-                                { label: 'Asset Processor', value: 'Busy', status: 'warning' },
-                                { label: 'Email Relay', value: 'Operational', status: 'healthy' },
+                                {
+                                    label: 'Database Service',
+                                    value: 'Operational',
+                                    status: 'healthy',
+                                },
+                                {
+                                    label: 'Storage Cluster',
+                                    value: 'Operational',
+                                    status: 'healthy',
+                                },
+                                {
+                                    label: 'Asset Processor',
+                                    value: 'Busy',
+                                    status: 'warning',
+                                },
+                                {
+                                    label: 'Email Relay',
+                                    value: 'Operational',
+                                    status: 'healthy',
+                                },
                             ].map((item) => (
-                                <div key={item.label} className="flex items-center justify-between">
+                                <div
+                                    key={item.label}
+                                    className="flex items-center justify-between"
+                                >
                                     <span className="text-xs font-bold tracking-widest text-text-primary uppercase">
                                         {item.label}
                                     </span>
                                     <div className="flex items-center gap-2">
-                                        <div className={`h-1.5 w-1.5 rounded-full ${
-                                            item.status === 'healthy' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]'
-                                        }`} />
+                                        <div
+                                            className={`h-1.5 w-1.5 rounded-full ${
+                                                item.status === 'healthy'
+                                                    ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]'
+                                                    : 'bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]'
+                                            }`}
+                                        />
                                         <span className="text-[10px] text-text-muted">
                                             {item.value}
                                         </span>
@@ -198,7 +253,7 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                                 </div>
                             ))}
                         </div>
-                        
+
                         <div className="rounded-3xl border border-border-subtle bg-surface/20 p-8">
                             <h4 className="mb-4 text-xs font-bold tracking-widest text-text-muted uppercase">
                                 Resource Usage
@@ -206,11 +261,15 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                             <div className="space-y-4">
                                 <div>
                                     <div className="mb-2 flex justify-between text-[10px] font-bold">
-                                        <span className="text-text-muted uppercase">Storage Used</span>
-                                        <span className="text-text-primary">78%</span>
+                                        <span className="text-text-muted uppercase">
+                                            Storage Used
+                                        </span>
+                                        <span className="text-text-primary">
+                                            78%
+                                        </span>
                                     </div>
                                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-dark">
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: '78%' }}
                                             className="h-full bg-accent-gold"

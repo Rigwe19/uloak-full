@@ -22,8 +22,8 @@ export default function StoryCard({
 
     const defaultMedia = () => {
         if (renderMedia) {
-return renderMedia(story);
-}
+            return renderMedia(story);
+        }
 
         if (story.type === 'video' && mediaUrl) {
             return (
@@ -51,7 +51,7 @@ return renderMedia(story);
                 <img
                     src={story.thumbnail || mediaUrl || '/logo-stacked.png'}
                     alt={story.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                     onError={(e) => {
                         e.currentTarget.src = '/logo-stacked.png';
                     }}
@@ -64,7 +64,7 @@ return renderMedia(story);
 
     return (
         <div
-            className={`relative ${aspectRatio} overflow-hidden bg-bg-dark cursor-pointer ${className}`}
+            className={`relative ${aspectRatio} cursor-pointer overflow-hidden bg-bg-dark ${className}`}
             onClick={onClick}
         >
             {defaultMedia()}

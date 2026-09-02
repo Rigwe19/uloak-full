@@ -14,7 +14,12 @@ interface FeedProps {
     hasMore: boolean;
 }
 
-export default function Feed({ room, initialVideos, nextCursor, hasMore: initialHasMore }: FeedProps) {
+export default function Feed({
+    room,
+    initialVideos,
+    nextCursor,
+    hasMore: initialHasMore,
+}: FeedProps) {
     const {
         videos,
         currentIndex,

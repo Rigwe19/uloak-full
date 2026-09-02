@@ -17,8 +17,16 @@ const typeLabels: Record<string, string> = {
     is_spiritual_kin_of: 'Spiritual kin of',
 };
 
-export default function RelationshipCard({ rel, baseUrl }: { rel: RelationshipNode; baseUrl: string }) {
-    const label = typeLabels[rel.relationship_type] || rel.relationship_type.replace(/_/g, ' ');
+export default function RelationshipCard({
+    rel,
+    baseUrl,
+}: {
+    rel: RelationshipNode;
+    baseUrl: string;
+}) {
+    const label =
+        typeLabels[rel.relationship_type] ||
+        rel.relationship_type.replace(/_/g, ' ');
 
     return (
         <Link
@@ -29,10 +37,14 @@ export default function RelationshipCard({ rel, baseUrl }: { rel: RelationshipNo
                 <Users size={18} />
             </div>
             <div className="min-w-0 grow">
-                <p className="text-sm font-bold text-text-primary truncate">{rel.name}</p>
+                <p className="truncate text-sm font-bold text-text-primary">
+                    {rel.name}
+                </p>
                 <p className="text-xs text-text-muted">{label}</p>
                 {rel.called_them && (
-                    <p className="text-xs text-accent-gold/80">"<span className="italic">{rel.called_them}</span>"</p>
+                    <p className="text-xs text-accent-gold/80">
+                        "<span className="italic">{rel.called_them}</span>"
+                    </p>
                 )}
             </div>
             {rel.closeness && (
@@ -41,7 +53,11 @@ export default function RelationshipCard({ rel, baseUrl }: { rel: RelationshipNo
                         <Heart
                             key={i}
                             size={10}
-                            className={i < rel.closeness! / 20 ? 'fill-accent-gold text-accent-gold' : 'text-border-subtle'}
+                            className={
+                                i < rel.closeness! / 20
+                                    ? 'fill-accent-gold text-accent-gold'
+                                    : 'text-border-subtle'
+                            }
                         />
                     ))}
                 </div>

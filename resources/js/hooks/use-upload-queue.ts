@@ -34,16 +34,16 @@ export function useUploadQueue() {
 
                 activeCountRef.current++;
 
-                                uploadFile(next.id, next.file, next.mediaType)
-                                    .catch((e) => {
-                                        const message =
-                                            e?.response?.data?.message ||
-                                            e?.message ||
-                                            'Upload failed. Please try again.';
+                uploadFile(next.id, next.file, next.mediaType)
+                    .catch((e) => {
+                        const message =
+                            e?.response?.data?.message ||
+                            e?.message ||
+                            'Upload failed. Please try again.';
 
-                                        useUploadStore.getState().setError(next.id, message);
-                                    })
-                                    .finally(() => {
+                        useUploadStore.getState().setError(next.id, message);
+                    })
+                    .finally(() => {
                         activeCountRef.current--;
                         processQueueRef.current();
                     });

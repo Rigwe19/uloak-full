@@ -45,7 +45,11 @@ export default function StoryFeed({
     children,
     addCard,
 }: StoryFeedProps) {
-    const { loading: pagLoading, hasMore } = useFeedPagination(urlBuilder, routeParams, nextCursor);
+    const { loading: pagLoading, hasMore } = useFeedPagination(
+        urlBuilder,
+        routeParams,
+        nextCursor,
+    );
 
     const filteredStories = useMemo(() => {
         if (!filters) {
@@ -61,12 +65,17 @@ export default function StoryFeed({
                 'Whispering Voices': 'audio',
                 Manuscripts: 'document',
             };
-            const targetType = typeMap[filters.activeTab] || filters.activeTab.toLowerCase();
-            result = result.filter((s) => s.type.toLowerCase().includes(targetType));
+            const targetType =
+                typeMap[filters.activeTab] || filters.activeTab.toLowerCase();
+            result = result.filter((s) =>
+                s.type.toLowerCase().includes(targetType),
+            );
         }
 
         if (filters.selectedTag) {
-            result = result.filter((s) => s.tags?.includes(filters.selectedTag!));
+            result = result.filter((s) =>
+                s.tags?.includes(filters.selectedTag!),
+            );
         }
 
         return result;
@@ -91,7 +100,10 @@ export default function StoryFeed({
                                 >
                                     {tab}
                                     {filters.activeTab === tab && (
-                                        <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-gold" />
+                                        <motion.div
+                                            layoutId="activeTab"
+                                            className="absolute right-0 bottom-0 left-0 h-0.5 bg-accent-gold"
+                                        />
                                     )}
                                 </button>
                             ))}
@@ -101,13 +113,17 @@ export default function StoryFeed({
                         {filters.onViewModeChange && (
                             <div className="flex items-center gap-1 rounded-2xl border border-white/5 bg-surface/50 p-1 backdrop-blur-sm">
                                 <button
-                                    onClick={() => filters.onViewModeChange?.('grid')}
+                                    onClick={() =>
+                                        filters.onViewModeChange?.('grid')
+                                    }
                                     className={`rounded-xl p-2 transition-all ${viewMode === 'grid' ? 'bg-white/5 text-accent-gold' : 'text-text-muted hover:text-text-primary'}`}
                                 >
                                     <Grid size={18} />
                                 </button>
                                 <button
-                                    onClick={() => filters.onViewModeChange?.('list')}
+                                    onClick={() =>
+                                        filters.onViewModeChange?.('list')
+                                    }
                                     className={`rounded-xl p-2 transition-all ${viewMode === 'list' ? 'bg-white/5 text-accent-gold' : 'text-text-muted hover:text-text-primary'}`}
                                 >
                                     <ListIcon size={18} />
@@ -126,7 +142,11 @@ export default function StoryFeed({
                     {filters.tags.map((tag) => (
                         <button
                             key={tag}
-                            onClick={() => filters.onTagChange?.(filters.selectedTag === tag ? null : tag)}
+                            onClick={() =>
+                                filters.onTagChange?.(
+                                    filters.selectedTag === tag ? null : tag,
+                                )
+                            }
                             className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${filters.selectedTag === tag ? 'border-accent-gold bg-accent-gold text-bg-dark' : 'border-white/5 bg-surface/30 text-text-muted hover:border-accent-gold/40'}`}
                         >
                             #{tag}
@@ -135,7 +155,13 @@ export default function StoryFeed({
                 </div>
             )}
 
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-6'}>
+            <div
+                className={
+                    viewMode === 'grid'
+                        ? 'grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'
+                        : 'flex flex-col gap-6'
+                }
+            >
                 <AnimatePresence mode="popLayout">
                     {showSkeleton ? (
                         <StorySkeleton viewMode={viewMode} count={6} />
@@ -160,18 +186,18 @@ export default function StoryFeed({
                     )}
                 </AnimatePresence>
 
-                {addCard && (
-                    <motion.div layout>
-                        {addCard}
-                    </motion.div>
-                )}
+                {addCard && <motion.div layout>{addCard}</motion.div>}
             </div>
 
             {pagLoading && !loading && (
                 <div className="flex justify-center py-8">
                     <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                        transition={{
+                            repeat: Infinity,
+                            duration: 1,
+                            ease: 'linear',
+                        }}
                         className="h-6 w-6 rounded-full border-2 border-accent-gold border-t-transparent"
                     />
                 </div>

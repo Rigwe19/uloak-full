@@ -8,8 +8,14 @@ interface VideoContextMenuProps {
     onReport?: () => void;
 }
 
-export function VideoContextMenu({ onCopyLink, onShare, onReport }: VideoContextMenuProps) {
-    const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+export function VideoContextMenu({
+    onCopyLink,
+    onShare,
+    onReport,
+}: VideoContextMenuProps) {
+    const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(
+        null,
+    );
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -42,13 +48,16 @@ export function VideoContextMenu({ onCopyLink, onShare, onReport }: VideoContext
         <AnimatePresence>
             {menuPos && (
                 <>
-                    <div className="fixed inset-0 z-40" onClick={() => setMenuPos(null)} />
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setMenuPos(null)}
+                    />
                     <motion.div
                         ref={menuRef}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="fixed z-50 bg-black/95 border border-white/10 rounded-xl p-1.5 shadow-2xl backdrop-blur-xl min-w-[160px]"
+                        className="fixed z-50 min-w-[160px] rounded-xl border border-white/10 bg-black/95 p-1.5 shadow-2xl backdrop-blur-xl"
                         style={{ left: menuPos.x, top: menuPos.y }}
                     >
                         {items.map((item) => (
@@ -58,7 +67,7 @@ export function VideoContextMenu({ onCopyLink, onShare, onReport }: VideoContext
                                     item.onClick?.();
                                     setMenuPos(null);
                                 }}
-                                className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-white/70 transition-all hover:bg-white/5 hover:text-white"
                             >
                                 <item.icon size={14} />
                                 {item.label}

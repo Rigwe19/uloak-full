@@ -10,20 +10,23 @@ export function useVideoPip() {
         const el = getActiveVideoElement();
 
         if (!el) {
-return;
-}
+            return;
+        }
 
         try {
             if (document.pictureInPictureElement) {
                 await document.exitPictureInPicture();
                 togglePip();
-            } else if (document.pictureInPictureEnabled && el.requestPictureInPicture) {
+            } else if (
+                document.pictureInPictureEnabled &&
+                el.requestPictureInPicture
+            ) {
                 await el.requestPictureInPicture();
                 togglePip();
             }
         } catch {
             // PiP not supported or denied
-            console.log('PiP not supported or denied')
+            console.log('PiP not supported or denied');
         }
     }, [togglePip]);
 

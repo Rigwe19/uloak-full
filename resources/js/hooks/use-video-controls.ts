@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { usePlayerStore, setActiveVideoElement } from '@/stores/video-player-store';
+import {
+    usePlayerStore,
+    setActiveVideoElement,
+} from '@/stores/video-player-store';
 
 interface UseVideoControlsOptions {
     videoId: string | number;
@@ -8,7 +11,12 @@ interface UseVideoControlsOptions {
     onEnded?: () => void;
 }
 
-export function useVideoControls({ videoId, src, onTimeUpdate, onEnded }: UseVideoControlsOptions) {
+export function useVideoControls({
+    videoId,
+    src,
+    onTimeUpdate,
+    onEnded,
+}: UseVideoControlsOptions) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const isPlaying = usePlayerStore((s) => s.isPlaying);
     const activeVideoId = usePlayerStore((s) => s.activeVideoId);
@@ -29,8 +37,8 @@ export function useVideoControls({ videoId, src, onTimeUpdate, onEnded }: UseVid
         const el = videoRef.current;
 
         if (!el || !src) {
-return;
-}
+            return;
+        }
 
         setActiveVideoElement(el);
 
@@ -100,8 +108,8 @@ return;
         const el = videoRef.current;
 
         if (!el || !src) {
-return;
-}
+            return;
+        }
 
         if (isActive && isPlaying) {
             el.play().catch(() => {});
@@ -114,8 +122,8 @@ return;
         const el = videoRef.current;
 
         if (!el) {
-return;
-}
+            return;
+        }
 
         el.muted = isMuted;
     }, [isMuted]);
@@ -124,8 +132,8 @@ return;
         const el = videoRef.current;
 
         if (!el) {
-return;
-}
+            return;
+        }
 
         el.volume = volume;
     }, [volume]);
@@ -134,8 +142,8 @@ return;
         const el = videoRef.current;
 
         if (!el) {
-return;
-}
+            return;
+        }
 
         el.playbackRate = speed;
     }, [speed]);
@@ -144,8 +152,8 @@ return;
         const el = videoRef.current;
 
         if (!el) {
-return;
-}
+            return;
+        }
 
         setError(null);
         setLoading(true);

@@ -54,9 +54,9 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             <div className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center">
-                <div className="h-full w-full rounded-full bg-accent-gold animate-pulse opacity-20" />
+                <div className="h-full w-full animate-pulse rounded-full bg-accent-gold opacity-20" />
             </div>
         </button>
     );

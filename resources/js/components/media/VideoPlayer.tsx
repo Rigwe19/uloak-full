@@ -70,9 +70,13 @@ export function VideoPlayer({
 
     if (!video.url) {
         return (
-            <div className={`flex items-center justify-center bg-black ${className}`}>
+            <div
+                className={`flex items-center justify-center bg-black ${className}`}
+            >
                 <div className="text-center">
-                    <p className="text-xs text-white/40 font-mono">No video available</p>
+                    <p className="font-mono text-xs text-white/40">
+                        No video available
+                    </p>
                 </div>
             </div>
         );
@@ -81,7 +85,10 @@ export function VideoPlayer({
     return (
         <div className={`relative overflow-hidden bg-black ${className}`}>
             {showStatusOverlay && (
-                <VideoStatusOverlay status={video.status} thumbnail={video.thumbnail} />
+                <VideoStatusOverlay
+                    status={video.status}
+                    thumbnail={video.thumbnail}
+                />
             )}
 
             <VideoSurface

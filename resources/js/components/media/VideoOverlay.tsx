@@ -8,11 +8,19 @@ interface VideoOverlayProps {
     className?: string;
 }
 
-export function VideoOverlay({ children, topRight, className = '' }: VideoOverlayProps) {
+export function VideoOverlay({
+    children,
+    topRight,
+    className = '',
+}: VideoOverlayProps) {
     const { overlayVisible, handleActivity } = useVideoOverlay();
 
     return (
-        <div className={`absolute inset-0 ${className}`} onMouseMove={handleActivity} onTouchStart={handleActivity}>
+        <div
+            className={`absolute inset-0 ${className}`}
+            onMouseMove={handleActivity}
+            onTouchStart={handleActivity}
+        >
             {/* Top right corner */}
             {topRight && (
                 <motion.div
@@ -28,9 +36,12 @@ export function VideoOverlay({ children, topRight, className = '' }: VideoOverla
             {/* Bottom bar */}
             <motion.div
                 initial={false}
-                animate={{ opacity: overlayVisible ? 1 : 0, y: overlayVisible ? 0 : 10 }}
+                animate={{
+                    opacity: overlayVisible ? 1 : 0,
+                    y: overlayVisible ? 0 : 10,
+                }}
                 transition={{ duration: 0.2 }}
-                className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent px-4 pt-12 pb-3"
+                className="absolute right-0 bottom-0 left-0 z-20 bg-gradient-to-t from-black/80 to-transparent px-4 pt-12 pb-3"
             >
                 {children}
             </motion.div>

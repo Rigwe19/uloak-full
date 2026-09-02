@@ -17,7 +17,7 @@ interface TranscriptCue {
 export default function AudioWaveformPlayer({
     src,
     title,
-    transcript
+    transcript,
 }: AudioWaveformPlayerProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const wavesurferRef = useRef<WaveSurfer | null>(null);
@@ -29,8 +29,8 @@ export default function AudioWaveformPlayer({
     const [currentSeconds, setCurrentSeconds] = useState(0);
     const getSpeakerColor = (speaker?: string) => {
         if (!speaker) {
-return 'text-accent-gold';
-}
+            return 'text-accent-gold';
+        }
 
         const colors = [
             'text-accent-gold',
@@ -54,8 +54,8 @@ return 'text-accent-gold';
 
     useEffect(() => {
         if (!containerRef.current) {
-return;
-}
+            return;
+        }
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -64,34 +64,18 @@ return;
         let waveGradient: string | CanvasGradient = 'rgba(255,255,255,0.12)';
 
         if (ctx) {
-            progressGradient = ctx.createLinearGradient(
-                0,
-                0,
-                600,
-                0
-            );
+            progressGradient = ctx.createLinearGradient(0, 0, 600, 0);
 
             progressGradient.addColorStop(0, '#D4A017');
             progressGradient.addColorStop(0.4, '#F4D03F');
             progressGradient.addColorStop(0.7, '#FFF6CC');
             progressGradient.addColorStop(1, '#FFFFFF');
 
-            waveGradient = ctx.createLinearGradient(
-                0,
-                0,
-                600,
-                0
-            );
+            waveGradient = ctx.createLinearGradient(0, 0, 600, 0);
 
-            waveGradient.addColorStop(
-                0,
-                'rgba(255,255,255,0.05)'
-            );
+            waveGradient.addColorStop(0, 'rgba(255,255,255,0.05)');
 
-            waveGradient.addColorStop(
-                1,
-                'rgba(255,255,255,0.18)'
-            );
+            waveGradient.addColorStop(1, 'rgba(255,255,255,0.18)');
         }
 
         const wavesurfer = WaveSurfer.create({
@@ -144,11 +128,10 @@ return;
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!wavesurferRef.current) {
-return;
-}
+                return;
+            }
 
-            const activeElement =
-                document.activeElement as HTMLElement | null;
+            const activeElement = document.activeElement as HTMLElement | null;
 
             const isTyping =
                 activeElement?.tagName === 'INPUT' ||
@@ -156,8 +139,8 @@ return;
                 activeElement?.isContentEditable;
 
             if (isTyping) {
-return;
-}
+                return;
+            }
 
             switch (e.code) {
                 case 'Space':
@@ -180,10 +163,7 @@ return;
         window.addEventListener('keydown', handleKeyDown);
 
         return () => {
-            window.removeEventListener(
-                'keydown',
-                handleKeyDown
-            );
+            window.removeEventListener('keydown', handleKeyDown);
         };
     }, [isPlaying, playbackRate]);
 
@@ -200,15 +180,14 @@ return;
 
     const changePlaybackRate = () => {
         if (!wavesurferRef.current) {
-return;
-}
+            return;
+        }
 
         const rates = [1, 1.25, 1.5, 2];
 
         const currentIndex = rates.indexOf(playbackRate);
 
-        const nextRate =
-            rates[(currentIndex + 1) % rates.length];
+        const nextRate = rates[(currentIndex + 1) % rates.length];
 
         wavesurferRef.current.setPlaybackRate(nextRate);
 
@@ -217,56 +196,45 @@ return;
 
     const seekRelative = (seconds: number) => {
         if (!wavesurferRef.current) {
-return;
-}
+            return;
+        }
 
-        const duration =
-            wavesurferRef.current.getDuration();
+        const duration = wavesurferRef.current.getDuration();
 
-        const current =
-            wavesurferRef.current.getCurrentTime();
+        const current = wavesurferRef.current.getCurrentTime();
 
-        const nextTime = Math.min(
-            Math.max(current + seconds, 0),
-            duration
-        );
+        const nextTime = Math.min(Math.max(current + seconds, 0), duration);
 
         wavesurferRef.current.setTime(nextTime);
     };
     const activeCueIndex = (() => {
-        console.log(transcript?.length, transcript?.at(0))
+        console.log(transcript?.length, transcript?.at(0));
 
         if (transcript?.length === 0) {
-return -1;
-}
+            return -1;
+        }
 
         if (!transcript) {
-return -1;
-}
+            return -1;
+        }
 
         return transcript.findIndex(
-            (cue) =>
-                currentSeconds >= cue.start &&
-                currentSeconds <= cue.end
+            (cue) => currentSeconds >= cue.start && currentSeconds <= cue.end,
         );
     })();
 
-    const activeCue =
-        activeCueIndex >= 0
-            ? transcript?.[activeCueIndex]
-            : null;
+    const activeCue = activeCueIndex >= 0 ? transcript?.[activeCueIndex] : null;
 
     return (
         <div
-            className={`relative overflow-hidden rounded-[32px] border border-white/10 bg-white/5 p-6 backdrop-blur-2xl transition-all duration-700 md:p-8
-        ${isPlaying ? 'shadow-[0_0_100px_rgba(212,160,23,0.12)]' : ''}`}
+            className={`relative overflow-hidden rounded-[32px] border border-white/10 bg-white/5 p-6 backdrop-blur-2xl transition-all duration-700 md:p-8 ${isPlaying ? 'shadow-[0_0_100px_rgba(212,160,23,0.12)]' : ''}`}
         >
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div
-                    className={`absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-gold/10 blur-3xl transition-all duration-1000 ${isPlaying ? 'scale-110 opacity-100' : 'scale-90 opacity-40'}`}
+                    className={`absolute top-1/2 left-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-gold/10 blur-3xl transition-all duration-1000 ${isPlaying ? 'scale-110 opacity-100' : 'scale-90 opacity-40'}`}
                 />
                 <div
-                    className={`absolute bottom-[-120px] right-[-60px] h-[260px] w-[260px] rounded-full bg-white/5 blur-3xl transition-all duration-1000 ${isPlaying ? 'translate-y-[-10px] opacity-80' : 'opacity-30'}`}
+                    className={`absolute right-[-60px] bottom-[-120px] h-[260px] w-[260px] rounded-full bg-white/5 blur-3xl transition-all duration-1000 ${isPlaying ? 'translate-y-[-10px] opacity-80' : 'opacity-30'}`}
                 />
             </div>
             <div className="relative z-10 mb-6 flex items-center gap-4">
@@ -355,20 +323,24 @@ return -1;
                                     key={idx}
                                     onClick={() =>
                                         wavesurferRef.current?.setTime(
-                                            cue.start
+                                            cue.start,
                                         )
                                     }
-                                    className={`w-full text-left rounded-lg px-2 py-2 transition-all ${isActive
-                                        ? 'bg-white/5'
-                                        : 'hover:bg-white/5'
-                                        }`}
+                                    className={`w-full rounded-lg px-2 py-2 text-left transition-all ${
+                                        isActive
+                                            ? 'bg-white/5'
+                                            : 'hover:bg-white/5'
+                                    }`}
                                 >
-                                    <div className={`flex items-start gap-3 ${isSameSpeaker ? 'mt-1' : 'mt-4'
-                                        }`}>
+                                    <div
+                                        className={`flex items-start gap-3 ${
+                                            isSameSpeaker ? 'mt-1' : 'mt-4'
+                                        }`}
+                                    >
                                         {cue.speaker && (
                                             <span
                                                 className={`min-w-[80px] rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-semibold tracking-[0.2em] uppercase backdrop-blur ${getSpeakerColor(
-                                                    cue.speaker
+                                                    cue.speaker,
                                                 )}`}
                                             >
                                                 {cue.speaker}
@@ -376,10 +348,11 @@ return -1;
                                         )}
 
                                         <span
-                                            className={`text-sm leading-relaxed ${isActive
-                                                ? 'text-white'
-                                                : 'text-text-muted'
-                                                }`}
+                                            className={`text-sm leading-relaxed ${
+                                                isActive
+                                                    ? 'text-white'
+                                                    : 'text-text-muted'
+                                            }`}
                                         >
                                             {cue.text}
                                         </span>

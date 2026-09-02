@@ -5,18 +5,21 @@ interface UseVideoHoverPreviewOptions {
     enabled?: boolean;
 }
 
-export function useVideoHoverPreview({ previewUrl, enabled = true }: UseVideoHoverPreviewOptions) {
+export function useVideoHoverPreview({
+    previewUrl,
+    enabled = true,
+}: UseVideoHoverPreviewOptions) {
     const previewRef = useRef<HTMLVideoElement | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const showPreview = useCallback(() => {
         if (!enabled || !previewUrl) {
-return;
-}
+            return;
+        }
 
         if (previewRef.current) {
-return;
-}
+            return;
+        }
 
         const video = document.createElement('video');
         video.src = previewUrl;
@@ -41,8 +44,8 @@ return;
 
     const handleMouseEnter = useCallback(() => {
         if (timerRef.current) {
-clearTimeout(timerRef.current);
-}
+            clearTimeout(timerRef.current);
+        }
 
         timerRef.current = setTimeout(showPreview, 200);
     }, [showPreview]);
@@ -61,10 +64,16 @@ clearTimeout(timerRef.current);
             destroyPreview();
 
             if (timerRef.current) {
-clearTimeout(timerRef.current);
-}
+                clearTimeout(timerRef.current);
+            }
         };
     }, [destroyPreview]);
 
-    return { previewRef, handleMouseEnter, handleMouseLeave, showPreview, destroyPreview };
+    return {
+        previewRef,
+        handleMouseEnter,
+        handleMouseLeave,
+        showPreview,
+        destroyPreview,
+    };
 }

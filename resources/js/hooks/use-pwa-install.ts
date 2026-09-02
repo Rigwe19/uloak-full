@@ -6,7 +6,8 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function usePwaInstall() {
-    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [deferredPrompt, setDeferredPrompt] =
+        useState<BeforeInstallPromptEvent | null>(null);
     const [isInstalled, setIsInstalled] = useState(false);
 
     useEffect(() => {
@@ -35,8 +36,8 @@ export function usePwaInstall() {
 
     const promptInstall = useCallback(async () => {
         if (!deferredPrompt) {
-return;
-}
+            return;
+        }
 
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;

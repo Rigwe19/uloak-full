@@ -1,7 +1,22 @@
 import { Link } from '@inertiajs/react';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import { motion } from 'framer-motion';
-import { User, Shield, Palette, Home, Lock, ChevronDown, AlertTriangle, Users, Clock, BookOpen, Image, Globe, Heart, FileText } from 'lucide-react';
+import {
+    User,
+    Shield,
+    Palette,
+    Home,
+    Lock,
+    ChevronDown,
+    AlertTriangle,
+    Users,
+    Clock,
+    BookOpen,
+    Image,
+    Globe,
+    Heart,
+    FileText,
+} from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -31,14 +46,46 @@ type SidebarItem = SidebarGroup | SidebarLink;
 
 const personChildren: SidebarChild[] = [
     { title: 'About', href: '/settings/about', icon: <User size={14} /> },
-    { title: 'Family Tree', href: '/settings/family-tree', icon: <Users size={14} /> },
-    { title: 'Life Timeline', href: '/settings/timeline', icon: <Clock size={14} /> },
-    { title: 'Stories', href: '/settings/stories', icon: <BookOpen size={14} /> },
-    { title: 'Photos & Documents', href: '/settings/media', icon: <Image size={14} /> },
-    { title: 'Heritage', href: '/settings/heritage', icon: <Globe size={14} /> },
-    { title: 'Memories From Others', href: '/settings/memories', icon: <Heart size={14} /> },
-    { title: 'Permissions & Consent', href: '/settings/permissions', icon: <Shield size={14} /> },
-    { title: 'Admin Notes', href: '/settings/activity', icon: <FileText size={14} /> },
+    {
+        title: 'Family Tree',
+        href: '/settings/family-tree',
+        icon: <Users size={14} />,
+    },
+    {
+        title: 'Life Timeline',
+        href: '/settings/timeline',
+        icon: <Clock size={14} />,
+    },
+    {
+        title: 'Stories',
+        href: '/settings/stories',
+        icon: <BookOpen size={14} />,
+    },
+    {
+        title: 'Photos & Documents',
+        href: '/settings/media',
+        icon: <Image size={14} />,
+    },
+    {
+        title: 'Heritage',
+        href: '/settings/heritage',
+        icon: <Globe size={14} />,
+    },
+    {
+        title: 'Memories From Others',
+        href: '/settings/memories',
+        icon: <Heart size={14} />,
+    },
+    {
+        title: 'Permissions & Consent',
+        href: '/settings/permissions',
+        icon: <Shield size={14} />,
+    },
+    {
+        title: 'Admin Notes',
+        href: '/settings/activity',
+        icon: <FileText size={14} />,
+    },
 ];
 
 const sidebarItems: SidebarItem[] = [
@@ -50,8 +97,16 @@ const sidebarItems: SidebarItem[] = [
     { title: 'House', href: '/settings/house', icon: <Home size={16} /> },
     { title: 'Privacy', href: '/settings/privacy', icon: <Lock size={16} /> },
     { title: 'Security', href: editSecurity().url, icon: <Shield size={16} /> },
-    { title: 'Appearance', href: editAppearance().url, icon: <Palette size={16} /> },
-    { title: 'Danger Zone', href: '/settings/danger-zone', icon: <AlertTriangle size={16} /> },
+    {
+        title: 'Appearance',
+        href: editAppearance().url,
+        icon: <Palette size={16} />,
+    },
+    {
+        title: 'Danger Zone',
+        href: '/settings/danger-zone',
+        icon: <AlertTriangle size={16} />,
+    },
 ];
 
 function isGroup(item: SidebarItem): item is SidebarGroup {
@@ -60,15 +115,16 @@ function isGroup(item: SidebarItem): item is SidebarGroup {
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl, currentUrl } = useCurrentUrl();
-    const isOnPersonPage = currentUrl.startsWith('/settings/about')
-        || currentUrl.startsWith('/settings/family-tree')
-        || currentUrl.startsWith('/settings/timeline')
-        || currentUrl.startsWith('/settings/stories')
-        || currentUrl.startsWith('/settings/media')
-        || currentUrl.startsWith('/settings/heritage')
-        || currentUrl.startsWith('/settings/memories')
-        || currentUrl.startsWith('/settings/permissions')
-        || currentUrl.startsWith('/settings/activity');
+    const isOnPersonPage =
+        currentUrl.startsWith('/settings/about') ||
+        currentUrl.startsWith('/settings/family-tree') ||
+        currentUrl.startsWith('/settings/timeline') ||
+        currentUrl.startsWith('/settings/stories') ||
+        currentUrl.startsWith('/settings/media') ||
+        currentUrl.startsWith('/settings/heritage') ||
+        currentUrl.startsWith('/settings/memories') ||
+        currentUrl.startsWith('/settings/permissions') ||
+        currentUrl.startsWith('/settings/activity');
     const [personOpen, setPersonOpen] = useState(isOnPersonPage);
 
     useEffect(() => {
@@ -78,7 +134,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     }, [isOnPersonPage]);
 
     return (
-        <div className="mx-auto w-full max-w-6xl px-4 pb-32 pt-4 md:p-8 md:pb-8 lg:p-16">
+        <div className="mx-auto w-full max-w-6xl px-4 pt-4 pb-32 md:p-8 md:pb-8 lg:p-16">
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -106,22 +162,27 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                                 'flex w-full shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-bold transition-all md:gap-3 md:p-4 md:text-sm',
                                                 groupActive
                                                     ? 'bg-accent-gold text-bg-dark shadow-lg shadow-accent-gold/20'
-                                                    : 'text-text-muted hover:bg-white/5 hover:text-text-primary'
+                                                    : 'text-text-muted hover:bg-white/5 hover:text-text-primary',
                                             )}
                                         >
                                             {item.icon}
-                                            <span className="grow text-left">{item.title}</span>
+                                            <span className="grow text-left">
+                                                {item.title}
+                                            </span>
                                             <ChevronDown
                                                 size={14}
                                                 className={cn(
                                                     'transition-transform',
-                                                    personOpen && 'rotate-180'
+                                                    personOpen && 'rotate-180',
                                                 )}
                                             />
                                         </Collapsible.Trigger>
-                                        <Collapsible.Content className="mt-1 space-y-0.5 overflow-hidden pl-6 data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down">
+                                        <Collapsible.Content className="data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down mt-1 space-y-0.5 overflow-hidden pl-6">
                                             {item.children.map((child) => {
-                                                const childActive = isCurrentOrParentUrl(child.href);
+                                                const childActive =
+                                                    isCurrentOrParentUrl(
+                                                        child.href,
+                                                    );
 
                                                 return (
                                                     <Link
@@ -131,11 +192,13 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                                             'flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-medium transition-all md:text-xs',
                                                             childActive
                                                                 ? 'bg-accent-gold/10 text-accent-gold'
-                                                                : 'text-text-muted hover:bg-white/5 hover:text-text-primary'
+                                                                : 'text-text-muted hover:bg-white/5 hover:text-text-primary',
                                                         )}
                                                     >
                                                         {child.icon}
-                                                        <span>{child.title}</span>
+                                                        <span>
+                                                            {child.title}
+                                                        </span>
                                                     </Link>
                                                 );
                                             })}
@@ -154,7 +217,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                         'flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-bold transition-all md:gap-3 md:p-4 md:text-sm',
                                         active
                                             ? 'bg-accent-gold text-bg-dark shadow-lg shadow-accent-gold/20'
-                                            : 'text-text-muted hover:bg-white/5 hover:text-text-primary'
+                                            : 'text-text-muted hover:bg-white/5 hover:text-text-primary',
                                     )}
                                 >
                                     {item.icon}

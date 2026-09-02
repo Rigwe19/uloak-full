@@ -4,7 +4,12 @@ import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui-elements';
 import GuestLayout from '@/layouts/guest-layout';
-import { cinematicText, fadeUp, parallaxFloat, staggerContainer } from '@/lib/animations';
+import {
+    cinematicText,
+    fadeUp,
+    parallaxFloat,
+    staggerContainer,
+} from '@/lib/animations';
 import { register } from '@/routes';
 
 interface Plan {
@@ -40,7 +45,11 @@ export default function Membership({
     page,
     subscriptions_enabled,
 }: MembershipPageProps & { subscriptions_enabled: boolean }) {
-    const { hero, plans, faqs } = page?.content ?? { hero: { title: '', subtitle: '' }, faqs: [], plans: [] };
+    const { hero, plans, faqs } = page?.content ?? {
+        hero: { title: '', subtitle: '' },
+        faqs: [],
+        plans: [],
+    };
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     return (
@@ -74,34 +83,47 @@ export default function Membership({
                     >
                         <motion.span
                             variants={fadeUp}
-                            className="mb-6 inline-block text-[10px] font-bold text-accent-gold uppercase tracking-[0.4em]"
-                        >Live product — subscriptions coming soon</motion.span>
+                            className="mb-6 inline-block text-[10px] font-bold tracking-[0.4em] text-accent-gold uppercase"
+                        >
+                            Live product — subscriptions coming soon
+                        </motion.span>
                         <motion.h1
                             variants={cinematicText}
                             className="text-5xl leading-[1.1] font-bold tracking-tight text-text-primary md:text-7xl"
                         >
-                            {subscriptions_enabled ? hero.title : 'Membership is not active yet'}
+                            {subscriptions_enabled
+                                ? hero.title
+                                : 'Membership is not active yet'}
                         </motion.h1>
                         <motion.div
                             variants={fadeUp}
                             className="mt-8 max-w-2xl text-xl leading-relaxed text-text-muted"
                         >
-                            {subscriptions_enabled ? hero.subtitle : <>
-                                <p>
-                                    Ulo of Stories is already fully functional today — you can create memorials,
-                                    share stories, and use the platform without any payment.
-                                </p>
+                            {subscriptions_enabled ? (
+                                hero.subtitle
+                            ) : (
+                                <>
+                                    <p>
+                                        Ulo of Stories is already fully
+                                        functional today — you can create
+                                        memorials, share stories, and use the
+                                        platform without any payment.
+                                    </p>
 
-                                <p>
-                                    We are currently building the subscription system that will unlock
-                                    optional premium features in the future.
-                                </p>
+                                    <p>
+                                        We are currently building the
+                                        subscription system that will unlock
+                                        optional premium features in the future.
+                                    </p>
 
-                                <p>
-                                    When it launches, nothing you currently use will be taken away.
-                                    It will simply add new capabilities on top of what already exists.
-                                </p>
-                            </>}
+                                    <p>
+                                        When it launches, nothing you currently
+                                        use will be taken away. It will simply
+                                        add new capabilities on top of what
+                                        already exists.
+                                    </p>
+                                </>
+                            )}
                         </motion.div>
                     </motion.div>
                 </div>
@@ -159,7 +181,7 @@ export default function Membership({
                     {/* ORIGINAL PRICING UI (UNCHANGED) */}
                     <section className="py-20 lg:py-32">
                         <div className="mx-auto max-w-7xl px-8">
-                            <div className="grid gap-8 md:grid-cols-2 lg:max-w-5xl lg:mx-auto">
+                            <div className="grid gap-8 md:grid-cols-2 lg:mx-auto lg:max-w-5xl">
                                 {plans.map((plan, index) => (
                                     <motion.div
                                         key={plan.name}
@@ -167,10 +189,11 @@ export default function Membership({
                                         whileInView={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.1 }}
                                         viewport={{ once: true }}
-                                        className={`relative flex flex-col rounded-3xl border p-8 transition-all duration-500 hover:translate-y-[-4px] ${plan.highlight
-                                            ? 'border-accent-gold bg-surface/50 shadow-[0_0_40px_rgba(212,175,55,0.1)]'
-                                            : 'border-border-subtle bg-surface/30'
-                                            }`}
+                                        className={`relative flex flex-col rounded-3xl border p-8 transition-all duration-500 hover:translate-y-[-4px] ${
+                                            plan.highlight
+                                                ? 'border-accent-gold bg-surface/50 shadow-[0_0_40px_rgba(212,175,55,0.1)]'
+                                                : 'border-border-subtle bg-surface/30'
+                                        }`}
                                     >
                                         {plan.highlight && (
                                             <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-accent-gold px-4 py-1 text-[10px] font-bold tracking-widest text-bg-dark uppercase">
@@ -234,51 +257,59 @@ export default function Membership({
             )}
 
             {/* FAQ stays ALWAYS (important trust anchor) */}
-            {subscriptions_enabled && <section className="bg-surface/10 py-20 lg:py-32">
-                <div className="mx-auto max-w-3xl px-8">
-                    <div className="mb-16 text-center">
-                        <h2 className="mb-4 text-3xl font-light text-text-primary md:text-4xl">
-                            Common Questions
-                        </h2>
-                        <p className="text-text-muted">
-                            Everything you need to know about Ulo of Stories membership.
-                        </p>
-                    </div>
+            {subscriptions_enabled && (
+                <section className="bg-surface/10 py-20 lg:py-32">
+                    <div className="mx-auto max-w-3xl px-8">
+                        <div className="mb-16 text-center">
+                            <h2 className="mb-4 text-3xl font-light text-text-primary md:text-4xl">
+                                Common Questions
+                            </h2>
+                            <p className="text-text-muted">
+                                Everything you need to know about Ulo of Stories
+                                membership.
+                            </p>
+                        </div>
 
-                    <div className="flex flex-col gap-4">
-                        {faqs.map((faq, index) => (
-                            <div
-                                key={index}
-                                className="overflow-hidden rounded-2xl border border-border-subtle bg-surface/20"
-                            >
-                                <button
-                                    onClick={() =>
-                                        setOpenFaq(openFaq === index ? null : index)
-                                    }
-                                    className="flex w-full items-center justify-between p-6 text-left"
+                        <div className="flex flex-col gap-4">
+                            {faqs.map((faq, index) => (
+                                <div
+                                    key={index}
+                                    className="overflow-hidden rounded-2xl border border-border-subtle bg-surface/20"
                                 >
-                                    <span className="font-medium text-text-primary">
-                                        {faq.question}
-                                    </span>
-                                </button>
+                                    <button
+                                        onClick={() =>
+                                            setOpenFaq(
+                                                openFaq === index
+                                                    ? null
+                                                    : index,
+                                            )
+                                        }
+                                        className="flex w-full items-center justify-between p-6 text-left"
+                                    >
+                                        <span className="font-medium text-text-primary">
+                                            {faq.question}
+                                        </span>
+                                    </button>
 
-                                <motion.div
-                                    initial={false}
-                                    animate={{
-                                        height: openFaq === index ? 'auto' : 0,
-                                        opacity: openFaq === index ? 1 : 0,
-                                    }}
-                                    className="px-6"
-                                >
-                                    <div className="pb-6 text-sm text-text-muted">
-                                        {faq.answer}
-                                    </div>
-                                </motion.div>
-                            </div>
-                        ))}
+                                    <motion.div
+                                        initial={false}
+                                        animate={{
+                                            height:
+                                                openFaq === index ? 'auto' : 0,
+                                            opacity: openFaq === index ? 1 : 0,
+                                        }}
+                                        className="px-6"
+                                    >
+                                        <div className="pb-6 text-sm text-text-muted">
+                                            {faq.answer}
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>}
+                </section>
+            )}
         </>
     );
 }

@@ -14,15 +14,16 @@ export function useVideoFullscreen() {
 
         document.addEventListener('fullscreenchange', handleFsChange);
 
-        return () => document.removeEventListener('fullscreenchange', handleFsChange);
+        return () =>
+            document.removeEventListener('fullscreenchange', handleFsChange);
     }, [setIsFullscreen]);
 
     const enterFullscreen = useCallback(async () => {
         const el = getActiveVideoElement();
 
         if (!el) {
-return;
-}
+            return;
+        }
 
         try {
             if (el.requestFullscreen) {

@@ -7,7 +7,7 @@ import {
     Info,
     Lock,
     Share2,
-    Users
+    Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
@@ -23,7 +23,7 @@ import {
     heroTextStagger,
     parallaxFloat,
     staggerContainer,
-    viewportOnce
+    viewportOnce,
 } from '@/lib/animations';
 import { register } from '@/routes';
 import { store } from '@/routes/waiting-list';
@@ -99,12 +99,16 @@ export default function Welcome({
         return () => clearInterval(timer);
     }, [heroImages.length]);
 
-    const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroImages.length);
-    const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+    const nextSlide = () =>
+        setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+    const prevSlide = () =>
+        setCurrentSlide(
+            (prev) => (prev - 1 + heroImages.length) % heroImages.length,
+        );
 
     const { data, setData, reset, post, errors, processing } = useForm({
         name: '',
-        email: ''
+        email: '',
     });
 
     const handleFormChange = (key: 'name' | 'email', value: string) => {
@@ -136,26 +140,40 @@ export default function Welcome({
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/20">
                 {/* 1. HERO SECTION WITH IMAGE CAROUSEL */}
-                <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden bg-bg-dark">
-                    <div className="mx-auto max-w-7xl px-6 md:px-8 w-full z-10">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <section className="relative flex min-h-screen items-center overflow-hidden bg-bg-dark pt-32 pb-20">
+                    <div className="z-10 mx-auto w-full max-w-7xl px-6 md:px-8">
+                        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
                             {/* Left: Editorial content */}
-                            <div className="lg:col-span-6 text-left space-y-8 max-w-2xl">
-                                <h1 className="font-serif text-5xl leading-[1.1] font-bold tracking-tight text-text-primary sm:text-6xl md:text-7.5xl">
+                            <div className="max-w-2xl space-y-8 text-left lg:col-span-6">
+                                <h1 className="md:text-7.5xl font-serif text-5xl leading-[1.1] font-bold tracking-tight text-text-primary sm:text-6xl">
                                     Every story <br />
-                                    has a <span className="text-accent-gold italic font-normal">home</span>.
+                                    has a{' '}
+                                    <span className="font-normal text-accent-gold italic">
+                                        home
+                                    </span>
+                                    .
                                 </h1>
-                                <p className="text-lg leading-relaxed text-text-muted sm:text-xl font-light">
-                                    A private digital home for family stories, event memories and tributes. Capture the voices, moments and context your family never wants to lose.
+                                <p className="text-lg leading-relaxed font-light text-text-muted sm:text-xl">
+                                    A private digital home for family stories,
+                                    event memories and tributes. Capture the
+                                    voices, moments and context your family
+                                    never wants to lose.
                                 </p>
-                                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                                <div className="flex flex-col gap-4 pt-4 sm:flex-row">
                                     <Link href={register().url}>
-                                        <Button size="xl" className="w-full sm:w-auto font-semibold px-8 tracking-wide">
+                                        <Button
+                                            size="xl"
+                                            className="w-full px-8 font-semibold tracking-wide sm:w-auto"
+                                        >
                                             Create a House
                                         </Button>
                                     </Link>
                                     <a href="#how-it-works">
-                                        <Button size="xl" variant="outline" className="w-full sm:w-auto font-semibold px-8 border-text-primary/10 text-text-primary hover:bg-text-primary/5">
+                                        <Button
+                                            size="xl"
+                                            variant="outline"
+                                            className="w-full border-text-primary/10 px-8 font-semibold text-text-primary hover:bg-text-primary/5 sm:w-auto"
+                                        >
                                             See how Ulo works
                                         </Button>
                                     </a>
@@ -163,15 +181,21 @@ export default function Welcome({
                             </div>
 
                             {/* Right: Beautiful Premium Carousel */}
-                            <div className="lg:col-span-6 relative flex flex-col items-center">
+                            <div className="relative flex flex-col items-center lg:col-span-6">
                                 <div className="relative aspect-4/3 w-full overflow-hidden rounded-3xl border border-border-subtle bg-surface shadow-2xl">
                                     <AnimatePresence mode="wait">
                                         <motion.div
                                             key={currentSlide}
-                                            initial={{ opacity: 0, scale: 1.02 }}
+                                            initial={{
+                                                opacity: 0,
+                                                scale: 1.02,
+                                            }}
                                             animate={{ opacity: 1, scale: 1 }}
                                             exit={{ opacity: 0 }}
-                                            transition={{ duration: 0.8, ease: 'easeInOut' }}
+                                            transition={{
+                                                duration: 0.8,
+                                                ease: 'easeInOut',
+                                            }}
                                             className="absolute inset-0"
                                         >
                                             <img
@@ -185,17 +209,17 @@ export default function Welcome({
                                     </AnimatePresence>
 
                                     {/* Slide Controls */}
-                                    <div className="absolute bottom-6 right-6 flex items-center gap-3 z-20">
+                                    <div className="absolute right-6 bottom-6 z-20 flex items-center gap-3">
                                         <button
                                             onClick={prevSlide}
-                                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-bg-dark/30 backdrop-blur-xs text-white transition hover:bg-white/20"
+                                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-bg-dark/30 text-white backdrop-blur-xs transition hover:bg-white/20"
                                             aria-label="Previous slide"
                                         >
                                             <ChevronLeft size={18} />
                                         </button>
                                         <button
                                             onClick={nextSlide}
-                                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-bg-dark/30 backdrop-blur-xs text-white transition hover:bg-white/20"
+                                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-bg-dark/30 text-white backdrop-blur-xs transition hover:bg-white/20"
                                             aria-label="Next slide"
                                         >
                                             <ChevronRight size={18} />
@@ -203,11 +227,13 @@ export default function Welcome({
                                     </div>
 
                                     {/* Pagination Indicators */}
-                                    <div className="absolute bottom-6 left-6 flex gap-2 z-20">
+                                    <div className="absolute bottom-6 left-6 z-20 flex gap-2">
                                         {heroImages.map((_, i) => (
                                             <button
                                                 key={i}
-                                                onClick={() => setCurrentSlide(i)}
+                                                onClick={() =>
+                                                    setCurrentSlide(i)
+                                                }
                                                 className={`h-1.5 rounded-full transition-all duration-300 ${i === currentSlide ? 'w-6 bg-accent-gold' : 'w-2 bg-white/40'}`}
                                                 aria-label={`Go to slide ${i + 1}`}
                                             />
@@ -220,18 +246,21 @@ export default function Welcome({
                 </section>
 
                 {/* 2. A HOME FOR EVERY KIND OF STORY */}
-                <section id="rooms" className="py-24 border-t border-border-subtle" >
+                <section
+                    id="rooms"
+                    className="border-t border-border-subtle py-24"
+                >
                     <div className="mx-auto max-w-7xl px-6 md:px-8">
                         <motion.div
                             variants={staggerContainer}
                             initial="hidden"
                             whileInView="show"
                             viewport={viewportOnce}
-                            className="text-center max-w-3xl mx-auto mb-16"
+                            className="mx-auto mb-16 max-w-3xl text-center"
                         >
                             <motion.span
                                 variants={fadeUp}
-                                className="text-xs font-bold tracking-[0.2em] text-accent-gold uppercase block mb-3"
+                                className="mb-3 block text-xs font-bold tracking-[0.2em] text-accent-gold uppercase"
                             >
                                 Organization
                             </motion.span>
@@ -243,9 +272,11 @@ export default function Welcome({
                             </motion.h2>
                             <motion.p
                                 variants={fadeUp}
-                                className="mt-4 text-lg text-text-muted font-light"
+                                className="mt-4 text-lg font-light text-text-muted"
                             >
-                                Different stories belong in different Rooms. Create the exact environment your memories deserve.
+                                Different stories belong in different Rooms.
+                                Create the exact environment your memories
+                                deserve.
                             </motion.p>
                         </motion.div>
 
@@ -254,7 +285,7 @@ export default function Welcome({
                             initial="hidden"
                             whileInView="show"
                             viewport={viewportOnce}
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                            className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3"
                         >
                             <StoryTypeCard
                                 title="Family House"
@@ -293,19 +324,23 @@ export default function Welcome({
                 </section>
 
                 {/* 3. HOW ULO WORKS */}
-                <section id="how-it-works" className="py-24 border-t border-border-subtle bg-surface/10" >
+                <section
+                    id="how-it-works"
+                    className="border-t border-border-subtle bg-surface/10 py-24"
+                >
                     <div className="mx-auto max-w-7xl px-6 md:px-8">
-                        <div className="text-center max-w-3xl mx-auto mb-20">
-                            <span className="text-xs font-bold tracking-[0.2em] text-accent-gold uppercase block mb-3">
+                        <div className="mx-auto mb-20 max-w-3xl text-center">
+                            <span className="mb-3 block text-xs font-bold tracking-[0.2em] text-accent-gold uppercase">
                                 The Flow
                             </span>
                             <h2 className="font-serif text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
-                                Create a House. Invite your people. Start the story.
+                                Create a House. Invite your people. Start the
+                                story.
                             </h2>
                         </div>
 
                         <motion.div
-                            className="grid grid-cols-1 md:grid-cols-5 gap-8 relative"
+                            className="relative grid grid-cols-1 gap-8 md:grid-cols-5"
                             variants={staggerContainer}
                             initial="hidden"
                             whileInView="show"
@@ -313,29 +348,56 @@ export default function Welcome({
                         >
                             {/* Horizontal connection line on desktop */}
                             <motion.div
-                                className="hidden md:block absolute top-8 left-10 right-10 h-0.5 bg-border-subtle z-0"
+                                className="absolute top-8 right-10 left-10 z-0 hidden h-0.5 bg-border-subtle md:block"
                                 initial={{ scaleX: 0 }}
                                 whileInView={{ scaleX: 1 }}
                                 viewport={viewportOnce}
-                                transition={{ duration: 1, ease: easeWarm, delay: 0.3 }}
+                                transition={{
+                                    duration: 1,
+                                    ease: easeWarm,
+                                    delay: 0.3,
+                                }}
                             />
 
                             {[
-                                { num: "01", step: "Create a House", desc: "Create a private space for the story you want to gather." },
-                                { num: "02", step: "Invite your people", desc: "Bring family members, friends and contributors into the Room." },
-                                { num: "03", step: "Gather their stories", desc: "Collect photographs, videos, recordings and memories." },
-                                { num: "04", step: "Add names & context", desc: "Connect each memory to the people, places, dates and meaning." },
-                                { num: "05", step: "Keep & share with care", desc: "Choose who can view, contribute to or share the Room." }
+                                {
+                                    num: '01',
+                                    step: 'Create a House',
+                                    desc: 'Create a private space for the story you want to gather.',
+                                },
+                                {
+                                    num: '02',
+                                    step: 'Invite your people',
+                                    desc: 'Bring family members, friends and contributors into the Room.',
+                                },
+                                {
+                                    num: '03',
+                                    step: 'Gather their stories',
+                                    desc: 'Collect photographs, videos, recordings and memories.',
+                                },
+                                {
+                                    num: '04',
+                                    step: 'Add names & context',
+                                    desc: 'Connect each memory to the people, places, dates and meaning.',
+                                },
+                                {
+                                    num: '05',
+                                    step: 'Keep & share with care',
+                                    desc: 'Choose who can view, contribute to or share the Room.',
+                                },
                             ].map((item, index) => (
                                 <motion.div
                                     key={index}
                                     variants={fadeUp}
-                                    className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left space-y-4"
+                                    className="relative z-10 flex flex-col items-center space-y-4 text-center md:items-start md:text-left"
                                 >
                                     <motion.div
-                                        className="h-16 w-16 rounded-2xl border border-border-subtle bg-bg-dark flex items-center justify-center text-accent-gold font-serif text-xl font-bold shadow-xs"
+                                        className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border-subtle bg-bg-dark font-serif text-xl font-bold text-accent-gold shadow-xs"
                                         whileHover={{ scale: 1.1, rotate: 2 }}
-                                        transition={{ duration: 0.3, ease: easeWarm }}
+                                        transition={{
+                                            duration: 0.3,
+                                            ease: easeWarm,
+                                        }}
                                     >
                                         {item.num}
                                     </motion.div>
@@ -352,22 +414,22 @@ export default function Welcome({
                 </section>
 
                 {/* 4. WHY NOT A SHARED FOLDER? */}
-                <section className="py-24 border-t border-border-subtle" >
+                <section className="border-t border-border-subtle py-24">
                     <div className="mx-auto max-w-7xl px-6 md:px-8">
                         <motion.div
                             variants={staggerContainer}
                             initial="hidden"
                             whileInView="show"
                             viewport={viewportOnce}
-                            className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center"
+                            className="grid grid-cols-1 items-center gap-16 lg:grid-cols-12"
                         >
                             <motion.div
                                 variants={fadeFromLeft}
-                                className="lg:col-span-5 space-y-6"
+                                className="space-y-6 lg:col-span-5"
                             >
                                 <motion.span
                                     variants={fadeUp}
-                                    className="text-xs font-bold tracking-[0.2em] text-accent-gold uppercase block"
+                                    className="block text-xs font-bold tracking-[0.2em] text-accent-gold uppercase"
                                 >
                                     The Differentiator
                                 </motion.span>
@@ -376,48 +438,66 @@ export default function Welcome({
                                     className="font-serif text-4xl leading-tight font-bold text-text-primary sm:text-5xl"
                                 >
                                     A photograph tells you what happened. <br />
-                                    <span className="text-accent-gold italic font-normal">The story tells you why it mattered.</span>
+                                    <span className="font-normal text-accent-gold italic">
+                                        The story tells you why it mattered.
+                                    </span>
                                 </motion.h2>
                                 <motion.p
                                     variants={fadeUp}
-                                    className="text-lg text-text-muted font-light leading-relaxed"
+                                    className="text-lg leading-relaxed font-light text-text-muted"
                                 >
-                                    Ulo keeps the memory, the people, and the meaning together in one place. Traditional folders display files; Ulo displays connections.
+                                    Ulo keeps the memory, the people, and the
+                                    meaning together in one place. Traditional
+                                    folders display files; Ulo displays
+                                    connections.
                                 </motion.p>
                             </motion.div>
 
                             {/* Visual Folder vs Ulo Room Comparison */}
                             <motion.div
                                 variants={fadeFromRight}
-                                className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-8"
+                                className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:col-span-7"
                             >
                                 {/* Shared Folder (Left side) */}
                                 <motion.div
                                     variants={cardReveal}
                                     whileHover={{ scale: 1.02 }}
-                                    className="border border-border-subtle bg-surface/30 rounded-3xl p-6 flex flex-col justify-between">
+                                    className="flex flex-col justify-between rounded-3xl border border-border-subtle bg-surface/30 p-6"
+                                >
                                     <div>
-                                        <div className="flex items-center gap-2 border-b border-border-subtle pb-4 mb-4">
-                                            <FolderX size={18} className="text-text-muted" />
-                                            <span className="text-xs font-semibold text-text-muted">Shared Cloud Folder</span>
+                                        <div className="mb-4 flex items-center gap-2 border-b border-border-subtle pb-4">
+                                            <FolderX
+                                                size={18}
+                                                className="text-text-muted"
+                                            />
+                                            <span className="text-xs font-semibold text-text-muted">
+                                                Shared Cloud Folder
+                                            </span>
                                         </div>
                                         <div className="space-y-2 font-mono text-[11px] text-text-muted">
-                                            <div className="p-2 bg-surface/50 rounded-lg flex items-center justify-between">
+                                            <div className="flex items-center justify-between rounded-lg bg-surface/50 p-2">
                                                 <span>IMG_2048.jpg</span>
-                                                <span className="opacity-50">4.2MB</span>
+                                                <span className="opacity-50">
+                                                    4.2MB
+                                                </span>
                                             </div>
-                                            <div className="p-2 bg-surface/50 rounded-lg flex items-center justify-between">
+                                            <div className="flex items-center justify-between rounded-lg bg-surface/50 p-2">
                                                 <span>wedding-video.mp4</span>
-                                                <span className="opacity-50">89.1MB</span>
+                                                <span className="opacity-50">
+                                                    89.1MB
+                                                </span>
                                             </div>
-                                            <div className="p-2 bg-surface/50 rounded-lg flex items-center justify-between">
+                                            <div className="flex items-center justify-between rounded-lg bg-surface/50 p-2">
                                                 <span>voice-note.m4a</span>
-                                                <span className="opacity-50">1.8MB</span>
+                                                <span className="opacity-50">
+                                                    1.8MB
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="mt-8 text-xs text-text-muted border-t border-border-subtle pt-4 italic">
-                                        No names, no audio transcripts, no context of who or why.
+                                    <div className="mt-8 border-t border-border-subtle pt-4 text-xs text-text-muted italic">
+                                        No names, no audio transcripts, no
+                                        context of who or why.
                                     </div>
                                 </motion.div>
 
@@ -426,118 +506,164 @@ export default function Welcome({
                                     variants={cardReveal}
                                     transition={{ delay: 0.15 }}
                                     whileHover={{ scale: 1.02 }}
-                                    className="border border-accent-gold/25 bg-bg-dark rounded-3xl p-6 flex flex-col justify-between shadow-xl"
+                                    className="flex flex-col justify-between rounded-3xl border border-accent-gold/25 bg-bg-dark p-6 shadow-xl"
                                 >
                                     <div>
-                                        <div className="flex items-center justify-between border-b border-border-subtle pb-4 mb-4">
+                                        <div className="mb-4 flex items-center justify-between border-b border-border-subtle pb-4">
                                             <div className="flex items-center gap-2">
                                                 <span className="h-2 w-2 rounded-full bg-accent-gold" />
-                                                <span className="text-xs font-semibold text-text-primary">Ulo Story</span>
+                                                <span className="text-xs font-semibold text-text-primary">
+                                                    Ulo Story
+                                                </span>
                                             </div>
-                                            <span className="text-[10px] text-accent-gold font-bold">Adim Family</span>
+                                            <span className="text-[10px] font-bold text-accent-gold">
+                                                Adim Family
+                                            </span>
                                         </div>
                                         <div className="space-y-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-lg bg-surface overflow-hidden">
-                                                    <img src="/images/07-ulo-story-box.jpg" className="object-cover h-full w-full" alt="Thumbnail" />
+                                                <div className="h-10 w-10 overflow-hidden rounded-lg bg-surface">
+                                                    <img
+                                                        src="/images/07-ulo-story-box.jpg"
+                                                        className="h-full w-full object-cover"
+                                                        alt="Thumbnail"
+                                                    />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-text-primary">Egusi Soup Lesson</h4>
-                                                    <p className="text-[10px] text-text-muted">Auntie Ifeoma · December 1984</p>
+                                                    <h4 className="text-xs font-bold text-text-primary">
+                                                        Egusi Soup Lesson
+                                                    </h4>
+                                                    <p className="text-[10px] text-text-muted">
+                                                        Auntie Ifeoma · December
+                                                        1984
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div className="space-y-1.5 text-[10px] text-text-primary leading-relaxed bg-surface/60 p-3 rounded-xl border border-border-subtle">
+                                            <div className="space-y-1.5 rounded-xl border border-border-subtle bg-surface/60 p-3 text-[10px] leading-relaxed text-text-primary">
                                                 <div className="flex justify-between border-b border-border-subtle/50 pb-1">
-                                                    <span className="text-text-muted">Who:</span>
-                                                    <span className="font-medium">Grandma Kemi</span>
+                                                    <span className="text-text-muted">
+                                                        Who:
+                                                    </span>
+                                                    <span className="font-medium">
+                                                        Grandma Kemi
+                                                    </span>
                                                 </div>
                                                 <div className="flex justify-between border-b border-border-subtle/50 pb-1">
-                                                    <span className="text-text-muted">Where:</span>
-                                                    <span className="font-medium">Enugu, Nigeria</span>
+                                                    <span className="text-text-muted">
+                                                        Where:
+                                                    </span>
+                                                    <span className="font-medium">
+                                                        Enugu, Nigeria
+                                                    </span>
                                                 </div>
-                                                <p className="mt-2 text-text-muted italic leading-relaxed">
-                                                    "The lesson Grandma recorded before we departed. This was the recipe that stayed with us through all our relocations."
+                                                <p className="mt-2 leading-relaxed text-text-muted italic">
+                                                    "The lesson Grandma recorded
+                                                    before we departed. This was
+                                                    the recipe that stayed with
+                                                    us through all our
+                                                    relocations."
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="mt-4 text-xs text-accent-gold font-semibold flex items-center justify-end gap-1">
+                                    <div className="mt-4 flex items-center justify-end gap-1 text-xs font-semibold text-accent-gold">
                                         <span>Meaning Protected</span>
                                         <Lock size={12} />
                                     </div>
                                 </motion.div>
                             </motion.div>
                         </motion.div>
-                    </div >
-                </section >
+                    </div>
+                </section>
 
                 {/* 5. PRIVACY & CONTROL */}
-                <section className="py-24 border-t border-border-subtle bg-surface/10" >
-                    <div className="mx-auto max-w-4xl px-6 md:px-8 text-center space-y-8">
-                        <div className="h-14 w-14 rounded-full border border-accent-gold/20 bg-accent-gold/5 flex items-center justify-center mx-auto text-accent-gold">
+                <section className="border-t border-border-subtle bg-surface/10 py-24">
+                    <div className="mx-auto max-w-4xl space-y-8 px-6 text-center md:px-8">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-accent-gold/20 bg-accent-gold/5 text-accent-gold">
                             <Lock size={24} />
                         </div>
                         <h2 className="font-serif text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
                             Your people. Your stories. Your choice.
                         </h2>
-                        <p className="text-lg text-text-muted font-light leading-relaxed max-w-2xl mx-auto">
-                            You decide who can contribute, who can view each Room and how its stories are shared. Ulo is private by default, keeping your family heritage away from public search engines and ad networks.
+                        <p className="mx-auto max-w-2xl text-lg leading-relaxed font-light text-text-muted">
+                            You decide who can contribute, who can view each
+                            Room and how its stories are shared. Ulo is private
+                            by default, keeping your family heritage away from
+                            public search engines and ad networks.
                         </p>
                         <motion.div
                             variants={staggerContainer}
                             initial="hidden"
                             whileInView="show"
                             viewport={viewportOnce}
-                            className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto pt-6 text-left"
+                            className="mx-auto grid max-w-3xl grid-cols-1 gap-6 pt-6 text-left md:grid-cols-3"
                         >
                             <motion.div
                                 variants={cardReveal}
                                 whileHover={{ y: -4 }}
-                                className="bg-surface/50 border border-border-subtle p-5 rounded-2xl space-y-3"
+                                className="space-y-3 rounded-2xl border border-border-subtle bg-surface/50 p-5"
                             >
                                 <Users size={18} className="text-accent-gold" />
-                                <h3 className="font-serif text-base font-bold text-text-primary">Controlled Invites</h3>
-                                <p className="text-xs text-text-muted leading-relaxed">Only family members you explicitly invite can access your House.</p>
+                                <h3 className="font-serif text-base font-bold text-text-primary">
+                                    Controlled Invites
+                                </h3>
+                                <p className="text-xs leading-relaxed text-text-muted">
+                                    Only family members you explicitly invite
+                                    can access your House.
+                                </p>
                             </motion.div>
                             <motion.div
                                 variants={cardReveal}
                                 whileHover={{ y: -4 }}
-                                className="bg-surface/50 border border-border-subtle p-5 rounded-2xl space-y-3"
+                                className="space-y-3 rounded-2xl border border-border-subtle bg-surface/50 p-5"
                             >
-                                <Share2 size={18} className="text-accent-gold" />
-                                <h3 className="font-serif text-base font-bold text-text-primary">Granular Permissions</h3>
-                                <p className="text-xs text-text-muted leading-relaxed">Set members as contributors, editors or view-only observers.</p>
+                                <Share2
+                                    size={18}
+                                    className="text-accent-gold"
+                                />
+                                <h3 className="font-serif text-base font-bold text-text-primary">
+                                    Granular Permissions
+                                </h3>
+                                <p className="text-xs leading-relaxed text-text-muted">
+                                    Set members as contributors, editors or
+                                    view-only observers.
+                                </p>
                             </motion.div>
                             <motion.div
                                 variants={cardReveal}
                                 whileHover={{ y: -4 }}
-                                className="bg-surface/50 border border-border-subtle p-5 rounded-2xl space-y-3"
+                                className="space-y-3 rounded-2xl border border-border-subtle bg-surface/50 p-5"
                             >
                                 <Info size={18} className="text-accent-gold" />
-                                <h3 className="font-serif text-base font-bold text-text-primary">No Ad Networks</h3>
-                                <p className="text-xs text-text-muted leading-relaxed">Your family stories belong entirely to you, free from trackers.</p>
+                                <h3 className="font-serif text-base font-bold text-text-primary">
+                                    No Ad Networks
+                                </h3>
+                                <p className="text-xs leading-relaxed text-text-muted">
+                                    Your family stories belong entirely to you,
+                                    free from trackers.
+                                </p>
                             </motion.div>
                         </motion.div>
                     </div>
                 </section>
 
                 {/* 6. ULO STUDIO */}
-                <section className="py-20 border-t border-border-subtle bg-surface/30" >
-                    <div className="mx-auto max-w-5xl px-6 md:px-8 border border-border-subtle/50 bg-bg-dark rounded-3xl p-8 md:p-12">
+                <section className="border-t border-border-subtle bg-surface/30 py-20">
+                    <div className="mx-auto max-w-5xl rounded-3xl border border-border-subtle/50 bg-bg-dark p-8 px-6 md:p-12 md:px-8">
                         <motion.div
                             variants={staggerContainer}
                             initial="hidden"
                             whileInView="show"
                             viewport={viewportOnce}
-                            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center"
+                            className="grid grid-cols-1 items-center gap-8 md:grid-cols-12"
                         >
                             <motion.div
                                 variants={fadeFromLeft}
-                                className="md:col-span-8 space-y-4"
+                                className="space-y-4 md:col-span-8"
                             >
                                 <motion.span
                                     variants={fadeUp}
-                                    className="text-[10px] font-bold text-accent-gold uppercase tracking-[0.2em] block"
+                                    className="block text-[10px] font-bold tracking-[0.2em] text-accent-gold uppercase"
                                 >
                                     Supporting Service
                                 </motion.span>
@@ -549,22 +675,32 @@ export default function Welcome({
                                 </motion.h2>
                                 <motion.p
                                     variants={fadeUp}
-                                    className="text-base text-text-muted leading-relaxed max-w-xl font-light"
+                                    className="max-w-xl text-base leading-relaxed font-light text-text-muted"
                                 >
-                                    Ulo Studio can help with professional interviews, heritage photography, filmmaking, and memory curation—bringing your family's stories together with care.
+                                    Ulo Studio can help with professional
+                                    interviews, heritage photography,
+                                    filmmaking, and memory curation—bringing
+                                    your family's stories together with care.
                                 </motion.p>
                             </motion.div>
                             <motion.div
                                 variants={fadeFromRight}
-                                className="md:col-span-4 flex justify-start md:justify-end"
+                                className="flex justify-start md:col-span-4 md:justify-end"
                             >
                                 <Link href="/services">
                                     <motion.div
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.97 }}
-                                        transition={{ duration: 0.2, ease: easeWarm }}
+                                        transition={{
+                                            duration: 0.2,
+                                            ease: easeWarm,
+                                        }}
                                     >
-                                        <Button variant="outline" size="lg" className="border-text-primary/10 text-text-primary hover:bg-text-primary/5 font-semibold">
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            className="border-text-primary/10 font-semibold text-text-primary hover:bg-text-primary/5"
+                                        >
                                             Explore Ulo Studio
                                         </Button>
                                     </motion.div>
@@ -575,18 +711,18 @@ export default function Welcome({
                 </section>
 
                 {/* 7. ABOUT ULO */}
-                <section className="py-24 border-t border-border-subtle" >
+                <section className="border-t border-border-subtle py-24">
                     <div className="mx-auto max-w-7xl px-6 md:px-8">
                         <motion.div
                             variants={staggerContainer}
                             initial="hidden"
                             whileInView="show"
                             viewport={viewportOnce}
-                            className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center"
+                            className="grid grid-cols-1 items-center gap-16 lg:grid-cols-12"
                         >
                             <motion.div
                                 variants={fadeFromLeft}
-                                className="lg:col-span-5 relative aspect-4/3 overflow-hidden rounded-3xl bg-surface"
+                                className="relative aspect-4/3 overflow-hidden rounded-3xl bg-surface lg:col-span-5"
                             >
                                 <motion.img
                                     variants={fadeFromLeft}
@@ -597,11 +733,11 @@ export default function Welcome({
                             </motion.div>
                             <motion.div
                                 variants={fadeFromRight}
-                                className="lg:col-span-7 space-y-6"
+                                className="space-y-6 lg:col-span-7"
                             >
                                 <motion.span
                                     variants={fadeUp}
-                                    className="text-xs font-bold tracking-[0.2em] text-accent-gold uppercase block"
+                                    className="block text-xs font-bold tracking-[0.2em] text-accent-gold uppercase"
                                 >
                                     Our Roots
                                 </motion.span>
@@ -613,9 +749,15 @@ export default function Welcome({
                                 </motion.h2>
                                 <motion.p
                                     variants={fadeUp}
-                                    className="text-lg text-text-muted font-light leading-relaxed"
+                                    className="text-lg leading-relaxed font-light text-text-muted"
                                 >
-                                    Ulo means house in Igbo. We created it because family stories deserve more than a forgotten folder, a disappearing chat or a photograph no one can explain. Ulo gives those stories a private home, together with the voices, names and context that keep them meaningful.
+                                    Ulo means house in Igbo. We created it
+                                    because family stories deserve more than a
+                                    forgotten folder, a disappearing chat or a
+                                    photograph no one can explain. Ulo gives
+                                    those stories a private home, together with
+                                    the voices, names and context that keep them
+                                    meaningful.
                                 </motion.p>
                             </motion.div>
                         </motion.div>
@@ -623,13 +765,16 @@ export default function Welcome({
                 </section>
 
                 {/* 8. WAITING LIST */}
-                <section className="py-24 border-t border-border-subtle bg-surface/20" >
+                <section className="border-t border-border-subtle bg-surface/20 py-24">
                     <div className="mx-auto max-w-xl px-6">
-                        <div className="border border-border-subtle bg-bg-dark rounded-3xl p-8 shadow-xl space-y-6">
-                            <div className="text-center space-y-2">
-                                <h3 className="font-serif text-2xl font-bold text-text-primary">Join the Journey</h3>
+                        <div className="space-y-6 rounded-3xl border border-border-subtle bg-bg-dark p-8 shadow-xl">
+                            <div className="space-y-2 text-center">
+                                <h3 className="font-serif text-2xl font-bold text-text-primary">
+                                    Join the Journey
+                                </h3>
                                 <p className="text-sm text-text-muted">
-                                    Leave your details and we'll invite you to set up your first Room when space opens.
+                                    Leave your details and we'll invite you to
+                                    set up your first Room when space opens.
                                 </p>
                             </div>
 
@@ -643,7 +788,10 @@ export default function Welcome({
 
                             <form onSubmit={submitForm} className="space-y-4">
                                 <div className="space-y-1">
-                                    <label htmlFor="name" className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                                    <label
+                                        htmlFor="name"
+                                        className="block text-[10px] font-bold tracking-wider text-text-muted uppercase"
+                                    >
                                         Your Name
                                     </label>
                                     <input
@@ -652,14 +800,26 @@ export default function Welcome({
                                         name="name"
                                         required
                                         value={data.name}
-                                        onChange={e => handleFormChange('name', e.target.value)}
+                                        onChange={(e) =>
+                                            handleFormChange(
+                                                'name',
+                                                e.target.value,
+                                            )
+                                        }
                                         className="w-full rounded-xl border border-border-subtle bg-surface/40 px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/40 focus:border-accent-gold focus:outline-hidden"
                                         placeholder="Full Name"
                                     />
-                                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                    {errors.name && (
+                                        <p className="mt-1 text-xs text-red-500">
+                                            {errors.name}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="email" className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                                    <label
+                                        htmlFor="email"
+                                        className="block text-[10px] font-bold tracking-wider text-text-muted uppercase"
+                                    >
                                         Your Email
                                     </label>
                                     <input
@@ -668,14 +828,29 @@ export default function Welcome({
                                         name="email"
                                         required
                                         value={data.email}
-                                        onChange={e => handleFormChange('email', e.target.value)}
+                                        onChange={(e) =>
+                                            handleFormChange(
+                                                'email',
+                                                e.target.value,
+                                            )
+                                        }
                                         className="w-full rounded-xl border border-border-subtle bg-surface/40 px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/40 focus:border-accent-gold focus:outline-hidden"
                                         placeholder="you@example.com"
                                     />
-                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                    {errors.email && (
+                                        <p className="mt-1 text-xs text-red-500">
+                                            {errors.email}
+                                        </p>
+                                    )}
                                 </div>
-                                <Button type="submit" disabled={processing} className="w-full py-3.5 text-sm font-semibold tracking-wider uppercase mt-4">
-                                    {processing ? 'Submitting...' : 'Join the Waiting List'}
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="mt-4 w-full py-3.5 text-sm font-semibold tracking-wider uppercase"
+                                >
+                                    {processing
+                                        ? 'Submitting...'
+                                        : 'Join the Waiting List'}
                                 </Button>
                             </form>
                         </div>
@@ -683,14 +858,14 @@ export default function Welcome({
                 </section>
 
                 {/* 9. FINAL CTA SECTION */}
-                <section className="py-24 border-t border-border-subtle bg-bg-dark text-center relative overflow-hidden" >
-                    <div className="absolute inset-0 z-0 bg-radial-gradient(circle, rgba(139,110,50,0.05) 0%, transparent 70%)" />
+                <section className="relative overflow-hidden border-t border-border-subtle bg-bg-dark py-24 text-center">
+                    <div className="bg-radial-gradient(circle, rgba(139,110,50,0.05) 0%, transparent 70%) absolute inset-0 z-0" />
                     <motion.div
                         variants={staggerContainer}
                         initial="hidden"
                         whileInView="show"
                         viewport={viewportOnce}
-                        className="relative z-10 max-w-4xl mx-auto px-6 md:px-8 space-y-8"
+                        className="relative z-10 mx-auto max-w-4xl space-y-8 px-6 md:px-8"
                     >
                         <motion.h2
                             variants={cinematicText}
@@ -700,21 +875,28 @@ export default function Welcome({
                         </motion.h2>
                         <motion.p
                             variants={fadeUp}
-                            className="text-lg text-text-muted font-light leading-relaxed max-w-xl mx-auto"
+                            className="mx-auto max-w-xl text-lg leading-relaxed font-light text-text-muted"
                         >
-                            Create a House, invite your people and keep the meaning together.
+                            Create a House, invite your people and keep the
+                            meaning together.
                         </motion.p>
                         <motion.div
                             variants={staggerContainer}
-                            className="flex flex-col sm:flex-row justify-center gap-4 pt-4"
+                            className="flex flex-col justify-center gap-4 pt-4 sm:flex-row"
                         >
                             <Link href={register().url}>
                                 <motion.div
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.97 }}
-                                    transition={{ duration: 0.2, ease: easeWarm }}
+                                    transition={{
+                                        duration: 0.2,
+                                        ease: easeWarm,
+                                    }}
                                 >
-                                    <Button size="lg" className="w-full sm:w-auto font-semibold px-8 tracking-wide">
+                                    <Button
+                                        size="lg"
+                                        className="w-full px-8 font-semibold tracking-wide sm:w-auto"
+                                    >
                                         Create a House
                                     </Button>
                                 </motion.div>
@@ -723,9 +905,16 @@ export default function Welcome({
                                 <motion.div
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.97 }}
-                                    transition={{ duration: 0.2, ease: easeWarm }}
+                                    transition={{
+                                        duration: 0.2,
+                                        ease: easeWarm,
+                                    }}
                                 >
-                                    <Button size="lg" variant="outline" className="w-full sm:w-auto font-semibold px-8 border-text-primary/10 text-text-primary hover:bg-text-primary/5">
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="w-full border-text-primary/10 px-8 font-semibold text-text-primary hover:bg-text-primary/5 sm:w-auto"
+                                    >
                                         See how Ulo works
                                     </Button>
                                 </motion.div>
@@ -733,7 +922,7 @@ export default function Welcome({
                         </motion.div>
                     </motion.div>
                 </section>
-            </div >
-        </GuestLayout >
+            </div>
+        </GuestLayout>
     );
 }

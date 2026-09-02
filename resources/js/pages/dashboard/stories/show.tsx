@@ -73,7 +73,12 @@ interface StoryViewerProps {
 
 const SWIPE_THRESHOLD = 60;
 
-export default function StoryViewer({ story: initialStory, room, prevStory: initialPrev, nextStory: initialNext }: StoryViewerProps) {
+export default function StoryViewer({
+    story: initialStory,
+    room,
+    prevStory: initialPrev,
+    nextStory: initialNext,
+}: StoryViewerProps) {
     const [currentStory, setCurrentStory] = useState<StoryData>(initialStory);
     const [prev, setPrev] = useState<StoryPreview | null>(initialPrev);
     const [next, setNext] = useState<StoryPreview | null>(initialNext);
@@ -99,8 +104,8 @@ export default function StoryViewer({ story: initialStory, room, prevStory: init
 
     const preloadStory = async (uuid: string) => {
         if (storyCache.current.has(uuid)) {
-return;
-}
+            return;
+        }
 
         try {
             const res = await fetch(`/dashboard/stories/${uuid}/data`, {
@@ -108,8 +113,8 @@ return;
             });
 
             if (!res.ok) {
-return;
-}
+                return;
+            }
 
             const data = await res.json();
 
@@ -181,12 +186,12 @@ return;
         storyCache.current.set(initialStory.uuid, initialStory);
 
         if (initialNext?.uuid) {
-preloadStory(initialNext.uuid);
-}
+            preloadStory(initialNext.uuid);
+        }
 
         if (initialPrev?.uuid) {
-preloadStory(initialPrev.uuid);
-}
+            preloadStory(initialPrev.uuid);
+        }
     }, []);
 
     const handleClose = () => {
@@ -244,27 +249,31 @@ preloadStory(initialPrev.uuid);
         e.preventDefault();
 
         if (!newComment.trim()) {
-return;
-}
+            return;
+        }
 
         setIsSubmittingComment(true);
-        router.post(`/dashboard/stories/${story.uuid}/comments`, {
-            content: newComment
-        }, {
-            onSuccess: () => {
-                setNewComment('');
-                setIsSubmittingComment(false);
+        router.post(
+            `/dashboard/stories/${story.uuid}/comments`,
+            {
+                content: newComment,
             },
-            onError: () => setIsSubmittingComment(false)
-        });
+            {
+                onSuccess: () => {
+                    setNewComment('');
+                    setIsSubmittingComment(false);
+                },
+                onError: () => setIsSubmittingComment(false),
+            },
+        );
     };
 
     const handleAddAsset = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
 
         if (!file) {
-return;
-}
+            return;
+        }
 
         setIsAddingAsset(true);
         const formData = new FormData();
@@ -273,23 +282,28 @@ return;
 
         router.post(`/dashboard/stories/${story.uuid}/assets`, formData, {
             onSuccess: () => setIsAddingAsset(false),
-            onError: () => setIsAddingAsset(false)
+            onError: () => setIsAddingAsset(false),
         });
     };
 
     const handleSaveVoice = (blob: Blob, duration: string) => {
         setIsAddingAsset(true);
-        const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
+        const file = new File([blob], `recording-${Date.now()}.webm`, {
+            type: 'audio/webm',
+        });
         const formData = new FormData();
         formData.append('recording', file);
-        formData.append('title', `Voice Memo - ${new Date().toLocaleDateString()}`);
+        formData.append(
+            'title',
+            `Voice Memo - ${new Date().toLocaleDateString()}`,
+        );
 
         router.post(`/dashboard/stories/${story.uuid}/assets`, formData, {
             onSuccess: () => {
                 setIsAddingAsset(false);
                 setShowVoiceRecorder(false);
             },
-            onError: () => setIsAddingAsset(false)
+            onError: () => setIsAddingAsset(false),
         });
     };
 
@@ -312,8 +326,8 @@ return;
 
     const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
-addTag();
-}
+            addTag();
+        }
     };
 
     const videoPlayerVideo: PlayerVideo = {
@@ -377,7 +391,7 @@ addTag();
                             topRight={
                                 <button
                                     onClick={() => setShowInfoPanel(true)}
-                                    className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white/70 hover:bg-white/20 hover:text-white transition-all backdrop-blur-sm border border-white/10"
+                                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/70 backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white"
                                     aria-label="Info"
                                 >
                                     <Info size={16} />
@@ -404,13 +418,17 @@ addTag();
                                 className="flex h-full w-full items-center justify-center p-4"
                             >
                                 {(() => {
-                                    const asset = story.assets[activeAssetIndex];
+                                    const asset =
+                                        story.assets[activeAssetIndex];
 
                                     switch (asset.type) {
                                         case 'video':
                                             return (
                                                 <VideoPlayer
-                                                    video={collectionVideoAsset(asset, activeAssetIndex)}
+                                                    video={collectionVideoAsset(
+                                                        asset,
+                                                        activeAssetIndex,
+                                                    )}
                                                     autoPlay
                                                     showControls
                                                     showSpeedControl={false}
@@ -427,20 +445,26 @@ addTag();
                                                     <div className="w-full max-w-2xl rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur-2xl">
                                                         <div className="mb-8 flex items-center gap-6">
                                                             <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-3xl bg-accent-gold/10 text-accent-gold shadow-2xl">
-                                                                <Play size={40} fill="currentColor" />
+                                                                <Play
+                                                                    size={40}
+                                                                    fill="currentColor"
+                                                                />
                                                             </div>
 
                                                             <div className="min-w-0">
                                                                 <p className="mb-2 text-xs font-bold tracking-[0.3em] text-accent-gold uppercase">
-                                                                    Audio Archive
+                                                                    Audio
+                                                                    Archive
                                                                 </p>
 
                                                                 <h2 className="truncate text-2xl font-bold text-white md:text-3xl">
-                                                                    {asset.title || story.title}
+                                                                    {asset.title ||
+                                                                        story.title}
                                                                 </h2>
 
                                                                 <p className="mt-2 text-sm text-text-muted">
-                                                                    Preserved voice memory
+                                                                    Preserved
+                                                                    voice memory
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -448,12 +472,20 @@ addTag();
                                                         <AudioWaveformPlayer
                                                             src={story.fileUrl!}
                                                             title={story.title}
-                                                            transcript={story.transcript}
+                                                            transcript={
+                                                                story.transcript
+                                                            }
                                                         />
 
                                                         <div className="mt-6 flex items-center justify-between text-xs tracking-widest text-text-muted uppercase">
-                                                            <span>Digital Preservation Artifact</span>
-                                                            <span>Audio Format</span>
+                                                            <span>
+                                                                Digital
+                                                                Preservation
+                                                                Artifact
+                                                            </span>
+                                                            <span>
+                                                                Audio Format
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -468,19 +500,29 @@ addTag();
 
                                                         <div className="relative flex flex-col items-center text-center">
                                                             <div className="mb-8 flex h-32 w-32 items-center justify-center rounded-[28px] bg-accent-gold/10 text-accent-gold shadow-2xl">
-                                                                <FileText size={64} />
+                                                                <FileText
+                                                                    size={64}
+                                                                />
                                                             </div>
 
                                                             <p className="mb-3 text-xs font-bold tracking-[0.35em] text-accent-gold uppercase">
-                                                                Archived Document
+                                                                Archived
+                                                                Document
                                                             </p>
 
                                                             <h2 className="mb-4 text-2xl font-bold text-white">
-                                                                {asset.title || 'Untitled Document'}
+                                                                {asset.title ||
+                                                                    'Untitled Document'}
                                                             </h2>
 
                                                             <p className="mb-8 max-w-md text-sm leading-relaxed text-text-muted">
-                                                                This preserved artifact contains archival written material stored within the collection.
+                                                                This preserved
+                                                                artifact
+                                                                contains
+                                                                archival written
+                                                                material stored
+                                                                within the
+                                                                collection.
                                                             </p>
 
                                                             <a
@@ -489,7 +531,9 @@ addTag();
                                                                 rel="noopener noreferrer"
                                                                 className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all hover:border-accent-gold/30 hover:bg-white/20"
                                                             >
-                                                                <FileText size={16} />
+                                                                <FileText
+                                                                    size={16}
+                                                                />
                                                                 Open Document
                                                             </a>
                                                         </div>
@@ -525,68 +569,73 @@ addTag();
                             ))}
                         </div>
                     </div>
-                ) : (() => {
-                    switch (story.type) {
-                        case 'audio':
-                            return (
-                                <div className="flex h-full w-full items-center justify-center p-6 md:p-12">
-                                    <AudioWaveformPlayer
-                                        src={story.fileUrl!}
-                                        title={story.title}
-                                        transcript={story.transcript}
-                                    />
-                                </div>
-                            );
+                ) : (
+                    (() => {
+                        switch (story.type) {
+                            case 'audio':
+                                return (
+                                    <div className="flex h-full w-full items-center justify-center p-6 md:p-12">
+                                        <AudioWaveformPlayer
+                                            src={story.fileUrl!}
+                                            title={story.title}
+                                            transcript={story.transcript}
+                                        />
+                                    </div>
+                                );
 
-                        case 'document':
-                        case 'pdf':
-                            return (
-                                <div className="flex h-full w-full items-center justify-center p-6 md:p-12">
-                                    <div className="relative w-full max-w-xl overflow-hidden rounded-[32px] border border-white/10 bg-white/5 p-10 backdrop-blur-2xl">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-accent-gold/5 to-transparent opacity-50" />
+                            case 'document':
+                            case 'pdf':
+                                return (
+                                    <div className="flex h-full w-full items-center justify-center p-6 md:p-12">
+                                        <div className="relative w-full max-w-xl overflow-hidden rounded-[32px] border border-white/10 bg-white/5 p-10 backdrop-blur-2xl">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-accent-gold/5 to-transparent opacity-50" />
 
-                                        <div className="relative flex flex-col items-center text-center">
-                                            <div className="mb-8 flex h-32 w-32 items-center justify-center rounded-[28px] bg-accent-gold/10 text-accent-gold shadow-2xl">
-                                                <FileText size={64} />
+                                            <div className="relative flex flex-col items-center text-center">
+                                                <div className="mb-8 flex h-32 w-32 items-center justify-center rounded-[28px] bg-accent-gold/10 text-accent-gold shadow-2xl">
+                                                    <FileText size={64} />
+                                                </div>
+
+                                                <p className="mb-3 text-xs font-bold tracking-[0.35em] text-accent-gold uppercase">
+                                                    Archived Document
+                                                </p>
+
+                                                <h2 className="mb-4 text-2xl font-bold text-white">
+                                                    {story.title}
+                                                </h2>
+
+                                                <p className="mb-8 max-w-md text-sm leading-relaxed text-text-muted">
+                                                    This preserved artifact
+                                                    contains archival written
+                                                    material stored within the
+                                                    collection.
+                                                </p>
+
+                                                <a
+                                                    href={story.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all hover:border-accent-gold/30 hover:bg-white/20"
+                                                >
+                                                    <FileText size={16} />
+                                                    Open Document
+                                                </a>
                                             </div>
-
-                                            <p className="mb-3 text-xs font-bold tracking-[0.35em] text-accent-gold uppercase">
-                                                Archived Document
-                                            </p>
-
-                                            <h2 className="mb-4 text-2xl font-bold text-white">
-                                                {story.title}
-                                            </h2>
-
-                                            <p className="mb-8 max-w-md text-sm leading-relaxed text-text-muted">
-                                                This preserved artifact contains archival written material stored within the collection.
-                                            </p>
-
-                                            <a
-                                                href={story.fileUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all hover:border-accent-gold/30 hover:bg-white/20"
-                                            >
-                                                <FileText size={16} />
-                                                Open Document
-                                            </a>
                                         </div>
                                     </div>
-                                </div>
-                            );
+                                );
 
-                        default:
-                            return (
-                                <motion.img
-                                    layoutId={`story-${story.id}`}
-                                    src={story.thumbnail}
-                                    alt={story.title}
-                                    className="h-full w-full object-contain lg:object-cover"
-                                />
-                            );
-                    }
-                })()}
+                            default:
+                                return (
+                                    <motion.img
+                                        layoutId={`story-${story.id}`}
+                                        src={story.thumbnail}
+                                        alt={story.title}
+                                        className="h-full w-full object-contain lg:object-cover"
+                                    />
+                                );
+                        }
+                    })()
+                )}
 
                 {/* Cinematic Overlays (non-video) */}
                 {!isVideo && story.type === 'photo' && (
@@ -606,7 +655,11 @@ addTag();
                             variant="secondary"
                             className="px-3 py-2 text-[10px] sm:px-4 md:text-xs"
                             icon={Download}
-                            onClick={() => toast.info('Collecting the Artifact for preservation...')}
+                            onClick={() =>
+                                toast.info(
+                                    'Collecting the Artifact for preservation...',
+                                )
+                            }
                         >
                             Collect Artifact
                         </Button>
@@ -633,11 +686,20 @@ addTag();
                     <div className="pointer-events-none absolute top-4 left-1/2 z-10 -translate-x-1/2">
                         <motion.div
                             animate={{ y: [0, 4, 0] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                            }}
                             className="flex flex-col items-center gap-1 rounded-full bg-black/30 px-3 py-1.5 backdrop-blur-sm"
                         >
-                            <ChevronLeft size={12} className="rotate-90 text-white/50" />
-                            <span className="text-[9px] font-medium tracking-wider text-white/40 uppercase">Prev</span>
+                            <ChevronLeft
+                                size={12}
+                                className="rotate-90 text-white/50"
+                            />
+                            <span className="text-[9px] font-medium tracking-wider text-white/40 uppercase">
+                                Prev
+                            </span>
                         </motion.div>
                     </div>
                 )}
@@ -645,11 +707,20 @@ addTag();
                     <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2">
                         <motion.div
                             animate={{ y: [0, -4, 0] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                            }}
                             className="flex flex-col items-center gap-1 rounded-full bg-black/30 px-3 py-1.5 backdrop-blur-sm"
                         >
-                            <span className="text-[9px] font-medium tracking-wider text-white/40 uppercase">Next</span>
-                            <ChevronRight size={12} className="rotate-90 text-white/50" />
+                            <span className="text-[9px] font-medium tracking-wider text-white/40 uppercase">
+                                Next
+                            </span>
+                            <ChevronRight
+                                size={12}
+                                className="rotate-90 text-white/50"
+                            />
                         </motion.div>
                     </div>
                 )}
@@ -670,20 +741,26 @@ addTag();
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="fixed right-0 top-0 z-40 h-full w-full max-w-md border-l border-white/5 bg-bg-dark/98 backdrop-blur-3xl overflow-y-auto shadow-2xl"
+                            transition={{
+                                type: 'spring',
+                                damping: 30,
+                                stiffness: 300,
+                            }}
+                            className="fixed top-0 right-0 z-40 h-full w-full max-w-md overflow-y-auto border-l border-white/5 bg-bg-dark/98 shadow-2xl backdrop-blur-3xl"
                         >
                             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/5 bg-bg-dark/90 p-4 backdrop-blur-md">
-                                <span className="text-xs font-bold tracking-widest text-accent-gold uppercase">Archival Details</span>
+                                <span className="text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                    Archival Details
+                                </span>
                                 <button
                                     onClick={() => setShowInfoPanel(false)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white"
                                 >
                                     <X size={16} />
                                 </button>
                             </div>
 
-                            <div className="p-6 space-y-8">
+                            <div className="space-y-8 p-6">
                                 <Badge className="w-fit">{story.type}</Badge>
 
                                 <div>
@@ -692,11 +769,17 @@ addTag();
                                     </h1>
                                     <div className="flex items-center gap-6 text-sm text-text-muted">
                                         <div className="flex items-center gap-2">
-                                            <User size={14} className="text-accent-gold" />
+                                            <User
+                                                size={14}
+                                                className="text-accent-gold"
+                                            />
                                             <span>{story.author}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Calendar size={14} className="text-accent-gold" />
+                                            <Calendar
+                                                size={14}
+                                                className="text-accent-gold"
+                                            />
                                             <span>{story.date}</span>
                                         </div>
                                     </div>
@@ -714,13 +797,17 @@ addTag();
                                             size={20}
                                             className={`transition-all ${isLiked ? 'fill-red-400 text-red-400' : 'text-text-muted group-hover:text-red-400'}`}
                                         />
-                                        <span className={`text-sm font-semibold ${isLiked ? 'text-text-primary' : 'text-text-muted'}`}>
+                                        <span
+                                            className={`text-sm font-semibold ${isLiked ? 'text-text-primary' : 'text-text-muted'}`}
+                                        >
                                             {likes}
                                         </span>
                                     </button>
                                     <button className="flex grow items-center justify-center gap-2 rounded-xl border border-border-subtle bg-surface/50 p-4 text-text-muted transition-all hover:bg-surface hover:text-text-primary">
                                         <MessageCircle size={20} />
-                                        <span className="text-sm font-semibold text-text-primary">{story.comments.length}</span>
+                                        <span className="text-sm font-semibold text-text-primary">
+                                            {story.comments.length}
+                                        </span>
                                     </button>
                                     <button className="rounded-xl border border-border-subtle bg-surface/50 p-4 text-text-muted transition-all hover:bg-surface hover:text-text-primary">
                                         <MoreVertical size={20} />
@@ -728,26 +815,52 @@ addTag();
                                 </div>
 
                                 <div className="flex flex-col gap-6">
-                                    <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Archive Details</h3>
+                                    <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                        Archive Details
+                                    </h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         {[
-                                            { label: 'Archivist', value: story.author },
-                                            { label: 'Preserved', value: story.date },
-                                            { label: 'Format', value: story.type.toUpperCase() },
-                                            { label: 'Archive ID', value: `HER-${String(story.id).substring(0, 8).toUpperCase()}` },
+                                            {
+                                                label: 'Archivist',
+                                                value: story.author,
+                                            },
+                                            {
+                                                label: 'Preserved',
+                                                value: story.date,
+                                            },
+                                            {
+                                                label: 'Format',
+                                                value: story.type.toUpperCase(),
+                                            },
+                                            {
+                                                label: 'Archive ID',
+                                                value: `HER-${String(story.id).substring(0, 8).toUpperCase()}`,
+                                            },
                                         ].map((item) => (
-                                            <div key={item.label} className="rounded-xl border border-border-subtle bg-surface p-3">
-                                                <p className="mb-1 text-[10px] tracking-wider text-text-muted uppercase">{item.label}</p>
-                                                <p className="text-xs font-bold text-text-primary">{item.value}</p>
+                                            <div
+                                                key={item.label}
+                                                className="rounded-xl border border-border-subtle bg-surface p-3"
+                                            >
+                                                <p className="mb-1 text-[10px] tracking-wider text-text-muted uppercase">
+                                                    {item.label}
+                                                </p>
+                                                <p className="text-xs font-bold text-text-primary">
+                                                    {item.value}
+                                                </p>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col gap-6">
-                                    <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Narrative</h3>
+                                    <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                        Narrative
+                                    </h3>
                                     <p className="border-l-2 border-accent-gold/30 py-2 pl-6 text-sm leading-relaxed text-text-muted italic md:text-base">
-                                        "{story.description || 'No narrative description provided for this memory.'}"
+                                        "
+                                        {story.description ||
+                                            'No narrative description provided for this memory.'}
+                                        "
                                     </p>
                                 </div>
 
@@ -767,15 +880,21 @@ addTag();
                                                 accept="image/*,video/*,application/pdf"
                                             />
                                             <button
-                                                onClick={() => fileInputRef.current?.click()}
+                                                onClick={() =>
+                                                    fileInputRef.current?.click()
+                                                }
                                                 disabled={isAddingAsset}
                                                 className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold disabled:opacity-50"
                                             >
                                                 <Plus size={10} />
-                                                {isAddingAsset ? 'Adding...' : 'Add Asset'}
+                                                {isAddingAsset
+                                                    ? 'Adding...'
+                                                    : 'Add Asset'}
                                             </button>
                                             <button
-                                                onClick={() => setShowVoiceRecorder(true)}
+                                                onClick={() =>
+                                                    setShowVoiceRecorder(true)
+                                                }
                                                 disabled={isAddingAsset}
                                                 className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold disabled:opacity-50"
                                             >
@@ -794,7 +913,9 @@ addTag();
                                             Tags
                                         </h3>
                                         <button
-                                            onClick={() => setShowTagInput(true)}
+                                            onClick={() =>
+                                                setShowTagInput(true)
+                                            }
                                             className="flex items-center gap-1 text-[10px] font-bold tracking-widest text-text-muted uppercase transition-colors hover:text-accent-gold"
                                         >
                                             <Plus size={10} />
@@ -808,14 +929,30 @@ addTag();
                                                 <motion.button
                                                     key={tag}
                                                     layout
-                                                    initial={{ opacity: 0, scale: 0.8 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    exit={{ opacity: 0, scale: 0.8 }}
-                                                    onClick={() => removeTag(tag)}
+                                                    initial={{
+                                                        opacity: 0,
+                                                        scale: 0.8,
+                                                    }}
+                                                    animate={{
+                                                        opacity: 1,
+                                                        scale: 1,
+                                                    }}
+                                                    exit={{
+                                                        opacity: 0,
+                                                        scale: 0.8,
+                                                    }}
+                                                    onClick={() =>
+                                                        removeTag(tag)
+                                                    }
                                                     className="group flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5 transition-all hover:border-red-400/30"
                                                 >
-                                                    <Hash size={10} className="text-accent-gold transition-colors group-hover:text-red-400" />
-                                                    <span className="text-xs text-text-primary transition-colors group-hover:text-red-400">{tag}</span>
+                                                    <Hash
+                                                        size={10}
+                                                        className="text-accent-gold transition-colors group-hover:text-red-400"
+                                                    />
+                                                    <span className="text-xs text-text-primary transition-colors group-hover:text-red-400">
+                                                        {tag}
+                                                    </span>
                                                 </motion.button>
                                             ))}
                                         </AnimatePresence>
@@ -823,19 +960,42 @@ addTag();
                                         <AnimatePresence>
                                             {showTagInput && (
                                                 <motion.div
-                                                    initial={{ opacity: 0, x: -10 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    exit={{ opacity: 0, x: -10 }}
+                                                    initial={{
+                                                        opacity: 0,
+                                                        x: -10,
+                                                    }}
+                                                    animate={{
+                                                        opacity: 1,
+                                                        x: 0,
+                                                    }}
+                                                    exit={{
+                                                        opacity: 0,
+                                                        x: -10,
+                                                    }}
                                                     className="flex items-center gap-2 rounded-full border border-accent-gold/30 bg-surface px-3 py-1"
                                                 >
-                                                    <Hash size={10} className="text-accent-gold" />
+                                                    <Hash
+                                                        size={10}
+                                                        className="text-accent-gold"
+                                                    />
                                                     <input
                                                         autoFocus
                                                         type="text"
                                                         value={newTag}
-                                                        onChange={(e) => setNewTag(e.target.value)}
-                                                        onKeyDown={handleKeyPress}
-                                                        onBlur={() => !newTag && setShowTagInput(false)}
+                                                        onChange={(e) =>
+                                                            setNewTag(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        onKeyDown={
+                                                            handleKeyPress
+                                                        }
+                                                        onBlur={() =>
+                                                            !newTag &&
+                                                            setShowTagInput(
+                                                                false,
+                                                            )
+                                                        }
                                                         placeholder="Story tag..."
                                                         className="w-24 border-none bg-transparent text-xs text-text-primary outline-none placeholder:text-text-muted/40"
                                                     />
@@ -848,16 +1008,27 @@ addTag();
                                 {/* Comments Section */}
                                 <div className="flex flex-col gap-6">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">Narrative Responses</h3>
-                                        <span className="text-[10px] font-bold text-text-muted uppercase">{story.comments.length} Memories</span>
+                                        <h3 className="text-xs font-bold tracking-widest text-accent-gold uppercase">
+                                            Narrative Responses
+                                        </h3>
+                                        <span className="text-[10px] font-bold text-text-muted uppercase">
+                                            {story.comments.length} Memories
+                                        </span>
                                     </div>
 
                                     <div className="flex flex-col gap-4">
                                         {story.comments.map((comment) => (
-                                            <div key={comment.id} className="group relative rounded-2xl border border-border-subtle bg-surface/30 p-4 transition-all hover:bg-surface/50">
+                                            <div
+                                                key={comment.id}
+                                                className="group relative rounded-2xl border border-border-subtle bg-surface/30 p-4 transition-all hover:bg-surface/50"
+                                            >
                                                 <div className="mb-2 flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-accent-gold">{comment.author}</span>
-                                                    <span className="text-[10px] text-text-muted">{comment.date}</span>
+                                                    <span className="text-xs font-bold text-accent-gold">
+                                                        {comment.author}
+                                                    </span>
+                                                    <span className="text-[10px] text-text-muted">
+                                                        {comment.date}
+                                                    </span>
                                                 </div>
                                                 <p className="text-sm leading-relaxed text-text-primary">
                                                     {comment.content}
@@ -867,34 +1038,55 @@ addTag();
 
                                         {story.comments.length === 0 && (
                                             <div className="rounded-2xl border border-dashed border-border-subtle p-8 text-center">
-                                                <MessageCircle size={24} className="mx-auto mb-3 text-text-muted opacity-20" />
-                                                <p className="text-xs text-text-muted italic">No responses shared yet. Be the first to leave a mark on this memory.</p>
+                                                <MessageCircle
+                                                    size={24}
+                                                    className="mx-auto mb-3 text-text-muted opacity-20"
+                                                />
+                                                <p className="text-xs text-text-muted italic">
+                                                    No responses shared yet. Be
+                                                    the first to leave a mark on
+                                                    this memory.
+                                                </p>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Comment Form */}
-                                    <form onSubmit={submitComment} className="mt-4 flex flex-col gap-3">
+                                    <form
+                                        onSubmit={submitComment}
+                                        className="mt-4 flex flex-col gap-3"
+                                    >
                                         <div className="relative">
                                             <textarea
                                                 value={newComment}
-                                                onChange={(e) => setNewComment(e.target.value)}
+                                                onChange={(e) =>
+                                                    setNewComment(
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="Share your reflection on this memory..."
-                                                className="min-h-[100px] w-full resize-none rounded-2xl border border-border-subtle bg-surface/50 p-4 text-sm text-text-primary placeholder:text-text-muted/40 focus:border-accent-gold/30 focus:outline-none focus:ring-1 focus:ring-accent-gold/30"
+                                                className="min-h-[100px] w-full resize-none rounded-2xl border border-border-subtle bg-surface/50 p-4 text-sm text-text-primary placeholder:text-text-muted/40 focus:border-accent-gold/30 focus:ring-1 focus:ring-accent-gold/30 focus:outline-none"
                                             />
                                         </div>
                                         <Button
                                             type="submit"
-                                            disabled={isSubmittingComment || !newComment.trim()}
+                                            disabled={
+                                                isSubmittingComment ||
+                                                !newComment.trim()
+                                            }
                                             className="w-full"
                                         >
-                                            {isSubmittingComment ? 'Preserving...' : 'Share Reflection'}
+                                            {isSubmittingComment
+                                                ? 'Preserving...'
+                                                : 'Share Reflection'}
                                         </Button>
                                     </form>
                                 </div>
 
                                 <div className="pt-8">
-                                    <Button className="w-full" icon={Share2}>Share this memory</Button>
+                                    <Button className="w-full" icon={Share2}>
+                                        Share this memory
+                                    </Button>
                                 </div>
                             </div>
                         </motion.aside>

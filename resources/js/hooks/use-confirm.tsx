@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useState  } from 'react';
-import type {ReactNode} from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
+import type { ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 
 interface ConfirmOptions {
@@ -22,15 +22,19 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         resolve: (value: boolean) => void;
     } | null>(null);
 
-    const confirm = useCallback((messageOrOptions: string | ConfirmOptions): Promise<boolean> => {
-        const options: ConfirmOptions = typeof messageOrOptions === 'string'
-            ? { message: messageOrOptions }
-            : messageOrOptions;
+    const confirm = useCallback(
+        (messageOrOptions: string | ConfirmOptions): Promise<boolean> => {
+            const options: ConfirmOptions =
+                typeof messageOrOptions === 'string'
+                    ? { message: messageOrOptions }
+                    : messageOrOptions;
 
-        return new Promise((resolve) => {
-            setState({ options, resolve });
-        });
-    }, []);
+            return new Promise((resolve) => {
+                setState({ options, resolve });
+            });
+        },
+        [],
+    );
 
     const handleConfirm = useCallback(() => {
         state?.resolve(true);
@@ -59,7 +63,9 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     );
 }
 
-export function useConfirm(): (messageOrOptions: string | ConfirmOptions) => Promise<boolean> {
+export function useConfirm(): (
+    messageOrOptions: string | ConfirmOptions,
+) => Promise<boolean> {
     const ctx = useContext(ConfirmContext);
 
     if (!ctx) {

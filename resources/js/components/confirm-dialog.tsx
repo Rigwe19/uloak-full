@@ -36,7 +36,11 @@ export function ConfirmDialog({
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                        transition={{
+                            type: 'spring',
+                            damping: 25,
+                            stiffness: 300,
+                        }}
                         onClick={(e) => e.stopPropagation()}
                         className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-2xl"
                     >
@@ -47,7 +51,9 @@ export function ConfirmDialog({
                                         <AlertTriangle size={16} />
                                     </div>
                                 )}
-                                <h3 className="text-sm font-bold text-text-primary">{title}</h3>
+                                <h3 className="text-sm font-bold text-text-primary">
+                                    {title}
+                                </h3>
                             </div>
                             <button
                                 onClick={onCancel}
@@ -57,7 +63,9 @@ export function ConfirmDialog({
                             </button>
                         </div>
                         <div className="px-6 py-5">
-                            <p className="text-sm leading-relaxed text-text-muted">{message}</p>
+                            <p className="text-sm leading-relaxed text-text-muted">
+                                {message}
+                            </p>
                         </div>
                         <div className="flex justify-end gap-3 border-t border-white/5 px-6 py-4">
                             <button

@@ -1,5 +1,25 @@
 import { Head } from '@inertiajs/react';
-import { Shield, Lock, Eye, FileText, Globe, Users, BookOpen, Heart, Film, Zap, Database, Microscope, Key, LayoutGrid, Camera, Mic, Book, Briefcase, Coffee } from 'lucide-react';
+import {
+    Shield,
+    Lock,
+    Eye,
+    FileText,
+    Globe,
+    Users,
+    BookOpen,
+    Heart,
+    Film,
+    Zap,
+    Database,
+    Microscope,
+    Key,
+    LayoutGrid,
+    Camera,
+    Mic,
+    Book,
+    Briefcase,
+    Coffee,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import GuestLayout from '@/layouts/guest-layout';
 import {
@@ -37,13 +57,14 @@ export default function Privacy({ page }: Props) {
         Mic,
         Book,
         Briefcase,
-        Coffee
+        Coffee,
     };
 
     const content = page?.content || {};
     const hero = content.hero || {
         title: 'Privacy Policy',
-        subtitle: 'Your trust is our most valuable asset. We are committed to protecting the privacy and security of your family stories.',
+        subtitle:
+            'Your trust is our most valuable asset. We are committed to protecting the privacy and security of your family stories.',
     };
 
     const sections = content.sections || [
@@ -76,12 +97,20 @@ export default function Privacy({ page }: Props) {
     return (
         <>
             <Head>
-                <title>{page?.title || 'Privacy Policy'} | Ulo of Stories</title>
-                <meta name="description" content={page?.meta_description || 'Our commitment to protecting your privacy and family stories.'} />
+                <title>
+                    {page?.title || 'Privacy Policy'} | Ulo of Stories
+                </title>
+                <meta
+                    name="description"
+                    content={
+                        page?.meta_description ||
+                        'Our commitment to protecting your privacy and family stories.'
+                    }
+                />
             </Head>
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
-                                <section className="relative min-h-[50vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
+                <section className="relative min-h-[50vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
                     <motion.div
                         className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]"
                         variants={parallaxFloat}
@@ -107,7 +136,7 @@ export default function Privacy({ page }: Props) {
                         >
                             <motion.span
                                 variants={fadeUp}
-                                className="mb-6 inline-block text-[10px] font-bold text-accent-gold uppercase tracking-[0.4em]"
+                                className="mb-6 inline-block text-[10px] font-bold tracking-[0.4em] text-accent-gold uppercase"
                             >
                                 Privacy & Trust
                             </motion.span>
@@ -121,7 +150,7 @@ export default function Privacy({ page }: Props) {
                                 variants={fadeUp}
                                 className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-text-muted"
                             >
-                                                                {hero.subtitle}
+                                {hero.subtitle}
                             </motion.p>
                         </motion.div>
                     </div>
@@ -131,7 +160,10 @@ export default function Privacy({ page }: Props) {
                     <div className="mx-auto max-w-4xl">
                         <div className="grid gap-8">
                             {sections.map((section: any, i: number) => {
-                                const IconComponent = iconMap[section.icon as keyof typeof iconMap] || Shield;
+                                const IconComponent =
+                                    iconMap[
+                                        section.icon as keyof typeof iconMap
+                                    ] || Shield;
 
                                 return (
                                     <motion.div
@@ -143,10 +175,17 @@ export default function Privacy({ page }: Props) {
                                         className="rounded-3xl border border-white/5 bg-surface/20 p-8 md:p-12"
                                     >
                                         <div className="mb-8 inline-flex rounded-2xl bg-accent-gold/10 p-4">
-                                            <IconComponent className="text-accent-gold" size={24} />
+                                            <IconComponent
+                                                className="text-accent-gold"
+                                                size={24}
+                                            />
                                         </div>
-                                        <h2 className="mb-4 text-2xl font-bold text-text-primary">{section.title}</h2>
-                                        <p className="text-lg leading-relaxed text-text-muted">{section.content}</p>
+                                        <h2 className="mb-4 text-2xl font-bold text-text-primary">
+                                            {section.title}
+                                        </h2>
+                                        <p className="text-lg leading-relaxed text-text-muted">
+                                            {section.content}
+                                        </p>
                                     </motion.div>
                                 );
                             })}
@@ -159,10 +198,21 @@ export default function Privacy({ page }: Props) {
                             className="mt-20 border-t border-white/5 pt-12 text-center"
                         >
                             <p className="text-sm text-text-muted italic">
-                                Last updated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                Last updated:{' '}
+                                {new Date().toLocaleDateString('en-GB', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                })}
                             </p>
                             <p className="mt-4 text-sm text-text-muted">
-                                Questions? Reach us at <a href="mailto:privacy@ulo of stories.co.uk" className="text-accent-gold hover:underline">privacy@ulo of stories.co.uk</a>
+                                Questions? Reach us at{' '}
+                                <a
+                                    href="mailto:privacy@ulo of stories.co.uk"
+                                    className="text-accent-gold hover:underline"
+                                >
+                                    privacy@ulo of stories.co.uk
+                                </a>
                             </p>
                         </motion.div>
                     </div>

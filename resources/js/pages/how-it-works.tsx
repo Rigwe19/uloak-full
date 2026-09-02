@@ -18,7 +18,7 @@ import {
     Zap,
     Microscope,
     Heart,
-    Database
+    Database,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import React from 'react';
@@ -61,13 +61,14 @@ export default function HowItWorks({ page }: Props) {
         FileText,
         Coffee,
         Lock,
-        Share2
+        Share2,
     };
 
     const content = page?.content || {};
     const hero = content.hero || {
         title: 'The Architecture of Storytelling.',
-        subtitle: 'From initial capture to generational preservation — a seamless journey for your legacy.',
+        subtitle:
+            'From initial capture to generational preservation — a seamless journey for your legacy.',
     };
 
     const steps = content.steps || [
@@ -106,7 +107,7 @@ export default function HowItWorks({ page }: Props) {
 
             <div className="bg-bg-dark text-text-primary selection:bg-accent-gold/30">
                 {/* Hero Section */}
-                                <section className="relative min-h-[70vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
+                <section className="relative min-h-[70vh] overflow-hidden px-6 pt-32 pb-20 md:px-12 lg:px-24">
                     <motion.div
                         className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent-gold/5 blur-[120px]"
                         variants={parallaxFloat}
@@ -132,7 +133,7 @@ export default function HowItWorks({ page }: Props) {
                         >
                             <motion.span
                                 variants={fadeUp}
-                                className="mb-6 inline-block text-[10px] font-bold text-accent-gold uppercase tracking-[0.4em]"
+                                className="mb-6 inline-block text-[10px] font-bold tracking-[0.4em] text-accent-gold uppercase"
                             >
                                 Our Process
                             </motion.span>
@@ -161,7 +162,10 @@ export default function HowItWorks({ page }: Props) {
 
                             <div className="grid gap-24 lg:gap-40">
                                 {steps.map((step: any, i: number) => {
-                                    const IconComponent = iconMap[step.icon as keyof typeof iconMap] || Share2;
+                                    const IconComponent =
+                                        iconMap[
+                                            step.icon as keyof typeof iconMap
+                                        ] || Share2;
 
                                     return (
                                         <motion.div
@@ -178,7 +182,8 @@ export default function HowItWorks({ page }: Props) {
                                                 >
                                                     <div className="mb-4 flex items-center gap-4 text-accent-gold">
                                                         <span className="font-outfit text-3xl font-bold opacity-30">
-                                                            {step.id || `0${i + 1}`}
+                                                            {step.id ||
+                                                                `0${i + 1}`}
                                                         </span>
                                                         <div className="h-px w-12 bg-accent-gold/30" />
                                                     </div>
@@ -223,7 +228,9 @@ export default function HowItWorks({ page }: Props) {
                         viewport={{ once: true }}
                         className="mx-auto max-w-5xl rounded-[60px] border border-white/5 bg-surface/20 p-16 text-center md:p-24"
                     >
-                        <h2 className="text-4xl font-bold tracking-tight text-text-primary md:text-6xl">Ready to begin?</h2>
+                        <h2 className="text-4xl font-bold tracking-tight text-text-primary md:text-6xl">
+                            Ready to begin?
+                        </h2>
                         <p className="mx-auto mt-8 max-w-xl text-xl text-text-muted">
                             Start building your digital house of stories today.
                         </p>

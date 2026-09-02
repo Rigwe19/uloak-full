@@ -11,8 +11,21 @@ interface VideoSurfaceProps {
     preload?: 'none' | 'metadata' | 'auto';
 }
 
-export function VideoSurface({ videoId, src, poster, onTimeUpdate, onEnded, className = '', preload = 'metadata' }: VideoSurfaceProps) {
-    const { videoRef, retry } = useVideoControls({ videoId, src, onTimeUpdate, onEnded });
+export function VideoSurface({
+    videoId,
+    src,
+    poster,
+    onTimeUpdate,
+    onEnded,
+    className = '',
+    preload = 'metadata',
+}: VideoSurfaceProps) {
+    const { videoRef, retry } = useVideoControls({
+        videoId,
+        src,
+        onTimeUpdate,
+        onEnded,
+    });
 
     return (
         <video

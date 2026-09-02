@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef } from 'react';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
     const rawData = window.atob(base64);
     const output = new Uint8Array(rawData.length);
 
@@ -15,27 +17,29 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 async function doSubscribe(): Promise<boolean> {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-return false;
-}
+        return false;
+    }
 
     try {
         const registration = await navigator.serviceWorker.ready;
         const existing = await registration.pushManager.getSubscription();
 
         if (existing) {
-return true;
-}
+            return true;
+        }
 
         const resp = await fetch('/push-public-key');
-        const { publicKey } = await resp.json() as { publicKey: string };
+        const { publicKey } = (await resp.json()) as { publicKey: string };
 
         if (!publicKey) {
-return false;
-}
+            return false;
+        }
 
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey) as unknown as string,
+            applicationServerKey: urlBase64ToUint8Array(
+                publicKey,
+            ) as unknown as string,
         });
 
         const subData = subscription.toJSON();
@@ -43,7 +47,10 @@ return false;
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
+                'X-CSRF-TOKEN':
+                    document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.getAttribute('content') ?? '',
             },
             body: JSON.stringify({
                 endpoint: subData.endpoint,
@@ -66,15 +73,15 @@ export function usePushSubscription() {
 
     const trySubscribe = useCallback(async () => {
         if (subscribed.current) {
-return;
-}
+            return;
+        }
 
         if (Notification.permission === 'granted') {
             const ok = await doSubscribe();
 
             if (ok) {
-subscribed.current = true;
-}
+                subscribed.current = true;
+            }
         }
     }, []);
 
@@ -103,7 +110,10 @@ subscribed.current = true;
 
         // Fallback: also check on focus/visibility change
         const handleVisibility = () => {
-            if (document.visibilityState === 'visible' && Notification.permission === 'granted') {
+            if (
+                document.visibilityState === 'visible' &&
+                Notification.permission === 'granted'
+            ) {
                 trySubscribe();
             }
         };
@@ -116,23 +126,23 @@ subscribed.current = true;
 
     const enableNotifications = useCallback(async (): Promise<boolean> => {
         if (subscribed.current) {
-return true;
-}
+            return true;
+        }
 
         if (Notification.permission === 'default') {
             const permission = await Notification.requestPermission();
 
             if (permission !== 'granted') {
-return false;
-}
+                return false;
+            }
         }
 
         if (Notification.permission === 'granted') {
             const ok = await doSubscribe();
 
             if (ok) {
-subscribed.current = true;
-}
+                subscribed.current = true;
+            }
 
             return ok;
         }

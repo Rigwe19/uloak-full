@@ -1,7 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart3, LayoutGrid, Search, Bell, Settings, LogOut, User } from 'lucide-react';
+import {
+    BarChart3,
+    LayoutGrid,
+    Search,
+    Bell,
+    Settings,
+    LogOut,
+    User,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { PageTransition } from '@/components/page-transition';
@@ -9,7 +17,6 @@ import { PushSubscriptionManager } from '@/components/push-subscription-manager'
 import { getPatternBackground } from '@/lib/house-patterns';
 import { logout, home, dashboard as dashboardRoute } from '@/routes';
 import dashboard from '@/routes/dashboard';
-
 
 interface SidebarItem {
     id: string;
@@ -29,7 +36,11 @@ export default function DashboardLayout({
         house_pattern?: string | null;
         house_pattern_upload_url?: string | null;
     } | null;
-    const authPerson = (props as any).auth?.person as { id: number; uuid: string; name: string } | null;
+    const authPerson = (props as any).auth?.person as {
+        id: number;
+        uuid: string;
+        name: string;
+    } | null;
     const mainRef = useRef<HTMLDivElement>(null);
 
     const patternStyle = useMemo(() => {
@@ -55,7 +66,8 @@ export default function DashboardLayout({
 
         if (patternStyle?.backgroundImage) {
             element.style.backgroundImage = patternStyle.backgroundImage;
-            element.style.backgroundRepeat = patternStyle.backgroundRepeat ?? '';
+            element.style.backgroundRepeat =
+                patternStyle.backgroundRepeat ?? '';
             element.style.backgroundSize = patternStyle.backgroundSize ?? '';
         } else {
             element.style.backgroundImage = '';
@@ -77,11 +89,31 @@ export default function DashboardLayout({
             label: 'Dashboard',
             href: dashboardRoute().url,
         },
-        { id: 'search', icon: Search, label: 'Search', href: dashboard.search().url },
-        { id: 'notifications', icon: Bell, label: 'Notifications', href: dashboard.notifications().url },
-        { id: 'analytics', icon: BarChart3, label: 'Analytics', href: dashboard.analytics().url },
+        {
+            id: 'search',
+            icon: Search,
+            label: 'Search',
+            href: dashboard.search().url,
+        },
+        {
+            id: 'notifications',
+            icon: Bell,
+            label: 'Notifications',
+            href: dashboard.notifications().url,
+        },
+        {
+            id: 'analytics',
+            icon: BarChart3,
+            label: 'Analytics',
+            href: dashboard.analytics().url,
+        },
         // ...(authPerson ? [{ id: 'profile', icon: User, label: 'Profile', href: '/settings/about' }] : []),
-        { id: 'settings', icon: Settings, label: 'Settings', href: '/settings/house' },
+        {
+            id: 'settings',
+            icon: Settings,
+            label: 'Settings',
+            href: '/settings/house',
+        },
     ];
 
     const handleLogout = () => {
@@ -104,12 +136,12 @@ export default function DashboardLayout({
                     <img
                         src="/logo-stacked-dark.png"
                         alt="ULO OF STORIES"
-                        className="h-auto dark:hidden w-full object-contain"
+                        className="h-auto w-full object-contain dark:hidden"
                     />
                     <img
                         src="/logo-stacked.png"
                         alt="ULO OF STORIES"
-                        className="h-auto dark:block hidden w-full object-contain"
+                        className="hidden h-auto w-full object-contain dark:block"
                     />
                 </Link>
 
@@ -146,14 +178,14 @@ export default function DashboardLayout({
             {/* Mobile Bottom Nav */}
             <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-4 md:hidden">
                 <div className="pointer-events-auto relative grid h-20 grid-cols-5 items-center rounded-[30px] border border-white/10 bg-surface/85 px-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-1 ring-white/5 backdrop-blur-2xl">
-
                     {/* Search */}
                     <Link
                         href={dashboard.search().url}
-                        className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${isActive(dashboard.search().url)
+                        className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${
+                            isActive(dashboard.search().url)
                                 ? 'bg-accent-gold/10 text-accent-gold'
                                 : 'text-text-muted hover:bg-white/5 hover:text-white'
-                            }`}
+                        }`}
                     >
                         <Search size={20} />
                         <span className="text-[10px] font-medium">Search</span>
@@ -162,10 +194,11 @@ export default function DashboardLayout({
                     {/* Notifications */}
                     <Link
                         href={dashboard.notifications().url}
-                        className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${isActive(dashboard.notifications().url)
+                        className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${
+                            isActive(dashboard.notifications().url)
                                 ? 'bg-accent-gold/10 text-accent-gold'
                                 : 'text-text-muted hover:bg-white/5 hover:text-white'
-                            }`}
+                        }`}
                     >
                         <Bell size={20} />
 
@@ -178,10 +211,11 @@ export default function DashboardLayout({
                     <div className="flex justify-center">
                         <Link
                             href={dashboardRoute().url}
-                            className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-full border-4 border-bg-dark transition-all duration-300 ${isActive(dashboardRoute().url)
+                            className={`-mt-10 flex h-16 w-16 items-center justify-center rounded-full border-4 border-bg-dark transition-all duration-300 ${
+                                isActive(dashboardRoute().url)
                                     ? 'bg-accent-gold text-bg-dark shadow-[0_18px_40px_rgba(198,161,91,.45)]'
                                     : 'bg-surface text-text-muted shadow-lg'
-                                }`}
+                            }`}
                         >
                             <LayoutGrid size={24} />
                         </Link>
@@ -190,13 +224,16 @@ export default function DashboardLayout({
                     {/* Settings */}
                     <Link
                         href="/settings/house"
-                        className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${isActive('/settings/house')
+                        className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-all ${
+                            isActive('/settings/house')
                                 ? 'bg-accent-gold/10 text-accent-gold'
                                 : 'text-text-muted hover:bg-white/5 hover:text-white'
-                            }`}
+                        }`}
                     >
                         <Settings size={20} />
-                        <span className="text-[10px] font-medium">Settings</span>
+                        <span className="text-[10px] font-medium">
+                            Settings
+                        </span>
                     </Link>
 
                     {/* Logout */}
@@ -211,7 +248,10 @@ export default function DashboardLayout({
             </nav>
 
             {/* Main Content */}
-            <main ref={mainRef} className="flex min-w-0 w-full grow flex-col overflow-x-hidden pb-32 md:pb-8">
+            <main
+                ref={mainRef}
+                className="flex w-full min-w-0 grow flex-col overflow-x-hidden pb-32 md:pb-8"
+            >
                 {/* House Thumbnail Banner */}
                 {/* {authUser?.house_thumbnail_url && (
                     <div className="h-32 shrink-0 overflow-hidden md:h-48">

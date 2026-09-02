@@ -1,6 +1,19 @@
 import { Link, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { Users, Clock, BookOpen, Image, Globe, Shield, Activity, ChevronLeft, User, Pencil, Heart, FileText } from 'lucide-react';
+import {
+    Users,
+    Clock,
+    BookOpen,
+    Image,
+    Globe,
+    Shield,
+    Activity,
+    ChevronLeft,
+    User,
+    Pencil,
+    Heart,
+    FileText,
+} from 'lucide-react';
 import React from 'react';
 import { show as peopleShow } from '@/routes/people';
 import type { Person, PersonStats } from '@/types/person';
@@ -18,12 +31,28 @@ const tabs: Tab[] = [
     { name: 'Stories', route: 'stories', icon: <BookOpen size={16} /> },
     { name: 'Photos & Documents', route: 'media', icon: <Image size={16} /> },
     { name: 'Heritage', route: 'heritage', icon: <Globe size={16} /> },
-    { name: 'Memories From Others', route: 'memories', icon: <Heart size={16} /> },
-    { name: 'Permissions & Consent', route: 'permissions', icon: <Shield size={16} /> },
+    {
+        name: 'Memories From Others',
+        route: 'memories',
+        icon: <Heart size={16} />,
+    },
+    {
+        name: 'Permissions & Consent',
+        route: 'permissions',
+        icon: <Shield size={16} />,
+    },
     { name: 'Admin Notes', route: 'activity', icon: <FileText size={16} /> },
 ];
 
-export default function PersonLayout({ children, person, stats }: { children: React.ReactNode; person: Person; stats?: PersonStats }) {
+export default function PersonLayout({
+    children,
+    person,
+    stats,
+}: {
+    children: React.ReactNode;
+    person: Person;
+    stats?: PersonStats;
+}) {
     const { url } = usePage();
     const currentTab = url.split('/').pop() || '';
 
@@ -52,9 +81,12 @@ export default function PersonLayout({ children, person, stats }: { children: Re
                                 <h1 className="truncate text-2xl font-bold text-text-primary md:text-3xl">
                                     {person.name}
                                 </h1>
-                                {person.legal_name && person.legal_name !== person.name && (
-                                    <p className="truncate text-sm text-text-muted">{person.legal_name}</p>
-                                )}
+                                {person.legal_name &&
+                                    person.legal_name !== person.name && (
+                                        <p className="truncate text-sm text-text-muted">
+                                            {person.legal_name}
+                                        </p>
+                                    )}
                             </div>
                             {person.is_owner && (
                                 <Link

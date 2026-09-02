@@ -34,12 +34,12 @@ export default function Notifications({ notifications }: NotificationsProps) {
 
     const filteredNotifications = notifications.data.filter((n) => {
         if (filter === 'All') {
-return true;
-}
+            return true;
+        }
 
         if (filter === 'Unread') {
-return !n.read_at;
-}
+            return !n.read_at;
+        }
 
         return true;
     });
@@ -58,7 +58,8 @@ return !n.read_at;
                             Notifications
                         </h2>
                         <p className="text-xs text-text-muted md:text-sm">
-                            Stay updated with your family's latest legacy movements.
+                            Stay updated with your family's latest legacy
+                            movements.
                         </p>
                     </div>
                     <div className="flex self-start rounded-xl border border-border-subtle bg-surface p-1 sm:self-auto">
@@ -67,9 +68,9 @@ return !n.read_at;
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={`rounded-lg px-4 py-1.5 text-[10px] font-bold transition-all md:text-xs ${
-                                    filter === f 
-                                    ? 'bg-accent-gold text-bg-dark shadow-lg shadow-accent-gold/20' 
-                                    : 'text-text-muted hover:text-text-primary'
+                                    filter === f
+                                        ? 'bg-accent-gold text-bg-dark shadow-lg shadow-accent-gold/20'
+                                        : 'text-text-muted hover:text-text-primary'
                                 }`}
                             >
                                 {f}
@@ -85,9 +86,9 @@ return !n.read_at;
                                 key={n.id}
                                 onClick={() => !n.read_at && markAsRead(n.id)}
                                 className={`group flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all md:gap-4 md:p-6 ${
-                                    !n.read_at 
-                                    ? 'border-accent-gold/20 bg-accent-gold/5 shadow-[0_0_20px_rgba(198,161,91,0.05)]' 
-                                    : 'border-border-subtle bg-surface hover:border-accent-gold/20'
+                                    !n.read_at
+                                        ? 'border-accent-gold/20 bg-accent-gold/5 shadow-[0_0_20px_rgba(198,161,91,0.05)]'
+                                        : 'border-border-subtle bg-surface hover:border-accent-gold/20'
                                 }`}
                             >
                                 <div className="relative">
@@ -108,13 +109,22 @@ return !n.read_at;
                                 </div>
                                 <div className="min-w-0 grow">
                                     <div className="mb-1 flex items-center justify-between gap-2">
-                                        <span className={`truncate text-sm font-bold transition-colors group-hover:text-accent-gold md:text-base ${
-                                            !n.read_at ? 'text-text-primary' : 'text-text-primary/80'
-                                        }`}>
+                                        <span
+                                            className={`truncate text-sm font-bold transition-colors group-hover:text-accent-gold md:text-base ${
+                                                !n.read_at
+                                                    ? 'text-text-primary'
+                                                    : 'text-text-primary/80'
+                                            }`}
+                                        >
                                             {n.data.title || 'Notification'}
                                         </span>
                                         <span className="shrink-0 font-mono text-[9px] text-text-muted md:text-[10px]">
-                                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(
+                                                n.created_at,
+                                            ).toLocaleTimeString([], {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })}
                                         </span>
                                     </div>
                                     <p className="line-clamp-2 text-xs leading-relaxed text-text-muted md:line-clamp-none md:text-sm">
@@ -132,7 +142,8 @@ return !n.read_at;
                                 <Bell size={32} />
                             </div>
                             <p className="text-sm text-text-muted italic">
-                                No {filter === 'Unread' ? 'unread' : ''} notifications found
+                                No {filter === 'Unread' ? 'unread' : ''}{' '}
+                                notifications found
                             </p>
                         </div>
                     )}
@@ -141,4 +152,3 @@ return !n.read_at;
         </div>
     );
 }
-

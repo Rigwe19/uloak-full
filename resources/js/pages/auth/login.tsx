@@ -49,7 +49,7 @@ export default function Login({
     useEffect(() => {
         setIsPasskeySupported(
             typeof window !== 'undefined' &&
-            window.PublicKeyCredential !== undefined,
+                window.PublicKeyCredential !== undefined,
         );
     }, []);
 
@@ -73,8 +73,8 @@ export default function Login({
 
     const handlePasskeyLogin = async () => {
         if (!isPasskeySupported) {
-return;
-}
+            return;
+        }
 
         setIsPasskeyLoggingIn(true);
 
@@ -93,17 +93,37 @@ return;
 
             // WebAuthn challenge and credential IDs come as base64url strings from JSON;
             // they must be converted to ArrayBuffer for the browser API.
-            if (rawOptions.challenge && typeof rawOptions.challenge === 'string') {
-                rawOptions.challenge = Uint8Array.from(atob(rawOptions.challenge.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
+            if (
+                rawOptions.challenge &&
+                typeof rawOptions.challenge === 'string'
+            ) {
+                rawOptions.challenge = Uint8Array.from(
+                    atob(
+                        rawOptions.challenge
+                            .replace(/-/g, '+')
+                            .replace(/_/g, '/'),
+                    ),
+                    (c) => c.charCodeAt(0),
+                ).buffer;
             }
 
             if (rawOptions.allowCredentials) {
-                rawOptions.allowCredentials = rawOptions.allowCredentials.map((cred: any) => ({
-                    ...cred,
-                    id: typeof cred.id === 'string'
-                        ? Uint8Array.from(atob(cred.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer
-                        : cred.id,
-                }));
+                rawOptions.allowCredentials = rawOptions.allowCredentials.map(
+                    (cred: any) => ({
+                        ...cred,
+                        id:
+                            typeof cred.id === 'string'
+                                ? Uint8Array.from(
+                                      atob(
+                                          cred.id
+                                              .replace(/-/g, '+')
+                                              .replace(/_/g, '/'),
+                                      ),
+                                      (c) => c.charCodeAt(0),
+                                  ).buffer
+                                : cred.id,
+                    }),
+                );
             }
 
             const credential = await navigator.credentials.get({
@@ -119,9 +139,10 @@ return;
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    'X-CSRF-TOKEN': document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') ?? '',
+                    'X-CSRF-TOKEN':
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute('content') ?? '',
                 },
                 body: JSON.stringify({
                     id: (credential as PublicKeyCredential).id,
@@ -156,22 +177,19 @@ return;
                                 ).signature,
                             ),
                         ),
-                        userHandle: ((
+                        userHandle: (
                             (credential as PublicKeyCredential)
                                 .response as AuthenticatorAssertionResponse
                         ).userHandle
                             ? Array.from(
-                                new Uint8Array(
-                                    (
-                                        (
-                                            (credential as PublicKeyCredential)
-                                                .response as AuthenticatorAssertionResponse
-                                        ).userHandle as ArrayBuffer
-                                    ),
-                                ),
-                            )
-                            : null
-                        ),
+                                  new Uint8Array(
+                                      (
+                                          (credential as PublicKeyCredential)
+                                              .response as AuthenticatorAssertionResponse
+                                      ).userHandle as ArrayBuffer,
+                                  ),
+                              )
+                            : null,
                     },
                 }),
             });
@@ -210,7 +228,6 @@ return;
         },
     ];
     const [eyeOpen, setEyeOpen] = useState(false);
-    
 
     return (
         <div className="relative flex max-h-screen items-center justify-center overflow-hidden bg-bg-dark md:p-8">
@@ -276,18 +293,37 @@ return;
                                     />
                                     <div className="relative w-full">
                                         <Input
-                                            type={!eyeOpen ? "password" : 'text'}
+                                            type={
+                                                !eyeOpen ? 'password' : 'text'
+                                            }
                                             placeholder="Password"
                                             required
                                             value={data.password}
                                             onChange={(e) =>
-                                                setData('password', e.target.value)
+                                                setData(
+                                                    'password',
+                                                    e.target.value,
+                                                )
                                             }
                                             className="w-full rounded-2xl border-border-subtle bg-surface py-7 pr-4 pl-12 text-base text-text-primary transition-all placeholder:text-text-muted/50 focus:border-accent-gold/50"
                                         />
-                                        <div className="absolute right-0 top-0 bottom-0 w-16 flex justify-center items-center text-accent-gold">
-                                            {eyeOpen && <Eye onClick={() => setEyeOpen(false)} className='' />}
-                                            {!eyeOpen && <EyeClosed onClick={() => setEyeOpen(true)} className='' />}
+                                        <div className="absolute top-0 right-0 bottom-0 flex w-16 items-center justify-center text-accent-gold">
+                                            {eyeOpen && (
+                                                <Eye
+                                                    onClick={() =>
+                                                        setEyeOpen(false)
+                                                    }
+                                                    className=""
+                                                />
+                                            )}
+                                            {!eyeOpen && (
+                                                <EyeClosed
+                                                    onClick={() =>
+                                                        setEyeOpen(true)
+                                                    }
+                                                    className=""
+                                                />
+                                            )}
                                         </div>
                                     </div>
 
@@ -332,7 +368,9 @@ return;
                                 disabled={processing}
                                 className="w-full rounded-2xl bg-accent-gold py-7 text-lg font-bold text-bg-dark shadow-[0_20px_40px_rgba(198,161,91,0.1)] transition-all hover:bg-accent-gold/90 disabled:opacity-50"
                             >
-                                {processing && <Loader className='animate-spin' />}
+                                {processing && (
+                                    <Loader className="animate-spin" />
+                                )}
                                 {processing
                                     ? 'Verifying...'
                                     : 'Enter the House'}

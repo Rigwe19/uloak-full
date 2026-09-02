@@ -9,13 +9,20 @@ interface VideoScrubThumbnailProps {
     duration: number;
 }
 
-export function VideoScrubThumbnail({ sprite, time, duration }: VideoScrubThumbnailProps) {
-    const { getBackgroundStyle, formatTimestamp } = useSpriteScrub({ sprite, duration });
+export function VideoScrubThumbnail({
+    sprite,
+    time,
+    duration,
+}: VideoScrubThumbnailProps) {
+    const { getBackgroundStyle, formatTimestamp } = useSpriteScrub({
+        sprite,
+        duration,
+    });
     const style = getBackgroundStyle(time);
 
     if (!style) {
         return (
-            <div className="bg-black/90 border border-white/10 rounded-lg px-2 py-1 text-[10px] font-mono text-white shadow-xl">
+            <div className="rounded-lg border border-white/10 bg-black/90 px-2 py-1 font-mono text-[10px] text-white shadow-xl">
                 {formatTimestamp(time)}
             </div>
         );
@@ -28,7 +35,7 @@ export function VideoScrubThumbnail({ sprite, time, duration }: VideoScrubThumbn
             className="flex flex-col items-center gap-1"
         >
             <div
-                className="rounded-lg border border-white/10 shadow-xl overflow-hidden"
+                className="overflow-hidden rounded-lg border border-white/10 shadow-xl"
                 style={{ width: style.width, height: style.height }}
             >
                 <div
@@ -41,7 +48,7 @@ export function VideoScrubThumbnail({ sprite, time, duration }: VideoScrubThumbn
                     }}
                 />
             </div>
-            <span className="text-[10px] font-mono text-white bg-black/80 px-1.5 py-0.5 rounded">
+            <span className="rounded bg-black/80 px-1.5 py-0.5 font-mono text-[10px] text-white">
                 {formatTimestamp(time)}
             </span>
         </motion.div>

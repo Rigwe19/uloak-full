@@ -47,15 +47,18 @@ export default function HouseLayout({
     }, [houseOwner?.house_pattern, houseOwner?.house_pattern_upload]);
     useEffect(() => {
         if (patternStyle?.backgroundImage && mainRef.current) {
-            mainRef.current.style.backgroundImage = patternStyle.backgroundImage;
+            mainRef.current.style.backgroundImage =
+                patternStyle.backgroundImage;
 
             if (patternStyle.backgroundRepeat) {
-mainRef.current.style.backgroundRepeat = patternStyle.backgroundRepeat;
-}
+                mainRef.current.style.backgroundRepeat =
+                    patternStyle.backgroundRepeat;
+            }
 
             if (patternStyle.backgroundSize) {
-mainRef.current.style.backgroundSize = patternStyle.backgroundSize;
-}
+                mainRef.current.style.backgroundSize =
+                    patternStyle.backgroundSize;
+            }
         } else {
             mainRef.current!.style.backgroundImage = '';
             mainRef.current!.style.backgroundRepeat = '';
@@ -104,12 +107,12 @@ mainRef.current.style.backgroundSize = patternStyle.backgroundSize;
                     <img
                         src="/logo-stacked-dark.png"
                         alt="ULO OF STORIES"
-                        className="h-auto dark:hidden w-full object-contain"
+                        className="h-auto w-full object-contain dark:hidden"
                     />
                     <img
                         src="/logo-stacked.png"
                         alt="ULO OF STORIES"
-                        className="h-auto dark:block hidden w-full object-contain"
+                        className="hidden h-auto w-full object-contain dark:block"
                     />
                 </Link>
 
@@ -151,14 +154,18 @@ mainRef.current.style.backgroundSize = patternStyle.backgroundSize;
                         className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(dashboard().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
                     >
                         <LayoutDashboard size={20} />
-                        <span className="text-[9px] font-medium tracking-wider uppercase">Home</span>
+                        <span className="text-[9px] font-medium tracking-wider uppercase">
+                            Home
+                        </span>
                     </Link>
                     <Link
                         href={settingsRoute().url}
                         className={`flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 transition-all ${isActive(settingsRoute().url) ? 'bg-accent-gold/10 text-accent-gold' : 'text-text-muted'}`}
                     >
                         <Settings size={20} />
-                        <span className="text-[9px] font-medium tracking-wider uppercase">Settings</span>
+                        <span className="text-[9px] font-medium tracking-wider uppercase">
+                            Settings
+                        </span>
                     </Link>
 
                     <Link
@@ -175,13 +182,18 @@ mainRef.current.style.backgroundSize = patternStyle.backgroundSize;
                         className="flex flex-col items-center gap-0.5 rounded-2xl px-3 py-2 text-text-muted transition-colors hover:text-red-400"
                     >
                         <LogOut size={20} />
-                        <span className="text-[9px] font-medium tracking-wider uppercase">Leave</span>
+                        <span className="text-[9px] font-medium tracking-wider uppercase">
+                            Leave
+                        </span>
                     </button>
                 </div>
             </nav>
 
             {/* Main Content */}
-            <main ref={mainRef} className="flex min-w-0 w-full grow flex-col overflow-x-hidden pb-32 md:pb-8">
+            <main
+                ref={mainRef}
+                className="flex w-full min-w-0 grow flex-col overflow-x-hidden pb-32 md:pb-8"
+            >
                 <PwaInstallPrompt />
 
                 {/* Page Content with Pattern */}

@@ -158,8 +158,9 @@ class LaravelImageProcessor implements ImageProcessor
             default => $transformed->toWebp(),
         };
 
-        $transformed->quality($quality);
-        $transformed->store($cachePath, $cacheDisk);
+        $final = $transformed->quality($quality);
+        $bytes = $final->toBytes();
+        $this->storage->put($cachePath, $bytes, $cacheDisk);
 
         return $cachePath;
     }

@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { 
-    Activity as ActivityIcon, 
+import {
+    Activity as ActivityIcon,
     Search,
     Filter,
     Calendar,
@@ -9,7 +9,7 @@ import {
     Globe,
     Clock,
     Mail,
-    UserX
+    UserX,
 } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/dashboard/ui';
@@ -50,7 +50,7 @@ export default function AdminActivityLogs({ logs, filters }: Props) {
     return (
         <AdminLayout>
             <Head title="Activity Logs" />
-            
+
             <div className="space-y-10 p-6 md:p-10">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
@@ -58,7 +58,8 @@ export default function AdminActivityLogs({ logs, filters }: Props) {
                             Activity Logs
                         </h1>
                         <p className="mt-2 text-text-muted">
-                            Monitor all actions performed by users and guests on the platform.
+                            Monitor all actions performed by users and guests on
+                            the platform.
                         </p>
                     </div>
                 </div>
@@ -67,33 +68,42 @@ export default function AdminActivityLogs({ logs, filters }: Props) {
                 <div className="rounded-3xl border border-border-subtle bg-surface/20 p-6 backdrop-blur-md">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                         <div className="relative">
-                            <Search className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted" size={16} />
-                            <input 
+                            <Search
+                                className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted"
+                                size={16}
+                            />
+                            <input
                                 type="text"
                                 name="search"
                                 placeholder="Search logs..."
                                 defaultValue={filters.search}
-                                className="h-10 w-full rounded-xl border border-border-subtle bg-surface/50 pl-10 pr-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
+                                className="h-10 w-full rounded-xl border border-border-subtle bg-surface/50 pr-4 pl-10 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                             />
                         </div>
                         <div className="relative">
-                            <Calendar className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted" size={16} />
-                            <input 
+                            <Calendar
+                                className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted"
+                                size={16}
+                            />
+                            <input
                                 type="date"
                                 name="from"
                                 placeholder="From"
                                 defaultValue={filters.from}
-                                className="h-10 w-full rounded-xl border border-border-subtle bg-surface/50 pl-10 pr-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
+                                className="h-10 w-full rounded-xl border border-border-subtle bg-surface/50 pr-4 pl-10 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                             />
                         </div>
                         <div className="relative">
-                            <Calendar className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted" size={16} />
-                            <input 
+                            <Calendar
+                                className="absolute top-1/2 left-3 -translate-y-1/2 text-text-muted"
+                                size={16}
+                            />
+                            <input
                                 type="date"
                                 name="to"
                                 placeholder="To"
                                 defaultValue={filters.to}
-                                className="h-10 w-full rounded-xl border border-border-subtle bg-surface/50 pl-10 pr-4 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
+                                className="h-10 w-full rounded-xl border border-border-subtle bg-surface/50 pr-4 pl-10 text-sm text-text-primary focus:border-accent-gold/50 focus:outline-hidden"
                             />
                         </div>
                         <Button variant="outline" size="sm" className="gap-2">
@@ -108,15 +118,23 @@ export default function AdminActivityLogs({ logs, filters }: Props) {
                         <table className="w-full text-left">
                             <thead className="border-b border-border-subtle bg-surface/50">
                                 <tr>
-                                    <th className="px-8 py-5 text-[10px] font-bold tracking-widest text-text-muted uppercase">Actor</th>
-                                    <th className="px-8 py-5 text-[10px] font-bold tracking-widest text-text-muted uppercase">Action</th>
-                                    <th className="px-8 py-5 text-[10px] font-bold tracking-widest text-text-muted uppercase">IP Address</th>
-                                    <th className="px-8 py-5 text-[10px] font-bold tracking-widest text-text-muted uppercase">Date/Time</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                        Actor
+                                    </th>
+                                    <th className="px-8 py-5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                        Action
+                                    </th>
+                                    <th className="px-8 py-5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                        IP Address
+                                    </th>
+                                    <th className="px-8 py-5 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                        Date/Time
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border-subtle/50">
                                 {logs.data.map((log, i) => (
-                                    <motion.tr 
+                                    <motion.tr
                                         key={log.id}
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -125,11 +143,20 @@ export default function AdminActivityLogs({ logs, filters }: Props) {
                                     >
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-3">
-                                                <div className={`rounded-full p-2 ${log.actor.type === 'user' ? 'bg-accent-gold/20 text-accent-gold' : 'bg-text-muted/20 text-text-muted'}`}>
-                                                    {log.actor.type === 'user' ? <User size={14} /> : <UserX size={14} />}
+                                                <div
+                                                    className={`rounded-full p-2 ${log.actor.type === 'user' ? 'bg-accent-gold/20 text-accent-gold' : 'bg-text-muted/20 text-text-muted'}`}
+                                                >
+                                                    {log.actor.type ===
+                                                    'user' ? (
+                                                        <User size={14} />
+                                                    ) : (
+                                                        <UserX size={14} />
+                                                    )}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-bold text-text-primary">{log.actor.name}</span>
+                                                    <span className="text-sm font-bold text-text-primary">
+                                                        {log.actor.name}
+                                                    </span>
                                                     {log.actor.email && (
                                                         <span className="flex items-center gap-1 text-xs text-text-muted">
                                                             <Mail size={10} />
@@ -140,25 +167,34 @@ export default function AdminActivityLogs({ logs, filters }: Props) {
                                             </div>
                                         </td>
                                         <td className="px-8 py-5">
-                                            <span className="text-sm text-text-primary">{log.description}</span>
+                                            <span className="text-sm text-text-primary">
+                                                {log.description}
+                                            </span>
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-2 text-text-muted">
                                                 <Globe size={14} />
-                                                <span className="text-sm">{log.ip_address}</span>
+                                                <span className="text-sm">
+                                                    {log.ip_address}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-2 text-text-muted">
                                                 <Clock size={14} />
                                                 <span className="text-sm">
-                                                    {new Date(log.created_at).toLocaleString(undefined, { 
-                                                        year: 'numeric', 
-                                                        month: 'short', 
-                                                        day: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit'
-                                                    })}
+                                                    {new Date(
+                                                        log.created_at,
+                                                    ).toLocaleString(
+                                                        undefined,
+                                                        {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                        },
+                                                    )}
                                                 </span>
                                             </div>
                                         </td>
@@ -167,7 +203,7 @@ export default function AdminActivityLogs({ logs, filters }: Props) {
                             </tbody>
                         </table>
                     </div>
-                    
+
                     {/* Pagination */}
                     {logs.links.length > 3 && (
                         <div className="flex items-center justify-center gap-2 border-t border-border-subtle p-6">
@@ -176,13 +212,15 @@ export default function AdminActivityLogs({ logs, filters }: Props) {
                                     key={i}
                                     disabled={!link.url}
                                     className={`rounded-lg px-4 py-2 text-sm transition-colors ${
-                                        link.active 
-                                            ? 'bg-accent-gold text-white' 
-                                            : link.url 
-                                                ? 'bg-surface hover:bg-surface/80 text-text-primary' 
-                                                : 'text-text-muted cursor-not-allowed'
+                                        link.active
+                                            ? 'bg-accent-gold text-white'
+                                            : link.url
+                                              ? 'bg-surface text-text-primary hover:bg-surface/80'
+                                              : 'cursor-not-allowed text-text-muted'
                                     }`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                    dangerouslySetInnerHTML={{
+                                        __html: link.label,
+                                    }}
                                 />
                             ))}
                         </div>

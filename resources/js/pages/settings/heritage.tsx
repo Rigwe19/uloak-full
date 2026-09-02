@@ -10,7 +10,11 @@ interface SettingsHeritageProps {
     languages: any[];
 }
 
-export default function SettingsHeritage({ person, heritage, languages }: SettingsHeritageProps) {
+export default function SettingsHeritage({
+    person,
+    heritage,
+    languages,
+}: SettingsHeritageProps) {
     const [editing, setEditing] = useState(false);
 
     const { data, setData, put, processing, errors, wasSuccessful } = useForm({
@@ -50,10 +54,17 @@ export default function SettingsHeritage({ person, heritage, languages }: Settin
 
     return (
         <>
-            <Head title={(person?.name || 'Heritage') + ' - Ulo of Storiesf Storiesf Stories'} />
+            <Head
+                title={
+                    (person?.name || 'Heritage') +
+                    ' - Ulo of Storiesf Storiesf Stories'
+                }
+            />
 
             <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold tracking-tight text-text-primary">Heritage</h2>
+                <h2 className="text-lg font-bold tracking-tight text-text-primary">
+                    Heritage
+                </h2>
                 {editing ? (
                     <div className="flex items-center gap-2">
                         <button
@@ -68,7 +79,11 @@ export default function SettingsHeritage({ person, heritage, languages }: Settin
                             disabled={processing}
                             className="flex items-center gap-1.5 rounded-lg bg-accent-gold px-3 py-1.5 text-xs font-bold text-bg-dark transition-all hover:bg-accent-gold/90 disabled:opacity-50"
                         >
-                            {processing ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            {processing ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <Save size={14} />
+                            )}
                             Save
                         </button>
                     </div>
@@ -83,7 +98,11 @@ export default function SettingsHeritage({ person, heritage, languages }: Settin
                 )}
             </div>
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+            >
                 {editing ? (
                     <section className="rounded-xl border border-border-subtle bg-surface p-5">
                         <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-text-primary">
@@ -92,21 +111,32 @@ export default function SettingsHeritage({ person, heritage, languages }: Settin
                         <div className="space-y-4">
                             {fields.map(({ key, label }) => (
                                 <div key={key}>
-                                    <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">{label}</label>
+                                    <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                        {label}
+                                    </label>
                                     <input
                                         value={(data.heritage as any)[key]}
-                                        onChange={(e) => updateField(key, e.target.value)}
-                                        className="mt-1 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-all focus:border-accent-gold/50"
+                                        onChange={(e) =>
+                                            updateField(key, e.target.value)
+                                        }
+                                        className="mt-1 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold/50"
                                     />
                                 </div>
                             ))}
                             <div>
-                                <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">Migration Story</label>
+                                <label className="ml-1 text-[10px] font-bold tracking-widest text-text-muted uppercase">
+                                    Migration Story
+                                </label>
                                 <textarea
                                     value={data.heritage.migration_story}
-                                    onChange={(e) => updateField('migration_story', e.target.value)}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'migration_story',
+                                            e.target.value,
+                                        )
+                                    }
                                     rows={4}
-                                    className="mt-1 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary outline-none transition-all focus:border-accent-gold/50"
+                                    className="mt-1 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-2.5 text-sm text-text-primary transition-all outline-none focus:border-accent-gold/50"
                                 />
                             </div>
                         </div>
@@ -118,15 +148,64 @@ export default function SettingsHeritage({ person, heritage, languages }: Settin
                                 <Globe size={16} /> Heritage
                             </h3>
                             <dl className="space-y-2 text-sm">
-                                {heritage.nationality && <div><dt className="inline text-text-muted">Nationality: </dt><dd className="inline text-text-primary">{heritage.nationality}</dd></div>}
-                                {heritage.ethnicity && <div><dt className="inline text-text-muted">Ethnicity: </dt><dd className="inline text-text-primary">{heritage.ethnicity}</dd></div>}
-                                {heritage.tribe && <div><dt className="inline text-text-muted">Tribe: </dt><dd className="inline text-text-primary">{heritage.tribe}</dd></div>}
-                                {heritage.clan && <div><dt className="inline text-text-muted">Clan: </dt><dd className="inline text-text-primary">{heritage.clan}</dd></div>}
-                                {heritage.religion && <div><dt className="inline text-text-muted">Religion: </dt><dd className="inline text-text-primary">{heritage.religion}</dd></div>}
+                                {heritage.nationality && (
+                                    <div>
+                                        <dt className="inline text-text-muted">
+                                            Nationality:{' '}
+                                        </dt>
+                                        <dd className="inline text-text-primary">
+                                            {heritage.nationality}
+                                        </dd>
+                                    </div>
+                                )}
+                                {heritage.ethnicity && (
+                                    <div>
+                                        <dt className="inline text-text-muted">
+                                            Ethnicity:{' '}
+                                        </dt>
+                                        <dd className="inline text-text-primary">
+                                            {heritage.ethnicity}
+                                        </dd>
+                                    </div>
+                                )}
+                                {heritage.tribe && (
+                                    <div>
+                                        <dt className="inline text-text-muted">
+                                            Tribe:{' '}
+                                        </dt>
+                                        <dd className="inline text-text-primary">
+                                            {heritage.tribe}
+                                        </dd>
+                                    </div>
+                                )}
+                                {heritage.clan && (
+                                    <div>
+                                        <dt className="inline text-text-muted">
+                                            Clan:{' '}
+                                        </dt>
+                                        <dd className="inline text-text-primary">
+                                            {heritage.clan}
+                                        </dd>
+                                    </div>
+                                )}
+                                {heritage.religion && (
+                                    <div>
+                                        <dt className="inline text-text-muted">
+                                            Religion:{' '}
+                                        </dt>
+                                        <dd className="inline text-text-primary">
+                                            {heritage.religion}
+                                        </dd>
+                                    </div>
+                                )}
                                 {heritage.migration_story && (
                                     <div className="mt-3">
-                                        <dt className="mb-1 text-sm font-bold text-text-primary">Migration Story</dt>
-                                        <dd className="text-sm text-text-muted">{heritage.migration_story}</dd>
+                                        <dt className="mb-1 text-sm font-bold text-text-primary">
+                                            Migration Story
+                                        </dt>
+                                        <dd className="text-sm text-text-muted">
+                                            {heritage.migration_story}
+                                        </dd>
                                     </div>
                                 )}
                             </dl>
@@ -141,9 +220,15 @@ export default function SettingsHeritage({ person, heritage, languages }: Settin
                         </h3>
                         <div className="flex flex-wrap gap-2">
                             {languages.map((l: any) => (
-                                <span key={l.id} className="rounded-full border border-border-subtle bg-surface px-3 py-1 text-xs font-medium text-text-primary">
-                                    {l.language}{l.dialect ? ` (${l.dialect})` : ''}
-                                    <span className="ml-1 text-text-muted">· {l.proficiency}</span>
+                                <span
+                                    key={l.id}
+                                    className="rounded-full border border-border-subtle bg-surface px-3 py-1 text-xs font-medium text-text-primary"
+                                >
+                                    {l.language}
+                                    {l.dialect ? ` (${l.dialect})` : ''}
+                                    <span className="ml-1 text-text-muted">
+                                        · {l.proficiency}
+                                    </span>
                                 </span>
                             ))}
                         </div>
@@ -151,7 +236,9 @@ export default function SettingsHeritage({ person, heritage, languages }: Settin
                 )}
 
                 {!heritage && languages.length === 0 && !editing && (
-                    <div className="py-16 text-center text-sm italic text-text-muted">No heritage data recorded.</div>
+                    <div className="py-16 text-center text-sm text-text-muted italic">
+                        No heritage data recorded.
+                    </div>
                 )}
             </motion.div>
         </>
