@@ -28,7 +28,7 @@ This is **Uloak Full** — the Laravel + Inertia + React codebase that powers `w
 
 | Layer | Tech | Version |
 |---|---|---|
-| Language | PHP | ^8.3 (prod 8.3, CI 8.3) |
+| Language | PHP | ^8.4 (prod 8.4+, CI 8.4/8.5) |
 | Framework | Laravel | ^13.20 |
 | Auth | Fortify + Sanctum + Socialite (Google/Apple) + Passkeys | 1.34 / 4.0 / 5.27 |
 | Frontend | React + Inertia | 19.2 / 3.0 |

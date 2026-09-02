@@ -49,7 +49,7 @@ export function RegionSelector({
             document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    return (
+    return createPortal(
         <div
             data-region-selector
             className={`relative inline-block ${className}`}
@@ -70,7 +70,7 @@ export function RegionSelector({
                 />
             </button>
 
-            {isOpen && createPortal(
+            {isOpen && (
                 <ul
                     role="listbox"
                     className="absolute top-full left-0 z-50 mt-2 w-64 animate-in rounded-xl border border-border-subtle bg-surface py-2 shadow-lg duration-200 fade-in-0 zoom-in-95"
@@ -99,9 +99,9 @@ export function RegionSelector({
                             )}
                         </li>
                     ))}
-                </ul>,
-                document.body,
+                </ul>
             )}
-        </div>
+        </div>,
+                document.body,
     );
 }

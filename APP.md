@@ -8,7 +8,7 @@
 - **Current wedge:** Wedding-First. Public brand is **Ulo**, launch product is **Ulo Wedding Room** at `/weddings` (one-off). Full monetization is live: Starter free → Full Room one-off → Family Archive recurring, 5-region pricing.
 
 ## Stack snapshot
-- PHP ^8.3, `laravel/framework ^13.20`, Fortify/Sanctum/Socialite (Google/Apple) + Passkeys.
+- PHP ^8.4, `laravel/framework ^13.20`, Fortify/Sanctum/Socialite (Google/Apple) + Passkeys.
 - **Brand:** Forest Black `#0E2A1A`, Story Cream `#F2EDE0`, Heritage Gold `#C9993A`; Poppins Bold/SemiBold (primary) + Lora Regular/Medium (secondary) via `vite.config.ts:14 bunny()` + `resources/css/app.css:10 --font-sans/--font-serif`; logos `public/logo*.png`, clear space = one window pane, no stretch/recolour/shadow.
 - `public/images/01..10-ulo-*.jpg` are the only allowed hardcoded images (AI visualisations — replace with commissioned photography as archive grows).
 - `pnpm build` is the frontend contract (manifest must list `pricing, weddings, weddings/create, checkout/status`).
