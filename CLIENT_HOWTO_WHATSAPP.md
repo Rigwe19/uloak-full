@@ -22,7 +22,7 @@ Go to uloofstories.com/weddings → tap Create My Wedding Room. If you're not lo
   - Title → e.g. “In memory of Papa — Burial Room” or “Amaka & Chidi's Wedding”
   - Couple/celebrant names, first date, extra dates if needed (traditional + white wedding = one Room), and a welcome message for guests.
 
-Tap Continue to payment. You'll see the order summary (e.g. Nigeria 15,000 Naira one-off) then go to Paystack (Nigeria) or Stripe/PayPal (UK, US, Canada, Europe, Rest of Africa). One payment = one Room. No subscription for a Full Room. After payment your Room becomes Active (10GB, 12 months, unlimited guests, QR + share link, bulk download, slideshow).
+Tap Continue to payment. You'll see the order summary (e.g. Nigeria 150,000 Naira one-off) then go to Paystack (Nigeria) or Stripe/PayPal (UK, US, Canada, Europe, Rest of Africa). One payment = one Room. No subscription for a Full Room. After payment your Room becomes Active (10GB, 12 months, unlimited guests, QR + share link, bulk download, slideshow).
 
 *3) BURIAL / BIRTHDAY / MEMORIAL?*
 Exactly the same flow as a wedding. Don't use the Dashboard free form. Go to:

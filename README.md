@@ -112,7 +112,7 @@ PAYPAL_WEBHOOK_ID=...
 
 | Location | Full/Wedding Room | Family Monthly | Family Yearly | Yearly save |
 |---|---|---|---:|---|
-| Nigeria | ₦15,000 (1_500_000) | ₦3,500 | ₦35,000 | ₦7,000 |
+| Nigeria | ₦150,000 (15_000_000) | ₦3,500 | ₦35,000 | ₦7,000 |
 | Rest of Africa | US$19 | US$4.99 | US$49 | US$10.88 |
 | UK | £29 | £7.99 | £79 | £16.88 |
 | US / Rest of world | US$35 | US$9.99 | US$99 | US$20.88 |

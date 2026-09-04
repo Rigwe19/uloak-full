@@ -47,6 +47,9 @@ class ProcessMediaVideo implements ShouldQueue
 
     public function handle(MediaRepository $repository): void
     {
+        // 4GB VPS guard — cap PHP memory for ffmpeg wrapper (ffmpeg itself is external, but PHP wrappers leak via FFMpegFacade)
+        ini_set('memory_limit', '512M');
+
         $media = $repository->findById($this->mediaId);
 
         if (! $media) {
@@ -75,6 +78,10 @@ class ProcessMediaVideo implements ShouldQueue
             ]);
 
             MediaProcessingCompleted::dispatch($media);
+
+            // Free FFMpeg handles and allow GC to reclaim ~300MB per transcode (4GB VPS)
+            $media = null;
+            gc_collect_cycles();
         } catch (\Throwable $e) {
             $repository->update($media, [
                 'status' => ProcessingState::Failed->value,
@@ -83,6 +90,7 @@ class ProcessMediaVideo implements ShouldQueue
             ]);
 
             MediaProcessingFailed::dispatch($media, Str::limit($e->getMessage(), 4000));
+            gc_collect_cycles();
 
             throw $e;
         }
@@ -96,6 +104,7 @@ class ProcessMediaVideo implements ShouldQueue
             'error' => Str::limit($e->getMessage(), 4000),
             'trace' => $e->getTraceAsString(),
         ]);
+        gc_collect_cycles();
         $media = Media::find($this->mediaId);
 
         // Guard against double-dispatch: the catch block above already

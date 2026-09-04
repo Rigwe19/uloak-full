@@ -41,7 +41,7 @@ const WEDDING_FAQS = [
     },
     {
         q: 'How much does it cost?',
-        a: '₦15,000 for one Wedding Room, paid once.',
+        a: '₦150,000 for one Wedding Room, paid once.',
     },
     {
         q: 'Do guests have to pay?',
@@ -72,7 +72,7 @@ const WEDDING_FAQS = [
 export default function Weddings({ pricing, defaultRegion }: WeddingsProps) {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
     const region = pricing[defaultRegion] ?? pricing['nigeria'];
-    const weddingPrice = region?.full_room_formatted ?? '₦15,000';
+    const weddingPrice = region?.full_room_formatted ?? '₦150,000';
 
     // Capture ?ref= attribution for checkout (also handled server-side via TrackReferral middleware)
     useEffect(() => {
@@ -108,7 +108,7 @@ export default function Weddings({ pricing, defaultRegion }: WeddingsProps) {
             <Head title="Ulo Weddings — One Wedding. One Room. Everyone's Memories. | Ulo of Stories">
                 <meta
                     name="description"
-                    content="Bring the photos, videos and stories your guests capture into one Ulo Wedding Room. ₦15,000 one-off per wedding."
+                    content="Bring the photos, videos and stories your guests capture into one Ulo Wedding Room. ₦150,000 one-off per wedding."
                 />
                 <meta
                     property="og:title"
@@ -116,7 +116,7 @@ export default function Weddings({ pricing, defaultRegion }: WeddingsProps) {
                 />
                 <meta
                     property="og:description"
-                    content="One wedding. One room. Everyone's memories. Create an Ulo Wedding Room for ₦15,000."
+                    content="One wedding. One room. Everyone's memories. Create an Ulo Wedding Room for ₦150,000."
                 />
             </Head>
 
@@ -168,7 +168,7 @@ export default function Weddings({ pricing, defaultRegion }: WeddingsProps) {
                             variants={fadeUp}
                             className="mt-4 text-sm font-semibold tracking-widest text-text-primary uppercase"
                         >
-                            ₦15,000 · One wedding · One payment
+                            ₦150,000 · One wedding · One payment
                         </motion.p>
                         <motion.div
                             variants={fadeUp}

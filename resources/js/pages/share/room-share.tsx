@@ -1223,7 +1223,7 @@ function MediaCaptureHub({
     }, [stopAllStreams]);
 
     const handleSubmit = () => {
-        // Parity: require the guest pipeline to have produced at least one ready media
+        // Pending response: allow video queued for compressing — show placeholder and let queue finish
         const hasQueueMedia = uploads.length > 0;
 
         if (!hasQueueMedia && !capturedPhoto && !videoBlob && !audioBlob) {
@@ -1231,24 +1231,26 @@ function MediaCaptureHub({
             return;
         }
 
-        const pending = uploads.filter((u) => u.status !== 'ready');
+        // Only block while XHR is still uploading (no mediaUuid yet). Processing (ffmpeg) is OK — we show placeholder.
+        const stillUploading = uploads.filter(
+            (u) => u.status === 'uploading' || u.status === 'queued' || u.status === 'pending',
+        );
 
-        if (pending.length > 0) {
-            toast.error('Please wait for uploads to finish processing.');
+        if (stillUploading.length > 0) {
+            toast.error('Uploading… please wait a moment.');
             return;
         }
 
-        const ready = uploads.filter((u) => u.status === 'ready');
-        const mediaUuids = ready.map((u) => u.mediaUuid).filter(Boolean) as string[];
+        const withMedia = uploads.filter((u) => u.mediaUuid);
+        const mediaUuids = withMedia.map((u) => u.mediaUuid).filter(Boolean) as string[];
 
-        // Fallback: if queue was bypassed (should not happen with parity), ensure we still submit
         if (mediaUuids.length === 0) {
-            toast.error('Your media is still processing — please wait a moment and try again.');
+            toast.error('Your media is still uploading — please wait a moment and try again.');
             return;
         }
 
         const firstType: 'video' | 'audio' | 'photo' = (() => {
-            const first = ready[0];
+            const first = withMedia[0];
             const mime = first?.file.type ?? '';
             if (mime.startsWith('video/')) {
                 return 'video';

@@ -27,7 +27,7 @@ class PaymentFactory extends Factory
         return [
             'user_id' => User::factory(),
             'room_id' => Room::factory(),
-            'amount' => 1_500_000,
+            'amount' => 15_000_000,
             'currency' => 'NGN',
             'provider' => PaymentProvider::Paystack,
             'provider_reference' => Str::random(20),

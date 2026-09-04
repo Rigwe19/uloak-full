@@ -458,14 +458,21 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
                                     size={16}
                                     className="mt-0.5 shrink-0 text-accent-gold"
                                 />{' '}
-                                Download all stories together
+                                Full download of all stories (ZIP, 48h link)
                             </li>
                             <li className="flex gap-3">
                                 <Check
                                     size={16}
                                     className="mt-0.5 shrink-0 text-accent-gold"
                                 />{' '}
-                                Slideshow from collected memories
+                                Selected picture edits — manual retouch
+                            </li>
+                            <li className="flex gap-3">
+                                <Check
+                                    size={16}
+                                    className="mt-0.5 shrink-0 text-accent-gold"
+                                />{' '}
+                                3-min video highlight — manual edit
                             </li>
                             <li className="flex gap-3">
                                 <Check

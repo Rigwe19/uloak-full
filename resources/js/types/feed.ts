@@ -8,7 +8,8 @@ export interface FeedStory {
     email?: string;
     thumbnail: string | null;
     file_url: string | null;
-    assets: { url: string; type: string; title: string }[];
+    assets: { url: string; type: string; title: string; status?: string; progress?: number; media_uuid?: string }[];
+    is_processing?: boolean;
     tags: string[];
     date: string;
     comments?: any[];

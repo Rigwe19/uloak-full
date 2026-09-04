@@ -141,8 +141,21 @@ export function AnnexMemoryModal({
             return;
         }
 
-        const readyUploads = uploads.filter((u) => u.status === 'ready');
-        const uuids = readyUploads
+        // Allow video queued for compressing — show placeholder instead of blocking
+        const stillUploading = uploads.filter(
+            (u) => u.status === 'uploading' || u.status === 'queued' || u.status === 'pending',
+        );
+        if (stillUploading.length > 0) {
+            // let the user know but don't block processing videos
+            // only block if truly still uploading (no mediaUuid yet)
+            const withoutUuid = stillUploading.filter((u) => !u.mediaUuid);
+            if (withoutUuid.length > 0) {
+                return;
+            }
+        }
+
+        const withMedia = uploads.filter((u) => u.mediaUuid);
+        const uuids = withMedia
             .map((u) => u.mediaUuid)
             .filter(Boolean) as string[];
 

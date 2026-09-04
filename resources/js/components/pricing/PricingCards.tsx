@@ -39,8 +39,8 @@ const TIER_CONFIG = {
     full_room: {
         label: 'Full Ulo Room',
         tagline: 'One-off payment per Room',
-        price: 1500000, // will be overridden by region data
-        formattedPrice: '₦15,000',
+        price: 15000000, // will be overridden by region data
+        formattedPrice: '₦150,000',
         billing:
             'One payment. No monthly subscription. Guests contribute free.',
         features: [
@@ -66,11 +66,9 @@ const TIER_CONFIG = {
                 text: 'Review & manage contributions before completing',
                 included: true,
             },
-            { text: 'Download all collected stories together', included: true },
-            {
-                text: 'Create a slideshow from collected memories',
-                included: true,
-            },
+            { text: 'Full download of all stories (ZIP, 48h link)', included: true },
+            { text: 'Selected picture edits — manual retouch', included: true },
+            { text: '3-min video highlight — manual edit', included: true },
             { text: '12 months of online Room access', included: true },
             {
                 text: 'Move completed Room into Family Archive later',

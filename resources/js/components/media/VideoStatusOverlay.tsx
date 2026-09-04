@@ -24,7 +24,7 @@ export function VideoStatusOverlay({
                 />
             )}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-            <div className="relative flex flex-col items-center gap-3">
+            <div className="relative flex flex-col items-center gap-3 px-6 text-center">
                 <motion.div
                     animate={{ rotate: 360 }}
                     transition={{
@@ -34,8 +34,11 @@ export function VideoStatusOverlay({
                     }}
                     className="h-10 w-10 rounded-full border-2 border-accent-gold/30 border-t-accent-gold"
                 />
-                <span className="font-mono text-xs tracking-wider text-white/70">
-                    Optimizing your memory...
+                <span className="font-mono text-xs font-semibold tracking-wider text-white">
+                    Video is processing
+                </span>
+                <span className="max-w-[220px] text-center text-xs leading-relaxed text-white/60">
+                    It will show soon. You can keep browsing — we&apos;ll update it automatically.
                 </span>
             </div>
         </div>

@@ -71,34 +71,74 @@ class ShareController extends Controller
             ->latest()
             ->cursorPaginate(24);
 
-        $stories = $paginator->through(fn ($story) => [
-            'id' => $story->id,
-            'title' => $story->title,
-            'type' => $story->type,
-            'description' => $story->description,
-            'author' => $story->user?->name ?? $story->getGuestName() ?? 'Anonymous',
-            'email' => $story->guest_email,
-            'thumbnail' => $story->thumbnail,
-            'file_url' => $story->file_url,
-            'assets' => $story->assets ?? [],
-            'comments' => $story->comments->map(fn ($c) => [
-                'id' => $c->id,
-                'content' => $c->content,
-                'author' => $c->authorName(),
-                'date' => $c->created_at->diffForHumans(),
-            ]),
-            'comments_count' => $story->comments()->count(),
-            'follow_ups' => $story->followUpStories->map(fn ($fs) => [
-                'id' => $fs->id,
-                'type' => $fs->type,
-                'file_url' => $fs->file_url,
-                'thumbnail' => $fs->thumbnail,
-                'author' => $fs->user?->name ?? $fs->getGuestName() ?? 'Anonymous',
-                'created_at' => $fs->created_at->format('M d, Y'),
-            ]),
-            'date' => $story->created_at->format('M d, Y'),
-            'tags' => $story->tags ?? [],
-        ]);
+        $stories = $paginator->through(function ($story) {
+            $assets = $story->assets ?? [];
+            $isProcessing = false;
+            $enrichedAssets = $assets;
+
+            // Enrich assets with live media status so frontend can show placeholder (pending → processing → ready)
+            if (! empty($assets)) {
+                $uuids = collect($assets)->pluck('media_uuid')->filter()->values()->all();
+                if (! empty($uuids)) {
+                    $mediaMap = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+                    $enrichedAssets = collect($assets)->map(function ($asset) use ($mediaMap, &$isProcessing) {
+                        $uuid = $asset['media_uuid'] ?? null;
+                        if ($uuid && isset($mediaMap[$uuid])) {
+                            $media = $mediaMap[$uuid];
+                            $asset['status'] = $media->status;
+                            $asset['progress'] = $media->progress;
+                            if (in_array($media->status, ['uploading', 'processing'], true)) {
+                                $isProcessing = true;
+                            }
+                        } elseif (($asset['type'] ?? null) === 'video' && empty($asset['url'])) {
+                            $isProcessing = true;
+                        }
+
+                        return $asset;
+                    })->all();
+                    // Fallback: if any asset type video but story type video and no ready media, treat as processing
+                    if (! $isProcessing && $story->type === 'video') {
+                        $hasReadyVideo = collect($enrichedAssets)->contains(fn ($a) => ($a['type'] ?? '') === 'video' && ($a['status'] ?? 'ready') === 'ready');
+                        $hasVideoAsset = collect($enrichedAssets)->contains(fn ($a) => ($a['type'] ?? '') === 'video');
+                        if ($hasVideoAsset && ! $hasReadyVideo) {
+                            $isProcessing = true;
+                        }
+                    }
+                }
+            } elseif ($story->type === 'video' && empty($story->file_url)) {
+                $isProcessing = true;
+            }
+
+            return [
+                'id' => $story->id,
+                'title' => $story->title,
+                'type' => $story->type,
+                'description' => $story->description,
+                'author' => $story->user?->name ?? $story->getGuestName() ?? 'Anonymous',
+                'email' => $story->guest_email,
+                'thumbnail' => $story->thumbnail,
+                'file_url' => $story->file_url,
+                'assets' => $enrichedAssets,
+                'is_processing' => $isProcessing,
+                'comments' => $story->comments->map(fn ($c) => [
+                    'id' => $c->id,
+                    'content' => $c->content,
+                    'author' => $c->authorName(),
+                    'date' => $c->created_at->diffForHumans(),
+                ]),
+                'comments_count' => $story->comments()->count(),
+                'follow_ups' => $story->followUpStories->map(fn ($fs) => [
+                    'id' => $fs->id,
+                    'type' => $fs->type,
+                    'file_url' => $fs->file_url,
+                    'thumbnail' => $fs->thumbnail,
+                    'author' => $fs->user?->name ?? $fs->getGuestName() ?? 'Anonymous',
+                    'created_at' => $fs->created_at->format('M d, Y'),
+                ]),
+                'date' => $story->created_at->format('M d, Y'),
+                'tags' => $story->tags ?? [],
+            ];
+        });
 
         $thumbnail = $room->thumbnail;
 

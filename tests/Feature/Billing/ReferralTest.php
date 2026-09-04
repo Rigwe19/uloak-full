@@ -11,18 +11,18 @@ uses(RefreshDatabase::class);
 test('partner commission calculates 20 percent with nigeria floor', function () {
     $partner = Partner::factory()->create(['commission_rate' => 20.00]);
 
-    // 20% of ₦15,000 (1_500_000 minor) = 300_000
-    expect($partner->calculateCommission(1_500_000, 'NGN'))->toBe(300_000);
+    // 20% of ₦150,000 (15_000_000 minor) = 3_000_000
+    expect($partner->calculateCommission(15_000_000, 'NGN'))->toBe(3_000_000);
 
-    // Low rate 5% would be 75_000 but floor pushes to 300_000
+    // Low rate 5% would be 750_000 but floor pushes to 3_000_000
     $low = Partner::factory()->create(['commission_rate' => 5.00]);
-    expect($low->calculateCommission(1_500_000, 'NGN'))->toBe(300_000);
+    expect($low->calculateCommission(15_000_000, 'NGN'))->toBe(3_000_000);
 
     // Non-NGN has no floor
-    expect($partner->calculateCommission(1_900, 'USD'))->toBe(380);
+    expect($partner->calculateCommission(19_000, 'USD'))->toBe(3_800);
 
     // USD low rate not floored
-    expect($low->calculateCommission(1_900, 'USD'))->toBe(95);
+    expect($low->calculateCommission(19_000, 'USD'))->toBe(950);
 });
 
 test('track-referral middleware captures ref_code to session and cookie', function () {

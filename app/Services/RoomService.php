@@ -36,7 +36,7 @@ class RoomService
         $paywalledTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
         if (in_array($data['room_type'] ?? null, $paywalledTypes, true) && $tier === RoomTier::Starter) {
             $msg = ($data['room_type'] ?? null) === 'wedding'
-                ? 'Wedding Rooms require a paid Full Room. Start yours at /weddings — ₦15,000 one-off.'
+                ? 'Wedding Rooms require a paid Full Room. Start yours at /weddings — ₦150,000 one-off.'
                 : 'This Room type requires a Full Room purchase. See /pricing.';
             throw ValidationException::withMessages(['room_type' => $msg]);
         }

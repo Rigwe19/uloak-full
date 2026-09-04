@@ -23,13 +23,13 @@ beforeEach(function () {
 });
 
 test('pricing matrix resolves correct amounts for each region', function () {
-    expect($this->pricing->priceFor(Region::Nigeria, 'full_room'))->toBe(1_500_000);
+    expect($this->pricing->priceFor(Region::Nigeria, 'full_room'))->toBe(15_000_000);
     expect($this->pricing->priceFor(Region::Nigeria, 'family_monthly'))->toBe(350_000);
     expect($this->pricing->priceFor(Region::Nigeria, 'family_yearly'))->toBe(3_500_000);
-    expect($this->pricing->priceFor(Region::RestOfAfrica, 'full_room'))->toBe(1_900);
-    expect($this->pricing->priceFor(Region::Uk, 'full_room'))->toBe(2_900);
-    expect($this->pricing->priceFor(Region::UsRestOfWorld, 'full_room'))->toBe(3_500);
-    expect($this->pricing->priceFor(Region::Europe, 'full_room'))->toBe(3_500);
+    expect($this->pricing->priceFor(Region::RestOfAfrica, 'full_room'))->toBe(19_000);
+    expect($this->pricing->priceFor(Region::Uk, 'full_room'))->toBe(29_000);
+    expect($this->pricing->priceFor(Region::UsRestOfWorld, 'full_room'))->toBe(35_000);
+    expect($this->pricing->priceFor(Region::Europe, 'full_room'))->toBe(35_000);
 });
 
 test('checkout creates pending payment with server-side pricing', function () {
@@ -40,7 +40,7 @@ test('checkout creates pending payment with server-side pricing', function () {
         'tier' => 'full_room',
     ]);
 
-    expect($payment->amount)->toBe(1_500_000);
+    expect($payment->amount)->toBe(15_000_000);
     expect($payment->currency)->toBe('NGN');
     expect($payment->status)->toBe(PaymentStatus::Pending);
     expect($payment->provider->value)->toBe('paystack');
@@ -55,7 +55,7 @@ test('checkout defaults to stripe for non-nigeria regions', function () {
 
     expect($payment->provider->value)->toBe('stripe');
     expect($payment->currency)->toBe('GBP');
-    expect($payment->amount)->toBe(2_900);
+    expect($payment->amount)->toBe(29_000);
 });
 
 test('checkout throws for unknown tier', function () {
@@ -91,7 +91,7 @@ test('checkout attaches partner commission for valid ref_code', function () {
     ]);
 
     expect($payment->partner_id)->toBe($partner->id);
-    expect($payment->commission_amount)->toBe(300_000);
+    expect($payment->commission_amount)->toBe(3_000_000);
 });
 
 test('checkout ignores invalid ref_code', function () {
@@ -107,14 +107,14 @@ test('checkout ignores invalid ref_code', function () {
 
 test('partner commission floors at nigeria minimum', function () {
     $partner = Partner::factory()->create(['ref_code' => 'FLOOR', 'commission_rate' => 5.00]);
-    // 5% of 1_500_000 = 75_000 but floor is 300_000 for NGN
+    // 5% of 15_000_000 = 750_000 but floor is 3_000_000 for NGN
     $payment = $this->payments->createCheckout($this->user, null, [
         'region' => 'nigeria',
         'tier' => 'full_room',
         'ref_code' => 'FLOOR',
     ]);
 
-    expect($payment->commission_amount)->toBe(300_000);
+    expect($payment->commission_amount)->toBe(3_000_000);
 });
 
 test('idempotent verify does not double-activate room', function () {
@@ -127,7 +127,7 @@ test('idempotent verify does not double-activate room', function () {
     $payment = Payment::factory()->create([
         'user_id' => $this->user->id,
         'room_id' => $room->id,
-        'amount' => 1_500_000,
+        'amount' => 15_000_000,
         'currency' => 'NGN',
         'provider' => 'paystack',
         'status' => PaymentStatus::Successful,
@@ -146,7 +146,7 @@ test('verifyAndActivate leaves pending when provider unverified', function () {
     $payment = Payment::factory()->create([
         'user_id' => $this->user->id,
         'status' => PaymentStatus::Pending,
-        'amount' => 1_500_000,
+        'amount' => 15_000_000,
         'currency' => 'NGN',
         'provider' => 'paystack',
     ]);
@@ -167,7 +167,7 @@ test('room activation sets full_room tier and 12-month expiry', function () {
     $payment = Payment::factory()->create([
         'user_id' => $this->user->id,
         'room_id' => $room->id,
-        'amount' => 1_500_000,
+        'amount' => 15_000_000,
         'currency' => 'NGN',
         'provider' => 'paystack',
         'status' => PaymentStatus::Pending,
@@ -175,7 +175,7 @@ test('room activation sets full_room tier and 12-month expiry', function () {
 
     // Mock gateway to return verified with matching amount
     $mock = Mockery::mock(PaymentGatewayInterface::class);
-    $mock->shouldReceive('verify')->andReturn(['verified' => true, 'amount' => 1_500_000, 'currency' => 'NGN', 'status' => 'success']);
+    $mock->shouldReceive('verify')->andReturn(['verified' => true, 'amount' => 15_000_000, 'currency' => 'NGN', 'status' => 'success']);
     $this->app->instance(PaystackGateway::class, $mock);
 
     $result = $this->payments->verifyAndActivate($payment);

@@ -82,7 +82,7 @@ class PageController extends Controller
 
         return Inertia::render('weddings', [
             'title' => 'Ulo Weddings | One Wedding. One Room. Everyone\'s Memories.',
-            'meta_description' => 'Bring the photos, videos and stories your guests capture into one Ulo Wedding Room. ₦15,000 one-off per wedding.',
+            'meta_description' => 'Bring the photos, videos and stories your guests capture into one Ulo Wedding Room. ₦150,000 one-off per wedding.',
             'meta_image' => url('/images/og-weddings.webp'),
             'meta_url' => url()->current(),
             'pricing' => $pricing,

@@ -19,6 +19,11 @@ export default function StoryCard({
     aspectRatio = 'aspect-video',
 }: StoryCardProps) {
     const mediaUrl = story.file_url || story.assets?.[0]?.url || null;
+    // Detect processing video: guest pipeline sets status=processing until ffmpeg finishes
+    const isVideoProcessing =
+        story.type === 'video' &&
+        ((story as any).is_processing ||
+            (story.assets?.some((a: any) => a?.status === 'processing' || a?.status === 'uploading') ?? false));
 
     const defaultMedia = () => {
         if (renderMedia) {
@@ -32,12 +37,31 @@ export default function StoryCard({
                         id: story.id,
                         storyId: story.id,
                         title: story.title,
-                        url: mediaUrl,
+                        url: isVideoProcessing ? null : mediaUrl,
                         thumbnail: story.thumbnail || null,
                         preview: null,
                         sprite: null,
+                        status: isVideoProcessing ? 'processing' : undefined,
                     }}
-                    onClick={onClick}
+                    onClick={isVideoProcessing ? undefined : onClick}
+                />
+            );
+        }
+
+        // Fallback placeholder for processing video with no URL yet
+        if (isVideoProcessing) {
+            return (
+                <VideoCard
+                    video={{
+                        id: story.id,
+                        storyId: story.id,
+                        title: story.title,
+                        url: null,
+                        thumbnail: story.thumbnail || null,
+                        preview: null,
+                        sprite: null,
+                        status: 'processing',
+                    }}
                 />
             );
         }

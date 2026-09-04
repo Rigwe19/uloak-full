@@ -39,7 +39,7 @@ export default function WeddingsCreate({
     refCode,
 }: WeddingsCreateProps) {
     const region = pricing[defaultRegion] ?? pricing['nigeria'];
-    const priceLabel = region?.full_room_formatted ?? '₦15,000';
+    const priceLabel = region?.full_room_formatted ?? '₦150,000';
 
     const [regionKey] = useState(defaultRegion);
     const currentPrice = pricing[regionKey]?.full_room_formatted ?? priceLabel;

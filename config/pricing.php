@@ -30,7 +30,7 @@ return [
             'label' => 'Nigeria',
             'currency' => 'NGN',
             'geo_countries' => ['NG'],
-            'full_room' => 1_500_000,
+            'full_room' => 15_000_000, // ₦150,000 — premium: full download + selected picture edits (manual) + 3-min highlight (manual)
             'family_monthly' => 350_000,
             'family_yearly' => 3_500_000,
             'yearly_savings' => 700_000,
@@ -39,7 +39,7 @@ return [
             'label' => 'Rest of Africa',
             'currency' => 'USD',
             'geo_countries' => ['ZA', 'KE', 'GH', 'EG', 'TZ', 'UG', 'ZW', 'ZM', 'CM', 'CI', 'SN', 'RW', 'ET'],
-            'full_room' => 1_900,
+            'full_room' => 19_000, // $190.00 — 10x
             'family_monthly' => 499,
             'family_yearly' => 4_900,
             'yearly_savings' => 1_088,
@@ -48,7 +48,7 @@ return [
             'label' => 'United Kingdom',
             'currency' => 'GBP',
             'geo_countries' => ['GB'],
-            'full_room' => 2_900,
+            'full_room' => 29_000, // £290.00 — 10x
             'family_monthly' => 799,
             'family_yearly' => 7_900,
             'yearly_savings' => 1_688,
@@ -57,7 +57,7 @@ return [
             'label' => 'United States / Rest of world',
             'currency' => 'USD',
             'geo_countries' => ['US', 'CA', 'AU', 'NZ', 'SG', 'MY', 'IN', 'BR', 'MX', 'JP', 'KR', 'PH', 'TH', 'AR', 'CL', 'CO'],
-            'full_room' => 3_500,
+            'full_room' => 35_000, // $350.00 — 10x
             'family_monthly' => 999,
             'family_yearly' => 9_900,
             'yearly_savings' => 2_088,
@@ -66,7 +66,7 @@ return [
             'label' => 'Europe',
             'currency' => 'EUR',
             'geo_countries' => ['FR', 'DE', 'IT', 'ES', 'NL', 'BE', 'PT', 'IE', 'AT', 'PL', 'SE', 'DK', 'FI', 'NO', 'CH', 'GR', 'CZ'],
-            'full_room' => 3_500,
+            'full_room' => 35_000, // €350.00 — 10x
             'family_monthly' => 999,
             'family_yearly' => 9_900,
             'yearly_savings' => 2_088,
@@ -111,7 +111,7 @@ return [
 
     'partner' => [
         'commission_rate' => 20.0,
-        'ngn_min_commission' => 300_000,
+        'ngn_min_commission' => 3_000_000, // 20% of ₦150k floor
         'attribution_cookie_days' => 30,
     ],
 ];
