@@ -3,7 +3,7 @@ import { useUploadStore } from '@/stores/upload-store';
 import type { UploadItem } from '@/types/media';
 import { useMediaUpload } from './use-media-upload';
 
-const MAX_CONCURRENT = 1;
+const MAX_CONCURRENT = 3;
 
 export function useUploadQueue() {
     const { uploadFile, cancelUpload, retryUpload } = useMediaUpload();

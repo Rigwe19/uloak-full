@@ -1249,6 +1249,45 @@ function MediaCaptureHub({
             return;
         }
 
+        // For multiple images/videos, create one story per media (parity with annex-memory-modal)
+        // so each appears as its own card instead of only the first showing.
+        if (withMedia.length > 1) {
+            setIsSubmittingMedia(true);
+            withMedia.forEach((item, index) => {
+                const fd = new FormData();
+                fd.append('guest_name', guestName);
+                fd.append('guest_email', guestEmail);
+                fd.append('description', description);
+                const t: 'video' | 'audio' | 'photo' =
+                    item.file.type.startsWith('video/') ? 'video' : item.file.type.startsWith('audio/') ? 'audio' : 'photo';
+                fd.append('type', t);
+                fd.append('media_uuids[]', item.mediaUuid!);
+                router.post(`/share/rooms/${roomSlug}/stories`, fd, {
+                    forceFormData: true,
+                    preserveScroll: true,
+                    preserveState: index < withMedia.length - 1,
+                    onSuccess: () => {
+                        if (index === withMedia.length - 1) {
+                            setIsSubmittingMedia(false);
+                            closeFullscreen();
+                            try {
+                                useUploadStore.getState().clearCompleted();
+                            } catch {}
+                            onSubmit();
+                            setShowSuccess(true);
+                        }
+                    },
+                    onError: () => {
+                        if (index === withMedia.length - 1) {
+                            setIsSubmittingMedia(false);
+                            toast.error('Something went wrong sharing your memory. Please try again.');
+                        }
+                    },
+                });
+            });
+            return;
+        }
+
         const firstType: 'video' | 'audio' | 'photo' = (() => {
             const first = withMedia[0];
             const mime = first?.file.type ?? '';
