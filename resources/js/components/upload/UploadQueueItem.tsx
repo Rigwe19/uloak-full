@@ -50,10 +50,12 @@ export function UploadQueueItem({
 }: UploadQueueItemProps) {
     const isImage = item.file.type.startsWith('image/');
     const isVideo = item.file.type.startsWith('video/');
+    // Do not show processing UI — video compresses silently in background per user request
+    if (item.status === 'processing') {
+        return null;
+    }
     const isActive =
-        item.status === 'uploading' ||
-        item.status === 'processing' ||
-        item.status === 'queued';
+        item.status === 'uploading' || item.status === 'queued';
     const isFinished = item.status === 'ready';
 
     // Only use realtime updates for videos (images process synchronously)
@@ -92,8 +94,7 @@ export function UploadQueueItem({
                     {formatSize(item.file.size)}
                 </span>
 
-                {(item.status === 'uploading' ||
-                    item.status === 'processing') && (
+                {item.status === 'uploading' && (
                     <UploadProgress
                         percentage={item.progress}
                         speed={item.speed}

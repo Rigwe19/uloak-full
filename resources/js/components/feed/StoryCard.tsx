@@ -19,11 +19,16 @@ export default function StoryCard({
     aspectRatio = 'aspect-video',
 }: StoryCardProps) {
     const mediaUrl = story.file_url || story.assets?.[0]?.url || null;
-    // Detect processing video: guest pipeline sets status=processing until ffmpeg finishes
+    // Video processes silently in background — do not show processing UI per user request
     const isVideoProcessing =
         story.type === 'video' &&
         ((story as any).is_processing ||
             (story.assets?.some((a: any) => a?.status === 'processing' || a?.status === 'uploading') ?? false));
+
+    // Do not show processing UI — hide video until ready (user requested)
+    if (isVideoProcessing) {
+        return null;
+    }
 
     const defaultMedia = () => {
         if (renderMedia) {
@@ -37,31 +42,12 @@ export default function StoryCard({
                         id: story.id,
                         storyId: story.id,
                         title: story.title,
-                        url: isVideoProcessing ? null : mediaUrl,
+                        url: mediaUrl,
                         thumbnail: story.thumbnail || null,
                         preview: null,
                         sprite: null,
-                        status: isVideoProcessing ? 'processing' : undefined,
                     }}
-                    onClick={isVideoProcessing ? undefined : onClick}
-                />
-            );
-        }
-
-        // Fallback placeholder for processing video with no URL yet
-        if (isVideoProcessing) {
-            return (
-                <VideoCard
-                    video={{
-                        id: story.id,
-                        storyId: story.id,
-                        title: story.title,
-                        url: null,
-                        thumbnail: story.thumbnail || null,
-                        preview: null,
-                        sprite: null,
-                        status: 'processing',
-                    }}
+                    onClick={onClick}
                 />
             );
         }
