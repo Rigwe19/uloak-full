@@ -143,14 +143,32 @@ class ProcessMediaVideo implements ShouldQueue
 
         $posterPath = $this->thumbnailsPath().'/'.pathinfo($processedFilename, PATHINFO_FILENAME).'.jpg';
 
-        $this->generatePoster($diskName, $processedPath, $posterPath);
+        try {
+            $this->generatePoster($diskName, $processedPath, $posterPath);
+        } catch (\Throwable $e) {
+            logger()->warning('Poster generation failed (non-fatal), falling back to original thumbnail', [
+                'media_id' => $media->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Keep original thumbnail if poster fails (e.g., 2s video seeking to 2.00 EOF)
+            $posterPath = $media->thumbnail ?? $posterPath;
+        }
 
         $this->updateProgress($media, 90);
 
         $spriteImage = $this->spritesPath().'/'.pathinfo($processedFilename, PATHINFO_FILENAME).'.jpg';
         $spriteVtt = $this->spritesPath().'/'.pathinfo($processedFilename, PATHINFO_FILENAME).'.vtt';
 
-        $this->generateSprite($diskName, $processedPath, $spriteImage, $spriteVtt, $metadata['duration'] ?? 0);
+        try {
+            $this->generateSprite($diskName, $processedPath, $spriteImage, $spriteVtt, $metadata['duration'] ?? 0);
+        } catch (\Throwable $e) {
+            logger()->warning('Sprite generation failed (non-fatal)', [
+                'media_id' => $media->id,
+                'error' => $e->getMessage(),
+            ]);
+            $spriteImage = null;
+            $spriteVtt = null;
+        }
 
         $this->updateProgress($media, 95);
 
@@ -405,11 +423,25 @@ class ProcessMediaVideo implements ShouldQueue
 
     protected function generatePoster(string $disk, string $video, string $output): void
     {
-        FFMpegFacade::fromDisk($disk)
-            ->open($video)
-            ->getFrameFromSeconds(2)
-            ->export()
-            ->save($output);
+        // For short videos (<2s), seeking to 2.00 is EOF → mjpeg encoder fails ("No filtered frames")
+        // Try 1s or half-duration first, fallback to 0.5s
+        $attempts = [1.0, 0.5, 0.0];
+        $lastException = null;
+        foreach ($attempts as $sec) {
+            try {
+                FFMpegFacade::fromDisk($disk)
+                    ->open($video)
+                    ->getFrameFromSeconds($sec)
+                    ->export()
+                    ->save($output);
+
+                return;
+            } catch (\Throwable $e) {
+                $lastException = $e;
+                // try next seek
+            }
+        }
+        throw $lastException ?? new \RuntimeException('Poster generation failed after retries');
     }
 
     protected function generateSprite(
