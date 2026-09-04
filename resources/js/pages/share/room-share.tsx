@@ -40,6 +40,9 @@ import { VideoPlayer } from '@/components/media/VideoPlayer';
 import { VideoSocialOverlay } from '@/components/media/VideoSocialOverlay';
 import { ResponsiveModal } from '@/components/responsive-modal';
 import { UploadDropzone } from '@/components/upload/UploadDropzone';
+import { UploadQueue } from '@/components/upload/UploadQueue';
+import { useGuestUploadQueue } from '@/hooks/use-guest-upload-queue';
+import { useUploadStore } from '@/stores/upload-store';
 import { usePlayerStore } from '@/stores/video-player-store';
 import type { FeedStory } from '@/types/feed';
 import type { PlayerVideo } from '@/types/video-player';
@@ -882,10 +885,17 @@ function MediaCaptureHub({
     const audioChunksRef = useRef<Blob[]>([]);
     const audioTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Upload states
-    const [uploadFiles, setUploadFiles] = useState<File[]>([]);
-    const [uploadPreviews, setUploadPreviews] = useState<string[]>([]);
+    // Upload states — parity with annex-memory-modal via guest pipeline
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const guestQueue = useGuestUploadQueue({
+        roomSlug,
+        guestName,
+        guestEmail,
+    });
+    const { uploads, addToQueue, removeFromQueue, cancelUpload, retryUpload } =
+        guestQueue;
+    const completedUploads = uploads.filter((u) => u.status === 'ready');
+    const hasReadyUploads = completedUploads.length > 0;
 
     // Description
     const [description, setDescription] = useState('');
@@ -974,11 +984,30 @@ function MediaCaptureHub({
         canvas.getContext('2d')?.drawImage(video, 0, 0);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         setCapturedPhoto(dataUrl);
+        // Parity: enqueue via guest pipeline (watermarked + async) so submit uses media_uuids
+        try {
+            const blob = (() => {
+                const arr = dataUrl.split(',');
+                const mimeMatch = arr[0].match(/:(.*?);/);
+                const mime = mimeMatch?.[1] || 'image/jpeg';
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                return new Blob([u8arr], { type: mime });
+            })();
+            const file = new File([blob], `photo-${Date.now()}.jpg`, {
+                type: 'image/jpeg',
+            });
+            addToQueue(file, 'photo');
+        } catch {}
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
         setCameraActive(false);
         setCameraReady(false);
-    }, []);
+    }, [addToQueue]);
 
     const retakePhoto = useCallback(() => {
         setCapturedPhoto(null);
@@ -1018,6 +1047,13 @@ function MediaCaptureHub({
                 setVideoBlob(blob);
                 setVideoPreviewUrl(url);
                 setVideoRecState('preview');
+                // Parity: also enqueue for guest pipeline (watermarked)
+                try {
+                    const file = new File([blob], `video-${Date.now()}.webm`, {
+                        type: blob.type || 'video/webm',
+                    });
+                    addToQueue(file, 'video');
+                } catch {}
                 s.getTracks().forEach((t) => t.stop());
                 streamRef.current = null;
             };
@@ -1039,7 +1075,7 @@ function MediaCaptureHub({
                 'Could not access camera. Please allow access and try again.',
             );
         }
-    }, []);
+    }, [addToQueue]);
 
     const stopVideoRecording = useCallback(() => {
         if (videoTimerRef.current) {
@@ -1093,6 +1129,12 @@ function MediaCaptureHub({
                 setAudioBlob(blob);
                 setAudioBlobUrl(url);
                 setAudioRecState('preview');
+                try {
+                    const file = new File([blob], `audio-${Date.now()}.webm`, {
+                        type: blob.type || 'audio/webm',
+                    });
+                    addToQueue(file, 'audio');
+                } catch {}
                 s.getTracks().forEach((t) => t.stop());
                 setAudioStream(null);
             };
@@ -1110,7 +1152,7 @@ function MediaCaptureHub({
                 'Could not access microphone. Please allow microphone access and try again.',
             );
         }
-    }, []);
+    }, [addToQueue]);
 
     const stopAudioRecording = useCallback(() => {
         if (audioTimerRef.current) {
@@ -1137,29 +1179,25 @@ function MediaCaptureHub({
             const files = Array.from(e.target.files || []);
 
             if (files.length > 0) {
-                setUploadFiles((prev) => [...prev, ...files]);
                 files.forEach((file) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        setUploadPreviews((prev) => [
-                            ...prev,
-                            reader.result as string,
-                        ]);
-                    };
-                    reader.readAsDataURL(file);
+                    const type: 'photo' | 'video' | 'audio' =
+                        file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
+                    addToQueue(file, type);
                 });
                 setMode('upload');
             }
 
             e.target.value = '';
         },
-        [],
+        [addToQueue],
     );
 
-    const removeUploadFile = useCallback((index: number) => {
-        setUploadFiles((prev) => prev.filter((_, i) => i !== index));
-        setUploadPreviews((prev) => prev.filter((_, i) => i !== index));
-    }, []);
+    const removeUploadFile = useCallback(
+        (uploadId: string) => {
+            removeFromQueue(uploadId);
+        },
+        [removeFromQueue],
+    );
 
     // Full reset back to the entry grid, stopping any active stream
     const closeFullscreen = useCallback(() => {
@@ -1172,52 +1210,54 @@ function MediaCaptureHub({
         setAudioBlob(null);
         setAudioBlobUrl(null);
         setAudioRecState('idle');
-        setUploadFiles([]);
-        setUploadPreviews([]);
+        // keep queue for submit, but clear previews — do not wipe uploads here if we have ready media
+        // uploads are cleared on successful submit instead
         setDescription('');
     }, [stopAllStreams]);
 
     const handleSubmit = () => {
+        // Parity: require the guest pipeline to have produced at least one ready media
+        const hasQueueMedia = uploads.length > 0;
+
+        if (!hasQueueMedia && !capturedPhoto && !videoBlob && !audioBlob) {
+            toast.error('Please add a photo, video or audio first.');
+            return;
+        }
+
+        const pending = uploads.filter((u) => u.status !== 'ready');
+
+        if (pending.length > 0) {
+            toast.error('Please wait for uploads to finish processing.');
+            return;
+        }
+
+        const ready = uploads.filter((u) => u.status === 'ready');
+        const mediaUuids = ready.map((u) => u.mediaUuid).filter(Boolean) as string[];
+
+        // Fallback: if queue was bypassed (should not happen with parity), ensure we still submit
+        if (mediaUuids.length === 0) {
+            toast.error('Your media is still processing — please wait a moment and try again.');
+            return;
+        }
+
+        const firstType: 'video' | 'audio' | 'photo' = (() => {
+            const first = ready[0];
+            const mime = first?.file.type ?? '';
+            if (mime.startsWith('video/')) {
+                return 'video';
+            }
+            if (mime.startsWith('audio/')) {
+                return 'audio';
+            }
+            return 'photo';
+        })();
+
         const formData = new FormData();
         formData.append('guest_name', guestName);
         formData.append('guest_email', guestEmail);
         formData.append('description', description);
-
-        if (capturedPhoto) {
-            const blob = dataURLtoBlob(capturedPhoto);
-            const file = new File([blob], `photo-${Date.now()}.jpg`, {
-                type: 'image/jpeg',
-            });
-            formData.append('files[]', file);
-            formData.append('type', 'photo');
-        } else if (videoBlob) {
-            const file = new File([videoBlob], `video-${Date.now()}.webm`, {
-                type: 'video/webm',
-            });
-            formData.append('recording', file);
-            formData.append('type', 'video');
-        } else if (audioBlob) {
-            const file = new File([audioBlob], `audio-${Date.now()}.webm`, {
-                type: 'audio/webm',
-            });
-            formData.append('recording', file);
-            formData.append('type', 'audio');
-        } else if (uploadFiles.length > 0) {
-            uploadFiles.forEach((f) => formData.append('files[]', f));
-            const firstFile = uploadFiles[0];
-            const mime = firstFile.type;
-            let detectedType = 'photo';
-
-            if (mime.startsWith('video/')) {
-                detectedType = 'video';
-            } else if (mime.startsWith('audio/')) {
-                detectedType = 'audio';
-            }
-
-            formData.append('type', detectedType);
-        } else {
-            return;
-        }
+        formData.append('type', firstType);
+        mediaUuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
 
         setIsSubmittingMedia(true);
 
@@ -1228,6 +1268,10 @@ function MediaCaptureHub({
             onSuccess: () => {
                 setIsSubmittingMedia(false);
                 closeFullscreen();
+                // clear guest pipeline queue after success so next contribution starts fresh
+                try {
+                    useUploadStore.getState().clearCompleted();
+                } catch {}
                 onSubmit();
                 setShowSuccess(true);
             },
@@ -1264,7 +1308,7 @@ function MediaCaptureHub({
         capturedPhoto ||
         (videoBlob && videoRecState === 'preview') ||
         (audioBlob && audioRecState === 'preview') ||
-        uploadFiles.length > 0
+        uploads.length > 0
     );
     const isFullscreenActive = mode !== null;
 
@@ -1447,66 +1491,23 @@ function MediaCaptureHub({
                                                 </div>
                                             )}
 
-                                            {uploadFiles.length > 0 && (
+                                            {uploads.length > 0 && (
                                                 <div className="px-4">
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        {uploadPreviews.map(
-                                                            (url, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    className="relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-bg-dark"
-                                                                >
-                                                                    {uploadFiles[
-                                                                        idx
-                                                                    ]?.type.startsWith(
-                                                                        'video/',
-                                                                    ) ? (
-                                                                        <video
-                                                                            src={
-                                                                                url
-                                                                            }
-                                                                            className="h-full w-full object-cover"
-                                                                        />
-                                                                    ) : uploadFiles[
-                                                                          idx
-                                                                      ]?.type.startsWith(
-                                                                          'audio/',
-                                                                      ) ? (
-                                                                        <div className="flex h-full items-center justify-center">
-                                                                            <Music
-                                                                                size={
-                                                                                    24
-                                                                                }
-                                                                                className="text-accent-gold"
-                                                                            />
-                                                                        </div>
-                                                                    ) : (
-                                                                        <img
-                                                                            src={
-                                                                                url
-                                                                            }
-                                                                            className="h-full w-full object-cover"
-                                                                            alt=""
-                                                                        />
-                                                                    )}
-                                                                    <button
-                                                                        onClick={() =>
-                                                                            removeUploadFile(
-                                                                                idx,
-                                                                            )
-                                                                        }
-                                                                        className="absolute top-1 right-1 rounded-full bg-black/70 p-1 text-white hover:bg-red-500"
-                                                                    >
-                                                                        <X className="h-3 w-3" />
-                                                                    </button>
-                                                                </div>
-                                                            ),
-                                                        )}
-                                                        <button
-                                                            onClick={() =>
-                                                                fileInputRef.current?.click()
-                                                            }
-                                                            className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-white/15 text-white/50 transition-transform active:scale-95"
+                                                    <UploadQueue
+                                                        uploads={uploads}
+                                                        onCancel={cancelUpload}
+                                                        onRetry={(id) => {
+                                                            const item = uploads.find((u) => u.id === id);
+                                                            const type: 'photo' | 'video' | 'audio' = item?.file.type.startsWith('video/') ? 'video' : item?.file.type.startsWith('audio/') ? 'audio' : 'photo';
+                                                            retryUpload(id, type);
+                                                        }}
+                                                        onRemove={removeFromQueue}
+                                                    />
+                                                    <button
+                                                        onClick={() =>
+                                                            fileInputRef.current?.click()
+                                                        }
+                                                        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-white/15 py-3 text-white/50 transition-transform active:scale-95"
                                                         >
                                                             <Plus size={20} />
                                                             <span className="font-mono text-[9px] tracking-wider uppercase">
@@ -1514,7 +1515,6 @@ function MediaCaptureHub({
                                                             </span>
                                                         </button>
                                                     </div>
-                                                </div>
                                             )}
                                         </div>
 
@@ -1747,35 +1747,11 @@ function MediaCaptureHub({
                                                             onFilesSelected={(
                                                                 files,
                                                             ) => {
-                                                                setUploadFiles(
-                                                                    (prev) => [
-                                                                        ...prev,
-                                                                        ...files,
-                                                                    ],
-                                                                );
-                                                                files.forEach(
-                                                                    (file) => {
-                                                                        const reader =
-                                                                            new FileReader();
-                                                                        reader.onloadend =
-                                                                            () => {
-                                                                                setUploadPreviews(
-                                                                                    (
-                                                                                        prev,
-                                                                                    ) => [
-                                                                                        ...prev,
-                                                                                        reader.result as string,
-                                                                                    ],
-                                                                                );
-                                                                            };
-                                                                        reader.readAsDataURL(
-                                                                            file,
-                                                                        );
-                                                                    },
-                                                                );
-                                                                setMode(
-                                                                    'upload',
-                                                                );
+                                                                files.forEach((file) => {
+                                                                    const t: 'photo' | 'video' | 'audio' = file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
+                                                                    addToQueue(file, t);
+                                                                });
+                                                                setMode('upload');
                                                             }}
                                                             multiple
                                                             accept="image/*,video/*,audio/*"

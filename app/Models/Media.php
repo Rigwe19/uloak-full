@@ -45,6 +45,7 @@ class Media extends Model
     use HasFactory;
 
     protected $fillable = [
+        'guest_identity_id',
         'uuid',
         'filename',
         'original_name',

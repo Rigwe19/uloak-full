@@ -1,7 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fadeUp, viewportOnce } from '@/lib/animations';
 
 interface WeddingsCreateProps {
@@ -12,6 +12,26 @@ interface WeddingsCreateProps {
     defaultRegion: string;
     refCode?: string | null;
 }
+
+const ROOM_TYPE_LABELS: Record<string, string> = {
+    wedding: 'Wedding',
+    birthday: 'Birthday',
+    burial: 'Burial / Funeral',
+    memorial: 'Memorial / Tribute',
+    anniversary: 'Anniversary',
+    graduation: 'Graduation',
+    general: 'Room',
+};
+
+const ROOM_TYPE_SHORT: Record<string, string> = {
+    wedding: 'Wedding',
+    birthday: 'Birthday',
+    burial: 'Burial',
+    memorial: 'Memorial',
+    anniversary: 'Anniversary',
+    graduation: 'Graduation',
+    general: 'Room',
+};
 
 export default function WeddingsCreate({
     pricing,
@@ -28,6 +48,9 @@ export default function WeddingsCreate({
         typeof window !== 'undefined' ? window.location.search : '',
     );
     const initialRoomType = (params.get('type') as string) || 'wedding';
+    const roomLabel = ROOM_TYPE_LABELS[initialRoomType] ?? 'Room';
+    const shortLabel = ROOM_TYPE_SHORT[initialRoomType] ?? 'Room';
+    const [type, setType] = useState(initialRoomType);
 
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -46,6 +69,42 @@ export default function WeddingsCreate({
                 : ''),
     });
 
+    // keep form room_type in sync with local type picker so labels price etc react instantly
+    const syncType = (val: string) => {
+        setType(val);
+        setData('room_type', val);
+    };
+
+    // Hydrate from dashboard modal handoff (keeps the "Create Room" modal as the single entry UX)
+    // so the user does not retype the name after being redirected to the paid funnel.
+    useEffect(() => {
+        try {
+            const raw = sessionStorage.getItem('ulo_pending_room');
+
+            if (raw) {
+                const pending = JSON.parse(raw) as { name?: string; description?: string; room_type?: string };
+
+                if (pending?.name) {
+                    setData('name', pending.name);
+                }
+
+                if (pending?.description) {
+                    setData('welcome_message', pending.description);
+                }
+
+                if (pending?.room_type && pending.room_type !== type) {
+                    // syncType will also setData internally, but we are inside effect so call directly
+                    setType(pending.room_type);
+                    setData('room_type', pending.room_type);
+                }
+
+                sessionStorage.removeItem('ulo_pending_room');
+            }
+        } catch {}
+        // run once on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/weddings/create', {
@@ -53,19 +112,23 @@ export default function WeddingsCreate({
         });
     };
 
+    const pageTitle = `Create your ${roomLabel} Room`;
+    const currentLabel = ROOM_TYPE_LABELS[type] ?? roomLabel;
+    const currentShort = ROOM_TYPE_SHORT[type] ?? shortLabel;
+
     return (
         <>
-            <Head title="Create your Wedding Room — Ulo Weddings" />
+            <Head title={`${pageTitle} — Ulo`} />
             <section className="mx-auto max-w-3xl px-6 py-12 md:py-16">
                 <motion.div initial="hidden" animate="show" variants={fadeUp}>
                     <p className="text-[10px] font-bold tracking-[0.4em] text-accent-gold uppercase">
-                        Ulo Weddings
+                        Ulo {currentShort}s
                     </p>
                     <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
-                        Create your Wedding Room
+                        {pageTitle}
                     </h1>
                     <p className="mt-3 text-text-muted">
-                        Set up your private Wedding Room. You&apos;ll review the
+                        Set up your private {currentLabel} Room. You&apos;ll review the
                         order summary before any payment.
                     </p>
                 </motion.div>
@@ -87,10 +150,8 @@ export default function WeddingsCreate({
                         </label>
                         <select
                             id="room_type"
-                            value={data.room_type as string}
-                            onChange={(e) =>
-                                setData('room_type', e.target.value)
-                            }
+                            value={type as string}
+                            onChange={(e) => syncType(e.target.value)}
                             className="mt-2 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary focus:border-accent-gold focus:outline-none"
                         >
                             <option value="wedding">Wedding</option>
@@ -112,25 +173,20 @@ export default function WeddingsCreate({
                             htmlFor="name"
                             className="text-sm font-medium text-text-primary"
                         >
-                            {data.room_type === 'wedding'
-                                ? 'Wedding'
-                                : data.room_type === 'burial'
-                                  ? 'Burial'
-                                  : data.room_type === 'memorial'
-                                    ? 'Memorial'
-                                    : 'Room'}{' '}
-                            title <span className="text-red-400">*</span>
+                            {currentShort} title <span className="text-red-400">*</span>
                         </label>
                         <input
                             id="name"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             placeholder={
-                                data.room_type === 'wedding'
+                                type === 'wedding'
                                     ? "e.g. Amaka & Chidi's Wedding"
-                                    : data.room_type === 'burial'
+                                    : type === 'burial'
                                       ? 'e.g. In memory of Papa — Burial Room'
-                                      : 'e.g. My occasion Room'
+                                      : type === 'memorial'
+                                        ? 'e.g. In memory of Mama — Memorial'
+                                        : `e.g. My ${currentShort} Room`
                             }
                             className="mt-2 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-gold focus:outline-none"
                             required
@@ -152,7 +208,7 @@ export default function WeddingsCreate({
                                 htmlFor="tribute_name"
                                 className="text-sm font-medium text-text-primary"
                             >
-                                Couple names
+                                {type === 'wedding' ? 'Couple names' : type === 'birthday' ? 'Celebrant name' : type === 'burial' || type === 'memorial' ? 'Honoree name' : 'Tribute name'}
                             </label>
                             <input
                                 id="tribute_name"
@@ -160,7 +216,7 @@ export default function WeddingsCreate({
                                 onChange={(e) =>
                                     setData('tribute_name', e.target.value)
                                 }
-                                placeholder="Amaka & Chidi"
+                                placeholder={type === 'wedding' ? 'Amaka & Chidi' : type === 'burial' ? 'Papa Joseph' : 'Name'}
                                 className="mt-2 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-gold focus:outline-none"
                             />
                         </div>
@@ -169,7 +225,7 @@ export default function WeddingsCreate({
                                 htmlFor="start_date"
                                 className="text-sm font-medium text-text-primary"
                             >
-                                Wedding date (first date)
+                                {type === 'wedding' ? 'Wedding date (first date)' : type === 'birthday' ? 'Birthday date' : type === 'burial' || type === 'memorial' ? 'Date' : 'Start date'}
                             </label>
                             <input
                                 id="start_date"
@@ -225,7 +281,7 @@ export default function WeddingsCreate({
                                 setData('welcome_message', e.target.value)
                             }
                             rows={3}
-                            placeholder="Welcome to our wedding memories — please share the moments you capture!"
+                            placeholder={type === 'wedding' ? "Welcome to our wedding memories — please share the moments you capture!" : `Welcome to this ${currentShort.toLowerCase()} — please share your memories!`}
                             className="mt-2 w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-gold focus:outline-none"
                         />
                     </div>
@@ -236,14 +292,14 @@ export default function WeddingsCreate({
                         </p>
                         <div className="mt-3 flex items-center justify-between">
                             <span className="font-medium text-text-primary capitalize">
-                                {data.room_type as string} Room
+                                {currentLabel} Room
                             </span>
                             <span className="text-lg font-semibold text-text-primary">
                                 {currentPrice}
                             </span>
                         </div>
                         <p className="text-xs text-text-muted">
-                            One-off payment for one Wedding Room. Guests
+                            One-off payment for one {currentLabel} Room. Guests
                             contribute free.
                         </p>
                         {data.ref_code && (

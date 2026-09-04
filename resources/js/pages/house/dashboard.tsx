@@ -115,6 +115,26 @@ export default function HouseDashboard({
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
 
+        const paidRoomTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
+
+        // @ts-ignore data has room_type
+        if (paidRoomTypes.includes((data as any).room_type)) {
+            const params = new URLSearchParams({
+                type: (data as any).room_type || 'wedding',
+            });
+
+            try {
+                sessionStorage.setItem(
+                    'ulo_pending_room',
+                    JSON.stringify({ name: (data as any).name, description: (data as any).description, room_type: (data as any).room_type }),
+                );
+            } catch {}
+
+            setIsCreateRoomOpen(false);
+            window.location.href = `/weddings/create?${params.toString()}`;
+            return;
+        }
+
         post('/house/rooms', {
             forceFormData: true,
             onSuccess: () => {

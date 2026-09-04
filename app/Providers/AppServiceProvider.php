@@ -6,10 +6,13 @@ use App\Listeners\TrackMediaEvent;
 use App\Models\Person;
 use App\Policies\PersonPolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use SocialiteProviders\Apple\AppleExtendSocialite;
@@ -37,6 +40,8 @@ class AppServiceProvider extends ServiceProvider
         $this->configureSubscribers();
 
         $this->configureSocialite();
+
+        $this->configureRateLimiting();
     }
 
     /**
@@ -56,6 +61,15 @@ class AppServiceProvider extends ServiceProvider
             SocialiteWasCalled::class,
             AppleExtendSocialite::class.'@handle',
         );
+    }
+
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('guest-media', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip())->response(function () {
+                return response()->json(['message' => 'Too many uploads. Please slow down.'], 429);
+            });
+        });
     }
 
     /**

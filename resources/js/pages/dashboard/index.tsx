@@ -194,6 +194,28 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Paid occasions must go through the checkout funnel at /weddings/create
+        const paidRoomTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
+
+        if (createMode === 'room' && paidRoomTypes.includes(data.room_type)) {
+            const params = new URLSearchParams({
+                type: data.room_type || 'wedding',
+            });
+
+            // prefill via sessionStorage for weddings/create to pick up
+            try {
+                sessionStorage.setItem('ulo_pending_room', JSON.stringify({ name: data.name, description: data.description, room_type: data.room_type }));
+            } catch {}
+
+            setIsCreateRoomOpen(false);
+
+            // Use same modal UX: navigate to the paid funnel preserving name
+            const target = `/weddings/create?${params.toString()}`;
+            window.location.href = target;
+
+            return;
+        }
+
         const url = createMode === 'room' ? storeRoom().url : storeEvent().url;
 
         // If room doesn't need tributes, reset tribute flags

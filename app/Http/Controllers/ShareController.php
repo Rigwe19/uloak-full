@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Mail\MagicLinkMail;
+use App\Media\MediaManager;
 use App\Models\Event;
+use App\Models\GuestIdentity;
+use App\Models\Media;
 use App\Models\Room;
 use App\Models\RoomGuestSubscription;
 use App\Models\Story;
@@ -24,7 +27,7 @@ use ZipArchive;
 
 class ShareController extends Controller
 {
-    public function __construct(protected ActivityLogger $activityLogger) {}
+    public function __construct(protected ActivityLogger $activityLogger, protected MediaManager $mediaManager) {}
 
     public function showRoom(string $slug): InertiaResponse
     {
@@ -164,7 +167,9 @@ class ShareController extends Controller
     }
 
     /**
-     * Store a guest contribution (story) on a room.
+     * Store a guest contribution (story) on a room — Option B parity with annex-memory-modal.
+     * Accepts pre-uploaded media_uuids from the guest pipeline (watermarked + async transcoded).
+     * Fallback legacy files/recording are now also routed through MediaManager so the bypass is removed.
      */
     public function storeRoomContribution(Request $request, Room $room): RedirectResponse
     {
@@ -174,73 +179,115 @@ class ShareController extends Controller
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'type' => ['required', 'string', 'in:video,audio,photo'],
+            'media_uuids' => ['nullable', 'array'],
+            'media_uuids.*' => ['uuid', 'exists:media,uuid'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file', 'max:51200'],
+            'duration' => ['nullable', 'string', 'max:20'],
         ]);
 
+        $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null);
+
         $fileUrl = null;
+        $thumbnail = $validated['thumbnail'] ?? null;
         $assets = [];
+        $mediaUuids = $validated['media_uuids'] ?? [];
 
-        // Handle recording (camera capture or audio recording blob)
-        if ($request->hasFile('recording')) {
-            $recording = $request->file('recording');
-            $path = $recording->store('stories/rooms/'.$room->id.'/guest-media', 'public');
-            $fileUrl = Storage::url($path);
-            // Trust the client-sent type — the frontend knows whether the user
-            // clicked "Record Audio" or "Record Video". .webm files report as
-            // video/webm even for audio-only recordings, so MIME is unreliable here.
-            $type = $validated['type'];
-            $validated['type'] = $type;
-            $assets[] = [
-                'url' => $fileUrl,
-                'type' => $type,
-                'title' => $recording->getClientOriginalName(),
-            ];
-        }
+        // 1) Preferred path: media_uuids from guest pipeline (2-phase, watermarked)
+        if (! empty($mediaUuids)) {
+            $medias = Media::whereIn('uuid', $mediaUuids)->get()->keyBy('uuid');
 
-        // Handle uploaded files
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $path = $file->store('stories/rooms/'.$room->id.'/guest-assets', 'public');
-                $url = Storage::url($path);
-
-                $mime = $file->getMimeType();
-                $type = 'photo';
-                if (str_contains($mime, 'video')) {
-                    $type = 'video';
-                } elseif (str_contains($mime, 'audio')) {
-                    $type = 'audio';
+            foreach ($mediaUuids as $uuid) {
+                $media = $medias->get($uuid);
+                if (! $media) {
+                    continue;
                 }
 
+                // Link guest for provenance (if media was uploaded anonymously before)
+                if (! $media->guest_identity_id) {
+                    $media->update(['guest_identity_id' => $guest->id]);
+                }
+
+                $type = $this->inferMediaType($media);
                 $assets[] = [
-                    'url' => $url,
+                    'media_uuid' => $media->uuid,
+                    'url' => $media->url(),
                     'type' => $type,
-                    'title' => $file->getClientOriginalName(),
+                    'title' => $media->original_name,
                 ];
 
                 if (! $fileUrl) {
-                    $fileUrl = $url;
-                    // Override the story-level type based on the first file's actual MIME type
+                    $fileUrl = $media->url();
                     $validated['type'] = $type;
+                    $thumbnail = $media->thumbnail ? (str_starts_with($media->thumbnail, 'http') ? $media->thumbnail : Storage::disk($media->disk)->url($media->thumbnail)) : $media->thumbnail();
                 }
             }
         }
 
-        if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('stories/rooms/'.$room->id.'/guest-thumbnails', 'public');
-            $validated['thumbnail'] = Storage::url($path);
+        // 2) Legacy fallback: files/recording — now also via Media pipeline (no raw Storage bypass)
+        if (empty($assets)) {
+            if ($request->hasFile('recording')) {
+                $recording = $request->file('recording');
+                $mime = $recording->getMimeType() ?: $recording->getClientMimeType();
+                $isVideo = $validated['type'] === 'video' || str_starts_with((string) $mime, 'video/');
+                try {
+                    $media = $isVideo ? $this->mediaManager->uploadVideo($recording) : $this->mediaManager->uploadImage($recording);
+                    $media->update(['guest_identity_id' => $guest->id]);
+                    $type = $validated['type'];
+                    $fileUrl = $media->url();
+                    $thumbnail = $media->thumbnail ? Storage::disk($media->disk)->url($media->thumbnail) : null;
+                    $assets[] = ['media_uuid' => $media->uuid, 'url' => $fileUrl, 'type' => $type, 'title' => $recording->getClientOriginalName()];
+                } catch (\Throwable $e) {
+                    return redirect()->back()->withErrors(['recording' => $e->getMessage()]);
+                }
+            }
+
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    $mime = $file->getMimeType() ?: $file->getClientMimeType();
+                    $ext = strtolower($file->getClientOriginalExtension());
+                    $isVideo = str_contains((string) $mime, 'video') || in_array($ext, ['mp4', 'mov', 'avi', 'mkv', 'webm'], true);
+                    $isAudio = str_contains((string) $mime, 'audio') || in_array($ext, ['mp3', 'wav', 'm4a', 'ogg', 'webm'], true);
+                    try {
+                        $media = $isVideo ? $this->mediaManager->uploadVideo($file) : $this->mediaManager->uploadImage($file);
+                        $media->update(['guest_identity_id' => $guest->id]);
+                        $type = $isVideo ? 'video' : ($isAudio ? 'audio' : 'photo');
+                        $url = $media->url();
+                        $assets[] = ['media_uuid' => $media->uuid, 'url' => $url, 'type' => $type, 'title' => $file->getClientOriginalName()];
+                        if (! $fileUrl) {
+                            $fileUrl = $url;
+                            $validated['type'] = $type;
+                            $thumbnail = $media->thumbnail ? Storage::disk($media->disk)->url($media->thumbnail) : ($type === 'photo' ? $url : null);
+                        }
+                    } catch (\Throwable $e) {
+                        continue;
+                    }
+                }
+            }
+
+            if ($request->hasFile('thumbnail') && ! $thumbnail) {
+                $path = $request->file('thumbnail')->store('stories/rooms/'.$room->id.'/guest-thumbnails', 'public');
+                $thumbnail = Storage::url($path);
+            }
+        } else {
+            // media_uuids path — still handle thumbnail upload if guest supplied one
+            if ($request->hasFile('thumbnail') && ! $thumbnail) {
+                $path = $request->file('thumbnail')->store('stories/rooms/'.$room->id.'/guest-thumbnails', 'public');
+                $thumbnail = Storage::url($path);
+            }
         }
 
-        $thumbnail = null;
-        if (isset($validated['thumbnail'])) {
-            $thumbnail = $validated['thumbnail'];
-        } elseif ($validated['type'] === 'photo') {
+        if (! $fileUrl && empty($assets)) {
+            return redirect()->back()->withErrors(['files' => 'Please upload a photo, video or audio file.']);
+        }
+
+        if (empty($thumbnail) && $validated['type'] === 'photo' && $fileUrl) {
             $thumbnail = $fileUrl;
         }
 
-        Story::create([
+        $story = Story::create([
             'room_id' => $room->id,
             'user_id' => null,
             'guest_name' => $validated['guest_name'],
@@ -254,11 +301,73 @@ class ShareController extends Controller
             'tags' => ['guest-contribution'],
         ]);
 
+        if (! empty($validated['duration'])) {
+            $story->update(['duration' => $validated['duration']]);
+        }
+
         return redirect()->back()->with('success', 'Your memory has been shared!');
     }
 
+    protected function resolveGuestIdentity(Request $request, ?Room $room, ?Event $event, string $name, ?string $email): GuestIdentity
+    {
+        $ip = $request->ip();
+
+        // Prefer existing unexpired identity for this room/event + email/ip to avoid churn
+        $query = GuestIdentity::query()->where('name', $name)->where('ip_address', $ip)->where('expires_at', '>', now());
+
+        if ($room) {
+            $query->where('room_id', $room->id);
+        }
+
+        if ($event) {
+            $query->where('event_id', $event->id);
+        }
+
+        if ($email) {
+            $query->orWhere(function ($q) use ($email, $room, $event) {
+                $q->where('email', $email);
+                if ($room) {
+                    $q->where('room_id', $room->id);
+                }
+                if ($event) {
+                    $q->where('event_id', $event->id);
+                }
+            });
+        }
+
+        $existing = $query->latest()->first();
+
+        if ($existing && ! $existing->isExpired()) {
+            $existing->update(['name' => $name, 'email' => $email ?? $existing->email]);
+
+            return $existing;
+        }
+
+        return GuestIdentity::create([
+            'room_id' => $room?->id,
+            'event_id' => $event?->id,
+            'name' => $name,
+            'email' => $email,
+            'ip_address' => $ip,
+            'expires_at' => now()->addHours(24),
+        ]);
+    }
+
+    protected function inferMediaType(Media $media): string
+    {
+        if ($media->type === 'video' || str_starts_with((string) $media->mime_type, 'video/')) {
+            return 'video';
+        }
+
+        if ($media->type === 'audio' || str_contains((string) $media->mime_type, 'audio')) {
+            return 'audio';
+        }
+
+        return 'photo';
+    }
+
     /**
-     * Store a follow-up media on an existing story.
+     * Store a follow-up media on an existing story — parity: media_uuids + ephemeral guest + pipeline.
      */
     public function storeRoomFollowUpMedia(Request $request, Room $room): RedirectResponse
     {
@@ -267,43 +376,75 @@ class ShareController extends Controller
             'guest_email' => ['nullable', 'email', 'max:255'],
             'story_id' => ['required', 'exists:stories,id'],
             'type' => ['required', 'string', 'in:video,audio,photo'],
+            'media_uuids' => ['nullable', 'array'],
+            'media_uuids.*' => ['uuid', 'exists:media,uuid'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
             'recording' => ['nullable', 'file', 'max:51200'],
         ]);
 
+        $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null);
+
         $fileUrl = null;
         $assets = [];
+        $mediaUuids = $validated['media_uuids'] ?? [];
 
-        if ($request->hasFile('recording')) {
-            $recording = $request->file('recording');
-            $path = $recording->store('stories/rooms/'.$room->id.'/guest-media', 'public');
-            $fileUrl = Storage::url($path);
-            // Trust the client-sent type — .webm files report as video/webm even for audio-only
-            $type = $validated['type'];
-            $validated['type'] = $type;
-            $assets[] = [
-                'url' => $fileUrl,
-                'type' => $type,
-                'title' => $recording->getClientOriginalName(),
-            ];
-        }
-
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $path = $file->store('stories/rooms/'.$room->id.'/guest-assets', 'public');
-                $url = Storage::url($path);
-                $mime = $file->getMimeType();
-                $type = str_contains($mime, 'video') ? 'video' : (str_contains($mime, 'audio') ? 'audio' : 'photo');
-                $assets[] = [
-                    'url' => $url,
-                    'type' => $type,
-                    'title' => $file->getClientOriginalName(),
-                ];
+        if (! empty($mediaUuids)) {
+            $medias = Media::whereIn('uuid', $mediaUuids)->get()->keyBy('uuid');
+            foreach ($mediaUuids as $uuid) {
+                $media = $medias->get($uuid);
+                if (! $media) {
+                    continue;
+                }
+                if (! $media->guest_identity_id) {
+                    $media->update(['guest_identity_id' => $guest->id]);
+                }
+                $type = $this->inferMediaType($media);
+                $url = $media->url();
+                $assets[] = ['media_uuid' => $media->uuid, 'url' => $url, 'type' => $type, 'title' => $media->original_name];
                 if (! $fileUrl) {
                     $fileUrl = $url;
                 }
             }
+        }
+
+        if (empty($assets)) {
+            if ($request->hasFile('recording')) {
+                $recording = $request->file('recording');
+                $isVideo = $validated['type'] === 'video';
+                try {
+                    $media = $isVideo ? $this->mediaManager->uploadVideo($recording) : $this->mediaManager->uploadImage($recording);
+                    $media->update(['guest_identity_id' => $guest->id]);
+                    $url = $media->url();
+                    $assets[] = ['media_uuid' => $media->uuid, 'url' => $url, 'type' => $validated['type'], 'title' => $recording->getClientOriginalName()];
+                    $fileUrl = $url;
+                } catch (\Throwable $e) {
+                    return redirect()->back()->withErrors(['recording' => $e->getMessage()]);
+                }
+            }
+
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    $mime = $file->getMimeType() ?: $file->getClientMimeType();
+                    $isVideo = str_contains((string) $mime, 'video');
+                    try {
+                        $media = $isVideo ? $this->mediaManager->uploadVideo($file) : $this->mediaManager->uploadImage($file);
+                        $media->update(['guest_identity_id' => $guest->id]);
+                        $type = $this->inferMediaType($media);
+                        $url = $media->url();
+                        $assets[] = ['media_uuid' => $media->uuid, 'url' => $url, 'type' => $type, 'title' => $file->getClientOriginalName()];
+                        if (! $fileUrl) {
+                            $fileUrl = $url;
+                        }
+                    } catch (\Throwable) {
+                        continue;
+                    }
+                }
+            }
+        }
+
+        if (! $fileUrl && empty($assets)) {
+            return redirect()->back()->withErrors(['files' => 'Please upload a file.']);
         }
 
         Story::create([
@@ -371,7 +512,7 @@ class ShareController extends Controller
     }
 
     /**
-     * Store a guest contribution (story) on an event.
+     * Store a guest contribution (story) on an event — parity: media_uuids + ephemeral guest + pipeline, no document.
      */
     public function storeEventContribution(Request $request, Event $event): RedirectResponse
     {
@@ -380,52 +521,81 @@ class ShareController extends Controller
             'guest_email' => ['nullable', 'email', 'max:255'],
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'type' => ['required', 'string', 'in:video,audio,photo,document'],
+            'type' => ['required', 'string', 'in:video,audio,photo'],
+            'media_uuids' => ['nullable', 'array'],
+            'media_uuids.*' => ['uuid', 'exists:media,uuid'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
         ]);
 
+        $guest = $this->resolveGuestIdentity($request, null, $event, $validated['guest_name'], $validated['guest_email'] ?? null);
+
         $fileUrl = null;
+        $thumbnail = $validated['thumbnail'] ?? null;
         $assets = [];
+        $mediaUuids = $validated['media_uuids'] ?? [];
 
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $path = $file->store('stories/events/'.$event->id.'/guest-assets', 'public');
-                $url = Storage::url($path);
-
-                $mime = $file->getMimeType();
-                $type = 'photo';
-                if ($mime === 'application/pdf') {
-                    $type = 'pdf';
-                } elseif (str_contains($mime, 'video')) {
-                    $type = 'video';
-                } elseif (str_contains($mime, 'audio')) {
-                    $type = 'audio';
+        if (! empty($mediaUuids)) {
+            $medias = Media::whereIn('uuid', $mediaUuids)->get()->keyBy('uuid');
+            foreach ($mediaUuids as $uuid) {
+                $media = $medias->get($uuid);
+                if (! $media) {
+                    continue;
                 }
-
-                $assets[] = [
-                    'url' => $url,
-                    'type' => $type,
-                    'title' => $file->getClientOriginalName(),
-                ];
-
+                if (! $media->guest_identity_id) {
+                    $media->update(['guest_identity_id' => $guest->id]);
+                }
+                $type = $this->inferMediaType($media);
+                $url = $media->url();
+                $assets[] = ['media_uuid' => $media->uuid, 'url' => $url, 'type' => $type, 'title' => $media->original_name];
                 if (! $fileUrl) {
                     $fileUrl = $url;
+                    $validated['type'] = $type;
+                    $thumbnail = $media->thumbnail ? Storage::disk($media->disk)->url($media->thumbnail) : ($type === 'photo' ? $url : null);
                 }
             }
         }
 
-        if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('stories/events/'.$event->id.'/guest-thumbnails', 'public');
-            $validated['thumbnail'] = Storage::url($path);
+        if (empty($assets)) {
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    $mime = $file->getMimeType() ?: $file->getClientMimeType();
+                    $isVideo = str_contains((string) $mime, 'video');
+                    try {
+                        $media = $isVideo ? $this->mediaManager->uploadVideo($file) : $this->mediaManager->uploadImage($file);
+                        $media->update(['guest_identity_id' => $guest->id]);
+                        $type = $this->inferMediaType($media);
+                        $url = $media->url();
+                        $assets[] = ['media_uuid' => $media->uuid, 'url' => $url, 'type' => $type, 'title' => $file->getClientOriginalName()];
+                        if (! $fileUrl) {
+                            $fileUrl = $url;
+                            $validated['type'] = $type;
+                            $thumbnail = $media->thumbnail ? Storage::disk($media->disk)->url($media->thumbnail) : null;
+                        }
+                    } catch (\Throwable) {
+                        continue;
+                    }
+                }
+            }
+
+            if ($request->hasFile('thumbnail') && ! $thumbnail) {
+                $path = $request->file('thumbnail')->store('stories/events/'.$event->id.'/guest-thumbnails', 'public');
+                $thumbnail = Storage::url($path);
+            }
+        } else {
+            if ($request->hasFile('thumbnail') && ! $thumbnail) {
+                $path = $request->file('thumbnail')->store('stories/events/'.$event->id.'/guest-thumbnails', 'public');
+                $thumbnail = Storage::url($path);
+            }
         }
 
-        $thumbnail = null;
-        if (isset($validated['thumbnail'])) {
-            $thumbnail = $validated['thumbnail'];
-        } elseif (in_array($validated['type'], ['photo', 'document'])) {
+        if (empty($thumbnail) && $validated['type'] === 'photo' && $fileUrl) {
             $thumbnail = $fileUrl;
+        }
+
+        if (! $fileUrl && empty($assets)) {
+            return redirect()->back()->withErrors(['files' => 'Please upload a file.']);
         }
 
         Story::create([

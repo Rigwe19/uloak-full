@@ -54,12 +54,12 @@ Route::get('/share/events/{slug}', [ShareController::class, 'showEvent'])->name(
 Route::post('/share/send-link', [ShareController::class, 'sendMagicLink'])->name('share.send-link');
 Route::post('/share/rooms/{room}/tributes', [TributeController::class, 'store'])->name('share.rooms.tributes.store');
 Route::post('/share/rooms/{room}/candles', [TributeController::class, 'lightCandle'])->name('share.rooms.candles.store');
-Route::post('/share/rooms/{room}/stories', [ShareController::class, 'storeRoomContribution'])->middleware('contributions.open')->name('share.rooms.stories.store');
-Route::post('/share/rooms/{room}/stories/followup', [ShareController::class, 'storeRoomFollowUpMedia'])->middleware('contributions.open')->name('share.rooms.stories.followup');
+Route::post('/share/rooms/{room}/stories', [ShareController::class, 'storeRoomContribution'])->middleware(['contributions.open', 'throttle:guest-media'])->name('share.rooms.stories.store');
+Route::post('/share/rooms/{room}/stories/followup', [ShareController::class, 'storeRoomFollowUpMedia'])->middleware(['contributions.open', 'throttle:guest-media'])->name('share.rooms.stories.followup');
 Route::post('/share/rooms/{room}/subscribe', [ShareController::class, 'storeGuestSubscription'])->name('share.rooms.subscribe');
 Route::post('/share/rooms/{room}/comments', [ShareController::class, 'storeRoomComment'])->name('share.rooms.comments.store');
 Route::delete('/share/rooms/{room}/stories/{story}', [ShareController::class, 'destroyStory'])->name('share.rooms.stories.destroy');
-Route::post('/share/events/{event}/contributions', [ShareController::class, 'storeEventContribution'])->name('share.events.contributions.store');
+Route::post('/share/events/{event}/contributions', [ShareController::class, 'storeEventContribution'])->middleware('throttle:guest-media')->name('share.events.contributions.store');
 Route::get('/magic-login', [ShareController::class, 'magicLogin'])->name('magic.login');
 Route::get('/rooms/{room}/download-media', [RoomController::class, 'downloadMedia'])->name('rooms.download-media');
 Route::get('/share/events/{slug}/download-media', [ShareController::class, 'downloadEventMedia'])->name('share.events.download-media');

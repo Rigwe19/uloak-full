@@ -8,7 +8,11 @@ use App\Media\Exceptions\MediaNotFoundException;
 use App\Media\Exceptions\MediaProcessingException;
 use App\Media\Exceptions\UnsupportedFormatException;
 use App\Media\MediaManager;
+use App\Models\Event;
+use App\Models\GuestIdentity;
 use App\Models\Media;
+use App\Models\Room;
+use App\Models\RoomGuestSubscription;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -169,6 +173,122 @@ class MediaController extends Controller
                 'provider' => $media->provider,
                 'thumbnail_url' => $thumbUrl,
                 'sprite' => $media->sprite,
+            ],
+        ], 201);
+    }
+
+    public function uploadGuestVideo(Request $request): JsonResponse
+    {
+        return $this->handleGuestUpload($request, 'video');
+    }
+
+    public function uploadGuestImage(Request $request): JsonResponse
+    {
+        return $this->handleGuestUpload($request, 'image');
+    }
+
+    public function uploadGuest(Request $request): JsonResponse
+    {
+        return $this->handleGuestUpload($request, null);
+    }
+
+    protected function handleGuestUpload(Request $request, ?string $forcedType): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:512000', 'mimes:mp4,mov,avi,mkv,webm,jpg,jpeg,png,webp,heic,heif,mp3,wav,m4a,ogg,webm'],
+            'room_slug' => ['nullable', 'string', 'required_without:event_slug'],
+            'event_slug' => ['nullable', 'string', 'required_without:room_slug'],
+            'guest_name' => ['required', 'string', 'max:255'],
+            'guest_email' => ['nullable', 'email', 'max:255'],
+            'type' => ['nullable', 'string', 'in:video,image,audio,photo'],
+        ]);
+
+        $room = null;
+        $event = null;
+
+        if ($request->filled('room_slug')) {
+            $room = Room::where('slug', $request->input('room_slug'))->first();
+
+            if (! $room) {
+                return response()->json(['message' => 'Room not found.'], 404);
+            }
+
+            if (! $room->contributionsOpen()) {
+                return response()->json(['message' => $room->contributionBlockReason() ?? 'Contributions are closed.'], 403);
+            }
+        }
+
+        if ($request->filled('event_slug')) {
+            $event = Event::where('slug', $request->input('event_slug'))->first();
+
+            if (! $event) {
+                return response()->json(['message' => 'Event not found.'], 404);
+            }
+        }
+
+        $guest = GuestIdentity::create([
+            'room_id' => $room?->id,
+            'event_id' => $event?->id,
+            'name' => $request->input('guest_name'),
+            'email' => $request->input('guest_email'),
+            'ip_address' => $request->ip(),
+            'expires_at' => now()->addHours(24),
+        ]);
+
+        // Keep RoomGuestSubscription in sync for organizer visibility/reminders
+        if ($room && $request->filled('guest_email')) {
+            RoomGuestSubscription::firstOrCreate(
+                ['room_id' => $room->id, 'email' => $request->input('guest_email')],
+                ['name' => $request->input('guest_name')]
+            );
+        }
+
+        $file = $request->file('file');
+        $mime = $file->getMimeType() ?: $file->getClientMimeType();
+        $ext = strtolower($file->getClientOriginalExtension());
+        $type = $forcedType ?? $request->input('type');
+        $isVideo = $type === 'video' || $type === 'video' || str_starts_with((string) $mime, 'video/') || in_array($ext, ['mp4', 'mov', 'avi', 'mkv', 'webm'], true);
+
+        try {
+            $media = $isVideo
+                ? $this->mediaManager->uploadVideo($file)
+                : $this->mediaManager->uploadImage($file);
+        } catch (UnsupportedFormatException $e) {
+            try {
+                $media = $isVideo ? $this->mediaManager->uploadImage($file) : $this->mediaManager->uploadVideo($file);
+            } catch (\Throwable $inner) {
+                return response()->json(['message' => $e->getMessage(), 'mime_type' => $e->mimeType], 415);
+            }
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+
+        // Link ephemeral guest for audit/watermark provenance
+        $media->update(['guest_identity_id' => $guest->id, 'metadata' => array_merge($media->metadata ?? [], ['guest_name' => $guest->name, 'guest_email' => $guest->email, 'guest_uuid' => $guest->uuid])]);
+
+        MediaProcessingStarted::dispatch($media);
+
+        $thumb = $media->attributes['thumbnail'] ?? $media->thumbnail ?? null;
+        $thumbUrl = is_string($thumb) && $thumb !== '' ? (str_starts_with($thumb, 'http') ? $thumb : (function () use ($media, $thumb) {
+            try {
+                return Storage::disk($media->disk)->url($thumb);
+            } catch (\Throwable) {
+                return $thumb;
+            }
+        })()) : null;
+
+        return response()->json([
+            'data' => [
+                'id' => $media->uuid,
+                'uuid' => $media->uuid,
+                'url' => $media->url(),
+                'type' => $media->type,
+                'mime_type' => $media->mime_type,
+                'status' => $media->status,
+                'provider' => $media->provider,
+                'thumbnail_url' => $thumbUrl,
+                'sprite' => $media->sprite,
+                'guest_identity_uuid' => $guest->uuid,
             ],
         ], 201);
     }
