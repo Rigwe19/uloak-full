@@ -50,8 +50,44 @@ class UpdateStoriesWithPendingMedia implements ShouldQueue
     protected function updateStoriesWithMedia(Media $media): void
     {
         // Find stories that reference this media in their assets array
-        $stories = Story::whereRaw("JSON_CONTAINS(assets, JSON_OBJECT('media_uuid', ?), '$')", [$media->uuid])
-            ->get();
+        // Use driver-aware JSON containment to support MySQL, Postgres (production), and SQLite (tests)
+        $driver = \DB::getDriverName();
+        $uuid = $media->uuid;
+
+        try {
+            if ($driver === 'pgsql') {
+                // Postgres: assets is jsonb — @> checks containment. Use array wrapper so subset matching works
+                $candidate = json_encode([['media_uuid' => $uuid]]);
+                $stories = Story::whereRaw('assets::jsonb @> ?', [$candidate])->get();
+            } elseif ($driver === 'mysql') {
+                // MySQL: JSON_CONTAINS with candidate JSON object
+                $candidate = json_encode(['media_uuid' => $uuid]);
+                $stories = Story::whereRaw("JSON_CONTAINS(assets, CAST(? AS JSON), '$')", [$candidate])->get();
+            } else {
+                // SQLite / fallback — LIKE is sufficient for queue job (small candidate set)
+                $stories = Story::where('assets', 'like', '%"media_uuid":"'.$uuid.'"%')->get();
+            }
+        } catch (\Throwable $e) {
+            // Fallback to PHP filtering if DB JSON operator not available (e.g., assets is TEXT)
+            \Log::warning('UpdateStoriesWithPendingMedia: JSON query failed, falling back to PHP filter', [
+                'media_id' => $media->id,
+                'driver' => $driver,
+                'error' => $e->getMessage(),
+            ]);
+            $stories = Story::whereNotNull('assets')->get()->filter(function ($story) use ($uuid) {
+                $assets = $story->assets;
+                if (is_string($assets)) {
+                    $assets = json_decode($assets, true) ?? [];
+                }
+                foreach ((array) $assets as $asset) {
+                    if (($asset['media_uuid'] ?? null) === $uuid) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
+        }
 
         foreach ($stories as $story) {
             $this->updateStoryAssets($story, $media);
