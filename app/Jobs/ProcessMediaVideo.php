@@ -64,11 +64,11 @@ class ProcessMediaVideo implements ShouldQueue
         } catch (\Throwable $e) {
             $repository->update($media, [
                 'status' => ProcessingState::Failed->value,
-                'failed_reason' => $e->getMessage(),
+                'failed_reason' => Str::limit($e->getMessage(), 4000),
                 'processing_completed_at' => now(),
             ]);
 
-            MediaProcessingFailed::dispatch($media, $e->getMessage());
+            MediaProcessingFailed::dispatch($media, Str::limit($e->getMessage(), 4000));
 
             throw $e;
         }
@@ -79,7 +79,7 @@ class ProcessMediaVideo implements ShouldQueue
         logger()->error('Media processing job failed', [
             'media_id' => $this->mediaId,
             'action' => $this->action,
-            'error' => $e->getMessage(),
+            'error' => Str::limit($e->getMessage(), 4000),
             'trace' => $e->getTraceAsString(),
         ]);
         $media = Media::find($this->mediaId);
@@ -89,11 +89,11 @@ class ProcessMediaVideo implements ShouldQueue
         if ($media && $media->status !== ProcessingState::Failed->value) {
             $media->update([
                 'status' => ProcessingState::Failed->value,
-                'failed_reason' => $e->getMessage(),
+                'failed_reason' => Str::limit($e->getMessage(), 4000),
                 'processing_completed_at' => now(),
             ]);
 
-            MediaProcessingFailed::dispatch($media, $e->getMessage());
+            MediaProcessingFailed::dispatch($media, Str::limit($e->getMessage(), 4000));
         }
     }
 
@@ -205,8 +205,25 @@ class ProcessMediaVideo implements ShouldQueue
         $inputPath = $storage->path($input);
         $outputPath = $storage->path($output);
 
-        if (! is_dir(dirname($outputPath))) {
-            mkdir(dirname($outputPath), 0755, true);
+        // Use Storage facade so directory is created as the app user (not just raw mkdir as queue user).
+        // Falls back to mkdir with broader perms if the disk driver cannot create it.
+        $outputDir = dirname($output);
+        try {
+            if (! $storage->exists($outputDir)) {
+                $storage->makeDirectory($outputDir);
+            }
+        } catch (\Throwable) {
+            if (! is_dir(dirname($outputPath)) && ! @mkdir(dirname($outputPath), 0775, true) && ! is_dir(dirname($outputPath))) {
+                throw new \RuntimeException('Failed to create output directory: '.dirname($outputPath).' — check storage/app/public/media/processed ownership (should be writable by '.get_current_user().' / www-data).');
+            }
+        }
+
+        // Ensure the directory is writable for the ffmpeg child process; attempt to fix common deploy drift (root-owned storage after rsync).
+        if (! is_writable(dirname($outputPath))) {
+            @chmod(dirname($outputPath), 0775);
+            if (! is_writable(dirname($outputPath))) {
+                throw new \RuntimeException('Output directory not writable: '.dirname($outputPath).' — run: sudo chown -R www-data:www-data storage/app/public/media && sudo chmod -R 775 storage/app/public/media');
+            }
         }
 
         $watermarkPath = public_path('ulo-wordmark-forest.png');
@@ -258,6 +275,8 @@ class ProcessMediaVideo implements ShouldQueue
             'aac',
             '-b:a',
             '128k',
+            '-threads',
+            '2',
             '-progress',
             'pipe:1',
             '-nostats',
@@ -317,11 +336,31 @@ class ProcessMediaVideo implements ShouldQueue
             usleep(200_000);
         }
 
-        $result = $process->wait();
+        try {
+            $result = $process->wait();
+        } catch (\Throwable $e) {
+            $msg = $e->getMessage();
+            if (str_contains($msg, 'signal "9"') || str_contains($msg, 'signal 9') || str_contains($msg, 'SIGKILL') || str_contains($msg, 'killed')) {
+                throw new \RuntimeException(
+                    'FFmpeg transcoding killed by OOM (signal 9). The video is too large for the current worker memory. Reduce source resolution/length or increase worker RAM/swap. Original: '.$e->getMessage(),
+                    0,
+                    $e
+                );
+            }
+            throw $e;
+        }
 
         if ($result->exitCode() !== 0) {
+            $rawError = $result->errorOutput();
+            $error = Str::limit($rawError, 3500);
+            if (str_contains($rawError, 'Permission denied')) {
+                $error .= ' — hint: sudo chown -R www-data:www-data storage/app/public/media && sudo chmod -R 775 storage/app/public/media && sudo -u www-data mkdir -p storage/app/public/media/processed';
+            }
+            if (str_contains($rawError, 'signal "9"') || str_contains($rawError, 'SIGKILL')) {
+                $error = 'FFmpeg OOM (signal 9): '.$error;
+            }
             throw new \RuntimeException(
-                'FFmpeg transcoding failed: '.$result->errorOutput()
+                'FFmpeg transcoding failed: '.$error
             );
         }
     }
