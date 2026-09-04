@@ -355,12 +355,19 @@ class ShareController extends Controller
 
     protected function inferMediaType(Media $media): string
     {
-        if ($media->type === 'video' || str_starts_with((string) $media->mime_type, 'video/')) {
+        // Explicit type wins — audio/webm; codecs=opus is often sniffed as video/webm by finfo, but must stay audio
+        if ($media->type === 'audio') {
+            return 'audio';
+        }
+        if ($media->type === 'video') {
             return 'video';
         }
-
-        if ($media->type === 'audio' || str_contains((string) $media->mime_type, 'audio')) {
+        $baseMime = strtolower(trim(explode(';', (string) $media->mime_type)[0]));
+        if (str_contains($baseMime, 'audio')) {
             return 'audio';
+        }
+        if (str_starts_with($baseMime, 'video/')) {
+            return 'video';
         }
 
         return 'photo';
