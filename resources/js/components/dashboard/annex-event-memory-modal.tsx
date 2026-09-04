@@ -49,7 +49,9 @@ export function AnnexEventMemoryModal({
     const { addToQueue, removeFromQueue, cancelUpload, retryUpload, uploads } =
         useUploadQueue();
     const completedUploads = uploads.filter((u) => u.status === 'ready');
+    const processingUploads = uploads.filter((u) => u.status === 'processing');
     const hasReadyUploads = completedUploads.length > 0;
+    const hasProcessingUploads = processingUploads.length > 0;
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
@@ -115,12 +117,21 @@ export function AnnexEventMemoryModal({
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
 
-        const readyUploads = uploads.filter((u) => u.status === 'ready');
-        const uuids = readyUploads
+        // Allow video queued for compressing — show placeholder instead of blocking
+        const stillUploading = uploads.filter(
+            (u) => u.status === 'uploading' || u.status === 'queued' || u.status === 'pending',
+        );
+        if (stillUploading.length > 0) {
+            const withoutUuid = stillUploading.filter((u) => !u.mediaUuid);
+            if (withoutUuid.length > 0) {
+                return;
+            }
+        }
+
+        const withMedia = uploads.filter((u) => u.mediaUuid);
+        const uuids = withMedia
             .map((u) => u.mediaUuid)
             .filter(Boolean) as string[];
-
-        console.log('got here', readyUploads, uuids, data.recording);
 
         if (uuids.length === 0 && !data.recording) {
             return;
@@ -629,7 +640,9 @@ export function AnnexEventMemoryModal({
                             type="submit"
                             disabled={
                                 processing ||
-                                (!hasReadyUploads && !data.recording)
+                                (!hasReadyUploads &&
+                                    !hasProcessingUploads &&
+                                    !data.recording)
                             }
                         >
                             {processing ? (

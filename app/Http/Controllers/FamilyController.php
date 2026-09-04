@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Media\MediaManager;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\RoomMember;
@@ -14,6 +15,8 @@ use Inertia\Response as InertiaResponse;
 
 class FamilyController extends Controller
 {
+    public function __construct(protected MediaManager $mediaManager) {}
+
     /**
      * Access a room via a token (no password, no email).
      */
@@ -84,34 +87,62 @@ class FamilyController extends Controller
             ])
             ->latest()
             ->cursorPaginate(24)
-            ->through(fn ($story) => [
-                'id' => $story->id,
-                'title' => $story->title,
-                'type' => $story->type,
-                'description' => $story->description,
-                'author' => $story->user?->name ?? $story->roomMember?->name ?? $story->getGuestName() ?? 'Anonymous',
-                'thumbnail' => $story->thumbnail,
-                'file_url' => $story->file_url,
-                'assets' => $story->assets ?? [],
-                'room_member_id' => $story->room_member_id,
-                'comments' => $story->comments->map(fn ($c) => [
-                    'id' => $c->id,
-                    'content' => $c->content,
-                    'author' => $c->authorName(),
-                    'date' => $c->created_at->diffForHumans(),
-                ]),
-                'comments_count' => $story->comments()->count(),
-                'follow_ups' => $story->followUpStories->map(fn ($fs) => [
-                    'id' => $fs->id,
-                    'type' => $fs->type,
-                    'file_url' => $fs->file_url,
-                    'thumbnail' => $fs->thumbnail,
-                    'author' => $fs->user?->name ?? $fs->roomMember?->name ?? $fs->getGuestName() ?? 'Anonymous',
-                    'created_at' => $fs->created_at->format('M d, Y'),
-                ]),
-                'date' => $story->created_at->format('M d, Y'),
-                'tags' => $story->tags ?? [],
-            ]);
+            ->through(function ($story) {
+                $assets = $story->assets ?? [];
+                $isProcessing = false;
+                $enrichedAssets = $assets;
+                if (! empty($assets)) {
+                    $uuids = collect($assets)->pluck('media_uuid')->filter()->values()->all();
+                    if (! empty($uuids)) {
+                        $mediaMap = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+                        $enrichedAssets = collect($assets)->map(function ($asset) use ($mediaMap, &$isProcessing) {
+                            $uuid = $asset['media_uuid'] ?? null;
+                            if ($uuid && isset($mediaMap[$uuid])) {
+                                $media = $mediaMap[$uuid];
+                                $asset['status'] = $media->status;
+                                $asset['progress'] = $media->progress;
+                                if (in_array($media->status, ['uploading', 'processing'], true)) {
+                                    $isProcessing = true;
+                                }
+                            }
+
+                            return $asset;
+                        })->all();
+                    }
+                } elseif ($story->type === 'video' && empty($story->file_url)) {
+                    $isProcessing = true;
+                }
+
+                return [
+                    'id' => $story->id,
+                    'title' => $story->title,
+                    'type' => $story->type,
+                    'description' => $story->description,
+                    'author' => $story->user?->name ?? $story->roomMember?->name ?? $story->getGuestName() ?? 'Anonymous',
+                    'thumbnail' => $story->thumbnail,
+                    'file_url' => $story->file_url,
+                    'assets' => $enrichedAssets,
+                    'is_processing' => $isProcessing,
+                    'room_member_id' => $story->room_member_id,
+                    'comments' => $story->comments->map(fn ($c) => [
+                        'id' => $c->id,
+                        'content' => $c->content,
+                        'author' => $c->authorName(),
+                        'date' => $c->created_at->diffForHumans(),
+                    ]),
+                    'comments_count' => $story->comments()->count(),
+                    'follow_ups' => $story->followUpStories->map(fn ($fs) => [
+                        'id' => $fs->id,
+                        'type' => $fs->type,
+                        'file_url' => $fs->file_url,
+                        'thumbnail' => $fs->thumbnail,
+                        'author' => $fs->user?->name ?? $fs->roomMember?->name ?? $fs->getGuestName() ?? 'Anonymous',
+                        'created_at' => $fs->created_at->format('M d, Y'),
+                    ]),
+                    'date' => $story->created_at->format('M d, Y'),
+                    'tags' => $story->tags ?? [],
+                ];
+            });
 
         return Inertia::render('family/rooms/show', [
             'room' => [
@@ -158,39 +189,80 @@ class FamilyController extends Controller
             'files.*' => ['file', 'max:51200'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file', 'max:51200'],
+            'media_uuids' => ['nullable', 'array'],
+            'media_uuids.*' => ['uuid', 'exists:media,uuid'],
         ]);
 
         $fileUrl = null;
         $assets = [];
+        $mediaUuids = $validated['media_uuids'] ?? [];
 
-        if ($request->hasFile('recording')) {
+        // Pending pipeline: media already uploaded via /api/media/* (processing placeholder)
+        if (! empty($mediaUuids)) {
+            $medias = Media::whereIn('uuid', $mediaUuids)->get()->keyBy('uuid');
+            foreach ($mediaUuids as $uuid) {
+                $media = $medias->get($uuid);
+                if (! $media) {
+                    continue;
+                }
+                $type = $media->type === 'video' ? 'video' : ($media->type === 'audio' ? 'audio' : 'photo');
+                $assets[] = [
+                    'media_uuid' => $media->uuid,
+                    'url' => $media->url(),
+                    'type' => $type,
+                    'title' => $media->original_name,
+                    'status' => $media->status,
+                ];
+                if (! $fileUrl) {
+                    $fileUrl = $media->url();
+                    $validated['type'] = $type;
+                }
+            }
+        }
+
+        // Legacy fallback: direct files/recording now via Media pipeline (pending)
+        if (empty($assets) && $request->hasFile('recording')) {
             $recording = $request->file('recording');
-            $path = $recording->store('stories/rooms/'.$room->id.'/family-media', 'public');
-            $fileUrl = Storage::url($path);
-            $type = $validated['type'];
-            $validated['type'] = $type;
+            $mime = strtolower(trim(explode(';', $recording->getMimeType() ?: '')[0]));
+            $isAudio = str_contains($mime, 'audio') || $validated['type'] === 'audio';
+            $media = $isAudio ? $this->mediaManager->uploadAudio($recording) : $this->mediaManager->uploadVideo($recording);
+            $fileUrl = $media->url();
             $assets[] = [
+                'media_uuid' => $media->uuid,
                 'url' => $fileUrl,
-                'type' => $type,
+                'type' => $validated['type'],
                 'title' => $recording->getClientOriginalName(),
+                'status' => $media->status,
             ];
         }
 
-        if ($request->hasFile('files')) {
+        if (empty($assets) && $request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
-                $path = $file->store('stories/rooms/'.$room->id.'/family-assets', 'public');
-                $url = Storage::url($path);
-                $mime = $file->getMimeType();
-                $type = 'photo';
-                if (str_contains($mime, 'video')) {
-                    $type = 'video';
-                } elseif (str_contains($mime, 'audio')) {
-                    $type = 'audio';
+                $mime = strtolower(trim(explode(';', $file->getMimeType() ?: '')[0]));
+                $isVideo = str_starts_with($mime, 'video/');
+                $isAudio = str_contains($mime, 'audio');
+                try {
+                    $media = $isVideo ? $this->mediaManager->uploadVideo($file) : ($isAudio ? $this->mediaManager->uploadAudio($file) : $this->mediaManager->uploadImage($file));
+                } catch (\Throwable) {
+                    $path = $file->store('stories/rooms/'.$room->id.'/family-assets', 'public');
+                    $url = Storage::url($path);
+                    $type = $isVideo ? 'video' : ($isAudio ? 'audio' : 'photo');
+                    $assets[] = ['url' => $url, 'type' => $type, 'title' => $file->getClientOriginalName()];
+                    if (! $fileUrl) {
+                        $fileUrl = $url;
+                        $validated['type'] = $type;
+                    }
+
+                    continue;
                 }
+                $type = $media->type === 'video' ? 'video' : ($media->type === 'audio' ? 'audio' : 'photo');
+                $url = $media->url();
                 $assets[] = [
+                    'media_uuid' => $media->uuid,
                     'url' => $url,
                     'type' => $type,
                     'title' => $file->getClientOriginalName(),
+                    'status' => $media->status,
                 ];
                 if (! $fileUrl) {
                     $fileUrl = $url;

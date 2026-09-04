@@ -37,19 +37,56 @@ class RoomController extends Controller
         $allTributes = $room->tributes;
         $candles = $room->candles()->orderByRaw('CASE WHEN is_approved = false THEN 0 ELSE 1 END')->get();
 
-        $storiesPaginator = $room->stories()->latest()->cursorPaginate(24)->through(fn ($story) => [
-            'uuid' => $story->uuid,
-            'id' => $story->id,
-            'title' => $story->title,
-            'thumbnail' => $story->thumbnail ? Storage::disk('public')->url($story->thumbnail) : null,
-            'type' => $story->type,
-            'description' => $story->description,
-            'author' => $story->user?->name ?? $story->guest_name,
-            'tags' => $story->tags ?? [],
-            'date' => $story->created_at->format('M d, Y'),
-            'file_url' => $story->file_url ? Storage::disk('public')->url($story->file_url) : null,
-            'assets' => $story->assets ?? [],
-        ]);
+        $storiesPaginator = $room->stories()->latest()->cursorPaginate(24)->through(function ($story) {
+            $assets = $story->assets ?? [];
+            $isProcessing = false;
+            $enrichedAssets = $assets;
+            if (! empty($assets)) {
+                $uuids = collect($assets)->pluck('media_uuid')->filter()->values()->all();
+                if (! empty($uuids)) {
+                    $mediaMap = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+                    $enrichedAssets = collect($assets)->map(function ($asset) use ($mediaMap, &$isProcessing) {
+                        $uuid = $asset['media_uuid'] ?? null;
+                        if ($uuid && isset($mediaMap[$uuid])) {
+                            $media = $mediaMap[$uuid];
+                            $asset['status'] = $media->status;
+                            $asset['progress'] = $media->progress;
+                            if (in_array($media->status, ['uploading', 'processing'], true)) {
+                                $isProcessing = true;
+                            }
+                        } elseif (($asset['type'] ?? null) === 'video' && empty($asset['url'])) {
+                            $isProcessing = true;
+                        }
+
+                        return $asset;
+                    })->all();
+                    if (! $isProcessing && $story->type === 'video') {
+                        $hasReadyVideo = collect($enrichedAssets)->contains(fn ($a) => ($a['type'] ?? '') === 'video' && ($a['status'] ?? 'ready') === 'ready');
+                        $hasVideoAsset = collect($enrichedAssets)->contains(fn ($a) => ($a['type'] ?? '') === 'video');
+                        if ($hasVideoAsset && ! $hasReadyVideo) {
+                            $isProcessing = true;
+                        }
+                    }
+                }
+            } elseif ($story->type === 'video' && empty($story->file_url)) {
+                $isProcessing = true;
+            }
+
+            return [
+                'uuid' => $story->uuid,
+                'id' => $story->id,
+                'title' => $story->title,
+                'thumbnail' => $story->thumbnail ? Storage::disk('public')->url($story->thumbnail) : null,
+                'type' => $story->type,
+                'description' => $story->description,
+                'author' => $story->user?->name ?? $story->guest_name,
+                'tags' => $story->tags ?? [],
+                'date' => $story->created_at->format('M d, Y'),
+                'file_url' => $story->file_url ? Storage::disk('public')->url($story->file_url) : null,
+                'assets' => $enrichedAssets,
+                'is_processing' => $isProcessing,
+            ];
+        });
 
         $pageTitle = $room->name.' - Ulo of Stories';
         $pageDescription = $room->description

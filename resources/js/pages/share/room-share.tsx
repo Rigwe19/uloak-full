@@ -1270,8 +1270,9 @@ function MediaCaptureHub({
                         if (index === withMedia.length - 1) {
                             setIsSubmittingMedia(false);
                             closeFullscreen();
+                            // Hide queue immediately — feed will show "Video is processing and it will show soon" placeholder
                             try {
-                                useUploadStore.getState().clearCompleted();
+                                useUploadStore.getState().clearAll();
                             } catch {}
                             onSubmit();
                             setShowSuccess(true);
@@ -1316,9 +1317,9 @@ function MediaCaptureHub({
             onSuccess: () => {
                 setIsSubmittingMedia(false);
                 closeFullscreen();
-                // clear guest pipeline queue after success so next contribution starts fresh
+                // Hide queue — feed placeholder takes over (Video is processing and it will show soon)
                 try {
-                    useUploadStore.getState().clearCompleted();
+                    useUploadStore.getState().clearAll();
                 } catch {}
                 onSubmit();
                 setShowSuccess(true);
@@ -1848,6 +1849,23 @@ export default function RoomShare({
     );
     const [viewerStory, setViewerStory] = useState<FeedStory | null>(null);
     const [commentsStoryId, setCommentsStoryId] = useState<number | null>(null);
+
+    // Poll for video processing completion — while any story shows placeholder, refresh feed
+    useEffect(() => {
+        const hasProcessing = allStories.some((s) => (s as any).is_processing);
+        if (! hasProcessing) {
+            return;
+        }
+        const id = window.setInterval(() => {
+            router.visit(window.location.pathname, {
+                only: ['stories'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 5000);
+        return () => window.clearInterval(id);
+    }, [allStories]);
 
     // Merge paginated stories & handle reset
     useEffect(() => {

@@ -101,11 +101,6 @@ export function UploadQueueItem({
                         status={item.status}
                     />
                 )}
-                {item.status === 'processing' && (
-                    <div className="flex items-center gap-2">
-                        <UploadStatusBadge status="processing" />
-                    </div>
-                )}
                 {item.errorMessage && (
                     <span className="flex w-full text-xs text-red-500">
                         {item.errorMessage}

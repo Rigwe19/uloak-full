@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\RoomTier;
 use App\Models\HouseMember;
+use App\Models\Media;
 use App\Models\Room;
 use App\Models\Story;
 use App\Models\User;
@@ -182,19 +183,47 @@ class HouseAccessController extends Controller
             'pendingTributes' => $pendingTributes,
             'approvedTributes' => $approvedTributes,
             'allTributes' => $allTributes,
-            'stories' => $room->stories->map(fn ($story) => [
-                'uuid' => $story->uuid,
-                'id' => $story->id,
-                'title' => $story->title,
-                'thumbnail' => $story->thumbnail,
-                'type' => $story->type,
-                'description' => $story->description,
-                'author' => $story->user?->name ?? $story->guest_name,
-                'tags' => $story->tags ?? [],
-                'date' => $story->created_at->format('M d, Y'),
-                'file_url' => $story->file_url,
-                'assets' => $story->assets ?? [],
-            ]),
+            'stories' => $room->stories->map(function ($story) {
+                $assets = $story->assets ?? [];
+                $isProcessing = false;
+                $enrichedAssets = $assets;
+                if (! empty($assets)) {
+                    $uuids = collect($assets)->pluck('media_uuid')->filter()->values()->all();
+                    if (! empty($uuids)) {
+                        $mediaMap = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+                        $enrichedAssets = collect($assets)->map(function ($asset) use ($mediaMap, &$isProcessing) {
+                            $uuid = $asset['media_uuid'] ?? null;
+                            if ($uuid && isset($mediaMap[$uuid])) {
+                                $media = $mediaMap[$uuid];
+                                $asset['status'] = $media->status;
+                                $asset['progress'] = $media->progress;
+                                if (in_array($media->status, ['uploading', 'processing'], true)) {
+                                    $isProcessing = true;
+                                }
+                            }
+
+                            return $asset;
+                        })->all();
+                    }
+                } elseif ($story->type === 'video' && empty($story->file_url)) {
+                    $isProcessing = true;
+                }
+
+                return [
+                    'uuid' => $story->uuid,
+                    'id' => $story->id,
+                    'title' => $story->title,
+                    'thumbnail' => $story->thumbnail,
+                    'type' => $story->type,
+                    'description' => $story->description,
+                    'author' => $story->user?->name ?? $story->guest_name,
+                    'tags' => $story->tags ?? [],
+                    'date' => $story->created_at->format('M d, Y'),
+                    'file_url' => $story->file_url,
+                    'assets' => $enrichedAssets,
+                    'is_processing' => $isProcessing,
+                ];
+            }),
             'candles' => $room->candles()->orderByRaw('CASE WHEN is_approved = false THEN 0 ELSE 1 END')->get(),
         ]);
     }
@@ -290,7 +319,7 @@ class HouseAccessController extends Controller
         $owner = User::findOrFail($ownerId);
 
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
+            'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'type' => ['required', 'string', 'in:video,audio,photo,document'],
             'files' => ['nullable', 'array'],
@@ -298,6 +327,8 @@ class HouseAccessController extends Controller
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file'],
             'duration' => ['nullable', 'string'],
+            'media_uuids' => ['nullable', 'array'],
+            'media_uuids.*' => ['uuid', 'exists:media,uuid'],
         ]);
 
         if ($request->hasFile('thumbnail')) {
