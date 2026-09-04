@@ -244,18 +244,33 @@ class MediaController extends Controller
         }
 
         $file = $request->file('file');
-        $mime = $file->getMimeType() ?: $file->getClientMimeType();
+        $rawMime = $file->getMimeType() ?: $file->getClientMimeType();
+        $mime = strtolower(trim(explode(';', (string) $rawMime)[0]));
         $ext = strtolower($file->getClientOriginalExtension());
         $type = $forcedType ?? $request->input('type');
-        $isVideo = $type === 'video' || $type === 'video' || str_starts_with((string) $mime, 'video/') || in_array($ext, ['mp4', 'mov', 'avi', 'mkv', 'webm'], true);
+        $isAudio = $type === 'audio' || str_starts_with($mime, 'audio/') || in_array($ext, ['mp3', 'wav', 'm4a', 'ogg', 'aac', 'opus', 'flac', 'webm'], true) && str_contains($mime, 'audio');
+        // Prefer explicit audio detection before video because audio/webm;codecs=opus reports as webm ext but is audio
+        if ($type === 'audio') {
+            $isAudio = true;
+        }
+        $isVideo = ! $isAudio && ($type === 'video' || str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'mov', 'avi', 'mkv', 'webm'], true));
 
         try {
-            $media = $isVideo
-                ? $this->mediaManager->uploadVideo($file)
-                : $this->mediaManager->uploadImage($file);
+            if ($isAudio) {
+                $media = $this->mediaManager->uploadAudio($file);
+            } elseif ($isVideo) {
+                $media = $this->mediaManager->uploadVideo($file);
+            } else {
+                $media = $this->mediaManager->uploadImage($file);
+            }
         } catch (UnsupportedFormatException $e) {
             try {
-                $media = $isVideo ? $this->mediaManager->uploadImage($file) : $this->mediaManager->uploadVideo($file);
+                // Fallback: try audio then video/image as last resort
+                if (! $isAudio) {
+                    $media = $this->mediaManager->uploadAudio($file);
+                } else {
+                    $media = $isVideo ? $this->mediaManager->uploadImage($file) : $this->mediaManager->uploadVideo($file);
+                }
             } catch (\Throwable $inner) {
                 return response()->json(['message' => $e->getMessage(), 'mime_type' => $e->mimeType], 415);
             }

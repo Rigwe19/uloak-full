@@ -39,7 +39,8 @@ export function validateVideo(file: File): ValidationResult {
         return { valid: false, error: 'No file selected.' };
     }
 
-    if (!ALLOWED_VIDEO_MIMES.includes(file.type)) {
+    const baseMime = file.type.split(';')[0].trim().toLowerCase();
+    if (!ALLOWED_VIDEO_MIMES.includes(baseMime) && !ALLOWED_VIDEO_MIMES.includes(file.type)) {
         return {
             valid: false,
             error: `Unsupported video format: ${file.type || 'unknown'}. Use MP4, MOV, AVI, or WebM.`,
@@ -61,7 +62,8 @@ export function validateImage(file: File): ValidationResult {
         return { valid: false, error: 'No file selected.' };
     }
 
-    if (!ALLOWED_IMAGE_MIMES.includes(file.type)) {
+    const baseMime = file.type.split(';')[0].trim().toLowerCase();
+    if (!ALLOWED_IMAGE_MIMES.includes(baseMime) && !ALLOWED_IMAGE_MIMES.includes(file.type)) {
         return {
             valid: false,
             error: `Unsupported image format: ${file.type || 'unknown'}. Use JPEG, PNG, WebP, or GIF.`,
@@ -83,7 +85,8 @@ export function validateAudio(file: File): ValidationResult {
         return { valid: false, error: 'No file selected.' };
     }
 
-    if (!ALLOWED_AUDIO_MIMES.includes(file.type)) {
+    const baseMime = file.type.split(';')[0].trim().toLowerCase();
+    if (!ALLOWED_AUDIO_MIMES.includes(baseMime) && !ALLOWED_AUDIO_MIMES.includes(file.type)) {
         return {
             valid: false,
             error: `Unsupported audio format: ${file.type || 'unknown'}. Use MP3, WAV, OGG, or AAC.`,
