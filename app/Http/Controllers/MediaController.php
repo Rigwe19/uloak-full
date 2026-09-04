@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\MediaDeleted;
 use App\Events\MediaProcessingStarted;
+use App\Media\Enums\ProcessingState;
 use App\Media\Exceptions\MediaNotFoundException;
 use App\Media\Exceptions\MediaProcessingException;
 use App\Media\Exceptions\UnsupportedFormatException;
@@ -281,7 +282,19 @@ class MediaController extends Controller
         // Link ephemeral guest for audit/watermark provenance
         $media->update(['guest_identity_id' => $guest->id, 'metadata' => array_merge($media->metadata ?? [], ['guest_name' => $guest->name, 'guest_email' => $guest->email, 'guest_uuid' => $guest->uuid])]);
 
-        MediaProcessingStarted::dispatch($media);
+        // Audio has no ffmpeg transcode — mark ready immediately so polling resolves (was stuck at uploading/progress 0)
+        if ($isAudio) {
+            $media->update([
+                'status' => ProcessingState::Ready->value,
+                'progress' => 100,
+                'processing_completed_at' => now(),
+            ]);
+            $media->refresh();
+        }
+
+        if (! $isAudio) {
+            MediaProcessingStarted::dispatch($media);
+        }
 
         $thumb = $media->attributes['thumbnail'] ?? $media->thumbnail ?? null;
         $thumbUrl = is_string($thumb) && $thumb !== '' ? (str_starts_with($thumb, 'http') ? $thumb : (function () use ($media, $thumb) {
