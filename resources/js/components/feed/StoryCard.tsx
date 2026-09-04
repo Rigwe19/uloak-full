@@ -19,16 +19,11 @@ export default function StoryCard({
     aspectRatio = 'aspect-video',
 }: StoryCardProps) {
     const mediaUrl = story.file_url || story.assets?.[0]?.url || null;
-    // Video processes silently in background — do not show processing UI per user request
+    // Detect processing video: show thumbnail + "Video is processing" overlay so user knows it will appear
     const isVideoProcessing =
         story.type === 'video' &&
         ((story as any).is_processing ||
             (story.assets?.some((a: any) => a?.status === 'processing' || a?.status === 'uploading') ?? false));
-
-    // Do not show processing UI — hide video until ready (user requested)
-    if (isVideoProcessing) {
-        return null;
-    }
 
     const defaultMedia = () => {
         if (renderMedia) {
@@ -42,12 +37,31 @@ export default function StoryCard({
                         id: story.id,
                         storyId: story.id,
                         title: story.title,
-                        url: mediaUrl,
+                        url: isVideoProcessing ? null : mediaUrl,
                         thumbnail: story.thumbnail || null,
                         preview: null,
                         sprite: null,
+                        status: isVideoProcessing ? 'processing' : undefined,
                     }}
-                    onClick={onClick}
+                    onClick={isVideoProcessing ? undefined : onClick}
+                />
+            );
+        }
+
+        // Fallback placeholder for processing video with no URL yet
+        if (isVideoProcessing) {
+            return (
+                <VideoCard
+                    video={{
+                        id: story.id,
+                        storyId: story.id,
+                        title: story.title,
+                        url: null,
+                        thumbnail: story.thumbnail || null,
+                        preview: null,
+                        sprite: null,
+                        status: 'processing',
+                    }}
                 />
             );
         }
