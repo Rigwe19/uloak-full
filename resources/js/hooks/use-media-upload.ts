@@ -128,11 +128,13 @@ export function useMediaUpload() {
 
             try {
                 updateStatus(id, 'queued');
+                updateStatus(id, 'uploading');
 
                 const media = await uploadFileWithProgress(
                     file,
                     mediaType,
                     (percentage, speed, uploadedBytes, eta) => {
+                        updateStatus(id, 'uploading');
                         updateProgress(
                             id,
                             percentage,

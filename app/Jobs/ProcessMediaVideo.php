@@ -13,6 +13,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -24,6 +25,19 @@ class ProcessMediaVideo implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 600;
+
+    /**
+     * Serialize video jobs on a 4GB VPS (1 at a time) to avoid OOM.
+     * With --max-jobs=1 the worker already waits, this is a safety net if a second worker is started.
+     */
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping('global-video-transcode'))
+                ->releaseAfter(30)
+                ->expireAfter(650),
+        ];
+    }
 
     public function __construct(
         public int $mediaId,
@@ -197,8 +211,9 @@ class ProcessMediaVideo implements ShouldQueue
         int $duration,
         array $options = []
     ): void {
-        $crf = $options['crf'] ?? 23;
-        $preset = $options['preset'] ?? 'slow';
+        $crf = $options['crf'] ?? 24;
+        // 4GB VPS: 'slow' OOMs on 720p+ watermark; use veryfast to keep single-job RAM <1.5GB
+        $preset = $options['preset'] ?? 'veryfast';
 
         $storage = Storage::disk($disk);
 
@@ -276,7 +291,7 @@ class ProcessMediaVideo implements ShouldQueue
             '-b:a',
             '128k',
             '-threads',
-            '2',
+            '1',
             '-progress',
             'pipe:1',
             '-nostats',

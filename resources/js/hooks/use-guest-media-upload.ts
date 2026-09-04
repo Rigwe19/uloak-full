@@ -156,12 +156,17 @@ export function useGuestMediaUpload(ctx: GuestContext) {
 
             try {
                 updateStatus(id, 'queued');
+                // Flip to uploading immediately so UploadQueueItem shows progress bar + speed/eta
+                // (the XHR progress callback fires within ~100ms but status would stay "queued" without this)
+                updateStatus(id, 'uploading');
 
                 const media = await uploadGuestFileWithProgress(
                     file,
                     mediaType,
                     ctx,
                     (percentage, speed, uploadedBytes, eta) => {
+                        // Keep status as uploading while XHR is streaming (pollMediaStatus later flips to processing)
+                        updateStatus(id, 'uploading');
                         updateProgress(
                             id,
                             percentage,

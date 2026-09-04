@@ -1,7 +1,18 @@
+import { storeGuestSubscription } from '@/actions/App/Http/Controllers/ShareController';
+import StoryCard from '@/components/feed/StoryCard';
+import StoryFeed from '@/components/feed/StoryFeed';
+import Hero from '@/components/hero';
+import { VideoPlayer } from '@/components/media/VideoPlayer';
+import { ResponsiveModal } from '@/components/responsive-modal';
+import { UploadDropzone } from '@/components/upload/UploadDropzone';
+import { UploadQueue } from '@/components/upload/UploadQueue';
+import { useGuestUploadQueue } from '@/hooks/use-guest-upload-queue';
+import { useUploadStore } from '@/stores/upload-store';
+import { usePlayerStore } from '@/stores/video-player-store';
+import type { FeedStory } from '@/types/feed';
 import { Head, router } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    ArrowLeft,
     Camera,
     Check,
     Clock,
@@ -19,33 +30,16 @@ import {
     Plus,
     RotateCcw,
     Send,
-    Sparkles,
     Square,
     Upload,
     User,
     Users,
     Video,
-    X,
+    X
 } from 'lucide-react';
-import React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
-import { storeGuestSubscription } from '@/actions/App/Http/Controllers/ShareController';
-import StoryCard from '@/components/feed/StoryCard';
-import StoryFeed from '@/components/feed/StoryFeed';
-import Hero from '@/components/hero';
-import { VideoCard } from '@/components/media/VideoCard';
-import { VideoPlayer } from '@/components/media/VideoPlayer';
-import { VideoSocialOverlay } from '@/components/media/VideoSocialOverlay';
-import { ResponsiveModal } from '@/components/responsive-modal';
-import { UploadDropzone } from '@/components/upload/UploadDropzone';
-import { UploadQueue } from '@/components/upload/UploadQueue';
-import { useGuestUploadQueue } from '@/hooks/use-guest-upload-queue';
-import { useUploadStore } from '@/stores/upload-store';
-import { usePlayerStore } from '@/stores/video-player-store';
-import type { FeedStory } from '@/types/feed';
-import type { PlayerVideo } from '@/types/video-player';
 
 /* ─── Animations ─────────────────────────────────────────── */
 const fadeInUp = {
@@ -791,48 +785,61 @@ function GuestIdentityGate({
             animate={{ opacity: 1, scale: 1 }}
             className="mx-auto max-w-md"
         >
-            <form onSubmit={handleSubmit} className="space-y-6 bg-surface/40">
-                {/* <div className="text-center space-y-2">
-                    <div className="w-16 h-16 rounded-full bg-accent-gold/10 border border-accent-gold/30 flex items-center justify-center mx-auto">
-                        <User className="w-7 h-7 text-accent-gold" />
-                    </div>
-                    <h2 className="font-serif text-2xl text-text-primary font-light">Introduce Yourself</h2>
-                    <p className="text-sm text-text-muted">Share your name so we know who contributed.</p>
-                </div> */}
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-6 rounded-3xl border border-white/10 bg-surface/40 p-8 backdrop-blur"
+            >
+                <div className="text-center">
+                    <p className="font-mono text-[11px] font-bold tracking-[0.28em] text-accent-gold uppercase">
+                        Join the Room
+                    </p>
+                    <h2 className="mt-2 font-serif text-2xl font-light text-text-primary">
+                        You&apos;re Part of the Story
+                    </h2>
+                    <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-text-muted">
+                        Tell us your name so we know who these memories are
+                        coming from.
+                    </p>
+                </div>
+
                 <div>
-                    <label className="mb-1.5 block text-xs font-semibold tracking-wider text-text-primary uppercase">
-                        Your Name <span className="text-accent-gold">*</span>
+                    <label className="mb-1.5 block text-[11px] font-bold tracking-[0.16em] text-text-muted uppercase">
+                        Your Name
                     </label>
                     <input
                         type="text"
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Enter your full name"
-                        className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary focus:border-accent-gold focus:ring-1 focus:ring-accent-gold focus:outline-none"
+                        placeholder="Enter your name"
+                        autoComplete="name"
+                        className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/60 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold focus:outline-none"
                     />
                 </div>
                 <div>
-                    <label className="mb-1.5 block text-xs font-semibold tracking-wider text-text-primary uppercase">
-                        Email{' '}
-                        <span className="font-normal text-text-muted">
-                            (Optional)
-                        </span>
+                    <label className="mb-1.5 block text-[11px] font-bold tracking-[0.16em] text-text-muted uppercase">
+                        Email (Optional)
                     </label>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="name@example.com"
-                        className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary focus:border-accent-gold focus:ring-1 focus:ring-accent-gold focus:outline-none"
+                        autoComplete="email"
+                        inputMode="email"
+                        className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/60 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold focus:outline-none"
                     />
                 </div>
                 <button
                     type="submit"
-                    className="w-full rounded-xl bg-accent-gold px-6 py-3 font-mono text-xs font-bold tracking-widest text-bg-dark uppercase transition-all hover:bg-accent-gold/80"
+                    className="w-full rounded-xl bg-accent-gold px-6 py-3.5 font-mono text-xs font-bold tracking-widest text-bg-dark uppercase transition-all hover:bg-accent-gold/80"
                 >
                     Continue
                 </button>
+                <p className="text-center text-[11px] leading-relaxed text-text-muted/70">
+                    Your name will appear with your contribution. Email is only
+                    used for room updates if you choose to share it.
+                </p>
             </form>
         </motion.div>
     );
