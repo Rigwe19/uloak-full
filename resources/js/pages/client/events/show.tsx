@@ -12,6 +12,22 @@ import {
 import { useState } from 'react';
 import { dashboard } from '@/routes/client';
 
+function resolveMediaUrl(url: string | null): string {
+    if (!url) {
+        return '/logo-stacked.png';
+    }
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+    }
+    if (url.startsWith('/storage/') || url.startsWith('storage/')) {
+        return url.startsWith('/') ? url : `/${url}`;
+    }
+    if (url.startsWith('media/')) {
+        return `/storage/${url}`;
+    }
+    return url;
+}
+
 interface Story {
     id: number;
     uuid?: string;
@@ -133,10 +149,7 @@ export default function ClientEventShow({ event, stories }: Props) {
                             >
                                 <div className="relative aspect-4/3 overflow-hidden">
                                     <img
-                                        src={
-                                            story.thumbnail ??
-                                            '/logo-stacked.png'
-                                        }
+                                        src={resolveMediaUrl(story.thumbnail)}
                                         alt={story.title}
                                         onError={(e) => {
                                             e.currentTarget.src =

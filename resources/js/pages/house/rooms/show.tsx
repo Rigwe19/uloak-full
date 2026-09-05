@@ -216,13 +216,25 @@ export default function RoomShow({
         });
     };
 
-    // Derive Cloudinary thumbnail URL by adding transformation params
-    function getThumbnailUrl(url: string | null): string | null {
+    function resolveMediaUrl(url: string | null): string | null {
         if (!url) {
             return null;
         }
-
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        if (url.startsWith('/storage/') || url.startsWith('storage/')) {
+            return url.startsWith('/') ? url : `/${url}`;
+        }
+        if (url.startsWith('media/')) {
+            return `/storage/${url}`;
+        }
         return url;
+    }
+
+    // Derive Cloudinary thumbnail URL by adding transformation params
+    function getThumbnailUrl(url: string | null): string | null {
+        return resolveMediaUrl(url);
     }
 
     // Flatten collection stories into individual media items

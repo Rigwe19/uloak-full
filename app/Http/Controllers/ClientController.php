@@ -189,18 +189,37 @@ class ClientController extends Controller
         abort_unless($client->events()->where('event_id', $event->id)->exists(), 403);
 
         $event->loadCount('stories');
-        $stories = $event->stories()->with('user')->latest()->get()->map(fn ($story) => [
-            'uuid' => $story->uuid,
-            'id' => $story->id,
-            'title' => $story->title,
-            'thumbnail' => $story->thumbnail,
-            'type' => $story->type,
-            'description' => $story->description,
-            'author' => $story->user?->name ?? $story->guest_name,
-            'date' => $story->created_at->format('M d, Y'),
-            'file_url' => $story->file_url,
-            'assets' => $story->assets ?? [],
-        ]);
+        $stories = $event->stories()->with('user')->latest()->get()->map(function ($story) {
+            $thumb = $story->thumbnail;
+            if ($thumb && ! str_starts_with($thumb, 'http')) {
+                $thumb = Storage::disk('public')->url(ltrim($thumb, '/'));
+            }
+            $fileUrl = $story->file_url;
+            if ($fileUrl && ! str_starts_with($fileUrl, 'http')) {
+                $fileUrl = Storage::disk('public')->url(ltrim($fileUrl, '/'));
+            }
+            // Enrich assets with full URLs if stored as relative
+            $assets = collect($story->assets ?? [])->map(function ($asset) {
+                if (isset($asset['url']) && $asset['url'] && ! str_starts_with($asset['url'], 'http')) {
+                    $asset['url'] = Storage::disk('public')->url(ltrim($asset['url'], '/'));
+                }
+
+                return $asset;
+            })->all();
+
+            return [
+                'uuid' => $story->uuid,
+                'id' => $story->id,
+                'title' => $story->title,
+                'thumbnail' => $thumb,
+                'type' => $story->type,
+                'description' => $story->description,
+                'author' => $story->user?->name ?? $story->guest_name,
+                'date' => $story->created_at->format('M d, Y'),
+                'file_url' => $fileUrl,
+                'assets' => $assets,
+            ];
+        });
 
         return Inertia::render('client/events/show', [
             'event' => $event,

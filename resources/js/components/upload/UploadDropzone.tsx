@@ -1,6 +1,7 @@
 import { Upload } from 'lucide-react';
 import type { ChangeEvent, DragEvent } from 'react';
 import React, { useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface UploadDropzoneProps {
     onFilesSelected: (files: File[]) => void;
@@ -22,13 +23,32 @@ export function UploadDropzone({
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const validateAndSend = (files: File[]) => {
+        const maxBytes = maxSizeMB * 1024 * 1024;
+        const valid: File[] = [];
+        const oversized: File[] = [];
+        for (const f of files) {
+            if (f.size > maxBytes) {
+                oversized.push(f);
+            } else {
+                valid.push(f);
+            }
+        }
+        if (oversized.length > 0) {
+            toast.error(
+                `${oversized.length} file${oversized.length > 1 ? 's' : ''} exceeds ${maxSizeMB}MB limit and was skipped.`,
+            );
+        }
+        if (valid.length > 0) {
+            onFilesSelected(valid);
+        }
+    };
+
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-
         if (files.length > 0) {
-            onFilesSelected(files);
+            validateAndSend(files);
         }
-
         e.target.value = '';
     };
 
@@ -53,9 +73,8 @@ export function UploadDropzone({
         }
 
         const files = Array.from(e.dataTransfer.files);
-
         if (files.length > 0) {
-            onFilesSelected(files);
+            validateAndSend(files);
         }
     };
 

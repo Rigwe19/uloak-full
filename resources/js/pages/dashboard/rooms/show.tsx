@@ -272,26 +272,38 @@ export default function RoomShow({
             },
         );
     };
-    // Derive Cloudinary thumbnail URL by adding transformation params
-    function getThumbnailUrl(url: string | null): string | null {
+    function resolveMediaUrl(url: string | null): string | null {
         if (!url) {
             return null;
         }
-
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        if (url.startsWith('/storage/') || url.startsWith('storage/')) {
+            return url.startsWith('/') ? url : `/${url}`;
+        }
+        if (url.startsWith('media/')) {
+            return `/storage/${url}`;
+        }
         return url;
+    }
+
+    // Derive Cloudinary thumbnail URL by adding transformation params
+    function getThumbnailUrl(url: string | null): string | null {
+        return resolveMediaUrl(url);
     }
 
     const getStoryThumbnail = (story: FeedStory) => {
         if (story.type === 'video' && story.thumbnail) {
-            return story.thumbnail;
+            return resolveMediaUrl(story.thumbnail);
         }
 
         if (story.type === 'photo') {
-            return story.thumbnail || story.file_url || '/logo-stacked.png';
+            return resolveMediaUrl(story.thumbnail || story.file_url || '/logo-stacked.png');
         }
 
         if (story.thumbnail) {
-            return story.thumbnail;
+            return resolveMediaUrl(story.thumbnail);
         }
 
         return '/logo-stacked.png';

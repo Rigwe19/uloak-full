@@ -13,6 +13,22 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+function resolveMediaUrl(url: string | null): string | null {
+    if (!url) {
+        return null;
+    }
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+    }
+    if (url.startsWith('/storage/') || url.startsWith('storage/')) {
+        return url.startsWith('/') ? url : `/${url}`;
+    }
+    if (url.startsWith('media/')) {
+        return `/storage/${url}`;
+    }
+    return url;
+}
+
 interface Story {
     id: number;
     title: string;
@@ -169,9 +185,12 @@ export default function FamilyRoomShow({ room, stories, member }: Props) {
                                         {story.thumbnail && (
                                             <div className="aspect-4/3 overflow-hidden">
                                                 <img
-                                                    src={story.thumbnail}
+                                                    src={resolveMediaUrl(story.thumbnail) ?? '/logo-stacked.png'}
                                                     alt={story.title}
                                                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = '/logo-stacked.png';
+                                                    }}
                                                 />
                                             </div>
                                         )}

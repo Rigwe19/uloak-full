@@ -42,19 +42,37 @@ class EventController extends Controller
                 'location' => $event->location,
                 'created_at' => $event->created_at->format('M d, Y'),
             ],
-            'stories' => $stories->map(fn ($story) => [
-                'id' => $story->id,
-                'uuid' => $story->uuid,
-                'title' => $story->title,
-                'description' => $story->description,
-                'type' => $story->type,
-                'thumbnail' => Storage::disk('public')->url($story->thumbnail),
-                'file_url' => Storage::disk('public')->url($story->file_url),
-                'duration' => $story->duration,
-                'assets' => $story->assets,
-                'created_at' => $story->created_at->format('M d, Y'),
-                'user' => $story->user?->name,
-            ]),
+            'stories' => $stories->map(function ($story) {
+                $thumb = $story->thumbnail;
+                if ($thumb && ! str_starts_with($thumb, 'http')) {
+                    $thumb = Storage::disk('public')->url(ltrim($thumb, '/'));
+                }
+                $fileUrl = $story->file_url;
+                if ($fileUrl && ! str_starts_with($fileUrl, 'http')) {
+                    $fileUrl = Storage::disk('public')->url(ltrim($fileUrl, '/'));
+                }
+                $assets = collect($story->assets ?? [])->map(function ($asset) {
+                    if (isset($asset['url']) && $asset['url'] && ! str_starts_with($asset['url'], 'http')) {
+                        $asset['url'] = Storage::disk('public')->url(ltrim($asset['url'], '/'));
+                    }
+
+                    return $asset;
+                })->all();
+
+                return [
+                    'id' => $story->id,
+                    'uuid' => $story->uuid,
+                    'title' => $story->title,
+                    'description' => $story->description,
+                    'type' => $story->type,
+                    'thumbnail' => $thumb,
+                    'file_url' => $fileUrl,
+                    'duration' => $story->duration,
+                    'assets' => $assets,
+                    'created_at' => $story->created_at->format('M d, Y'),
+                    'user' => $story->user?->name,
+                ];
+            }),
             'clients' => $event->clients->map(fn ($client) => [
                 'id' => $client->id,
                 'name' => $client->name,

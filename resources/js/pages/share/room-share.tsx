@@ -869,7 +869,9 @@ function MediaCaptureHub({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [cameraReady, setCameraReady] = useState(false);
 
-    // Video recording states
+    // Video recording states — 4GB VPS guard: cap at 120s, 50MB
+    const VIDEO_MAX_SECONDS = 120;
+    const AUDIO_MAX_SECONDS = 180;
     const [videoRecState, setVideoRecState] = useState<
         'idle' | 'recording' | 'preview'
     >('idle');
@@ -924,7 +926,7 @@ function MediaCaptureHub({
         }
     }, [mode, cameraActive]);
 
-    // Cleanup streams
+    // Cleanup streams + timers + object URLs (prevent leaks on 4GB VPS / mobile)
     const stopAllStreams = useCallback(() => {
         if (streamRef.current) {
             streamRef.current.getTracks().forEach((t) => t.stop());
@@ -936,24 +938,55 @@ function MediaCaptureHub({
             setAudioStream(null);
         }
 
-        // Clean up video preview URL to prevent memory leaks
+        if (videoTimerRef.current) {
+            clearInterval(videoTimerRef.current);
+            videoTimerRef.current = null;
+        }
+        if (audioTimerRef.current) {
+            clearInterval(audioTimerRef.current);
+            audioTimerRef.current = null;
+        }
+
+        // Clean up video/audio preview URLs to prevent memory leaks
         if (videoPreviewUrl) {
             URL.revokeObjectURL(videoPreviewUrl);
             setVideoPreviewUrl(null);
         }
-    }, [audioStream, videoPreviewUrl]);
+        if (audioBlobUrl) {
+            URL.revokeObjectURL(audioBlobUrl);
+            setAudioBlobUrl(null);
+        }
+    }, [audioStream, videoPreviewUrl, audioBlobUrl]);
 
     useEffect(() => {
         return () => stopAllStreams();
     }, [stopAllStreams]);
 
     useEffect(() => {
+        const original = document.body.style.overflow;
         if (mode !== null) {
             document.body.style.overflow = 'hidden';
         } else {
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = original || 'auto';
         }
+        return () => {
+            document.body.style.overflow = original || 'auto';
+        };
     }, [mode]);
+
+    // ESC to close fullscreen + focus trap
+    useEffect(() => {
+        if (mode === null) {
+            return;
+        }
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                closeFullscreen();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [mode, closeFullscreen]);
     const startCamera = useCallback(async () => {
         try {
             const s = await navigator.mediaDevices.getUserMedia({
@@ -1023,19 +1056,44 @@ function MediaCaptureHub({
 
     const startVideoRecording = useCallback(async () => {
         try {
-            const s = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' },
-                audio: false, // video only
-            });
+            let s: MediaStream;
+            try {
+                s = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 48000,
+                    },
+                });
+            } catch (e: any) {
+                // Fallback for desktop / OverconstrainedError (no environment camera)
+                if (e?.name === 'OverconstrainedError' || e?.name === 'NotFoundError') {
+                    s = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                        },
+                    });
+                } else {
+                    throw e;
+                }
+            }
             streamRef.current = s;
 
+            // Safari (iOS) does not support webm — prefer mp4 if available
             const mimeType = MediaRecorder.isTypeSupported(
                 'video/webm;codecs=vp9',
             )
                 ? 'video/webm;codecs=vp9'
                 : MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
                   ? 'video/webm;codecs=vp8'
-                  : 'video/webm';
+                  : MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
+                    ? 'video/mp4;codecs=avc1'
+                    : MediaRecorder.isTypeSupported('video/mp4')
+                      ? 'video/mp4'
+                      : 'video/webm';
 
             const mr = new MediaRecorder(s, { mimeType });
             videoChunksRef.current = [];
@@ -1070,10 +1128,19 @@ function MediaCaptureHub({
 
             setVideoRecState('recording');
             setVideoSeconds(0);
-            videoTimerRef.current = setInterval(
-                () => setVideoSeconds((p) => p + 1),
-                1000,
-            );
+            videoTimerRef.current = setInterval(() => {
+                setVideoSeconds((p) => {
+                    const next = p + 1;
+                    if (next >= VIDEO_MAX_SECONDS) {
+                        // Auto-stop at cap to avoid huge files / OOM
+                        setTimeout(() => {
+                            toast.info(`Video limit is ${Math.floor(VIDEO_MAX_SECONDS / 60)}:${String(VIDEO_MAX_SECONDS % 60).padStart(2, '0')} — stopping`);
+                            stopVideoRecording();
+                        }, 0);
+                    }
+                    return next;
+                });
+            }, 1000);
             setCameraActive(true);
             setMode('video');
         } catch (err) {
@@ -1150,10 +1217,18 @@ function MediaCaptureHub({
             setAudioSeconds(0);
             setAudioRecState('recording');
             setMode('audio');
-            audioTimerRef.current = setInterval(
-                () => setAudioSeconds((p) => p + 1),
-                1000,
-            );
+            audioTimerRef.current = setInterval(() => {
+                setAudioSeconds((p) => {
+                    const next = p + 1;
+                    if (next >= AUDIO_MAX_SECONDS) {
+                        setTimeout(() => {
+                            toast.info(`Audio limit is ${Math.floor(AUDIO_MAX_SECONDS / 60)}:${String(AUDIO_MAX_SECONDS % 60).padStart(2, '0')} — stopping`);
+                            stopAudioRecording();
+                        }, 0);
+                    }
+                    return next;
+                });
+            }, 1000);
         } catch {
             toast.error(
                 'Could not access microphone. Please allow microphone access and try again.',
@@ -1407,6 +1482,7 @@ function MediaCaptureHub({
                             key={item.key}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
+                            aria-label={item.label}
                             onClick={() => {
                                 if (item.key === 'camera') {
                                     startCamera();
@@ -1584,8 +1660,15 @@ function MediaCaptureHub({
                                                 }
                                                 placeholder="Add a short description or story behind this media..."
                                                 rows={2}
+                                                maxLength={500}
+                                                aria-label="Description for your memory"
                                                 className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-accent-gold focus:outline-none"
                                             />
+                                            <div className="flex justify-end">
+                                                <span className="font-mono text-[10px] text-white/30">
+                                                    {description.length}/500
+                                                </span>
+                                            </div>
                                             <div className="flex gap-3">
                                                 <button
                                                     onClick={closeFullscreen}
@@ -1682,7 +1765,7 @@ function MediaCaptureHub({
                                                             }}
                                                             className="h-2 w-2 rounded-full bg-white"
                                                         />
-                                                        REC {fmt(videoSeconds)}
+                                                        REC {fmt(videoSeconds)} / {fmt(VIDEO_MAX_SECONDS)}
                                                     </div>
                                                 )}
                                                 <div

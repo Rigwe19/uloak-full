@@ -113,14 +113,30 @@ class FamilyController extends Controller
                     $isProcessing = true;
                 }
 
+                $thumb = $story->thumbnail;
+                if ($thumb && ! str_starts_with($thumb, 'http')) {
+                    $thumb = Storage::disk('public')->url(ltrim($thumb, '/'));
+                }
+                $fileUrl = $story->file_url;
+                if ($fileUrl && ! str_starts_with($fileUrl, 'http')) {
+                    $fileUrl = Storage::disk('public')->url(ltrim($fileUrl, '/'));
+                }
+                $enrichedAssets = collect($enrichedAssets)->map(function ($asset) {
+                    if (isset($asset['url']) && $asset['url'] && ! str_starts_with($asset['url'], 'http')) {
+                        $asset['url'] = Storage::disk('public')->url(ltrim($asset['url'], '/'));
+                    }
+
+                    return $asset;
+                })->all();
+
                 return [
                     'id' => $story->id,
                     'title' => $story->title,
                     'type' => $story->type,
                     'description' => $story->description,
                     'author' => $story->user?->name ?? $story->roomMember?->name ?? $story->getGuestName() ?? 'Anonymous',
-                    'thumbnail' => $story->thumbnail,
-                    'file_url' => $story->file_url,
+                    'thumbnail' => $thumb,
+                    'file_url' => $fileUrl,
                     'assets' => $enrichedAssets,
                     'is_processing' => $isProcessing,
                     'room_member_id' => $story->room_member_id,
