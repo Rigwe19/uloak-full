@@ -15,6 +15,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ProtoneMedia\LaravelFFMpeg\Drivers\UnknownDurationException;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg as FFMpegFacade;
 
 class LocalFfmpegVideoProcessor implements VideoProcessor
@@ -207,10 +208,38 @@ class LocalFfmpegVideoProcessor implements VideoProcessor
     {
         $ffmpeg = FFMpegFacade::open(Storage::disk($disk)->path($path));
 
+        $duration = 0;
+
+        try {
+            $sec = $ffmpeg->getDurationInSeconds();
+
+            if ($sec !== null && is_numeric($sec) && (float) $sec > 0) {
+                $duration = (int) round((float) $sec);
+            }
+        } catch (UnknownDurationException) {
+            // Phone webm often lacks duration header — fall back to raw ffprobe
+            try {
+                $abs = Storage::disk($disk)->path($path);
+                $result = Process::run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', $abs]);
+
+                if ($result->successful()) {
+                    $out = trim($result->output());
+
+                    if (is_numeric($out) && (float) $out > 0) {
+                        $duration = (int) round((float) $out);
+                    }
+                }
+            } catch (\Throwable) {
+                // keep 0
+            }
+        } catch (\Throwable) {
+            // keep 0
+        }
+
         return [
             'width' => $ffmpeg->getVideoStream()?->get('width'),
             'height' => $ffmpeg->getVideoStream()?->get('height'),
-            'duration' => (int) round($ffmpeg->getDurationInSeconds() ?? 0),
+            'duration' => $duration,
         ];
     }
 

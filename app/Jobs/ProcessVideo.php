@@ -7,8 +7,10 @@ use App\Models\Media;
 use FFMpeg\Format\Video\X264;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable as FoundationQueueable;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ProtoneMedia\LaravelFFMpeg\Drivers\UnknownDurationException;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg as FFMpegFacade;
 
 class ProcessVideo implements ShouldQueue
@@ -68,11 +70,7 @@ class ProcessVideo implements ShouldQueue
             ->save(Storage::disk($media->disk)->path($outputPath));
 
         $ffmpeg = FFMpegFacade::open(Storage::disk($media->disk)->path($outputPath));
-        $metadata = [
-            'width' => $ffmpeg->getVideoStream()?->get('width'),
-            'height' => $ffmpeg->getVideoStream()?->get('height'),
-            'duration' => (int) round($ffmpeg->getDurationInSeconds() ?? 0),
-        ];
+        $metadata = $this->safeMetadata($ffmpeg, $outputPath, $media->disk);
 
         return $this->updateMediaRecord($media, $outputPath, Storage::disk($media->disk)->size($outputPath), $metadata);
     }
@@ -91,11 +89,7 @@ class ProcessVideo implements ShouldQueue
             ->save(Storage::disk($media->disk)->path($outputPath));
 
         $ffmpeg = FFMpegFacade::open(Storage::disk($media->disk)->path($outputPath));
-        $metadata = [
-            'width' => $ffmpeg->getVideoStream()?->get('width'),
-            'height' => $ffmpeg->getVideoStream()?->get('height'),
-            'duration' => (int) round($ffmpeg->getDurationInSeconds() ?? 0),
-        ];
+        $metadata = $this->safeMetadata($ffmpeg, $outputPath, $media->disk);
 
         return $this->updateMediaRecord($media, $outputPath, Storage::disk($media->disk)->size($outputPath), $metadata);
     }
@@ -165,5 +159,39 @@ class ProcessVideo implements ShouldQueue
         }
 
         return $seconds;
+    }
+
+    protected function safeMetadata($ffmpeg, string $path, string $disk): array
+    {
+        $duration = 0;
+
+        try {
+            $sec = $ffmpeg->getDurationInSeconds();
+
+            if ($sec !== null && is_numeric($sec) && (float) $sec > 0) {
+                $duration = (int) round((float) $sec);
+            }
+        } catch (UnknownDurationException) {
+            try {
+                $abs = Storage::disk($disk)->path($path);
+                $result = Process::run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', $abs]);
+
+                if ($result->successful()) {
+                    $out = trim($result->output());
+
+                    if (is_numeric($out) && (float) $out > 0) {
+                        $duration = (int) round((float) $out);
+                    }
+                }
+            } catch (\Throwable) {
+            }
+        } catch (\Throwable) {
+        }
+
+        return [
+            'width' => $ffmpeg->getVideoStream()?->get('width'),
+            'height' => $ffmpeg->getVideoStream()?->get('height'),
+            'duration' => $duration,
+        ];
     }
 }

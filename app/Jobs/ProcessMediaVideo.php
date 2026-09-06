@@ -18,6 +18,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ProtoneMedia\LaravelFFMpeg\Drivers\UnknownDurationException;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg as FFMpegFacade;
 
 class ProcessMediaVideo implements ShouldQueue
@@ -131,10 +132,12 @@ class ProcessMediaVideo implements ShouldQueue
         $originalVideo = FFMpegFacade::fromDisk($diskName)
             ->open($media->path);
 
+        $duration = $this->getSafeDuration($diskName, $media->path, $originalVideo);
+
         $metadata = [
             'width' => $originalVideo->getVideoStream()?->get('width'),
             'height' => $originalVideo->getVideoStream()?->get('height'),
-            'duration' => (int) round($originalVideo->getDurationInSeconds() ?? 0),
+            'duration' => $duration,
         ];
 
         $this->runTranscode($diskName, $media->path, $processedPath, $metadata['duration'] ?? 0, $this->options);
@@ -175,10 +178,12 @@ class ProcessMediaVideo implements ShouldQueue
         $processedVideo = FFMpegFacade::fromDisk($diskName)
             ->open($processedPath);
 
+        $processedDuration = $this->getSafeDuration($diskName, $processedPath, $processedVideo);
+
         $processed = [
             'width' => $processedVideo->getVideoStream()?->get('width'),
             'height' => $processedVideo->getVideoStream()?->get('height'),
-            'duration' => (int) round($processedVideo->getDurationInSeconds() ?? 0),
+            'duration' => $processedDuration,
         ];
 
         $fileSize = $disk->size($processedPath);
@@ -530,11 +535,116 @@ class ProcessMediaVideo implements ShouldQueue
     {
         $ffmpeg = FFMpegFacade::open(Storage::disk($disk)->path($path));
 
+        $duration = $this->getSafeDuration($disk, $path, $ffmpeg);
+
         return [
             'width' => $ffmpeg->getVideoStream()?->get('width'),
             'height' => $ffmpeg->getVideoStream()?->get('height'),
-            'duration' => (int) round($ffmpeg->getDurationInSeconds() ?? 0),
+            'duration' => $duration,
         ];
+    }
+
+    /**
+     * Resolve duration without throwing UnknownDurationException.
+     * Phone-recorded WebM (MediaRecorder) often has no container duration
+     * — ffprobe reports N/A but the file is still playable and ffmpeg can transcode it.
+     * We fall back through raw ffprobe probes so the job degrades (duration=0, no progress bar) instead of failing.
+     */
+    protected function getSafeDuration(string $diskName, string $path, $openedMedia = null): int
+    {
+        // Attempt 1: Laravel-FFMpeg wrapper (fast path)
+        try {
+            $media = $openedMedia ?? FFMpegFacade::fromDisk($diskName)->open($path);
+            $sec = $media->getDurationInSeconds();
+
+            if ($sec !== null && is_numeric($sec) && (float) $sec > 0) {
+                return (int) round((float) $sec);
+            }
+        } catch (UnknownDurationException $e) {
+            logger()->warning('Duration probe via LaravelFFMpeg failed, trying raw ffprobe', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+        } catch (\Throwable $e) {
+            logger()->warning('Duration probe threw, trying raw ffprobe', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $absolutePath = Storage::disk($diskName)->path($path);
+
+        if (! file_exists($absolutePath)) {
+            logger()->warning('Duration fallback: file not found', ['path' => $path, 'absolute' => $absolutePath]);
+
+            return 0;
+        }
+
+        // Attempt 2: format duration (most reliable for mp4/mov, often N/A for phone webm)
+        try {
+            $result = Process::run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', $absolutePath]);
+
+            if ($result->successful()) {
+                $out = trim($result->output());
+
+                if (is_numeric($out) && (float) $out > 0) {
+                    return (int) round((float) $out);
+                }
+            }
+        } catch (\Throwable) {
+            // ignore
+        }
+
+        // Attempt 3: stream duration (sometimes present when format is not)
+        try {
+            $result = Process::run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=duration', '-of', 'default=noprint_wrappers=1:nokey=1', $absolutePath]);
+
+            if ($result->successful()) {
+                $out = trim($result->output());
+
+                if (is_numeric($out) && (float) $out > 0) {
+                    return (int) round((float) $out);
+                }
+            }
+        } catch (\Throwable) {
+            // ignore
+        }
+
+        // Attempt 4: estimate via counted frames (handles truncated webm with no duration header)
+        try {
+            $result = Process::run(['ffprobe', '-v', 'error', '-count_frames', '-select_streams', 'v:0', '-show_entries', 'stream=nb_read_frames,avg_frame_rate,r_frame_rate,duration', '-of', 'json', $absolutePath]);
+
+            if ($result->successful()) {
+                $json = json_decode($result->output(), true);
+                $stream = $json['streams'][0] ?? null;
+
+                if ($stream) {
+                    if (isset($stream['duration']) && is_numeric($stream['duration']) && (float) $stream['duration'] > 0) {
+                        return (int) round((float) $stream['duration']);
+                    }
+
+                    if (isset($stream['nb_read_frames']) && is_numeric($stream['nb_read_frames'])) {
+                        $frames = (int) $stream['nb_read_frames'];
+                        $rateStr = $stream['avg_frame_rate'] ?? $stream['r_frame_rate'] ?? null;
+
+                        if ($rateStr && str_contains((string) $rateStr, '/')) {
+                            [$num, $den] = explode('/', (string) $rateStr);
+                            $fps = ((float) $den != 0) ? (float) $num / (float) $den : 0;
+
+                            if ($fps > 0 && $frames > 0) {
+                                return (int) round($frames / $fps);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            // ignore
+        }
+
+        logger()->warning('Could not determine duration after all fallbacks, using 0 (transcode will continue without progress)', ['path' => $path]);
+
+        return 0;
     }
 
     protected function updateMediaRecord(Media $media, string $newPath, int $newSize, array $metadata, array $extra = []): void
