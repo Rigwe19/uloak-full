@@ -1225,14 +1225,14 @@ function MediaCaptureHub({
         }
     }, [addToQueue]);
 
-    const stopVideoRecording = useCallback(() => {
+    const stopVideoRecording = () => {
         if (videoTimerRef.current) {
             clearInterval(videoTimerRef.current);
         }
 
         mediaRecorderRef.current?.stop();
         setCameraActive(false);
-    }, []);
+    };
 
     const rerecordVideo = useCallback(() => {
         if (videoPreviewUrl) {
@@ -1310,13 +1310,13 @@ function MediaCaptureHub({
         }
     }, [addToQueue]);
 
-    const stopAudioRecording = useCallback(() => {
+    const stopAudioRecording = () => {
         if (audioTimerRef.current) {
             clearInterval(audioTimerRef.current);
         }
 
         audioRecorderRef.current?.stop();
-    }, []);
+    };
 
     const rerecordAudio = useCallback(() => {
         if (audioBlobUrl) {

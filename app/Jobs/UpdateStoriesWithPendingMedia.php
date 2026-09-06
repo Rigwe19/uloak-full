@@ -23,13 +23,22 @@ class UpdateStoriesWithPendingMedia implements ShouldQueue
     public function handle(): void
     {
         // Find media that is now ready but was previously processing
+        // NOTE: processing_logs schema is (media_id, media_uuid, from_state, to_state, metadata, …) — not (type/status/processed_at).
+        // We store story_update idempotency as to_state='story_updated' + metadata.type='story_update'.
         $processedMedia = Media::where('status', 'ready')
             ->where('processing_completed_at', '>=', now()->subMinutes(5))
             ->whereNotIn('id', function ($query) {
                 $query->select('media_id')
                     ->from('processing_logs')
-                    ->where('type', 'story_update')
-                    ->where('status', 'completed');
+                    ->where('to_state', 'story_updated');
+
+                $driver = \DB::getDriverName();
+
+                if ($driver === 'pgsql') {
+                    $query->whereRaw("metadata->>'type' = ?", ['story_update']);
+                } else {
+                    $query->where('metadata->type', 'story_update');
+                }
             })
             ->limit($this->limit)
             ->get();
@@ -37,12 +46,19 @@ class UpdateStoriesWithPendingMedia implements ShouldQueue
         foreach ($processedMedia as $media) {
             $this->updateStoriesWithMedia($media);
 
-            // Log that we've processed this media
+            // Log that we've processed this media — use real processing_logs columns
             \DB::table('processing_logs')->insert([
                 'media_id' => $media->id,
-                'type' => 'story_update',
-                'status' => 'completed',
-                'processed_at' => now(),
+                'media_uuid' => $media->uuid,
+                'from_state' => null,
+                'to_state' => 'story_updated',
+                'metadata' => json_encode([
+                    'type' => 'story_update',
+                    'status' => 'completed',
+                    'processed_at' => now()->toIso8601String(),
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }
