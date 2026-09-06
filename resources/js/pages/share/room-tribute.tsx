@@ -778,6 +778,13 @@ export default function RoomTribute({
                                                     <input
                                                         type="text"
                                                         required
+                                                        id="tribute-name"
+                                                        name="name"
+                                                        autoComplete="name"
+                                                        autoCapitalize="words"
+                                                        spellCheck={false}
+                                                        maxLength={255}
+                                                        enterKeyHint="next"
                                                         value={formName}
                                                         onChange={(e) =>
                                                             setFormName(

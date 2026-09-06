@@ -216,8 +216,10 @@ class ShareController extends Controller
         $validated = $request->validate([
             'guest_name' => ['required', 'string', 'max:255'],
             'guest_email' => ['nullable', 'email', 'max:255'],
+            'guest_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s\-\(\)]+$/'],
+            'guest_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s\-\(\)]+$/'],
             'title' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'type' => ['required', 'string', 'in:video,audio,photo'],
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
@@ -228,7 +230,7 @@ class ShareController extends Controller
             'duration' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null);
+        $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null, $validated['guest_whatsapp'] ?? null);
 
         $fileUrl = null;
         $thumbnail = $validated['thumbnail'] ?? null;
@@ -348,7 +350,7 @@ class ShareController extends Controller
         return redirect()->back()->with('success', 'Your memory has been shared!');
     }
 
-    protected function resolveGuestIdentity(Request $request, ?Room $room, ?Event $event, string $name, ?string $email): GuestIdentity
+    protected function resolveGuestIdentity(Request $request, ?Room $room, ?Event $event, string $name, ?string $email, ?string $whatsapp = null): GuestIdentity
     {
         $ip = $request->ip();
 
@@ -378,7 +380,7 @@ class ShareController extends Controller
         $existing = $query->latest()->first();
 
         if ($existing && ! $existing->isExpired()) {
-            $existing->update(['name' => $name, 'email' => $email ?? $existing->email]);
+            $existing->update(['name' => $name, 'email' => $email ?? $existing->email, 'whatsapp' => $whatsapp ?? $existing->whatsapp]);
 
             return $existing;
         }
@@ -388,6 +390,7 @@ class ShareController extends Controller
             'event_id' => $event?->id,
             'name' => $name,
             'email' => $email,
+            'whatsapp' => $whatsapp,
             'ip_address' => $ip,
             'expires_at' => now()->addHours(24),
         ]);
@@ -421,6 +424,8 @@ class ShareController extends Controller
         $validated = $request->validate([
             'guest_name' => ['required', 'string', 'max:255'],
             'guest_email' => ['nullable', 'email', 'max:255'],
+            'guest_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s\-\(\)]+$/'],
+            'guest_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s\-\(\)]+$/'],
             'story_id' => ['required', 'exists:stories,id'],
             'type' => ['required', 'string', 'in:video,audio,photo'],
             'media_uuids' => ['nullable', 'array'],
@@ -430,7 +435,7 @@ class ShareController extends Controller
             'recording' => ['nullable', 'file', 'max:51200'],
         ]);
 
-        $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null);
+        $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null, $validated['guest_whatsapp'] ?? null);
 
         $fileUrl = null;
         $assets = [];
@@ -544,6 +549,7 @@ class ShareController extends Controller
             'content' => ['required', 'string', 'max:1000'],
             'guest_name' => ['required', 'string', 'max:255'],
             'guest_email' => ['nullable', 'email', 'max:255'],
+            'guest_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s\-\(\)]+$/'],
         ]);
 
         $story = Story::where('room_id', $room->id)->findOrFail($validated['story_id']);
@@ -566,8 +572,10 @@ class ShareController extends Controller
         $validated = $request->validate([
             'guest_name' => ['required', 'string', 'max:255'],
             'guest_email' => ['nullable', 'email', 'max:255'],
+            'guest_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s\-\(\)]+$/'],
+            'guest_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s\-\(\)]+$/'],
             'title' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'type' => ['required', 'string', 'in:video,audio,photo'],
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
@@ -576,7 +584,7 @@ class ShareController extends Controller
             'thumbnail' => ['nullable', 'image', 'max:5120'],
         ]);
 
-        $guest = $this->resolveGuestIdentity($request, null, $event, $validated['guest_name'], $validated['guest_email'] ?? null);
+        $guest = $this->resolveGuestIdentity($request, null, $event, $validated['guest_name'], $validated['guest_email'] ?? null, $validated['guest_whatsapp'] ?? null);
 
         $fileUrl = null;
         $thumbnail = $validated['thumbnail'] ?? null;

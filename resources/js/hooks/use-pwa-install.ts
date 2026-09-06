@@ -9,9 +9,13 @@ export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] =
         useState<BeforeInstallPromptEvent | null>(null);
     const [isInstalled, setIsInstalled] = useState(false);
+    const [isIOS, setIsIOS] = useState(false);
 
     useEffect(() => {
-        if (window.matchMedia('(display-mode: standalone)').matches) {
+        const ua = window.navigator.userAgent;
+        const iOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+        setIsIOS(iOS);
+        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
             setIsInstalled(true);
 
             return;
@@ -51,6 +55,8 @@ export function usePwaInstall() {
     return {
         canInstall: deferredPrompt !== null,
         isInstalled,
+        isIOS,
+        canShowIOSHint: isIOS && !isInstalled && deferredPrompt === null,
         promptInstall,
     };
 }

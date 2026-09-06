@@ -59,6 +59,10 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#0b0b0b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ulo">
 
     @fonts
 
@@ -68,10 +72,11 @@
         <title>{{ $page['props']['title'] ?? config('app.name', 'Ulo of Stories') }}</title>
     </x-inertia::head>
 
-    {{-- Service Worker for Web Push Notifications --}}
+    {{-- Service Workers: PWA shell + Web Push --}}
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' });
                 navigator.serviceWorker.register('/webpush-worker.js');
             });
         }

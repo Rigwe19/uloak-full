@@ -40,6 +40,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
+import { validateFile } from '@/utils/media-validation';
 
 /* ─── Animations ─────────────────────────────────────────── */
 const fadeInUp = {
@@ -437,12 +438,14 @@ function CommentsModal({
     roomSlug,
     guestName,
     guestEmail,
+    guestWhatsapp,
     onClose,
 }: {
     storyId: number;
     roomSlug: string;
     guestName: string;
     guestEmail: string;
+    guestWhatsapp: string;
     onClose: () => void;
 }) {
     const [commentText, setCommentText] = useState('');
@@ -485,6 +488,7 @@ function CommentsModal({
                 content: commentText,
                 guest_name: guestName,
                 guest_email: guestEmail,
+                guest_whatsapp: guestWhatsapp,
             },
             {
                 preserveScroll: true,
@@ -586,8 +590,9 @@ function CommentsModal({
                         <input
                             type="text"
                             value={commentText}
-                            onChange={(e) => setCommentText(e.target.value)}
+                            onChange={(e) => setCommentText(e.target.value.slice(0,1000))}
                             placeholder="Write a comment..."
+                            maxLength={1000}
                             className="flex-1 rounded-xl border border-white/10 bg-bg-dark px-4 py-2.5 text-xs text-text-primary focus:border-accent-gold focus:outline-none"
                         />
                         <button
@@ -612,6 +617,7 @@ function CommentSection({
     roomSlug,
     guestName,
     guestEmail,
+    guestWhatsapp,
     onViewAll,
 }: {
     storyId: number;
@@ -620,6 +626,7 @@ function CommentSection({
     roomSlug: string;
     guestName: string;
     guestEmail: string;
+    guestWhatsapp: string;
     onViewAll: (storyId: number) => void;
 }) {
     const visibleComments = comments.slice(0, 2);
@@ -642,6 +649,7 @@ function CommentSection({
                 content: commentText,
                 guest_name: guestName,
                 guest_email: guestEmail,
+                guest_whatsapp: guestWhatsapp,
             },
             {
                 preserveScroll: true,
@@ -708,8 +716,9 @@ function CommentSection({
                 <input
                     type="text"
                     value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
+                    onChange={(e) => setCommentText(e.target.value.slice(0,1000))}
                     placeholder="Write a comment..."
+                    maxLength={1000}
                     className="flex-1 rounded-xl border border-white/10 bg-bg-dark px-3 py-2 text-xs text-text-primary focus:border-accent-gold focus:outline-none"
                 />
                 <button
@@ -729,15 +738,18 @@ function GuestIdentityGate({
     onComplete,
     initialName,
     initialEmail,
+    initialWhatsapp,
     roomSlug,
 }: {
-    onComplete: (name: string, email: string) => void;
+    onComplete: (name: string, email: string, whatsapp: string) => void;
     initialName: string;
     initialEmail: string;
+    initialWhatsapp: string;
     roomSlug: string;
 }) {
     const [name, setName] = useState(initialName);
     const [email, setEmail] = useState(initialEmail);
+    const [whatsapp, setWhatsapp] = useState(initialWhatsapp);
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -747,13 +759,13 @@ function GuestIdentityGate({
             return;
         }
 
-        onComplete(name.trim(), email.trim());
+        onComplete(name.trim(), email.trim(), whatsapp.trim());
 
         // Save to database for upload reminders
         if (email.trim()) {
             router.post(
                 storeGuestSubscription.url(roomSlug),
-                { name: name.trim(), email: email.trim() },
+                { name: name.trim(), email: email.trim(), whatsapp: whatsapp.trim() || undefined },
                 {
                     preserveScroll: true,
                     preserveState: true,
@@ -803,30 +815,59 @@ function GuestIdentityGate({
                 </div>
 
                 <div>
-                    <label className="mb-1.5 block text-[11px] font-bold tracking-[0.16em] text-text-muted uppercase">
+                    <label htmlFor="guest-name" className="mb-1.5 block text-[11px] font-bold tracking-[0.16em] text-text-muted uppercase">
                         Your Name
                     </label>
                     <input
+                        id="guest-name"
+                        name="name"
                         type="text"
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Enter your name"
                         autoComplete="name"
+                        autoCapitalize="words"
+                        spellCheck={false}
+                        maxLength={255}
+                        enterKeyHint="next"
+                        autoFocus
                         className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/60 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold focus:outline-none"
                     />
                 </div>
                 <div>
-                    <label className="mb-1.5 block text-[11px] font-bold tracking-[0.16em] text-text-muted uppercase">
+                    <label htmlFor="guest-email" className="mb-1.5 block text-[11px] font-bold tracking-[0.16em] text-text-muted uppercase">
                         Email (Optional)
                     </label>
                     <input
+                        id="guest-email"
+                        name="email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="name@example.com"
                         autoComplete="email"
                         inputMode="email"
+                        enterKeyHint="next"
+                        maxLength={255}
+                        className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/60 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold focus:outline-none"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="guest-whatsapp" className="mb-1.5 block text-[11px] font-bold tracking-[0.16em] text-text-muted uppercase">
+                        WhatsApp (Optional)
+                    </label>
+                    <input
+                        id="guest-whatsapp"
+                        name="tel"
+                        type="tel"
+                        value={whatsapp}
+                        onChange={(e) => setWhatsapp(e.target.value)}
+                        placeholder="+234 801 234 5678"
+                        autoComplete="tel"
+                        inputMode="tel"
+                        enterKeyHint="done"
+                        maxLength={30}
                         className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/60 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold focus:outline-none"
                     />
                 </div>
@@ -852,11 +893,13 @@ function MediaCaptureHub({
     onSubmit,
     guestName,
     guestEmail,
+    guestWhatsapp,
     roomSlug,
 }: {
     onSubmit: () => void;
     guestName: string;
     guestEmail: string;
+    guestWhatsapp: string;
     roomSlug: string;
 }) {
     const [mode, setMode] = useState<CaptureMode>(null);
@@ -1262,8 +1305,16 @@ function MediaCaptureHub({
 
             if (files.length > 0) {
                 files.forEach((file) => {
+                    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+                    const isVideoExt = ['mp4','mov','avi','mkv','webm','m4v','3gp','3gpp','mpeg','mpg','hevc'].includes(ext);
+                    const isVideoMime = file.type.startsWith('video/') || isVideoExt;
                     const type: 'photo' | 'video' | 'audio' =
-                        file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
+                        isVideoMime ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
+                    const res = validateFile(file, type);
+                    if (!res.valid) {
+                        toast.error(res.error || 'This file cannot be uploaded.');
+                        return;
+                    }
                     addToQueue(file, type);
                 });
                 setMode('upload');
@@ -1332,6 +1383,7 @@ function MediaCaptureHub({
                 const fd = new FormData();
                 fd.append('guest_name', guestName);
                 fd.append('guest_email', guestEmail);
+                fd.append('guest_whatsapp', guestWhatsapp);
                 fd.append('description', description);
                 const t: 'video' | 'audio' | 'photo' =
                     item.file.type.startsWith('video/') ? 'video' : item.file.type.startsWith('audio/') ? 'audio' : 'photo';
@@ -1379,6 +1431,7 @@ function MediaCaptureHub({
         const formData = new FormData();
         formData.append('guest_name', guestName);
         formData.append('guest_email', guestEmail);
+        formData.append('guest_whatsapp', guestWhatsapp);
         formData.append('description', description);
         formData.append('type', firstType);
         mediaUuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
@@ -1655,9 +1708,22 @@ function MediaCaptureHub({
                                                 value={description}
                                                 onChange={(e) =>
                                                     setDescription(
-                                                        e.target.value,
+                                                        e.target.value.slice(0,500),
                                                     )
                                                 }
+                                                onPaste={(e) => {
+                                                    const text = e.clipboardData.getData('text');
+                                                    if (description.length + text.length > 500) {
+                                                        e.preventDefault();
+                                                        const remain = 500 - description.length;
+                                                        if (remain > 0) {
+                                                            setDescription((prev) => (prev + text.slice(0, remain)).slice(0,500));
+                                                            toast.info('Description trimmed to 500 characters.');
+                                                        } else {
+                                                            toast.info('Description limit is 500 characters.');
+                                                        }
+                                                    }
+                                                }}
                                                 placeholder="Add a short description or story behind this media..."
                                                 rows={2}
                                                 maxLength={500}
@@ -1927,6 +1993,9 @@ export default function RoomShare({
     const [guestEmail, setGuestEmail] = useState(
         () => localStorage.getItem('room-share-email') || '',
     );
+    const [guestWhatsapp, setGuestWhatsapp] = useState(
+        () => localStorage.getItem('room-share-whatsapp') || '',
+    );
     const [isIdentified, setIsIdentified] = useState(
         () => !!localStorage.getItem('room-share-name'),
     );
@@ -1989,12 +2058,15 @@ export default function RoomShare({
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Persist guest identity in localStorage to survive page reloads
-    const completeIdentity = useCallback((name: string, email: string) => {
+    const completeIdentity = useCallback((name: string, email: string, whatsapp: string) => {
         setGuestName(name);
         setGuestEmail(email);
+        setGuestWhatsapp(whatsapp);
         setIsIdentified(true);
         localStorage.setItem('room-share-name', name);
         localStorage.setItem('room-share-email', email);
+        if (whatsapp) localStorage.setItem('room-share-whatsapp', whatsapp);
+        else localStorage.removeItem('room-share-whatsapp');
     }, []);
 
     // Refresh stories after submission
@@ -2036,6 +2108,7 @@ export default function RoomShare({
     const clearSession = useCallback(() => {
         localStorage.removeItem('room-share-name');
         localStorage.removeItem('room-share-email');
+        localStorage.removeItem('room-share-whatsapp');
         setIsIdentified(false);
     }, []);
 
@@ -2150,19 +2223,23 @@ export default function RoomShare({
                         </div>
 
                         {!isIdentified ? (
-                            <GuestIdentityGate
-                                onComplete={(name, email) => {
-                                    completeIdentity(name, email);
-                                }}
-                                initialName={guestName}
-                                initialEmail={guestEmail}
-                                roomSlug={room.slug}
-                            />
+                            <form autoComplete="on">
+                                <GuestIdentityGate
+                                    onComplete={(name, email, whatsapp) => {
+                                        completeIdentity(name, email, whatsapp);
+                                    }}
+                                    initialName={guestName}
+                                    initialEmail={guestEmail}
+                                    initialWhatsapp={guestWhatsapp}
+                                    roomSlug={room.slug}
+                                />
+                            </form>
                         ) : (
                             <MediaCaptureHub
                                 onSubmit={handleNewSubmission}
                                 guestName={guestName}
                                 guestEmail={guestEmail}
+                                guestWhatsapp={guestWhatsapp}
                                 roomSlug={room.slug}
                             />
                         )}
@@ -2242,6 +2319,7 @@ export default function RoomShare({
                                                 roomSlug={room.slug}
                                                 guestName={guestName}
                                                 guestEmail={guestEmail}
+                                                guestWhatsapp={guestWhatsapp}
                                                 onViewAll={(id) =>
                                                     setCommentsStoryId(id)
                                                 }

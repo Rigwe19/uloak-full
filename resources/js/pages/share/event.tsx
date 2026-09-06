@@ -615,6 +615,12 @@ export default function ShareEvent({
                                                 <input
                                                     type="email"
                                                     required
+                                                    id="event-email"
+                                                    name="email"
+                                                    autoComplete="email"
+                                                    inputMode="email"
+                                                    enterKeyHint="done"
+                                                    maxLength={255}
                                                     value={email}
                                                     onChange={(e) =>
                                                         setEmail(e.target.value)

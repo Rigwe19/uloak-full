@@ -66,8 +66,11 @@ class AppServiceProvider extends ServiceProvider
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('guest-media', function (Request $request) {
-            return Limit::perMinute(30)->by($request->ip())->response(function () {
-                return response()->json(['message' => 'Too many uploads. Please slow down.'], 429);
+            // Venue NAT: many guests share one public IP, so rate-limit per room+IP instead of IP alone.
+            $key = $request->ip().'|'.($request->input('room_slug') ?? $request->input('event_slug') ?? $request->route('room')?->slug ?? $request->route('event')?->slug ?? 'global');
+
+            return Limit::perMinute(120)->by($key)->response(function () {
+                return response()->json(['message' => 'Too many uploads. Please wait a moment and try again.'], 429);
             });
         });
     }

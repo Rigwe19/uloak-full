@@ -149,6 +149,13 @@ export default function ShareWelcome({
                                                 <input
                                                     type="text"
                                                     required
+                                                    id="welcome-name"
+                                                    name="name"
+                                                    autoComplete="name"
+                                                    autoCapitalize="words"
+                                                    spellCheck={false}
+                                                    maxLength={255}
+                                                    enterKeyHint="next"
                                                     placeholder="Enter your name"
                                                     value={data.name}
                                                     onChange={(e) =>
@@ -179,6 +186,12 @@ export default function ShareWelcome({
                                                 <input
                                                     type="email"
                                                     required
+                                                    id="welcome-email"
+                                                    name="email"
+                                                    autoComplete="email"
+                                                    inputMode="email"
+                                                    enterKeyHint="done"
+                                                    maxLength={255}
                                                     placeholder="name@example.com"
                                                     value={data.email}
                                                     onChange={(e) =>

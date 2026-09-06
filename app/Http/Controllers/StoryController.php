@@ -26,7 +26,7 @@ class StoryController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'type' => ['required', 'string', 'in:video,audio,photo,document,collection'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:51200'],
@@ -53,7 +53,7 @@ class StoryController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $story->update($validated);

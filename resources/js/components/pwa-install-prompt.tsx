@@ -3,16 +3,16 @@ import React, { useEffect, useState } from 'react';
 import { usePwaInstall } from '@/hooks/use-pwa-install';
 
 export function PwaInstallPrompt() {
-    const { canInstall, promptInstall } = usePwaInstall();
+    const { canInstall, canShowIOSHint, promptInstall } = usePwaInstall();
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
-        if (canInstall) {
+        if (canInstall || canShowIOSHint) {
             setDismissed(false);
         }
-    }, [canInstall]);
+    }, [canInstall, canShowIOSHint]);
 
-    if (!canInstall || dismissed) {
+    if ((!canInstall && !canShowIOSHint) || dismissed) {
         return null;
     }
 
@@ -33,13 +33,19 @@ export function PwaInstallPrompt() {
                     </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={promptInstall}
-                        className="rounded-lg bg-accent-gold px-3 py-1.5 text-[10px] font-bold tracking-wider text-bg-dark uppercase transition-all hover:opacity-90"
-                    >
-                        Install
-                    </button>
+                    {canInstall ? (
+                        <button
+                            type="button"
+                            onClick={promptInstall}
+                            className="rounded-lg bg-accent-gold px-3 py-1.5 text-[10px] font-bold tracking-wider text-bg-dark uppercase transition-all hover:opacity-90"
+                        >
+                            Install
+                        </button>
+                    ) : (
+                        <span className="rounded-lg bg-white/10 px-3 py-1.5 text-[10px] font-bold tracking-wider text-text-primary">
+                            Share → Add to Home Screen
+                        </span>
+                    )}
                     <button
                         type="button"
                         onClick={() => setDismissed(true)}

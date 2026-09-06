@@ -550,12 +550,33 @@ export default function RoomShow({
                                     A Shared Heritage
                                 </span>
                             </div>
-                            <h1 className="text-4xl leading-none font-bold tracking-tight text-text-primary md:text-7xl">
+                            <h1 className="line-clamp-2 text-4xl leading-none font-bold tracking-tight text-text-primary md:text-7xl" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
                                 {room.name}
                             </h1>
-                            <p className="max-w-2xl text-lg leading-relaxed font-light text-text-muted">
-                                {room.description}
-                            </p>
+                            <div className="max-w-2xl">
+                                <p className="line-clamp-3 text-lg leading-relaxed font-light text-text-muted" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
+                                    {room.description}
+                                </p>
+                                {room.description && room.description.length > 180 && (
+                                    <button
+                                        onClick={(e) => {
+                                            const p = (e.target as HTMLElement).previousElementSibling as HTMLElement;
+                                            if (!p) return;
+                                            const isClamped = p.classList.contains('line-clamp-3');
+                                            if (isClamped) {
+                                                p.classList.remove('line-clamp-3');
+                                                (e.target as HTMLElement).textContent = 'Show less';
+                                            } else {
+                                                p.classList.add('line-clamp-3');
+                                                (e.target as HTMLElement).textContent = 'Read more';
+                                            }
+                                        }}
+                                        className="mt-2 text-xs font-bold tracking-wide text-accent-gold underline decoration-accent-gold/30 underline-offset-4 hover:text-accent-gold/80"
+                                    >
+                                        Read more
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         {/* <div className="flex flex-wrap items-center gap-4">
                             <ShareQRCode roomSlug={room.slug} roomName={room.name} />

@@ -201,6 +201,7 @@ class MediaController extends Controller
             'event_slug' => ['nullable', 'string', 'required_without:room_slug'],
             'guest_name' => ['required', 'string', 'max:255'],
             'guest_email' => ['nullable', 'email', 'max:255'],
+            'guest_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9\s\-\(\)]+$/'],
             'type' => ['nullable', 'string', 'in:video,image,audio,photo'],
         ]);
 
@@ -232,6 +233,7 @@ class MediaController extends Controller
             'event_id' => $event?->id,
             'name' => $request->input('guest_name'),
             'email' => $request->input('guest_email'),
+            'whatsapp' => $request->input('guest_whatsapp'),
             'ip_address' => $request->ip(),
             'expires_at' => now()->addHours(24),
         ]);
@@ -280,7 +282,7 @@ class MediaController extends Controller
         }
 
         // Link ephemeral guest for audit/watermark provenance
-        $media->update(['guest_identity_id' => $guest->id, 'metadata' => array_merge($media->metadata ?? [], ['guest_name' => $guest->name, 'guest_email' => $guest->email, 'guest_uuid' => $guest->uuid])]);
+        $media->update(['guest_identity_id' => $guest->id, 'metadata' => array_merge($media->metadata ?? [], ['guest_name' => $guest->name, 'guest_email' => $guest->email, 'guest_whatsapp' => $guest->whatsapp, 'guest_uuid' => $guest->uuid])]);
 
         // Audio has no ffmpeg transcode — mark ready immediately so polling resolves (was stuck at uploading/progress 0)
         if ($isAudio) {

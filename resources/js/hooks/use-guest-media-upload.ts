@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { pollMediaStatus } from '@/services/upload-service';
 import { useUploadStore } from '@/stores/upload-store';
 import { validateFile } from '@/utils/media-validation';
@@ -8,6 +9,7 @@ interface GuestContext {
     eventSlug?: string | null;
     guestName: string;
     guestEmail?: string | null;
+    guestWhatsapp?: string | null;
 }
 
 function uploadGuestFileWithProgress(
@@ -51,6 +53,10 @@ function uploadGuestFileWithProgress(
 
         if (ctx.guestEmail) {
             formData.append('guest_email', ctx.guestEmail);
+        }
+
+        if (ctx.guestWhatsapp) {
+            formData.append('guest_whatsapp', ctx.guestWhatsapp);
         }
 
         formData.append('type', mediaType === 'photo' ? 'image' : mediaType);
@@ -142,7 +148,7 @@ export function useGuestMediaUpload(ctx: GuestContext) {
 
             if (!validation.valid) {
                 setError(id, validation?.error ?? '');
-
+                toast.error(validation.error || 'This file cannot be uploaded before reaching the server.');
                 throw new Error(validation.error);
             }
 
@@ -204,7 +210,12 @@ export function useGuestMediaUpload(ctx: GuestContext) {
             } catch (error) {
                 const message =
                     error instanceof Error ? error.message : 'Upload failed';
-
+                // Surface network/413/timeout reasons that never hit server logs
+                if (message.includes('Network error') || message.includes('Failed to fetch') || message.includes('413') || message.includes('Entity Too Large')) {
+                    toast.error('Network issue — video did not reach the server. Try a shorter video or stronger Wi-Fi.');
+                } else if (!message.includes('No file selected') && !message.includes('Unsupported')) {
+                    toast.error(message);
+                }
                 setError(id, message);
                 callbacks?.onStatusChange?.('failed');
 

@@ -3,13 +3,14 @@ import { useUploadStore } from '@/stores/upload-store';
 import type { UploadItem } from '@/types/media';
 import { useGuestMediaUpload } from './use-guest-media-upload';
 
-const MAX_CONCURRENT = 3;
+const MAX_CONCURRENT = 1;
 
 interface GuestCtx {
     roomSlug?: string | null;
     eventSlug?: string | null;
     guestName: string;
     guestEmail?: string | null;
+    guestWhatsapp?: string | null;
 }
 
 export function useGuestUploadQueue(ctx: GuestCtx) {

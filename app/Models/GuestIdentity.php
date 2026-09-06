@@ -15,6 +15,7 @@ class GuestIdentity extends Model
         'event_id',
         'name',
         'email',
+        'whatsapp',
         'ip_address',
         'expires_at',
     ];

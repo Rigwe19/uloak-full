@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { Navbar, Footer } from '@/components/navigation';
 import { PageTransition } from '@/components/page-transition';
+import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
 
 export default function GuestLayout({
     children,
@@ -21,6 +22,7 @@ export default function GuestLayout({
                     </PageTransition>
                 </AnimatePresence>
             </main>
+            <PwaInstallPrompt />
             <Footer />
         </div>
     );

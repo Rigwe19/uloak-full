@@ -3,14 +3,23 @@ export interface ValidationResult {
     error?: string;
 }
 
-const MAX_VIDEO_SIZE = 700 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const ALLOWED_VIDEO_MIMES = [
     'video/mp4',
     'video/quicktime',
     'video/x-msvideo',
     'video/webm',
+    'video/hevc',
+    'video/h264',
+    'video/h265',
+    'video/x-matroska',
+    'video/3gpp',
+    'video/3gpp2',
+    'video/mpeg',
+    'video/x-m4v',
 ];
+const ALLOWED_VIDEO_EXTENSIONS = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v', '3gp', '3gpp', 'mpeg', 'mpg', 'hevc'];
 const ALLOWED_IMAGE_MIMES = [
     'image/jpeg',
     'image/png',
@@ -39,18 +48,34 @@ export function validateVideo(file: File): ValidationResult {
         return { valid: false, error: 'No file selected.' };
     }
 
-    const baseMime = file.type.split(';')[0].trim().toLowerCase();
-    if (!ALLOWED_VIDEO_MIMES.includes(baseMime) && !ALLOWED_VIDEO_MIMES.includes(file.type)) {
-        return {
-            valid: false,
-            error: `Unsupported video format: ${file.type || 'unknown'}. Use MP4, MOV, AVI, or WebM.`,
-        };
+    // iOS Safari and some Android browsers report empty or generic mime for HEVC/MOV.
+    // Fall back to file extension check so "didn't get to server" silent rejects don't happen.
+    const baseMime = (file.type || '').split(';')[0].trim().toLowerCase();
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const mimeAllowed = baseMime ? ALLOWED_VIDEO_MIMES.includes(baseMime) || ALLOWED_VIDEO_MIMES.includes(file.type.toLowerCase()) || baseMime.startsWith('video/') : false;
+    const extAllowed = ALLOWED_VIDEO_EXTENSIONS.includes(ext);
+
+    // Allow if either mime is video/* or extension is known video. Only block if both fail and mime is non-empty non-video.
+    if (!mimeAllowed && !extAllowed) {
+        // If file.type is empty, rely solely on extension; if extension also unknown, block.
+        if (baseMime && !baseMime.startsWith('video/')) {
+            return {
+                valid: false,
+                error: `Unsupported video format: ${file.type || ext || 'unknown'}. Use MP4, MOV, AVI, or WebM.`,
+            };
+        }
+        if (!extAllowed) {
+            return {
+                valid: false,
+                error: `Unsupported video format: ${file.name || 'unknown'}. Use MP4, MOV, AVI, or WebM.`,
+            };
+        }
     }
 
     if (file.size > MAX_VIDEO_SIZE) {
         return {
             valid: false,
-            error: `File too large (${formatSize(file.size)}). Maximum size is 500MB.`,
+            error: `File too large (${formatSize(file.size)}). Maximum size is 500MB. Try trimming the video or choose a lower quality.`,
         };
     }
 
@@ -62,11 +87,15 @@ export function validateImage(file: File): ValidationResult {
         return { valid: false, error: 'No file selected.' };
     }
 
-    const baseMime = file.type.split(';')[0].trim().toLowerCase();
-    if (!ALLOWED_IMAGE_MIMES.includes(baseMime) && !ALLOWED_IMAGE_MIMES.includes(file.type)) {
+    const baseMime = (file.type || '').split(';')[0].trim().toLowerCase();
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const mimeAllowed = baseMime ? ALLOWED_IMAGE_MIMES.includes(baseMime) || ALLOWED_IMAGE_MIMES.includes(file.type.toLowerCase()) || baseMime.startsWith('image/') : false;
+    const imageExts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif', 'bmp', 'tiff'];
+    const extAllowed = imageExts.includes(ext);
+    if (!mimeAllowed && !extAllowed) {
         return {
             valid: false,
-            error: `Unsupported image format: ${file.type || 'unknown'}. Use JPEG, PNG, WebP, or GIF.`,
+            error: `Unsupported image format: ${file.type || ext || 'unknown'}. Use JPEG, PNG, WebP, or GIF.`,
         };
     }
 
