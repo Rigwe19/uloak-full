@@ -263,7 +263,7 @@ class ShareController extends Controller
                 if (! $fileUrl) {
                     $fileUrl = $media->url();
                     $validated['type'] = $type;
-                    $thumbnail = $media->thumbnail ? (str_starts_with($media->thumbnail, 'http') ? $media->thumbnail : Storage::disk($media->disk)->url($media->thumbnail)) : $media->thumbnail();
+                    $thumbnail = $media->thumbnail ? (str_starts_with($media->thumbnail, 'http') ? $media->thumbnail : (str_starts_with($media->thumbnail, 'http') || str_starts_with($media->thumbnail, '/storage') ? $media->thumbnail : Storage::disk($media->disk)->url(ltrim($media->thumbnail, '/')))) : $media->thumbnail();
                 }
             }
         }
@@ -279,7 +279,7 @@ class ShareController extends Controller
                     $media->update(['guest_identity_id' => $guest->id]);
                     $type = $validated['type'];
                     $fileUrl = $media->url();
-                    $thumbnail = $media->thumbnail ? Storage::disk($media->disk)->url($media->thumbnail) : null;
+                    $thumbnail = $media->thumbnail ? (str_starts_with($media->thumbnail, 'http') || str_starts_with($media->thumbnail, '/storage') ? $media->thumbnail : Storage::disk($media->disk)->url(ltrim($media->thumbnail, '/'))) : null;
                     $assets[] = ['media_uuid' => $media->uuid, 'url' => $fileUrl, 'type' => $type, 'title' => $recording->getClientOriginalName()];
                 } catch (\Throwable $e) {
                     return redirect()->back()->withErrors(['recording' => $e->getMessage()]);
@@ -301,7 +301,7 @@ class ShareController extends Controller
                         if (! $fileUrl) {
                             $fileUrl = $url;
                             $validated['type'] = $type;
-                            $thumbnail = $media->thumbnail ? Storage::disk($media->disk)->url($media->thumbnail) : ($type === 'photo' ? $url : null);
+                            $thumbnail = $media->thumbnail ? (str_starts_with($media->thumbnail, 'http') || str_starts_with($media->thumbnail, '/storage') ? $media->thumbnail : Storage::disk($media->disk)->url(ltrim($media->thumbnail, '/'))) : ($type === 'photo' ? $url : null);
                         }
                     } catch (\Throwable $e) {
                         continue;
@@ -607,7 +607,7 @@ class ShareController extends Controller
                 if (! $fileUrl) {
                     $fileUrl = $url;
                     $validated['type'] = $type;
-                    $thumbnail = $media->thumbnail ? Storage::disk($media->disk)->url($media->thumbnail) : ($type === 'photo' ? $url : null);
+                    $thumbnail = $media->thumbnail ? (str_starts_with($media->thumbnail, 'http') || str_starts_with($media->thumbnail, '/storage') ? $media->thumbnail : Storage::disk($media->disk)->url(ltrim($media->thumbnail, '/'))) : ($type === 'photo' ? $url : null);
                 }
             }
         }
@@ -626,7 +626,7 @@ class ShareController extends Controller
                         if (! $fileUrl) {
                             $fileUrl = $url;
                             $validated['type'] = $type;
-                            $thumbnail = $media->thumbnail ? Storage::disk($media->disk)->url($media->thumbnail) : null;
+                            $thumbnail = $media->thumbnail ? (str_starts_with($media->thumbnail, 'http') || str_starts_with($media->thumbnail, '/storage') ? $media->thumbnail : Storage::disk($media->disk)->url(ltrim($media->thumbnail, '/'))) : null;
                         }
                     } catch (\Throwable) {
                         continue;

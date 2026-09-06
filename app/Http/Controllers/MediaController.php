@@ -71,7 +71,7 @@ class MediaController extends Controller
             $thumbUrl = $thumb;
         } elseif (is_string($thumb) && $thumb !== '' && $thumb !== null) {
             try {
-                $thumbUrl = Storage::disk($media->disk)->url($thumb);
+                $thumbUrl = (str_starts_with($thumb, 'http') || str_starts_with($thumb, '/storage') ? $thumb : Storage::disk($media->disk)->url(ltrim($thumb, '/')));
             } catch (\Throwable) {
                 $thumbUrl = $thumb;
             }
@@ -155,7 +155,7 @@ class MediaController extends Controller
             $thumbUrl = $thumb;
         } elseif (is_string($thumb) && $thumb !== '' && $thumb !== null) {
             try {
-                $thumbUrl = Storage::disk($media->disk)->url($thumb);
+                $thumbUrl = (str_starts_with($thumb, 'http') || str_starts_with($thumb, '/storage') ? $thumb : Storage::disk($media->disk)->url(ltrim($thumb, '/')));
             } catch (\Throwable) {
                 $thumbUrl = $thumb;
             }
@@ -301,7 +301,7 @@ class MediaController extends Controller
         $thumb = $media->attributes['thumbnail'] ?? $media->thumbnail ?? null;
         $thumbUrl = is_string($thumb) && $thumb !== '' ? (str_starts_with($thumb, 'http') ? $thumb : (function () use ($media, $thumb) {
             try {
-                return Storage::disk($media->disk)->url($thumb);
+                return str_starts_with($thumb, 'http') || str_starts_with($thumb, '/storage') ? $thumb : Storage::disk($media->disk)->url(ltrim($thumb, '/'));
             } catch (\Throwable) {
                 return $thumb;
             }

@@ -141,7 +141,7 @@ class Media extends Model
         try {
             return app(MediaManager::class)->forMedia($this)->url();
         } catch (\Throwable) {
-            return Storage::disk($this->disk)->url($this->path);
+            return str_starts_with($this->path, 'http') || str_starts_with($this->path, '/storage') ? $this->path : Storage::disk($this->disk)->url(ltrim($this->path, '/'));
         }
     }
 

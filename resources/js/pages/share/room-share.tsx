@@ -234,6 +234,51 @@ function SuccessModal({ onClose }: { onClose: () => void }) {
     );
 }
 
+function ExpandableTextInline({
+    text,
+    clampLines = 2,
+    className = '',
+    quote = false,
+}: {
+    text: string;
+    clampLines?: number;
+    className?: string;
+    quote?: boolean;
+}) {
+    const [expanded, setExpanded] = React.useState(false);
+    const [over, setOver] = React.useState(false);
+    const ref = React.useRef<HTMLParagraphElement>(null);
+    React.useEffect(() => setExpanded(false), [text]);
+    React.useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const check = () => setOver(el.scrollHeight > el.clientHeight + 4);
+        check();
+        const ro = new ResizeObserver(check);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [text, clampLines, expanded]);
+    return (
+        <div className={className}>
+            <p
+                ref={ref}
+                className={`text-sm leading-relaxed text-white/80 ${quote ? 'italic' : ''} ${!expanded ? `line-clamp-${clampLines}` : ''}`}
+                style={!expanded ? ({ display: '-webkit-box', WebkitLineClamp: clampLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any) : undefined}
+            >
+                {quote ? `"${text}"` : text}
+            </p>
+            {over && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+                    className="mt-1.5 text-xs font-bold tracking-wide text-white/90 underline decoration-white/30 underline-offset-4 hover:text-white"
+                >
+                    {expanded ? 'Show less' : 'Read more'}
+                </button>
+            )}
+        </div>
+    );
+}
+
 /* ─── TikTok-style Media Viewer Modal ──────────────────────── */
 function MediaViewerModal({
     story,
@@ -286,10 +331,10 @@ function MediaViewerModal({
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-gold/30 text-xs font-bold text-accent-gold">
                             {story.author.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-white">
+                        <div className="min-w-0 flex-1">
+                            <div className="text-sm font-bold text-white line-clamp-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
                                 {story.title}
-                            </h3>
+                            </div>
                             <p className="text-xs text-white/60">
                                 {story.author} · {story.date}
                             </p>
@@ -373,17 +418,18 @@ function MediaViewerModal({
                         </div>
                     )}
 
-                    {/* Description overlay on video (shown over bottom of video) */}
+                    {/* Description — fixed-height Facebook-style 2 lines + Read more, never covers full video */}
                     {story.description && overlayVisible && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="absolute right-0 bottom-0 left-0 z-10 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-6 pt-16 pb-4"
+                            className="absolute right-0 bottom-0 left-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-6 pt-8 pb-4 max-h-[32%] overflow-y-auto overscroll-contain"
                             onClick={(e) => e.stopPropagation()}
+                            data-caption
                         >
-                            <p className="max-w-xl text-sm text-white/80 italic">
-                                "{story.description}"
-                            </p>
+                            <div className="max-w-xl">
+                                <ExpandableTextInline text={story.description} clampLines={2} quote />
+                            </div>
                         </motion.div>
                     )}
                 </div>
@@ -2273,10 +2319,10 @@ export default function RoomShare({
                                     onClick={() => setViewerStory(story)}
                                 />
                                 <div className="space-y-3 p-5">
-                                    <h3 className="text-sm leading-snug font-bold text-text-primary">
+                                    <h3 className="text-sm leading-snug font-bold text-text-primary line-clamp-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
                                         {story.title}
                                     </h3>
-                                    <p className="line-clamp-2 text-xs text-text-muted italic">
+                                    <p className="line-clamp-2 text-xs text-text-muted italic" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
                                         {story.description || 'No description'}
                                     </p>
                                     <div className="flex items-center justify-between font-mono text-[10px] tracking-wider text-text-muted uppercase">

@@ -44,15 +44,15 @@ class EventController extends Controller
             ],
             'stories' => $stories->map(function ($story) {
                 $thumb = $story->thumbnail;
-                if ($thumb && ! str_starts_with($thumb, 'http')) {
+                if ($thumb && ! str_starts_with($thumb, 'http') && ! str_starts_with($thumb, '/storage')) {
                     $thumb = Storage::disk('public')->url(ltrim($thumb, '/'));
                 }
                 $fileUrl = $story->file_url;
-                if ($fileUrl && ! str_starts_with($fileUrl, 'http')) {
+                if ($fileUrl && ! str_starts_with($fileUrl, 'http') && ! str_starts_with($fileUrl, '/storage')) {
                     $fileUrl = Storage::disk('public')->url(ltrim($fileUrl, '/'));
                 }
                 $assets = collect($story->assets ?? [])->map(function ($asset) {
-                    if (isset($asset['url']) && $asset['url'] && ! str_starts_with($asset['url'], 'http')) {
+                    if (isset($asset['url']) && $asset['url'] && ! str_starts_with($asset['url'], 'http') && ! str_starts_with($asset['url'], '/storage')) {
                         $asset['url'] = Storage::disk('public')->url(ltrim($asset['url'], '/'));
                     }
 
