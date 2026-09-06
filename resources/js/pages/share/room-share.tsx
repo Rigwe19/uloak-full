@@ -1061,20 +1061,6 @@ function MediaCaptureHub({
             document.body.style.overflow = original || 'auto';
         };
     }, [mode]);
-
-    // ESC to close fullscreen + focus trap
-    useEffect(() => {
-        if (mode === null) {
-            return;
-        }
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                closeFullscreen();
-            }
-        };
-        window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
-    }, [mode, closeFullscreen]);
     const startCamera = useCallback(async () => {
         try {
             const s = await navigator.mediaDevices.getUserMedia({
@@ -1397,6 +1383,20 @@ function MediaCaptureHub({
         // uploads are cleared on successful submit instead
         setDescription('');
     }, [stopAllStreams]);
+
+    // ESC to close fullscreen + focus trap
+    useEffect(() => {
+        if (mode === null) {
+            return;
+        }
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                closeFullscreen();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [mode, closeFullscreen]);
 
     const handleSubmit = () => {
         // Pending response: allow video queued for compressing — show placeholder and let queue finish
