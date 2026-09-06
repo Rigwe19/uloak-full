@@ -40,7 +40,6 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
-import { validateFile } from '@/utils/media-validation';
 
 /* ─── Animations ─────────────────────────────────────────── */
 const fadeInUp = {
@@ -245,11 +244,11 @@ function ExpandableTextInline({
     className?: string;
     quote?: boolean;
 }) {
-    const [expanded, setExpanded] = React.useState(false);
-    const [over, setOver] = React.useState(false);
-    const ref = React.useRef<HTMLParagraphElement>(null);
-    React.useEffect(() => setExpanded(false), [text]);
-    React.useEffect(() => {
+    const [expanded, setExpanded] = useState(false);
+    const [over, setOver] = useState(false);
+    const ref = useRef<HTMLParagraphElement>(null);
+    useEffect(() => setExpanded(false), [text]);
+    useEffect(() => {
         const el = ref.current;
         if (!el) return;
         const check = () => setOver(el.scrollHeight > el.clientHeight + 4);
@@ -1356,9 +1355,14 @@ function MediaCaptureHub({
                     const isVideoMime = file.type.startsWith('video/') || isVideoExt;
                     const type: 'photo' | 'video' | 'audio' =
                         isVideoMime ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
-                    const res = validateFile(file, type);
-                    if (!res.valid) {
-                        toast.error(res.error || 'This file cannot be uploaded.');
+                    // Light client guard: only block obvious >500MB video, let server validate rest.
+                    // Prevents "didn't get to server" silent fail for HEVC/empty mime which we now allow.
+                    if (type === 'video' && file.size > 500 * 1024 * 1024) {
+                        toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 500MB. Try a shorter video.`);
+                        return;
+                    }
+                    if (type !== 'video' && file.size > 50 * 1024 * 1024) {
+                        toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 50MB.`);
                         return;
                     }
                     addToQueue(file, type);
