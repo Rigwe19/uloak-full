@@ -65,47 +65,85 @@ class ShareController extends Controller
     {
         $paginator = $room->stories()
             ->whereNull('follow_up_to')
-            ->with(['comments' => function ($q) {
-                $q->latest();
-            }, 'followUpStories'])
+            ->with([
+                'comments' => function ($q) {
+                    $q->latest();
+                },
+                'followUpStories',
+            ])
             ->latest()
             ->cursorPaginate(24);
+
+        // Get the cursor BEFORE transforming paginator items with through().
+        // Cursor pagination needs the original created_at value to generate
+        // the next cursor.
+        $nextCursor = $paginator->nextCursor()?->encode();
 
         $stories = $paginator->through(function ($story) {
             $assets = $story->assets ?? [];
             $isProcessing = false;
             $enrichedAssets = $assets;
 
-            // Enrich assets with live media status so frontend can show placeholder (pending → processing → ready)
+            // Enrich assets with live media status so frontend can show
+            // placeholder (pending → processing → ready).
             if (! empty($assets)) {
-                $uuids = collect($assets)->pluck('media_uuid')->filter()->values()->all();
+                $uuids = collect($assets)
+                    ->pluck('media_uuid')
+                    ->filter()
+                    ->values()
+                    ->all();
+
                 if (! empty($uuids)) {
-                    $mediaMap = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
-                    $enrichedAssets = collect($assets)->map(function ($asset) use ($mediaMap, &$isProcessing) {
-                        $uuid = $asset['media_uuid'] ?? null;
-                        if ($uuid && isset($mediaMap[$uuid])) {
-                            $media = $mediaMap[$uuid];
-                            $asset['status'] = $media->status;
-                            $asset['progress'] = $media->progress;
-                            if (in_array($media->status, ['uploading', 'processing'], true)) {
+                    $mediaMap = Media::whereIn('uuid', $uuids)
+                        ->get()
+                        ->keyBy('uuid');
+
+                    $enrichedAssets = collect($assets)
+                        ->map(function ($asset) use ($mediaMap, &$isProcessing) {
+                            $uuid = $asset['media_uuid'] ?? null;
+
+                            if ($uuid && isset($mediaMap[$uuid])) {
+                                $media = $mediaMap[$uuid];
+
+                                $asset['status'] = $media->status;
+                                $asset['progress'] = $media->progress;
+
+                                if (in_array($media->status, ['uploading', 'processing'], true)) {
+                                    $isProcessing = true;
+                                }
+                            } elseif (
+                                ($asset['type'] ?? null) === 'video'
+                                && empty($asset['url'])
+                            ) {
                                 $isProcessing = true;
                             }
-                        } elseif (($asset['type'] ?? null) === 'video' && empty($asset['url'])) {
-                            $isProcessing = true;
-                        }
 
-                        return $asset;
-                    })->all();
-                    // Fallback: if any asset type video but story type video and no ready media, treat as processing
+                            return $asset;
+                        })
+                        ->all();
+
+                    // Fallback: if any asset type is video but the story is a
+                    // video and no ready video exists, treat it as processing.
                     if (! $isProcessing && $story->type === 'video') {
-                        $hasReadyVideo = collect($enrichedAssets)->contains(fn ($a) => ($a['type'] ?? '') === 'video' && ($a['status'] ?? 'ready') === 'ready');
-                        $hasVideoAsset = collect($enrichedAssets)->contains(fn ($a) => ($a['type'] ?? '') === 'video');
+                        $hasReadyVideo = collect($enrichedAssets)->contains(
+                            fn ($a) =>
+                                ($a['type'] ?? '') === 'video'
+                                && ($a['status'] ?? 'ready') === 'ready'
+                        );
+
+                        $hasVideoAsset = collect($enrichedAssets)->contains(
+                            fn ($a) => ($a['type'] ?? '') === 'video'
+                        );
+
                         if ($hasVideoAsset && ! $hasReadyVideo) {
                             $isProcessing = true;
                         }
                     }
                 }
-            } elseif ($story->type === 'video' && empty($story->file_url)) {
+            } elseif (
+                $story->type === 'video'
+                && empty($story->file_url)
+            ) {
                 $isProcessing = true;
             }
 
@@ -114,27 +152,35 @@ class ShareController extends Controller
                 'title' => $story->title,
                 'type' => $story->type,
                 'description' => $story->description,
-                'author' => $story->user?->name ?? $story->getGuestName() ?? 'Anonymous',
+                'author' => $story->user?->name
+                    ?? $story->getGuestName()
+                    ?? 'Anonymous',
                 'email' => $story->guest_email,
                 'thumbnail' => $story->thumbnail,
                 'file_url' => $story->file_url,
                 'assets' => $enrichedAssets,
                 'is_processing' => $isProcessing,
+
                 'comments' => $story->comments->map(fn ($c) => [
                     'id' => $c->id,
                     'content' => $c->content,
                     'author' => $c->authorName(),
                     'date' => $c->created_at->diffForHumans(),
                 ]),
+
                 'comments_count' => $story->comments()->count(),
+
                 'follow_ups' => $story->followUpStories->map(fn ($fs) => [
                     'id' => $fs->id,
                     'type' => $fs->type,
                     'file_url' => $fs->file_url,
                     'thumbnail' => $fs->thumbnail,
-                    'author' => $fs->user?->name ?? $fs->getGuestName() ?? 'Anonymous',
+                    'author' => $fs->user?->name
+                        ?? $fs->getGuestName()
+                        ?? 'Anonymous',
                     'created_at' => $fs->created_at->format('M d, Y'),
                 ]),
+
                 'date' => $story->created_at->format('M d, Y'),
                 'tags' => $story->tags ?? [],
             ];
@@ -153,19 +199,31 @@ class ShareController extends Controller
                 'room_type' => $room->room_type,
                 'tribute_song' => $room->tribute_song,
             ],
+
             'stories' => $stories->items(),
+
             'pagination' => [
-                'next_cursor' => $paginator->nextCursor()?->encode(),
+                'next_cursor' => $nextCursor,
                 'path' => $paginator->path(),
                 'per_page' => $paginator->perPage(),
             ],
-            'title' => $room->name.' - Ulo of Stories',
+
+            'title' => $room->name . ' - Ulo of Stories',
+
             'meta_description' => $room->description
                 ? Str::limit($room->description, 155)
                 : 'Share your memories, photos, videos in this room.',
+
             'meta_image' => $thumbnail ?? url('/images/og-image.webp'),
-            'meta_url' => url()->route('share.rooms.show', $room->slug),
-            'flash' => session('success') ? ['success' => session('success')] : null,
+
+            'meta_url' => url()->route(
+                'share.rooms.show',
+                $room->slug
+            ),
+
+            'flash' => session('success')
+                ? ['success' => session('success')]
+                : null,
         ]);
     }
 
