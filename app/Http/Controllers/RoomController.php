@@ -37,20 +37,31 @@ class RoomController extends Controller
         $allTributes = $room->tributes;
         $candles = $room->candles()->orderByRaw('CASE WHEN is_approved = false THEN 0 ELSE 1 END')->get();
 
-        $storiesPaginator = $room->stories()->latest()->cursorPaginate(24)->through(function ($story) {
+        $storiesPaginator = $room->stories()
+            ->latest()
+            ->cursorPaginate(24);
+
+        $nextCursor = $storiesPaginator->nextCursor()?->encode();
+
+        $stories = $storiesPaginator->getCollection()->map(function ($story) {
             $assets = $story->assets ?? [];
             $isProcessing = false;
             $enrichedAssets = $assets;
+
             if (! empty($assets)) {
                 $uuids = collect($assets)->pluck('media_uuid')->filter()->values()->all();
+
                 if (! empty($uuids)) {
                     $mediaMap = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+
                     $enrichedAssets = collect($assets)->map(function ($asset) use ($mediaMap, &$isProcessing) {
                         $uuid = $asset['media_uuid'] ?? null;
+
                         if ($uuid && isset($mediaMap[$uuid])) {
                             $media = $mediaMap[$uuid];
                             $asset['status'] = $media->status;
                             $asset['progress'] = $media->progress;
+
                             if (in_array($media->status, ['uploading', 'processing'], true)) {
                                 $isProcessing = true;
                             }
@@ -60,9 +71,17 @@ class RoomController extends Controller
 
                         return $asset;
                     })->all();
+
                     if (! $isProcessing && $story->type === 'video') {
-                        $hasReadyVideo = collect($enrichedAssets)->contains(fn ($a) => ($a['type'] ?? '') === 'video' && ($a['status'] ?? 'ready') === 'ready');
-                        $hasVideoAsset = collect($enrichedAssets)->contains(fn ($a) => ($a['type'] ?? '') === 'video');
+                        $hasReadyVideo = collect($enrichedAssets)->contains(
+                            fn ($a) => ($a['type'] ?? '') === 'video'
+                                && ($a['status'] ?? 'ready') === 'ready'
+                        );
+
+                        $hasVideoAsset = collect($enrichedAssets)->contains(
+                            fn ($a) => ($a['type'] ?? '') === 'video'
+                        );
+
                         if ($hasVideoAsset && ! $hasReadyVideo) {
                             $isProcessing = true;
                         }
@@ -76,13 +95,27 @@ class RoomController extends Controller
                 'uuid' => $story->uuid,
                 'id' => $story->id,
                 'title' => $story->title,
-                'thumbnail' => $story->thumbnail ? (str_starts_with($story->thumbnail, 'http') || str_starts_with($story->thumbnail, '/storage') ? $story->thumbnail : Storage::disk('public')->url(ltrim($story->thumbnail, '/'))) : null,
+                'thumbnail' => $story->thumbnail
+                    ? (
+                        str_starts_with($story->thumbnail, 'http')
+                        || str_starts_with($story->thumbnail, '/storage')
+                            ? $story->thumbnail
+                            : Storage::disk('public')->url(ltrim($story->thumbnail, '/'))
+                    )
+                    : null,
                 'type' => $story->type,
                 'description' => $story->description,
                 'author' => $story->user?->name ?? $story->guest_name,
                 'tags' => $story->tags ?? [],
                 'date' => $story->created_at->format('M d, Y'),
-                'file_url' => $story->file_url ? (str_starts_with($story->file_url, 'http') || str_starts_with($story->file_url, '/storage') ? $story->file_url : Storage::disk('public')->url(ltrim($story->file_url, '/'))) : null,
+                'file_url' => $story->file_url
+                    ? (
+                        str_starts_with($story->file_url, 'http')
+                        || str_starts_with($story->file_url, '/storage')
+                            ? $story->file_url
+                            : Storage::disk('public')->url(ltrim($story->file_url, '/'))
+                    )
+                    : null,
                 'assets' => $enrichedAssets,
                 'is_processing' => $isProcessing,
             ];
@@ -105,14 +138,26 @@ class RoomController extends Controller
             'pendingTributes' => $pendingTributes,
             'approvedTributes' => $approvedTributes,
             'allTributes' => $allTributes,
-            'stories' => $storiesPaginator->items(),
+
+            'stories' => $stories->values()->all(),
+
             'pagination' => [
-                'next_cursor' => $storiesPaginator->nextCursor()?->encode(),
+                'next_cursor' => $nextCursor,
                 'path' => $storiesPaginator->path(),
                 'per_page' => $storiesPaginator->perPage(),
             ],
             'candles' => $candles,
         ]);
+
+        // return Inertia::render('dashboard/rooms/show', [
+
+        //     'stories' => $storiesPaginator->items(),
+        //     'pagination' => [
+        //         'next_cursor' => $storiesPaginator->nextCursor()?->encode(),
+        //         'path' => $storiesPaginator->path(),
+        //         'per_page' => $storiesPaginator->perPage(),
+        //     ],
+        // ]);
     }
 
     public function feed(Room $room): Response
