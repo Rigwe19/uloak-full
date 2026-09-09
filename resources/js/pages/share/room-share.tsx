@@ -957,7 +957,7 @@ function MediaCaptureHub({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [cameraReady, setCameraReady] = useState(false);
 
-    // Video recording states — 4GB VPS guard: cap at 120s, 50MB
+    // Video recording states — 4GB VPS guard: cap at 120s, 500MB for video / 50MB otherwise
     const VIDEO_MAX_SECONDS = 120;
     const AUDIO_MAX_SECONDS = 180;
     const [videoRecState, setVideoRecState] = useState<
@@ -1996,14 +1996,26 @@ function MediaCaptureHub({
                                                                 files,
                                                             ) => {
                                                                 files.forEach((file) => {
-                                                                    const t: 'photo' | 'video' | 'audio' = file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
+                                                                    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+                                                                    const isVideoExt = ['mp4','mov','avi','mkv','webm','m4v','3gp','3gpp','mpeg','mpg','hevc'].includes(ext);
+                                                                    const isVideoMime = file.type.startsWith('video/') || isVideoExt;
+                                                                    const t: 'photo' | 'video' | 'audio' =
+                                                                        isVideoMime ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
+                                                                    if (t === 'video' && file.size > 500 * 1024 * 1024) {
+                                                                        toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 500MB. Try a shorter video.`);
+                                                                        return;
+                                                                    }
+                                                                    if (t !== 'video' && file.size > 50 * 1024 * 1024) {
+                                                                        toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 50MB.`);
+                                                                        return;
+                                                                    }
                                                                     addToQueue(file, t);
                                                                 });
                                                                 setMode('upload');
                                                             }}
                                                             multiple
                                                             accept="image/*,video/*,audio/*"
-                                                            maxSizeMB={50}
+                                                            maxSizeMB={500}
                                                             label="Tap to browse files"
                                                         />
                                                     </div>

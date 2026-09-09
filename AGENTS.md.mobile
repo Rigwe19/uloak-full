@@ -1,0 +1,411 @@
+# Expo HAS CHANGED
+
+Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
+
+# AGENTS.md
+
+# Ulo — House of Stories — Mobile Engineering Instructions
+
+This document defines the architecture, technology choices, coding standards, product rules, UI rules, and development constraints for the **Ulo — House of Stories** mobile application.
+
+AI coding agents MUST read and follow this document before making changes to the project. Designs live in **Google Stitch** — never invent UI.
+
+---
+
+# 0. Stitch — Source of Truth for UI
+
+All mobile UI is designed in Google Stitch. The frontend agent must implement Stitch exports verbatim, not generic Tailwind UIs.
+
+- Project: `projects/14264674603951156260` — `Ulo — House of Stories — Mobile App` — https://stitch.google.com/projects/14264674603951156260
+- Design System: `assets/10531941693422165094` — `Ulo — Black Heritage` — `theme.bodyFont=INTER headlineFont=INTER colorMode=DARK roundness=ROUND_TWELVE customColor=#000000 colorVariant=NEUTRAL`
+- Every new screen MUST select this Design System when generating.
+- Device: `MOBILE` `390×852` portrait only (screenshots export `780×1768` etc). **All Stitch prompts MUST start with `MOBILE NATIVE APP 390×852 portrait, pure black #000000`** — never generate Desktop/web.
+- Tokens (mobile = black, not web green):
+  ```
+  background #000000
+  surface #0A0A0A / #111111 / #1A1A1A / #222222
+  card #0A0A0A border 1px rgba(255,255,255,0.08) radius 16/32
+  text cream #F2EDE0 primary
+  text muted #A8A8A8 / #8A8A8A secondary
+  accent gold #C9993A (CTA / active / ring / spinner)
+  gold-10% rgba(201,153,58,0.10) banners
+  ```
+- Fonts: Stitch uses `INTER` (mobile). Web uses Poppins/Lora — do not mix. Mobile typography: Poppins mapping → Inter Semibold for headlines, Inter Regular for body.
+- Stitch HTML: `projects/.../files/<htmlId>` is React Native blueprint. Convert `className` Tailwind → `NativeWind className` on `View/Text/Pressable`. Keep `bg-[#000000]`, `rounded-[32px]`, `border-white/5` exactly.
+
+If Stitch is throttling (`MCP error -32001`): paste manual `MOBILE NATIVE` prompts from git / task, do **not** invent new colors.
+
+---
+
+# 1. Project Overview
+
+Ulo — House of Stories is a family legacy vault: **Every story has a home. Bring every story home.** (Ulo = house in Igbo).
+
+Users create **Rooms** for life moments. The app connects authenticated members and their extended family/guests:
+
+- Onboarding (4 slides, MOBILE NATIVE black)
+- Auth (Login / Sign Up)
+- Member Dashboard — house stats, rooms, recent stories, events
+- Room Detail — hero, tributes, candles, story feed, contribute gate
+- Open a New Room — occasion picker sheet (7 occasions)
+- Wedding Funnel — `/weddings/create` style wizard (mobile native)
+- Pricing — 5 regions single-card, savings = 12×monthly − yearly
+- Checkout — payment verification polling (`/checkout/{payment}`) `pending → successful/failed`
+- Guest Share Room — public `/share/rooms/{slug}` 2-col story grid, gold Share pill, contribution gate
+- Search — pill input, filter chips, room rows 56px thumb
+- Notifications — list, mark-read
+- Analytics — DashboardService stats, storage, activity
+- Video Reels — vertical TikTok-style viewer 9:16 snap (immersive, muted scrim bottom)
+- Family House Access — token entry `POST /house/access` crypto token
+- Client Dashboard — `/client/dashboard` for paid consumers
+- Settings & House — members list, house avatar, logout, account
+
+Priorities: simplicity, readability, accessibility, reliability, security, clear payment amount before confirm, minimal auth friction, **pure black premium heritage — NOT generic AI SaaS**.
+
+---
+
+# 2. Product Model
+
+3 surfaces share one Laravel backend:
+
+```
+House Owner / Member  →  Web Dashboard (Inertia)  ─┐
+                                                    ├─→ Laravel Backend (v13, PHP 8.5) → PostgreSQL + Stripe/Paystack/PayPal + Storage
+Authenticated Member →  Mobile App (Expo)         ─┘
+Guest (no login)     →  Public share /house/access, /share/rooms/{slug}
+```
+
+```
+Laravel Backend (Sanctum + Fortify)
+        |
+        +----------→ config/pricing.php (single currency per region)
+        +----------→ app/Services/RoomService.php (domain rule: room_type → tier)
+        +----------→ app/Services/DashboardService.php::getDashboardData()
+        +----------→ routes/web.php (web) + routes/api.php (mobile)
+```
+
+Mobile must never call Stripe/Paystack/PayPal directly. Mobile only:
+`POST /api/rooms`, `GET /api/rooms`, `POST /api/checkout/initialize`, `GET /api/checkout/{payment}/status` (poll 3s), `GET /api/share/rooms/{slug}`, `POST /api/house/access`.
+
+---
+
+# 3. Technology Stack — MUST MATCH WEB’s Tailwind System
+
+## Mobile
+- React Native + Expo SDK 57 + Expo Router
+- TypeScript **strict** (`any` forbidden, use `unknown`)
+- **NativeWind** — this **is** TailwindCSS v4 for React Native. Same tokens as web (`tailwindcss: v4`). Do not introduce another styling framework. Use `className="flex-1 bg-[#000000] px-5"` not inline style objects.
+- Tailwind config shares tokens with web: `background #000000`, `surface #0A0A0A`, `gold #C9993A`, `cream #F2EDE0`. Centralize in `src/constants/theme.ts` / `tailwind.config.js`.
+- TanStack Query for ALL server state (queries/mutations/infinite)
+- Zustand only when client global state genuinely required
+- React Hook Form + Zod
+- Expo SecureStore (auth tokens ONLY)
+- Expo Linking (deep links) + Expo Notifications (push later)
+- lucide-react-native (ALL icons) + react-native-reanimated + gesture-handler only when needed
+
+Do not add native UI frameworks (UI Kitten, NativeBase, etc.).
+
+---
+
+# 4. Package Manager
+
+```
+npm install / npm install <package> / npx expo install <package> / npx <command>
+```
+
+- `npx expo install` for Expo-compatible deps (never arbitrary version)
+- Do not switch to `pnpm/yarn/bun` for mobile unless explicitly instructed (web uses `pnpm`, mobile uses `npm` — respect lockfiles)
+
+---
+
+# 5. Expo Versioning
+
+Expo SDK 57. Before changing `expo`, `expo-router`, `react`, `react-native`:
+
+```
+npx expo-doctor
+npm list expo expo-router react react-native
+```
+
+Coordinate SDK upgrades. `npx expo install --fix` + `npx expo start -c`.
+
+---
+
+# 6. React Native Architecture
+
+Prefer `View / Text / Pressable / ScrollView / FlatList / Image / KeyboardAvoidingView / SafeAreaView`.
+
+Keep lightweight. No large UI frameworks.
+
+---
+
+# 7. Navigation — Expo Router
+
+```
+src/
+  app/
+    _layout.tsx              # root: session restore + auth guard
+    (public)/
+      welcome.tsx            # invitation-only message
+      onboarding.tsx         # 4 slides (Stitch: b76aaa / 5e1cc6 / 08dc048 / 887c16a)
+      login.tsx              # Stitch a6f0251 / 4ee3af
+    (auth)/
+      verifying.tsx          # token verification
+    (app)/
+      _layout.tsx            # tabs: bottom nav 5-col + FAB
+      index.tsx              # Dashboard — Stitch c598b3c / 6deff95 / c7a2f084
+      rooms/
+        [slug].tsx           # Room Detail — 45ae96 / 40c614 / 54afe4
+        create.tsx            # Open a New Room — a4e0c7
+      weddings/
+        create.tsx            # Wedding Funnel — 63b2b9b (11218px scroll)
+      pricing.tsx             # Pricing — f10eb7
+      checkout/
+        [payment].tsx        # Checkout Verification — de2a64 (poll 3s)
+      share/
+        [slug].tsx           # Guest Share Room — public, no nav
+      search.tsx              # Search — pill + chips + rows
+      notifications.tsx
+      analytics.tsx          # DashboardService stats
+      reels/
+        [id].tsx             # Video Reels vertical — 777562f
+      house/
+        access.tsx           # Family House Access — 1c9d78 token entry
+        settings.tsx         # Settings & House — 81c16cd
+      client/
+        dashboard.tsx
+```
+
+Do not create unnecessary nesting. Lowercase routes, `payment-history.tsx` style.
+
+---
+
+# 8. Auth Model — Ulo (adapted from invitation-only)
+
+Ulo uses:
+1) **Standard auth** — Fortify email/password + Sanctum token for members (login screen Stitch a6f02). User stays logged in via SecureStore.
+2) **House access token** — crypto-secure, revocable, single-use token for extended family: `POST /house/access` with `token` → backend verifies, grants house scope. Token URLs: `https://app.ulo.house/house/access/<token>` and dev `ulo://house/<token>`. Mobile extracts token, calls backend, backend is authoritative (never decide locally "token valid").
+3) **Guest share link** — `https://app.ulo.house/share/rooms/<slug>` public read; no auth required, but contributions gated by `rooms.tier_type`/`doors_open`/`storage_bytes`.
+
+Flow:
+```
+Invite link tap → App open (cold/warm/background) → extract token/slug → POST verify → SecureStore session → _layout guard → (app) index or (public) welcome
+```
+
+No password-less WhatsApp primary — WhatsApp is secondary for invites later if needed.
+
+---
+
+# 9. Session Storage
+
+`expo-secure-store` ONLY for tokens/credentials. Never AsyncStorage / plain file / query param / Zustand / component state.
+
+Startup:
+```
+App Launch → Restore Session → valid → (app) / no session → (public) welcome / expired → verifying → welcome
+```
+Never flash welcome while session restore pending.
+
+---
+
+# 10. Backend Contract
+
+Mobile talks to Laravel API only:
+
+```
+React Native → HTTPS → Laravel API → PostgreSQL / Stripe|Paystack|PayPal / Storage
+```
+
+Backend owns: auth, authorization, house membership isolation, invitation/token validation, rooms, stories, payments + fee calc + verification (webhooks authoritative), storage limits, contribution gates.
+
+Never trust `organization_id` / `house_id` from client. Never calculate fee in client.
+
+---
+
+# 11. API Communication
+
+TanStack Query is mandatory for server state. Do not use `useEffect+useState` fetch.
+
+```ts
+const { data, isLoading, error } = useQuery({ queryKey: ['rooms'], queryFn: getRooms });
+```
+
+Structure:
+```
+Screen → Feature Hook (useRooms) → TanStack Query → Feature API (features/rooms/api.ts → apiClient.get('/rooms')) → Shared HTTP Client (src/lib/api/client.ts) → Laravel JSON:API
+```
+
+Do not create one giant `src/api.ts`. Domain modules: `features/rooms/{api,queries,mutations,types,components}`, `features/checkout`, `features/house`, `features/payments`, `features/reels`, `features/search`, etc. Wayfinder analogue: `@/actions/` for web — mobile uses `apiClient` with same backend.
+
+Shared HTTP client handles base URL (`EXPO_PUBLIC_API_URL`), auth header from SecureStore, serialization, error normalization. No business logic inside client.
+
+---
+
+# 12. Domain Truth — Rooms & Pricing (authoritative)
+
+`config/pricing.php` + `app/Services/RoomService.php` + `routes/web.php` are source of truth — see also `APP.md`/`README.md`.
+
+Rooms: `rooms.room_type = general|wedding|birthday|burial|memorial|anniversary|graduation`
+- `general` = free Starter: 1 active room, 50 contributions, 1GB (`tiers.starter`), 30 collection days.
+- Every other occasion = Paid Full Room: 10GB (`tiers.full_room`), 12 months access, auto-upgrade via checkout. Paywall redirect if `tier_type !== general` and member tries `/dashboard/rooms/create`.
+
+Pricing: 5 regions, single currency shown, amounts in minor units, savings = 12×monthly − yearly:
+- nigeria NGN: Full Room ₦150,000 (15_000_000), Family monthly ₦3,500 yearly ₦35,000 savings ₦7,000
+- rest_of_africa USD: $190 / $4.99 / $49.00 save $10.88
+- uk GBP: £290 / £7.99 / £79.00 save £16.88
+- us_rest_of_world USD: $350 / $9.99 / $99.00 save $20.88
+- europe EUR: €350 / €9.99 / €99.00 save €20.88
+
+Family Archive: 25GB (`tiers.family_archive`). Partner referral: 20% commission floor ₦3,000.
+
+Fees: mobile never calculates fees. Backend returns `{ amount, processing_fee, service_fee, total }` — mobile displays only.
+
+---
+
+# 13. Payments — Multi-Gateway polling
+
+Providers: Stripe / Paystack / PayPal per region. Flow:
+
+```
+Select occasion/amount → Backend POST /checkout/initialize (idempotent) → return { payment_id, amount, fees, total, provider, reference } → Show breakdown → Confirm → Provider checkout → Backend verifies (webhook+poll) → Poll GET /checkout/{payment}/status every 3s → successful/failed
+```
+
+Never show `Payment successful` because checkout sheet closed. Only backend says `successful`. Polling text: `Checking every 3s — do not close` with gold 2px progress bar. Disable double-tap: button `Processing...`, no auto-retry that creates duplicate transactions (idempotency key handled by backend).
+
+History/detail: `GET /payments` paginated + `GET /payments/{payment}` shows purpose, status, reference, dates, total. Use `Intl.NumberFormat` per region currency — centralize in `features/payments/utils/formatCurrency.ts`.
+
+---
+
+# 14. Styling — NativeWind IS TailwindCSS
+
+- `NativeWind` **is** TailwindCSS v4 for RN. Do not add `styled-components`, `tamagui`, etc.
+- Prefer `<View className="flex-1 bg-[#000000] px-5">` — no arbitrary inline styles.
+- NativeWind does NOT dictate design — Stitch does. Do not make generic Tailwind dashboard.
+- Tokens: define centrally `src/constants/theme.ts` + `tailwind.config.js`:
+  ```
+  primary #C9993A, background #000000, surface #0A0A0A, foreground #F2EDE0, muted #A8A8A8, border rgba(255,255,255,0.08), success/warning/danger semantic
+  ```
+  Solid colors only. No gradients/glassmorphism/neon/blobs/sparkles/wand/emoji nav.
+
+# 14a. Light Mode — REQUIRED (invert dark tokens, same Stitch design)
+
+The agent MUST ship both **dark (default) + light** modes from day one. Dark is primary (Stitch `Ulo — Black Heritage` pure black) — light is the semantic inversion using **the same token names from §0/§14**, do not invent a new palette.
+
+- Implementation: `src/constants/theme.ts` exports `light` + `dark` objects with identical keys; `tailwind.config.js` uses CSS variables / NativeWind `dark:` not enough — use explicit theme provider (`src/hooks/useTheme.ts` + `ThemeProvider` at `_layout.tsx`) that switches via `Appearance` + persisted preference (`AsyncStorage` for preference, `SecureStore` not needed for theme). Support `light | dark | system` and respect OS `useColorScheme()`. Toggle lives in `Settings & House` (`house/settings.tsx` — Stitch `81c16cd`).
+- Stitch mapping: Keep Stitch dark HTML as authored; light is runtime inversion — do NOT regenerate Stitch screens for light. Derive light tokens 1:1 from dark:
+  ```
+  dark.background  #000000          → light.background  #F2EDE0 (Story Cream) / #FAF6EE
+  dark.surface     #0A0A0A/#111111  → light.surface     #FFFFFF
+  dark.card        #0A0A0A border rgba(255,255,255,0.08) → light.card #FFFFFF border rgba(0,0,0,0.08) shadow-sm 0 1px 3px rgba(0,0,0,0.06)
+  dark.foreground  #F2EDE0          → light.foreground  #0A0A0A (near-black)
+  dark.muted       #A8A8A8          → light.muted       #6B6B6B / #8A8A8A
+  dark.border      rgba(255,255,255,0.08) → light.border rgba(0,0,0,0.08)
+  accent           #C9993A          → same #C9993A in both (gold CTA never changes)
+  success/warning/danger keep semantic but ensure contrast on both
+  ```
+- Tailwind usage: never hardcode `bg-[#000000]` without theme — use `bg-background` / `bg-surface` / `text-foreground` / `border-border` / `bg-primary` that resolve via NativeWind `vars` or `theme[colorScheme].background`. Example:
+  ```tsx
+  const { colors, scheme } = useTheme();
+  <View style={{ backgroundColor: colors.background }} className="flex-1" />
+  // or NativeWind: <View className="flex-1 bg-background" />
+  ```
+  The raw Stitch export `bg-[#000000]` must be converted to theme-aware: `bg-background` (dark #000000 / light #F2EDE0).
+- Every screen must be verified in both modes: Dashboard, Room Detail, Wedding Funnel, Pricing, Checkout, Guest Share, Search, Notifications, Analytics, Reels (video stays dark scrim even in light — keep immersive dark), House Access, Client. Take screenshots light+dark for PR.
+- Respect `StatusBar` style per scheme (`light-content` on dark, `dark-content` on light) and `SafeAreaView` background = `colors.background`.
+
+---
+
+# 15. Design Philosophy + Anti-Slop
+
+Professional, mature, trustworthy, calm, clear, accessible, human, heritage — appropriate for older family members + financial transactions. Dark premium black feels like private vault.
+
+PROHIBITED by default: gradients, glassmorphism, excessive shadows, neon, blobs, abstract shapes, pill-everything, giant hero, fake stats/testimonials, confetti/sparkles/magic, AI decorations, wand/sparkle/robot emoji. Rounded-2xl only where Stitch shows (32px card max). No `rounded-full` spam.
+
+Cards only when grouping improves hierarchy — avoid `Card>Card>Card`. Prefer spacing/dividers/typography.
+
+---
+
+# 16. Icons / Buttons / Typography
+
+- Icons `lucide-react-native` ONLY — semantic: `Calendar/CreditCard/Users/MessageCircle/Bell/User/Settings/Search/ChevronRight/Check/X/AlertCircle/Clock/Share2/QrCode`. No Sparkles/Wand/Stars/Robot/Magic.
+- Buttons: clear label `Make Payment / View Room / Contribute a Story / Confirm Payment`. Icon-only allowed for Back/Close/Search with `accessibilityLabel`.
+- Typography: readability first. Hierarchy `Screen title 20px semibold cream / Section 16px / Body 13-14px / Metadata 11-12px`. Minimum tap text 14px for amounts.
+
+---
+
+# 17. Client vs Server State
+
+- Server: TanStack Query (`['rooms'], ['rooms',slug], ['payments'], ['house'], ['search',query], ['notifications']`)
+- Persistent sensitive: SecureStore (auth token, house token)
+- Client UI: local `useState` (modal, tab, search input) or Zustand for genuine cross-screen shared UI only — never put server data in Zustand.
+
+Invalidate after mutations: payment success → invalidate `['payments'], ['rooms']`.
+
+---
+
+# 18. TypeScript & Folder Structure
+
+Strict TS, no `any` (use `unknown`). Centralize types `features/rooms/types.ts` etc.
+
+```
+src/
+  app/ (expo-router routes — see §7)
+  components/ui/  Button Input Card Avatar Badge Modal BottomSheet EmptyState ErrorState LoadingState
+  features/
+    auth/{api,queries,mutations,types,session}
+    rooms/{api,queries,mutations,types,utils,components/room-card.tsx}
+    checkout/{api,queries,types}
+    house/{api,queries,types}
+    payments/{api,queries,mutations,types,utils}
+    reels/{api,queries,types}
+    search/{api,queries,types}
+    notifications/{api,queries,types}
+  lib/api/{client.ts}
+  hooks/ stores/ constants/ types/ utils/
+```
+
+Feature owns its domain. No `modules/` needless.
+
+---
+
+# 19. Loading / Empty / Error
+
+Every server screen: Loading (skeleton, not blank) / Success / Empty / Error (`We couldn't load your rooms. Try again.` with Retry, never `AxiosError 422`).
+
+Pagination: `FlatList`/`FlashList` + TanStack infinite queries. Never `data.map` inside `ScrollView`.
+
+---
+
+# 20. Security — Secrets, Auth, Org Isolation
+
+- Never hardcode `STRIPE_SECRET`, `PAYSTACK_SECRET`, WhatsApp secrets — backend only. `EXPO_PUBLIC_*` is client-bundled → never secrets.
+- Mobile is not security boundary — backend enforces house isolation: user A must not see house B rooms/payments. Frontend hides UX but backend rejects.
+- Deep link edge: invalid/expired/revoked/used token, wrong house — show human message, never silently swap account if already authenticated.
+- Logout: clear SecureStore + reset TanStack cache + navigate to `(public)/welcome`; never leak previous user's payments/chats.
+
+---
+
+# 21. Deep Links — House/Share
+
+Scheme: `ulo://house/<token>` dev, `https://app.ulo.house/house/<token>` prod universal, `https://app.ulo.house/share/rooms/<slug>` public. Must handle cold/warm/background/after-install (Expo Linking). Extract → `POST /house/access` → backend decides.
+
+Do not add email login/verify/reset unless requested — Ulo is house-token/guest-slug centric.
+
+---
+
+# 22. Quality Gates
+
+Before completing task:
+
+```
+npx tsc --noEmit (or project's types:check)
+npm run lint
+npx expo-doctor
+php artisan test --compact --filter=related (backend contract)
+vendor/bin/pint --dirty --format agent (if PHP touched)
+```
+
+Tests priority: auth, token verification, payment status/polling, house isolation, query invalidation, deep links.
+
+Never ship fake data (`John Doe ₦1M`).
+

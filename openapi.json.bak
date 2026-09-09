@@ -1,0 +1,237 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ulo — House of Stories — Mobile API",
+    "version": "1.0.0",
+    "description": "Sanctum bearer JSON for Expo mobile (AGENTS.md.mobile + API.md). Base URL {APP_URL}/api/v1. Mirror of routes/api.php. Auth: Bearer <sanctum_token>. Public: GET /pricing, GET /share/rooms/{slug}.",
+    "contact": { "name": "Ulo API" }
+  },
+  "servers": [{ "url": "https://uloak.test/api/v1", "description": "Local Herd (see get-absolute-url)" }],
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Auth" }, { "name": "Dashboard" }, { "name": "Rooms" }, { "name": "Stories" }, { "name": "Feed" }, { "name": "Search" }, { "name": "Notifications" }, { "name": "House" }, { "name": "Billing" }, { "name": "Share" }
+  ],
+  "paths": {
+    "/pricing": {
+      "get": {
+        "tags": ["Billing"], "security": [], "summary": "Pricing matrix (public)",
+        "operationId": "getPricing",
+        "responses": { "200": { "description": "Pricing", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "additionalProperties": { "$ref": "#/components/schemas/PricingRegion" } } } } } } } }
+      }
+    },
+    "/share/rooms/{slug}": {
+      "get": {
+        "tags": ["Share"], "security": [], "summary": "Public guest share room",
+        "operationId": "getShareRoom",
+        "parameters": [{ "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Room + stories cursor", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "room": { "$ref": "#/components/schemas/Room" }, "stories": { "type": "array", "items": { "$ref": "#/components/schemas/Story" } }, "pagination": { "$ref": "#/components/schemas/CursorPagination" } } } } } } } }, "404": { "description": "Not found" } }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": ["Auth"], "summary": "Current user", "operationId": "getMe",
+        "responses": { "200": { "description": "User", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/User" } } } } } }, "401": { "description": "Unauthenticated" } }
+      }
+    },
+    "/logout": {
+      "post": {
+        "tags": ["Auth"], "summary": "Logout (revoke current token)", "operationId": "logout",
+        "responses": { "200": { "description": "Logged out", "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" } } } } } } }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "tags": ["Dashboard"], "summary": "Member dashboard (rooms, events, recentStories, stats, house_members)", "operationId": "getDashboard",
+        "responses": { "200": { "description": "Dashboard", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "rooms": { "type": "array", "items": { "$ref": "#/components/schemas/Room" } }, "events": { "type": "array", "items": { "type": "object" } }, "recent_stories": { "type": "array", "items": { "$ref": "#/components/schemas/Story" } }, "stats": { "type": "array", "items": { "type": "object" } }, "house_members": { "type": "array", "items": { "$ref": "#/components/schemas/HouseMember" } }, "notifications": { "type": "array", "items": { "type": "object" } } } } } } } } }
+      }
+    },
+    "/analytics": {
+      "get": {
+        "tags": ["Dashboard"], "summary": "Creator analytics (30d)", "operationId": "getAnalytics",
+        "responses": { "200": { "description": "Analytics", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object" } } } } } } }
+      }
+    },
+    "/rooms": {
+      "get": {
+        "tags": ["Rooms"], "summary": "List rooms (paginate 20)", "operationId": "listRooms",
+        "responses": { "200": { "description": "Rooms", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Room" } }, "links": { "type": "object" }, "meta": { "type": "object" } } } } } }
+      },
+      "post": {
+        "tags": ["Rooms"], "summary": "Create room (only general free, else 402 requires_checkout)", "operationId": "createRoom",
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "$ref": "#/components/schemas/StoreRoomRequest" } }, "application/json": { "schema": { "$ref": "#/components/schemas/StoreRoomRequest" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Room" } } } } } }, "402": { "description": "Requires checkout", "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" }, "requires_checkout": { "type": "boolean" }, "room_type": { "type": "string" } } } } } }, "422": { "description": "Validation" } }
+      }
+    },
+    "/rooms/{room}": {
+      "get": {
+        "tags": ["Rooms"], "summary": "Room detail (slug, with tributes/candles/stories)", "operationId": "getRoom",
+        "parameters": [{ "name": "room", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Room slug (getRouteKeyName slug)" }],
+        "responses": { "200": { "description": "Detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "room": { "$ref": "#/components/schemas/Room" }, "stories": { "type": "array", "items": { "$ref": "#/components/schemas/Story" } }, "tributes": { "type": "array", "items": { "$ref": "#/components/schemas/Tribute" } }, "candles": { "type": "array", "items": { "$ref": "#/components/schemas/Candle" } } } } } } } } }
+      },
+      "put": {
+        "tags": ["Rooms"], "summary": "Update room", "operationId": "updateRoom",
+        "parameters": [{ "name": "room", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "$ref": "#/components/schemas/UpdateRoomRequest" } }, "application/json": { "schema": { "$ref": "#/components/schemas/UpdateRoomRequest" } } } },
+        "responses": { "200": { "description": "Updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Room" } } } } } } }
+      },
+      "delete": {
+        "tags": ["Rooms"], "summary": "Delete room (owner 403 else)", "operationId": "deleteRoom",
+        "parameters": [{ "name": "room", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deleted" }, "403": { "description": "Forbidden" } }
+      }
+    },
+    "/rooms/{room}/stories": {
+      "get": {
+        "tags": ["Stories"], "summary": "List stories cursor", "operationId": "listStories",
+        "parameters": [{ "name": "room", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "cursor", "in": "query", "schema": { "type": "string" } }, { "name": "per_page", "in": "query", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Stories", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Story" } }, "pagination": { "$ref": "#/components/schemas/CursorPagination" } } } } } } }
+      },
+      "post": {
+        "tags": ["Stories"], "summary": "Contribute story (contributions.open + throttle:guest-media)", "operationId": "createStory",
+        "parameters": [{ "name": "room", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "$ref": "#/components/schemas/StoreStoryRequest" } }, "application/json": { "schema": { "$ref": "#/components/schemas/StoreStoryRequest" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Story" } } } } } }, "403": { "description": "Contributions closed", "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" }, "reason": { "type": "string", "enum": ["draft","closed","expired","storage_full"] } } } } } } }
+      }
+    },
+    "/stories/{story}": {
+      "get": {
+        "tags": ["Stories"], "summary": "Get story by uuid", "operationId": "getStory",
+        "parameters": [{ "name": "story", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Story", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Story" } } } } } } }
+      },
+      "delete": {
+        "tags": ["Stories"], "summary": "Delete story (owner/room owner)", "operationId": "deleteStory",
+        "parameters": [{ "name": "story", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    },
+    "/stories/{story}/processing-status": {
+      "get": {
+        "tags": ["Stories"], "summary": "Media processing status", "operationId": "getProcessingStatus",
+        "parameters": [{ "name": "story", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Status", "content": { "application/json": { "schema": { "type": "object", "properties": { "is_processing": { "type": "boolean" }, "assets": { "type": "array", "items": { "type": "object" } } } } } } } }
+      }
+    },
+    "/rooms/{room}/feed": {
+      "get": {
+        "tags": ["Feed"], "summary": "Room video feed (reels, cursor)", "operationId": "getRoomFeed",
+        "parameters": [{ "name": "room", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "cursor", "in": "query", "schema": { "type": "integer" } }, { "name": "limit", "in": "query", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Feed", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "type": "object" } }, "next_cursor": { "type": ["integer","null"] }, "has_more": { "type": "boolean" } } } } } } }
+      }
+    },
+    "/feed": {
+      "get": {
+        "tags": ["Feed"], "summary": "Legacy feed ?room=&cursor=", "operationId": "getFeedLegacy",
+        "parameters": [{ "name": "room", "in": "query", "required": true, "schema": { "type": "integer" } }, { "name": "cursor", "in": "query", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Feed", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Story" } }, "next_cursor": { "type": ["integer","null"] }, "has_more": { "type": "boolean" } } } } } } }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": ["Search"], "summary": "Search rooms/stories", "operationId": "search",
+        "parameters": [{ "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }, { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["all","rooms","stories","tributes"] } }],
+        "responses": { "200": { "description": "Results", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "rooms": { "type": "array", "items": { "$ref": "#/components/schemas/Room" } }, "stories": { "type": "array", "items": { "$ref": "#/components/schemas/Story" } }, "query": { "type": "string" } } } } } } } } }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": ["Notifications"], "summary": "List notifications paginate 20", "operationId": "listNotifications",
+        "responses": { "200": { "description": "Notifications", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Notification" } } } } } } } }
+      }
+    },
+    "/notifications/{id}/read": {
+      "post": {
+        "tags": ["Notifications"], "summary": "Mark one read", "operationId": "markRead",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Read" } }
+      }
+    },
+    "/notifications/read-all": {
+      "post": {
+        "tags": ["Notifications"], "summary": "Mark all read", "operationId": "markAllRead",
+        "responses": { "200": { "description": "Read all" } }
+      }
+    },
+    "/house/verify": {
+      "post": {
+        "tags": ["House"], "summary": "Verify house token (64hex)", "operationId": "verifyHouse",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["token"], "properties": { "token": { "type": "string", "minLength": 64, "maxLength": 64 } } } } } },
+        "responses": { "200": { "description": "Verified", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "house_member": { "$ref": "#/components/schemas/HouseMember" }, "owner": { "type": "object", "properties": { "id": { "type": "integer" }, "name": { "type": "string" } } }, "rooms": { "type": "array", "items": { "$ref": "#/components/schemas/Room" } } } } } } } }, "404": { "description": "Invalid token" } }
+      }
+    },
+    "/house/members": {
+      "get": {
+        "tags": ["House"], "summary": "List house members (owner)", "operationId": "listHouseMembers",
+        "responses": { "200": { "description": "Members", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/HouseMember" } } } } } } } }
+      },
+      "post": {
+        "tags": ["House"], "summary": "Add house member", "operationId": "addHouseMember",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name","email"], "properties": { "name": { "type": "string" }, "email": { "type": "string", "format": "email" } } } } } },
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/house/members/{houseMember}": {
+      "delete": {
+        "tags": ["House"], "summary": "Remove house member", "operationId": "removeHouseMember",
+        "parameters": [{ "name": "houseMember", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Removed" }, "403": { "description": "Forbidden" } }
+      }
+    },
+    "/billing/checkout": {
+      "post": {
+        "tags": ["Billing"], "summary": "Create checkout (server-side price, idempotent)", "operationId": "createCheckout",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckoutRequest" } } } },
+        "responses": { "201": { "description": "Checkout", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Payment" }, "authorization_url": { "type": "string", "format": "uri" }, "reference": { "type": "string" }, "free": { "type": "boolean" } } } } } }, "402": { "description": "Requires checkout" } }
+      }
+    },
+    "/billing/payments/{payment}/status": {
+      "get": {
+        "tags": ["Billing"], "summary": "Poll payment status (3s)", "operationId": "getPaymentStatus",
+        "parameters": [{ "name": "payment", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Payment", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Payment" } } } } } }, "403": { "description": "Not owner" } }
+      }
+    },
+    "/billing/payments/{payment}/verify": {
+      "post": {
+        "tags": ["Billing"], "summary": "Verify and activate (idempotent)", "operationId": "verifyPayment",
+        "parameters": [{ "name": "payment", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "type": "object", "properties": { "reference": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Verified", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Payment" } } } } } } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "Sanctum" } },
+    "schemas": {
+      "User": { "type": "object", "properties": { "id": { "type": "integer" }, "name": { "type": "string" }, "email": { "type": "string", "format": "email" }, "profile_photo_url": { "type": ["string","null"] }, "is_admin": { "type": "boolean" }, "email_verified_at": { "type": ["string","null"], "format": "date-time" } } },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }, "slug": { "type": "string" }, "name": { "type": "string" }, "description": { "type": ["string","null"] },
+          "room_type": { "type": ["string","null"], "enum": ["general","wedding","birthday","burial","memorial","anniversary","graduation", null] },
+          "tier_type": { "type": ["string","null"], "enum": ["starter","full_room","family_archive", null] },
+          "status": { "type": ["string","null"], "enum": ["draft","active", null] },
+          "privacy": { "type": "string", "enum": ["public","private"] },
+          "thumbnail": { "type": ["string","null"], "format": "uri" }, "tribute_name": { "type": ["string","null"] },
+          "enable_tributes": { "type": "boolean" }, "enable_candle_lighting": { "type": "boolean" },
+          "storage_used_bytes": { "type": "integer" }, "storage_limit_bytes": { "type": ["integer","null"] }, "remaining_storage_bytes": { "type": ["integer","null"] },
+          "expires_at": { "type": ["string","null"], "format": "date-time" }, "contributions_closed_at": { "type": ["string","null"], "format": "date-time" },
+          "contributions_open": { "type": "boolean" }, "contribution_block_reason": { "type": ["string","null"], "enum": ["draft","closed","expired","storage_full", null] },
+          "stories_count": { "type": ["integer","null"] }, "tributes_count": { "type": ["integer","null"] }
+        }
+      },
+      "Story": { "type": "object", "properties": { "id": { "type": "integer" }, "uuid": { "type": "string", "format": "uuid" }, "title": { "type": "string" }, "description": { "type": ["string","null"] }, "type": { "type": "string", "enum": ["photo","video","audio","document"] }, "thumbnail": { "type": ["string","null"], "format": "uri" }, "file_url": { "type": ["string","null"], "format": "uri" }, "duration": { "type": ["integer","null"] }, "assets": { "type": ["array","null"], "items": { "type": "object" } }, "created_at": { "type": ["string","null"] }, "user": { "type": ["string","null"] } } },
+      "Payment": { "type": "object", "properties": { "id": { "type": "integer" }, "status": { "type": "string", "enum": ["pending","successful","failed"] }, "provider": { "type": "string", "enum": ["paystack","stripe","paypal"] }, "amount": { "type": "integer", "description": "minor units (kobo/cents)" }, "currency": { "type": "string", "enum": ["NGN","USD","GBP","EUR"] }, "region": { "type": ["string","null"] }, "provider_reference": { "type": ["string","null"] }, "room": { "type": ["object","null"], "properties": { "id": { "type": "integer" }, "slug": { "type": "string" }, "name": { "type": "string" } } }, "paid_at": { "type": ["string","null"], "format": "date-time" }, "created_at": { "type": "string", "format": "date-time" } } },
+      "HouseMember": { "type": "object", "properties": { "id": { "type": "integer" }, "name": { "type": "string" }, "email": { "type": "string", "format": "email" }, "avatar": { "type": ["string","null"] }, "bio": { "type": ["string","null"] }, "position": { "type": ["string","null"] }, "created_at": { "type": "string", "format": "date-time" } } },
+      "Tribute": { "type": "object", "properties": { "id": { "type": "integer" }, "room_id": { "type": "integer" }, "name": { "type": "string" }, "message": { "type": ["string","null"] }, "images": { "type": "array", "items": { "type": "string" } }, "video": { "type": ["string","null"] }, "audio": { "type": ["string","null"] }, "is_approved": { "type": "boolean" }, "created_at": { "type": "string", "format": "date-time" } } },
+      "Candle": { "type": "object", "properties": { "id": { "type": "integer" }, "room_id": { "type": "integer" }, "name": { "type": "string" }, "message": { "type": ["string","null"] }, "is_approved": { "type": "boolean" }, "created_at": { "type": "string", "format": "date-time" } } },
+      "Notification": { "type": "object", "properties": { "id": { "type": "string" }, "type": { "type": "string" }, "data": { "type": "object" }, "read_at": { "type": ["string","null"], "format": "date-time" }, "created_at": { "type": "string", "format": "date-time" } } },
+      "PricingRegion": { "type": "object", "properties": { "key": { "type": "string" }, "label": { "type": "string" }, "currency": { "type": "string" }, "full_room": { "type": "integer" }, "full_room_formatted": { "type": "string" }, "family_monthly": { "type": "integer" }, "family_yearly": { "type": "integer" }, "yearly_savings": { "type": "integer" } } },
+      "CursorPagination": { "type": "object", "properties": { "next_cursor": { "type": ["string","null"] }, "per_page": { "type": "integer" }, "path": { "type": "string" } } },
+      "StoreRoomRequest": { "type": "object", "required": ["name","privacy"], "properties": { "name": { "type": "string", "maxLength": 255 }, "description": { "type": "string" }, "privacy": { "type": "string", "enum": ["public","private"] }, "room_type": { "type": "string", "enum": ["general","wedding","birthday","burial","memorial","anniversary","graduation"] }, "tier_type": { "type": "string", "enum": ["starter","full_room","family_archive"] }, "thumbnail": { "type": "string", "format": "binary" }, "enable_tributes": { "type": "boolean" }, "enable_candle_lighting": { "type": "boolean" } } },
+      "UpdateRoomRequest": { "type": "object", "required": ["name","privacy"], "properties": { "name": { "type": "string" }, "privacy": { "type": "string", "enum": ["public","private"] } } },
+      "StoreStoryRequest": { "type": "object", "required": ["title","type"], "properties": { "title": { "type": "string", "maxLength": 255 }, "description": { "type": "string" }, "type": { "type": "string", "enum": ["photo","video","audio","document"] }, "file": { "type": "string", "format": "binary" }, "tags": { "type": "array", "items": { "type": "string" } } } },
+      "CheckoutRequest": { "type": "object", "required": ["region","tier"], "properties": { "room_id": { "type": "integer" }, "region": { "type": "string", "enum": ["nigeria","rest_of_africa","uk","us_rest_of_world","europe"] }, "tier": { "type": "string", "enum": ["starter","full_room","family_archive","family_monthly","family_yearly"] }, "provider": { "type": "string", "enum": ["paystack","paypal","stripe"] }, "ref_code": { "type": "string" } } }
+    }
+  }
+}
