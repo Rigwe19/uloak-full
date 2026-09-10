@@ -3,7 +3,7 @@ export interface ValidationResult {
     error?: string;
 }
 
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 1024 * 1024 * 1024;
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const ALLOWED_VIDEO_MIMES = [
     'video/mp4',
@@ -75,7 +75,7 @@ export function validateVideo(file: File): ValidationResult {
     if (file.size > MAX_VIDEO_SIZE) {
         return {
             valid: false,
-            error: `File too large (${formatSize(file.size)}). Maximum size is 500MB. Try trimming the video or choose a lower quality.`,
+            error: `File too large (${formatSize(file.size)}). Maximum size is 1GB. Try trimming the video or choose a lower quality.`,
         };
     }
 

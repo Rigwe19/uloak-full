@@ -20,7 +20,7 @@ class StoreStoryRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'type' => ['required', 'string', 'in:photo,video,audio,document'],
-            'file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm,mp3,wav,ogg,pdf', 'max:51200'],
+            'file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm,mp3,wav,ogg,pdf', 'max:1048576'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:32'],

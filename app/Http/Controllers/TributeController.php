@@ -48,7 +48,7 @@ class TributeController extends Controller
             'quote' => ['nullable', 'string', 'max:1000'],
             'images' => ['nullable', 'array'],
             'images.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'video' => ['nullable', 'file', 'mimes:mp4,mov,webm', 'max:51200'],
+            'video' => ['nullable', 'file', 'mimes:mp4,mov,webm', 'max:1048576'],
             'audio' => ['nullable', 'string'],
         ]);
 

@@ -31,6 +31,7 @@ import {
     RotateCcw,
     Send,
     Square,
+    Trash2,
     Upload,
     User,
     Users,
@@ -957,7 +958,7 @@ function MediaCaptureHub({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [cameraReady, setCameraReady] = useState(false);
 
-    // Video recording states — 4GB VPS guard: cap at 120s, 500MB for video / 50MB otherwise
+    // Video recording states — 4GB VPS guard: cap at 120s, 1GB for video / 50MB otherwise
     const VIDEO_MAX_SECONDS = 120;
     const AUDIO_MAX_SECONDS = 180;
     const [videoRecState, setVideoRecState] = useState<
@@ -1128,7 +1129,7 @@ function MediaCaptureHub({
         startCamera();
     }, [startCamera]);
 
-    const startVideoRecording = useCallback(async () => {
+    const previewVideo = useCallback(async () => {
         try {
             let s: MediaStream;
             try {
@@ -1141,7 +1142,6 @@ function MediaCaptureHub({
                     },
                 });
             } catch (e: any) {
-                // Fallback for desktop / OverconstrainedError (no environment camera)
                 if (e?.name === 'OverconstrainedError' || e?.name === 'NotFoundError') {
                     s = await navigator.mediaDevices.getUserMedia({
                         video: true,
@@ -1155,74 +1155,77 @@ function MediaCaptureHub({
                 }
             }
             streamRef.current = s;
-
-            // Safari (iOS) does not support webm — prefer mp4 if available
-            const mimeType = MediaRecorder.isTypeSupported(
-                'video/webm;codecs=vp9',
-            )
-                ? 'video/webm;codecs=vp9'
-                : MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
-                  ? 'video/webm;codecs=vp8'
-                  : MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
-                    ? 'video/mp4;codecs=avc1'
-                    : MediaRecorder.isTypeSupported('video/mp4')
-                      ? 'video/mp4'
-                      : 'video/webm';
-
-            const mr = new MediaRecorder(s, { mimeType });
-            videoChunksRef.current = [];
-
-            mr.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    videoChunksRef.current.push(e.data);
-                }
-            };
-
-            mr.onstop = () => {
-                const blob = new Blob(videoChunksRef.current, {
-                    type: mr.mimeType,
-                });
-                const url = URL.createObjectURL(blob);
-                setVideoBlob(blob);
-                setVideoPreviewUrl(url);
-                setVideoRecState('preview');
-                // Parity: also enqueue for guest pipeline (watermarked)
-                try {
-                    const file = new File([blob], `video-${Date.now()}.webm`, {
-                        type: blob.type || 'video/webm',
-                    });
-                    addToQueue(file, 'video');
-                } catch {}
-                s.getTracks().forEach((t) => t.stop());
-                streamRef.current = null;
-            };
-
-            mediaRecorderRef.current = mr;
-            mr.start(100);
-
-            setVideoRecState('recording');
-            setVideoSeconds(0);
-            videoTimerRef.current = setInterval(() => {
-                setVideoSeconds((p) => {
-                    const next = p + 1;
-                    if (next >= VIDEO_MAX_SECONDS) {
-                        // Auto-stop at cap to avoid huge files / OOM
-                        setTimeout(() => {
-                            toast.info(`Video limit is ${Math.floor(VIDEO_MAX_SECONDS / 60)}:${String(VIDEO_MAX_SECONDS % 60).padStart(2, '0')} — stopping`);
-                            stopVideoRecording();
-                        }, 0);
-                    }
-                    return next;
-                });
-            }, 1000);
             setCameraActive(true);
             setMode('video');
+            setVideoRecState('idle');
+            setVideoSeconds(0);
         } catch (err) {
-            console.error('Video recording error:', err);
-            toast.error(
-                'Could not access camera. Please allow access and try again.',
-            );
+            console.error('Video preview error:', err);
+            toast.error('Could not access camera. Please allow access and try again.');
         }
+    }, []);
+
+    const beginVideoRecording = useCallback(() => {
+        const s = streamRef.current;
+        if (!s) {
+            toast.error('Camera not ready. Please try again.');
+            return;
+        }
+
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+            ? 'video/webm;codecs=vp9'
+            : MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+              ? 'video/webm;codecs=vp8'
+              : MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
+                ? 'video/mp4;codecs=avc1'
+                : MediaRecorder.isTypeSupported('video/mp4')
+                  ? 'video/mp4'
+                  : 'video/webm';
+
+        const mr = new MediaRecorder(s, { mimeType });
+        videoChunksRef.current = [];
+
+        mr.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                videoChunksRef.current.push(e.data);
+            }
+        };
+
+        mr.onstop = () => {
+            const blob = new Blob(videoChunksRef.current, {
+                type: mr.mimeType,
+            });
+            const url = URL.createObjectURL(blob);
+            setVideoBlob(blob);
+            setVideoPreviewUrl(url);
+            setVideoRecState('preview');
+            try {
+                const file = new File([blob], `video-${Date.now()}.webm`, {
+                    type: blob.type || 'video/webm',
+                });
+                addToQueue(file, 'video');
+            } catch {}
+            s.getTracks().forEach((t) => t.stop());
+            streamRef.current = null;
+        };
+
+        mediaRecorderRef.current = mr;
+        mr.start(100);
+
+        setVideoRecState('recording');
+        setVideoSeconds(0);
+        videoTimerRef.current = setInterval(() => {
+            setVideoSeconds((p) => {
+                const next = p + 1;
+                if (next >= VIDEO_MAX_SECONDS) {
+                    setTimeout(() => {
+                        toast.info(`Video limit is ${Math.floor(VIDEO_MAX_SECONDS / 60)}:${String(VIDEO_MAX_SECONDS % 60).padStart(2, '0')} — stopping`);
+                        stopVideoRecording();
+                    }, 0);
+                }
+                return next;
+            });
+        }, 1000);
     }, [addToQueue]);
 
     const stopVideoRecording = () => {
@@ -1249,66 +1252,74 @@ function MediaCaptureHub({
         setVideoSeconds(0);
         setVideoRecState('idle');
         setCameraActive(false);
-        startVideoRecording();
-    }, [videoPreviewUrl, startVideoRecording]);
+        // Back to preview — user must press Start again
+        previewVideo();
+    }, [videoPreviewUrl, previewVideo]);
 
-    const startAudioRecording = useCallback(async () => {
+    const previewAudio = useCallback(async () => {
         try {
             const s = await navigator.mediaDevices.getUserMedia({
                 audio: true,
             });
             setAudioStream(s);
-            const mr = new MediaRecorder(s, {
-                mimeType: MediaRecorder.isTypeSupported('audio/webm')
-                    ? 'audio/webm'
-                    : 'audio/mp4',
-            });
-            audioChunksRef.current = [];
-            mr.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    audioChunksRef.current.push(e.data);
-                }
-            };
-            mr.onstop = () => {
-                const blob = new Blob(audioChunksRef.current, {
-                    type: mr.mimeType,
-                });
-                const url = URL.createObjectURL(blob);
-                setAudioBlob(blob);
-                setAudioBlobUrl(url);
-                setAudioRecState('preview');
-                try {
-                    const file = new File([blob], `audio-${Date.now()}.webm`, {
-                        type: blob.type || 'audio/webm',
-                    });
-                    addToQueue(file, 'audio');
-                } catch {}
-                s.getTracks().forEach((t) => t.stop());
-                setAudioStream(null);
-            };
-            mr.start();
-            audioRecorderRef.current = mr;
-            setAudioSeconds(0);
-            setAudioRecState('recording');
             setMode('audio');
-            audioTimerRef.current = setInterval(() => {
-                setAudioSeconds((p) => {
-                    const next = p + 1;
-                    if (next >= AUDIO_MAX_SECONDS) {
-                        setTimeout(() => {
-                            toast.info(`Audio limit is ${Math.floor(AUDIO_MAX_SECONDS / 60)}:${String(AUDIO_MAX_SECONDS % 60).padStart(2, '0')} — stopping`);
-                            stopAudioRecording();
-                        }, 0);
-                    }
-                    return next;
-                });
-            }, 1000);
+            setAudioRecState('idle');
+            setAudioSeconds(0);
         } catch {
-            toast.error(
-                'Could not access microphone. Please allow microphone access and try again.',
-            );
+            toast.error('Could not access microphone. Please allow microphone access and try again.');
         }
-    }, [addToQueue]);
+    }, []);
+
+    const beginAudioRecording = useCallback(() => {
+        const s = audioStream;
+        if (!s) {
+            toast.error('Microphone not ready. Please try again.');
+            return;
+        }
+
+        const mr = new MediaRecorder(s, {
+            mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4',
+        });
+        audioChunksRef.current = [];
+        mr.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                audioChunksRef.current.push(e.data);
+            }
+        };
+        mr.onstop = () => {
+            const blob = new Blob(audioChunksRef.current, {
+                type: mr.mimeType,
+            });
+            const url = URL.createObjectURL(blob);
+            setAudioBlob(blob);
+            setAudioBlobUrl(url);
+            setAudioRecState('preview');
+            try {
+                const file = new File([blob], `audio-${Date.now()}.webm`, {
+                    type: blob.type || 'audio/webm',
+                });
+                addToQueue(file, 'audio');
+            } catch {}
+            s.getTracks().forEach((t) => t.stop());
+            setAudioStream(null);
+        };
+        mr.start();
+        audioRecorderRef.current = mr;
+        setAudioSeconds(0);
+        setAudioRecState('recording');
+        audioTimerRef.current = setInterval(() => {
+            setAudioSeconds((p) => {
+                const next = p + 1;
+                if (next >= AUDIO_MAX_SECONDS) {
+                    setTimeout(() => {
+                        toast.info(`Audio limit is ${Math.floor(AUDIO_MAX_SECONDS / 60)}:${String(AUDIO_MAX_SECONDS % 60).padStart(2, '0')} — stopping`);
+                        stopAudioRecording();
+                    }, 0);
+                }
+                return next;
+            });
+        }, 1000);
+    }, [addToQueue, audioStream]);
 
     const stopAudioRecording = () => {
         if (audioTimerRef.current) {
@@ -1327,8 +1338,8 @@ function MediaCaptureHub({
         setAudioBlobUrl(null);
         setAudioSeconds(0);
         setAudioRecState('idle');
-        startAudioRecording();
-    }, [audioBlobUrl, startAudioRecording]);
+        previewAudio();
+    }, [audioBlobUrl, previewAudio]);
 
     const handleUploadFiles = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1341,10 +1352,10 @@ function MediaCaptureHub({
                     const isVideoMime = file.type.startsWith('video/') || isVideoExt;
                     const type: 'photo' | 'video' | 'audio' =
                         isVideoMime ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
-                    // Light client guard: only block obvious >500MB video, let server validate rest.
+                    // Light client guard: only block obvious >1GB video, let server validate rest.
                     // Prevents "didn't get to server" silent fail for HEVC/empty mime which we now allow.
-                    if (type === 'video' && file.size > 500 * 1024 * 1024) {
-                        toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 500MB. Try a shorter video.`);
+                    if (type === 'video' && file.size > 1024 * 1024 * 1024) {
+                        toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 1GB. Try a shorter video.`);
                         return;
                     }
                     if (type !== 'video' && file.size > 50 * 1024 * 1024) {
@@ -1590,9 +1601,9 @@ function MediaCaptureHub({
                                 if (item.key === 'camera') {
                                     startCamera();
                                 } else if (item.key === 'video') {
-                                    startVideoRecording();
+                                    previewVideo();
                                 } else if (item.key === 'audio') {
-                                    startAudioRecording();
+                                    previewAudio();
                                 } else {
                                     setMode('upload');
                                     fileInputRef.current?.click();
@@ -1884,21 +1895,38 @@ function MediaCaptureHub({
                                                         REC {fmt(videoSeconds)} / {fmt(VIDEO_MAX_SECONDS)}
                                                     </div>
                                                 )}
+                                                {videoRecState === 'idle' && (
+                                                    <div className="absolute top-20 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 font-mono text-xs tracking-wider text-white/90 backdrop-blur">
+                                                        Ready — tap Start to record
+                                                    </div>
+                                                )}
                                                 <div
-                                                    className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-gradient-to-t from-black/85 via-black/30 to-transparent pt-12"
+                                                    className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-t from-black/85 via-black/30 to-transparent pt-12"
                                                     style={{
                                                         paddingBottom:
                                                             'max(2.5rem, env(safe-area-inset-bottom))',
                                                     }}
                                                 >
-                                                    <button
-                                                        onClick={
-                                                            stopVideoRecording
-                                                        }
-                                                        className="flex h-20 w-20 items-center justify-center rounded-full border-[3px] border-white/90 transition-transform active:scale-90"
-                                                    >
-                                                        <div className="h-8 w-8 rounded-md bg-red-500" />
-                                                    </button>
+                                                    {videoRecState === 'idle' ? (
+                                                        <button
+                                                            onClick={beginVideoRecording}
+                                                            className="flex h-20 w-20 items-center justify-center rounded-full border-[3px] border-white/90 bg-red-500/90 transition-transform active:scale-90"
+                                                            aria-label="Start recording"
+                                                        >
+                                                            <div className="h-7 w-7 rounded-full bg-white" />
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={stopVideoRecording}
+                                                            className="flex h-20 w-20 items-center justify-center rounded-full border-[3px] border-white/90 transition-transform active:scale-90"
+                                                            aria-label="Stop recording"
+                                                        >
+                                                            <div className="h-8 w-8 rounded-md bg-red-500" />
+                                                        </button>
+                                                    )}
+                                                    {videoRecState === 'idle' && (
+                                                        <span className="font-mono text-[11px] tracking-wider text-white/70 uppercase">Start Recording</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -1917,10 +1945,9 @@ function MediaCaptureHub({
                                                             <div className="flex h-28 w-28 items-center justify-center rounded-full border-2 border-dashed border-accent-gold/40 bg-accent-gold/10">
                                                                 <Mic className="h-10 w-10 text-accent-gold" />
                                                             </div>
+                                                            <p className="font-mono text-xs tracking-wider text-white/60">Ready — tap Start when ready</p>
                                                             <button
-                                                                onClick={
-                                                                    startAudioRecording
-                                                                }
+                                                                onClick={beginAudioRecording}
                                                                 className="flex items-center gap-2 rounded-full bg-accent-gold px-6 py-3.5 font-mono text-xs font-bold tracking-widest text-bg-dark uppercase transition-transform active:scale-95"
                                                             >
                                                                 <Mic
@@ -2001,8 +2028,8 @@ function MediaCaptureHub({
                                                                     const isVideoMime = file.type.startsWith('video/') || isVideoExt;
                                                                     const t: 'photo' | 'video' | 'audio' =
                                                                         isVideoMime ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'photo';
-                                                                    if (t === 'video' && file.size > 500 * 1024 * 1024) {
-                                                                        toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 500MB. Try a shorter video.`);
+                                                                    if (t === 'video' && file.size > 1024 * 1024 * 1024) {
+                                                                        toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 1GB. Try a shorter video.`);
                                                                         return;
                                                                     }
                                                                     if (t !== 'video' && file.size > 50 * 1024 * 1024) {
@@ -2015,7 +2042,7 @@ function MediaCaptureHub({
                                                             }}
                                                             multiple
                                                             accept="image/*,video/*,audio/*"
-                                                            maxSizeMB={500}
+                                                            maxSizeMB={1024}
                                                             label="Tap to browse files"
                                                         />
                                                     </div>
@@ -2147,6 +2174,22 @@ export default function RoomShare({
             },
         });
     }, []);
+
+    const handleDeleteStory = useCallback((story: FeedStory) => {
+        const identifier = (story as any).uuid ?? story.id;
+        if (!confirm('Delete this memory? This will also delete the media.')) {
+            return;
+        }
+        router.delete(`/share/rooms/${room.slug}/stories/${identifier}`, {
+            data: { guest_name: guestName, guest_email: guestEmail },
+            preserveScroll: true,
+            onSuccess: () => {
+                setAllStories((prev) => prev.filter((s) => s.id !== story.id && (s as any).uuid !== identifier));
+                toast.success('Memory deleted');
+            },
+            onError: () => toast.error('Failed to delete. Please try again.'),
+        });
+    }, [room.slug, guestName, guestEmail]);
 
     // Tribute song toggle
     const toggleTributeSong = useCallback(() => {
@@ -2357,6 +2400,16 @@ export default function RoomShare({
                                             {story.date}
                                         </span>
                                     </div>
+                                    {(story.author?.toLowerCase().trim() === guestName?.toLowerCase().trim() ||
+                                        (story as any).guest_name?.toLowerCase().trim() ===
+                                            guestName?.toLowerCase().trim()) && (
+                                        <button
+                                            onClick={() => handleDeleteStory(story)}
+                                            className="flex items-center gap-1.5 font-mono text-[10px] tracking-wider text-red-400/70 transition-colors hover:text-red-400"
+                                        >
+                                            <Trash2 size={10} /> Delete memory
+                                        </button>
+                                    )}
                                     {story.follow_ups &&
                                         story.follow_ups.length > 0 && (
                                             <div className="flex items-center gap-2 font-mono text-[10px] tracking-wider text-accent-gold">

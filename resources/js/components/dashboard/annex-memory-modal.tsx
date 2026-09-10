@@ -467,7 +467,7 @@ export function AnnexMemoryModal({
                                           : '*/*'
                                 }
                                 multiple={mediaType === 'photo'}
-                                maxSizeMB={mediaType === 'video' ? 500 : 50}
+                                maxSizeMB={mediaType === 'video' ? 1024 : 50}
                             />
 
                             {/* Google Drive Import */}

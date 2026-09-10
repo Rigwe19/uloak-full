@@ -210,7 +210,7 @@ class EventController extends Controller
             'description' => ['nullable', 'string'],
             'type' => ['required', 'string', 'in:video,audio,photo,document,collection'],
             'files' => ['nullable', 'array'],
-            'files.*' => ['file', 'max:51200'],
+            'files.*' => ['file', 'max:1048576'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file'],
             'duration' => ['nullable', 'string'],

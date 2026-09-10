@@ -7,7 +7,7 @@
 ## 1. Conventions
 
 - **Versioning:** `/api/v1` — never break without new version.
-- **Auth:** `Authorization: Bearer <sanctum_token>` (`POST /login` via Fortify returns token — store in `expo-secure-store`, attach in `src/lib/api/client.ts`). Public routes: `GET /pricing`, `GET /share/rooms/{slug}`.
+- **Auth:** `Authorization: Bearer <sanctum_token>` (`POST /api/v1/login` returns Sanctum `plainTextToken` + `POST /api/v1/register` — store in `expo-secure-store`, attach in `src/lib/api/client.ts`). Public routes: `POST /api/v1/login`, `POST /api/v1/register`, `GET /pricing`, `GET /share/rooms/{slug}`.
 - **Headers:** `Accept: application/json`, `Content-Type: application/json` (multipart for uploads).
 - **Errors:** Laravel shape
   ```json
@@ -23,13 +23,20 @@ Re-validate on backend — mobile never calculates fees/storage.
 
 ## 2. Auth
 
+### `POST /api/v1/login` — public — `V1AuthController@login` `throttle:login` (5/min)
+Body: `email*`, `password*`, `device_name?` (defaults to `User-Agent`/`mobile`), `code?` (2FA TOTP), `recovery_code?`.
+Success `200 { data: UserResource, token: string (Sanctum plainTextToken), message }` — store `token` in `expo-secure-store` and send as `Authorization: Bearer <token>`.
+If user has `two_factor_confirmed_at` and no `code`/`recovery_code` → `423 { message, two_factor: true }` — prompt TOTP/recovery and retry. Invalid code → `422`. Throttled → `429` (Fortify `login` limiter: 5/min by `email|ip`).
+
+### `POST /api/v1/register` — public — `V1AuthController@register` `throttle:6,1`
+Body: `name*`, `email*`, `password*` (`Password::defaults()`), `password_confirmation*`, `device_name?`.
+`201 { data: UserResource, token }` — creates user via `CreateNewUser` + `PersonService` and logs in immediately.
+
 ### `GET /api/v1/me` — auth:sanctum
 Returns `UserResource`.
 
 ### `POST /api/v1/logout` — auth:sanctum
 Deletes `currentAccessToken`. Clear TanStack cache + SecureStore client-side.
-
-> Login itself is Fortify `POST /login` (web guard) or `POST /api/login` if exposed — mobile must use `EXPO_PUBLIC_API_URL + /login` → returns `token`. Follow existing Fortify flow; do not invent `POST /api/v1/login`.
 
 ---
 
@@ -97,12 +104,16 @@ Same fields + `existing_media_urls` JSON string + `media_files[]`. Returns `Room
 `StoryResource` cursor paginate — `['rooms', slug, 'stories']`.
 
 ### `POST /api/v1/rooms/{room}/stories` — auth:sanctum + `contributions.open` + `throttle:guest-media`
-`StoreStoryRequest`: `title* 255`, `description ≤5000`, `type* photo|video|audio|document`, `file file ≤50MB`, `thumbnail image`, `tags[] ≤32`, `assets[]`, `follow_up_to story_id`. If `contributionBlockReason !== null` → `403 { reason: draft|closed|expired|storage_full }`. `201 StoryResource`. Invalidate `['rooms', slug, 'stories']`.
+`StoreStoryRequest`: `title* 255`, `description ≤5000`, `type* photo|video|audio|document`, `file photo/audio ≤50MB, video ≤1GB` (`media-validation.ts` `MAX_VIDEO_SIZE=1GB`, guest upload `MediaController@handleGuestUpload` `max:1048576` (~1GB), `room-share.tsx` `maxSizeMB={1024}` for video), `thumbnail image`, `tags[] ≤32`, `assets[]`, `follow_up_to story_id`. If `contributionBlockReason !== null` → `403 { reason: draft|closed|expired|storage_full }`. `201 StoryResource`. Invalidate `['rooms', slug, 'stories']`.
 
 ### `GET /api/v1/stories/{story}` — auth:sanctum — `uuid` route
 `StoryResource` (with `user.name`, `file_url`, `thumbnail` absolute).
 
 ### `DELETE /api/v1/stories/{story}` — auth:sanctum — owner / room owner else `403`.
+
+### `DELETE /share/rooms/{room}/stories/{story}` — guest or auth — `ShareController@destroyStory` deletes story + attached media. Guest must send `guest_name*`/`guest_email?` matching `story.guest_name/email` or media `GuestIdentity`; auth user must own story or room. `200 {success:true}`. Frontend `room-share.tsx:handleDeleteStory` uses this.
+
+### `DELETE /api/media/guest/{uuid}` — guest — `MediaController@destroyGuest` `throttle:guest-media` deletes orphaned `Media` before story creation. Query `room_slug|event_slug` + `guest_name*`/`guest_email?` must match `Media.guest_identity_id` or `metadata.guest_*`. `useGuestUploadQueue.removeFromQueue` calls this when `mediaUuid` exists.
 
 ### `GET /api/v1/stories/{story}/processing-status` — auth:sanctum
 ```json
@@ -278,6 +289,13 @@ Invalidate `['rooms']` after create/update, `['rooms', slug]` after story contri
 ## 14. curl Examples
 
 ```bash
+# Auth — login + register (public)
+curl -X POST -H "Content-Type: application/json" -d '{"email":"you@example.com","password":"secret","device_name":"mobile"}' $API/api/v1/login
+# → { "data": { "id": 1, ... }, "token": "1|xxx" }
+# If 423 { "two_factor": true } → retry with TOTP:
+curl -X POST -H "Content-Type: application/json" -d '{"email":"you@example.com","password":"secret","code":"123456"}' $API/api/v1/login
+curl -X POST -H "Content-Type: application/json" -d '{"name":"Ada","email":"ada@example.com","password":"secret123","password_confirmation":"secret123"}' $API/api/v1/register
+
 # Dashboard
 curl -H "Authorization: Bearer $TOKEN" $API/api/v1/dashboard
 

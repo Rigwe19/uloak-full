@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\HouseMemberResource;
 use App\Http\Resources\RoomResource;
-use App\Http\Resources\StoryResource;
 use App\Services\AnalyticsAggregationService;
 use App\Services\DashboardService;
 use Carbon\CarbonImmutable;
@@ -27,9 +25,9 @@ class DashboardController extends Controller
             'data' => [
                 'rooms' => RoomResource::collection($data['rooms']),
                 'events' => $data['events'],
-                'recent_stories' => StoryResource::collection($data['recentStories']),
+                'recent_stories' => $data['recentStories'],
                 'stats' => $data['stats'],
-                'house_members' => HouseMemberResource::collection($data['house_members']),
+                'house_members' => $data['house_members'],
                 'notifications' => $data['notifications'],
             ],
         ]);

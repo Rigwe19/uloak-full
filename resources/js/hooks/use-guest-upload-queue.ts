@@ -102,12 +102,35 @@ export function useGuestUploadQueue(ctx: GuestCtx) {
 
             if (item) {
                 URL.revokeObjectURL(item.previewUrl);
+
+                // If media already uploaded (has uuid), delete on server as guest
+                if (item.mediaUuid) {
+                    try {
+                        const csrf =
+                            (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
+                                ?.content ?? '';
+                        const params = new URLSearchParams();
+                        if (ctx.roomSlug) params.set('room_slug', ctx.roomSlug);
+                        if (ctx.eventSlug) params.set('event_slug', ctx.eventSlug);
+                        params.set('guest_name', ctx.guestName);
+                        if (ctx.guestEmail) params.set('guest_email', ctx.guestEmail);
+                        fetch(`/api/media/guest/${item.mediaUuid}?${params.toString()}`, {
+                            method: 'DELETE',
+                            headers: {
+                                Accept: 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+                            },
+                            credentials: 'same-origin',
+                        }).catch(() => {});
+                    } catch {}
+                }
             }
 
             queueRef.current = queueRef.current.filter((q) => q.id !== id);
             removeUpload(id);
         },
-        [uploads, removeUpload],
+        [uploads, removeUpload, ctx],
     );
 
     const clearCompleted = useCallback(() => {

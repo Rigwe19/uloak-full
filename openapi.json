@@ -136,6 +136,160 @@
         }
       }
     },
+    "/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "summary": "Login (Sanctum token)",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "device_name": {
+                    "type": "string",
+                    "description": "Token name, defaults to User-Agent / mobile"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "2FA TOTP if user has two_factor_confirmed_at"
+                  },
+                  "recovery_code": {
+                    "type": "string",
+                    "description": "2FA recovery code alternative"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Sanctum plainTextToken (store in expo-secure-store, send as Bearer)"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation (invalid credentials or code)"
+          },
+          "423": {
+            "description": "Two factor required — resend with code/recovery_code"
+          },
+          "429": {
+            "description": "Throttled (Fortify login limiter 5/min by email|ip)"
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "summary": "Register (create account + Sanctum token)",
+        "operationId": "register",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "password_confirmation"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "password_confirmation": {
+                    "type": "string"
+                  },
+                  "device_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "token": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation"
+          },
+          "429": {
+            "description": "Throttled"
+          }
+        }
+      }
+    },
     "/me": {
       "get": {
         "tags": [
@@ -693,6 +847,68 @@
               "responses": {
                 "200": {
                   "description": "Deleted"
+                }
+              }
+            }
+          },
+          "/media/guest/{uuid}": {
+            "delete": {
+              "tags": [
+                "Media"
+              ],
+              "security": [],
+              "summary": "Delete guest media (orphaned before story, guest ownership via guest_name/email + room_slug/event_slug)",
+              "operationId": "deleteGuestMedia",
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                {
+                  "name": "room_slug",
+                  "in": "query",
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "event_slug",
+                  "in": "query",
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "guest_name",
+                  "in": "query",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "guest_email",
+                  "in": "query",
+                  "schema": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Deleted"
+                },
+                "403": {
+                  "description": "Not authorized"
+                },
+                "404": {
+                  "description": "Not found"
                 }
               }
             }
@@ -1897,7 +2113,8 @@
                   },
                   "file": {
                     "type": "string",
-                    "format": "binary"
+                    "format": "binary",
+                    "description": "Binary — photo/audio ≤50MB, video ≤1GB (MAX_VIDEO_SIZE=1GB, MediaController max:1048576, room-share maxSizeMB 1024 for video)"
                   },
                   "tags": {
                     "type": "array",

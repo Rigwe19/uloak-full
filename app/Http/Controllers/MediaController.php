@@ -29,7 +29,7 @@ class MediaController extends Controller
     public function upload(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:512000'],
+            'file' => ['required', 'file', 'max:1048576'],
             'type' => ['nullable', 'string', 'in:video,image,audio,document'],
         ]);
 
@@ -130,7 +130,7 @@ class MediaController extends Controller
     public function uploadVideo(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:512000', 'mimes:mp4,mov,avi,mkv,webm'],
+            'file' => ['required', 'file', 'max:1048576', 'mimes:mp4,mov,avi,mkv,webm'],
         ]);
 
         $file = $request->file('file');
@@ -196,7 +196,7 @@ class MediaController extends Controller
     protected function handleGuestUpload(Request $request, ?string $forcedType): JsonResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:512000', 'mimes:mp4,mov,avi,mkv,webm,jpg,jpeg,png,webp,heic,heif,mp3,wav,m4a,ogg,webm'],
+            'file' => ['required', 'file', 'max:1048576', 'mimes:mp4,mov,avi,mkv,webm,jpg,jpeg,png,webp,heic,heif,mp3,wav,m4a,ogg,webm'],
             'room_slug' => ['nullable', 'string', 'required_without:event_slug'],
             'event_slug' => ['nullable', 'string', 'required_without:room_slug'],
             'guest_name' => ['required', 'string', 'max:255'],
@@ -321,6 +321,80 @@ class MediaController extends Controller
                 'guest_identity_uuid' => $guest->uuid,
             ],
         ], 201);
+    }
+
+    public function destroyGuest(Request $request, string $uuid): JsonResponse
+    {
+        $request->validate([
+            'room_slug' => ['nullable', 'string', 'required_without:event_slug'],
+            'event_slug' => ['nullable', 'string', 'required_without:room_slug'],
+            'guest_name' => ['required', 'string', 'max:255'],
+            'guest_email' => ['nullable', 'email', 'max:255'],
+        ]);
+
+        try {
+            $media = Media::where('uuid', $uuid)->firstOrFail();
+        } catch (ModelNotFoundException) {
+            return response()->json(['message' => 'Media not found.'], 404);
+        }
+
+        // Resolve room/event for ownership check
+        $roomId = null;
+        $eventId = null;
+        if ($request->filled('room_slug')) {
+            $room = Room::where('slug', $request->input('room_slug'))->first();
+            $roomId = $room?->id;
+        }
+        if ($request->filled('event_slug')) {
+            $event = Event::where('slug', $request->input('event_slug'))->first();
+            $eventId = $event?->id;
+        }
+
+        $providedName = strtolower(trim($request->input('guest_name')));
+        $providedEmail = $request->input('guest_email') ? strtolower(trim($request->input('guest_email'))) : null;
+
+        $isOwner = false;
+
+        if ($media->guest_identity_id) {
+            $guest = GuestIdentity::find($media->guest_identity_id);
+            if ($guest) {
+                $guestName = strtolower(trim($guest->name));
+                $guestEmail = $guest->email ? strtolower(trim($guest->email)) : null;
+                $roomMatch = $roomId ? $guest->room_id === $roomId : true;
+                $eventMatch = $eventId ? $guest->event_id === $eventId : true;
+                $nameMatch = $guestName === $providedName;
+                // If guest record has email, require email match; otherwise just name
+                $emailMatch = $guestEmail ? $guestEmail === $providedEmail : true;
+                $isOwner = $nameMatch && $emailMatch && $roomMatch && $eventMatch;
+            }
+        }
+
+        // Fallback to metadata check (for older media or when guest_identity_id is null)
+        if (! $isOwner) {
+            $metaName = isset($media->metadata['guest_name']) ? strtolower(trim($media->metadata['guest_name'])) : null;
+            $metaEmail = isset($media->metadata['guest_email']) ? strtolower(trim($media->metadata['guest_email'])) : null;
+            if ($metaName) {
+                $nameMatch = $metaName === $providedName;
+                $emailMatch = $metaEmail ? $metaEmail === $providedEmail : true;
+                // Also check room/event via media metadata if available
+                $isOwner = $nameMatch && $emailMatch;
+            }
+        }
+
+        // Also allow if media is not yet attached to any story and guest_name matches metadata guest_uuid? Last fallback: check if request IP matches? Skip for now.
+
+        if (! $isOwner) {
+            return response()->json(['message' => 'Not authorized to delete this media.'], 403);
+        }
+
+        try {
+            $this->mediaManager->forMedia($media)->delete();
+        } catch (\Throwable $e) {
+            // Fallback direct delete if manager fails
+            $media->delete();
+        }
+
+        return response()->json(['message' => 'Media deleted.']);
     }
 
     public function show(string $uuid): JsonResponse

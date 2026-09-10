@@ -126,8 +126,7 @@ class ShareController extends Controller
                     // video and no ready video exists, treat it as processing.
                     if (! $isProcessing && $story->type === 'video') {
                         $hasReadyVideo = collect($enrichedAssets)->contains(
-                            fn ($a) =>
-                                ($a['type'] ?? '') === 'video'
+                            fn ($a) => ($a['type'] ?? '') === 'video'
                                 && ($a['status'] ?? 'ready') === 'ready'
                         );
 
@@ -208,7 +207,7 @@ class ShareController extends Controller
                 'per_page' => $paginator->perPage(),
             ],
 
-            'title' => $room->name . ' - Ulo of Stories',
+            'title' => $room->name.' - Ulo of Stories',
 
             'meta_description' => $room->description
                 ? Str::limit($room->description, 155)
@@ -282,9 +281,9 @@ class ShareController extends Controller
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
             'files' => ['nullable', 'array'],
-            'files.*' => ['file', 'max:51200'],
+            'files.*' => ['file', 'max:1048576'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
-            'recording' => ['nullable', 'file', 'max:51200'],
+            'recording' => ['nullable', 'file', 'max:1048576'],
             'duration' => ['nullable', 'string', 'max:20'],
         ]);
 
@@ -489,8 +488,8 @@ class ShareController extends Controller
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
             'files' => ['nullable', 'array'],
-            'files.*' => ['file', 'max:51200'],
-            'recording' => ['nullable', 'file', 'max:51200'],
+            'files.*' => ['file', 'max:1048576'],
+            'recording' => ['nullable', 'file', 'max:1048576'],
         ]);
 
         $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null, $validated['guest_whatsapp'] ?? null);
@@ -638,7 +637,7 @@ class ShareController extends Controller
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
             'files' => ['nullable', 'array'],
-            'files.*' => ['file', 'max:51200'],
+            'files.*' => ['file', 'max:1048576'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
         ]);
 
@@ -777,17 +776,99 @@ class ShareController extends Controller
     }
 
     /**
-     * Delete a guest story from a room.
+     * Delete a guest story from a room (guest ownership via guest_name/email or media guest_identity).
      */
-    public function destroyStory(Request $request, Room $room, Story $story): RedirectResponse|JsonResponse
+    public function destroyStory(Request $request, Room $room, string $story): RedirectResponse|JsonResponse
     {
-        if ($story->room_id !== $room->id) {
+        $storyModel = Story::where('uuid', $story)->orWhere('id', $story)->first();
+        if (! $storyModel || $storyModel->room_id !== $room->id) {
             abort(404);
+        }
+        $story = $storyModel;
+
+        $user = $request->user();
+        $isOwner = false;
+
+        if ($user) {
+            $isOwner = $story->user_id === $user->id || $room->created_by === $user->id || (bool) $user->is_admin;
+        }
+
+        if (! $isOwner) {
+            $request->validate([
+                'guest_name' => ['required', 'string', 'max:255'],
+                'guest_email' => ['nullable', 'email', 'max:255'],
+            ]);
+
+            $providedName = strtolower(trim($request->input('guest_name')));
+            $providedEmail = $request->input('guest_email') ? strtolower(trim($request->input('guest_email'))) : null;
+
+            $storyGuestName = $story->guest_name ? strtolower(trim($story->guest_name)) : null;
+            $storyGuestEmail = $story->guest_email ? strtolower(trim($story->guest_email)) : null;
+
+            $nameMatch = $storyGuestName === $providedName;
+            $emailMatch = $storyGuestEmail ? $storyGuestEmail === $providedEmail : true;
+
+            if ($nameMatch && $emailMatch) {
+                $isOwner = true;
+            } else {
+                // Fallback: check via attached media guest identities
+                $uuids = collect($story->assets ?? [])->pluck('media_uuid')->filter()->toArray();
+                if (! empty($uuids)) {
+                    $medias = Media::whereIn('uuid', $uuids)->get();
+                    foreach ($medias as $media) {
+                        if ($media->guest_identity_id) {
+                            $guest = GuestIdentity::find($media->guest_identity_id);
+                            if ($guest && strtolower(trim($guest->name)) === $providedName) {
+                                $guestEmail = $guest->email ? strtolower(trim($guest->email)) : null;
+                                $emailOk = $guestEmail ? $guestEmail === $providedEmail : true;
+                                if ($emailOk) {
+                                    $isOwner = true;
+                                    break;
+                                }
+                            }
+                        }
+                        $metaName = $media->metadata['guest_name'] ?? null;
+                        $metaEmail = $media->metadata['guest_email'] ?? null;
+                        if ($metaName && strtolower(trim($metaName)) === $providedName) {
+                            $metaEmailNorm = $metaEmail ? strtolower(trim($metaEmail)) : null;
+                            $emailOk = $metaEmailNorm ? $metaEmailNorm === $providedEmail : true;
+                            if ($emailOk) {
+                                $isOwner = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (! $isOwner) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Not authorized to delete this story.'], 403);
+            }
+
+            return redirect()->back()->withErrors(['story' => 'Not authorized to delete this story.']);
+        }
+
+        // Delete associated media (along with story)
+        $uuids = collect($story->assets ?? [])->pluck('media_uuid')->filter()->toArray();
+        if (! empty($uuids)) {
+            $medias = Media::whereIn('uuid', $uuids)->get();
+            foreach ($medias as $media) {
+                try {
+                    $this->mediaManager->forMedia($media)->delete();
+                } catch (\Throwable) {
+                    try {
+                        $media->delete();
+                    } catch (\Throwable) {
+                    }
+                }
+            }
         }
 
         $story->delete();
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json(['success' => true]);
         }
 

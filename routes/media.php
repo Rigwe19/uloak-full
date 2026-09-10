@@ -12,6 +12,7 @@ Route::middleware('api')->prefix('api')->group(function () {
         Route::post('/media/guest/videos/upload', [MediaController::class, 'uploadGuestVideo'])->name('api.media.guest.videos.upload');
         Route::post('/media/guest/images/upload', [MediaController::class, 'uploadGuestImage'])->name('api.media.guest.images.upload');
         Route::post('/media/guest/upload', [MediaController::class, 'uploadGuest'])->name('api.media.guest.upload');
+        Route::delete('/media/guest/{uuid}', [MediaController::class, 'destroyGuest'])->name('api.media.guest.destroy');
     });
     Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('api.media.show');
     Route::post('/media/{uuid}/process', [MediaController::class, 'processImage'])->name('api.media.process');
