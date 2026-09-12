@@ -336,11 +336,6 @@ export function Footer() {
                             &copy; {new Date().getFullYear()} Ulo of Stories.
                             All rights reserved.
                         </p>
-                        <p className="text-xs text-text-muted">
-                            Ulo is a trading name of My Story House Limited.
-                            Registered in England and Wales. Company number
-                            16756288.
-                        </p>
                     </div>
                     <p className="text-xs text-text-muted italic">
                         Every story has a home.

@@ -2077,16 +2077,16 @@ export default function RoomShare({
 }: ShareRoomProps) {
     const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [guestName, setGuestName] = useState(
-        () => localStorage.getItem('room-share-name') || '',
+        () => localStorage ? localStorage.getItem('room-share-name') : '',
     );
     const [guestEmail, setGuestEmail] = useState(
-        () => localStorage.getItem('room-share-email') || '',
+        () => localStorage ? localStorage.getItem('room-share-email') : '',
     );
     const [guestWhatsapp, setGuestWhatsapp] = useState(
-        () => localStorage.getItem('room-share-whatsapp') || '',
+        () => localStorage ? localStorage.getItem('room-share-whatsapp') : '',
     );
     const [isIdentified, setIsIdentified] = useState(
-        () => !!localStorage.getItem('room-share-name'),
+        () => localStorage ? !!localStorage.getItem('room-share-name') : '',
     );
     const [viewerStory, setViewerStory] = useState<FeedStory | null>(null);
     const [commentsStoryId, setCommentsStoryId] = useState<number | null>(null);

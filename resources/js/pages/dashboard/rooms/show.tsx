@@ -886,7 +886,7 @@ export default function RoomShow({
                 {/* ════════════════════════════════════════ */}
                 {/*  STORIES SECTION                         */}
                 {/* ════════════════════════════════════════ */}
-                {!room.enable_tributes && (
+                {typeof document !== 'undefined' && !room.enable_tributes && (
                     <StoryFeed
                         stories={allStories}
                         nextCursor={pagination?.next_cursor ?? null}
@@ -1281,7 +1281,7 @@ export default function RoomShow({
                     onClose={() => setIsAnnexModalOpen(false)}
                     room={room as any}
                 />,
-                document.body ?? null,
+                document.body,
             )}
 
             {/* Edit Room Modal */}
