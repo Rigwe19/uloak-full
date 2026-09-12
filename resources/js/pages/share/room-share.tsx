@@ -843,7 +843,7 @@ function GuestIdentityGate({
             animate={{ opacity: 1, scale: 1 }}
             className="mx-auto max-w-md"
         >
-            <form
+            <form  autoComplete="on"
                 onSubmit={handleSubmit}
                 className="space-y-6 rounded-3xl border border-white/10 bg-surface/40 p-8 backdrop-blur"
             >
@@ -2328,7 +2328,7 @@ export default function RoomShare({
                         </div>
 
                         {!isIdentified ? (
-                            <form autoComplete="on">
+                            <div>
                                 <GuestIdentityGate
                                     onComplete={(name, email, whatsapp) => {
                                         completeIdentity(name, email, whatsapp);
@@ -2338,7 +2338,7 @@ export default function RoomShare({
                                     initialWhatsapp={guestWhatsapp}
                                     roomSlug={room.slug}
                                 />
-                            </form>
+                            </div>
                         ) : (
                             <MediaCaptureHub
                                 onSubmit={handleNewSubmission}

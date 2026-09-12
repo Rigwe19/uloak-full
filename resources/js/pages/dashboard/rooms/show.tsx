@@ -1281,7 +1281,7 @@ export default function RoomShow({
                     onClose={() => setIsAnnexModalOpen(false)}
                     room={room as any}
                 />,
-                document.body,
+                document.body ?? null,
             )}
 
             {/* Edit Room Modal */}

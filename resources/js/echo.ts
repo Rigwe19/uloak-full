@@ -10,12 +10,13 @@ declare global {
     }
 }
 
-window.Pusher = Pusher;
-
 let echoInstance: ReverbEcho | null = null;
 
 export function initEcho(): ReverbEcho | null {
-    // console.log('🔥 initEcho() called');
+    // Echo is browser-only.
+    if (typeof window === 'undefined') {
+        return null;
+    }
 
     if (echoInstance) {
         return echoInstance;
@@ -29,19 +30,14 @@ export function initEcho(): ReverbEcho | null {
         return null;
     }
 
+    // Pusher must only be attached in the browser.
+    window.Pusher = Pusher;
+
     const host = import.meta.env.VITE_REVERB_HOST || 'uloak.test';
     const port = Number(import.meta.env.VITE_REVERB_PORT || 8080);
     const scheme = import.meta.env.VITE_REVERB_SCHEME || 'https';
 
     const useTLS = scheme === 'https';
-
-    // console.log('Initializing Reverb:', {
-    //     key,
-    //     host,
-    //     port,
-    //     scheme,
-    //     useTLS,
-    // });
 
     echoInstance = new Echo({
         broadcaster: 'reverb',
@@ -62,10 +58,9 @@ export function initEcho(): ReverbEcho | null {
 }
 
 export function getEcho(): ReverbEcho | null {
-    return echoInstance ?? initEcho();
-}
+    if (typeof window === 'undefined') {
+        return null;
+    }
 
-if (typeof window !== 'undefined') {
-    // console.log('🔥 ECHO MODULE LOADED');
-    initEcho();
+    return echoInstance ?? initEcho();
 }

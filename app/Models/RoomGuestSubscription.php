@@ -16,6 +16,7 @@ class RoomGuestSubscription extends Model
         'room_id',
         'name',
         'email',
+        'whatsapp'
     ];
 
     public function room(): BelongsTo

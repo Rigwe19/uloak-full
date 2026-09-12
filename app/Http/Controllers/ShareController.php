@@ -582,6 +582,7 @@ class ShareController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
+            'whatsapp' => ['nullable', 'string', 'max:20']
         ]);
         $exists = RoomGuestSubscription::where('room_id', $room->id)->where('email', $validated['email'])->exists();
         if ($exists) {
@@ -590,7 +591,10 @@ class ShareController extends Controller
 
         $room->guestSubscriptions()->updateOrCreate(
             ['email' => $validated['email']],
-            ['name' => $validated['name']],
+            [
+                'name' => $validated['name'],
+                'whatsapp' => $validated['whatsapp'] ?? null
+            ],
         );
 
         return redirect()->back()->with('success', 'You\'ve been registered!');
