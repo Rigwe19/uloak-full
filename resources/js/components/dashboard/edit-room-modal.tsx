@@ -581,9 +581,13 @@ export function EditRoomModal({ isOpen, room, onClose }: EditRoomModalProps) {
 
                         {/* Media Items */}
                         <div>
-                            <label className="mb-2 block text-xs font-medium tracking-wide text-text-muted uppercase">
-                                Media Items (images & videos)
+                            <label className="mb-1 block text-xs font-medium tracking-wide text-text-muted uppercase">
+                                Media Gallery (Carousel)
                             </label>
+                            <p className="mb-2 text-[11px] leading-snug text-text-muted">
+                                Images and videos shown as a carousel at the top
+                                of the room page.
+                            </p>
                             {mediaItems.length > 0 && (
                                 <div className="mb-3 grid grid-cols-3 gap-2">
                                     {mediaItems.map((item, i) => (

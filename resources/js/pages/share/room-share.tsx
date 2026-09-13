@@ -883,7 +883,7 @@ function GuestIdentityGate({
                 </div>
                 <div>
                     <label htmlFor="guest-email" className="mb-1.5 block text-[11px] font-bold tracking-[0.16em] text-text-muted uppercase">
-                        Email (Optional)
+                        Email
                     </label>
                     <input
                         id="guest-email"

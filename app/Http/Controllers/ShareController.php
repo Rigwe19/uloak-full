@@ -582,7 +582,7 @@ class ShareController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'whatsapp' => ['nullable', 'string', 'max:20']
+            'whatsapp' => ['nullable', 'string', 'max:20'],
         ]);
         $exists = RoomGuestSubscription::where('room_id', $room->id)->where('email', $validated['email'])->exists();
         if ($exists) {
@@ -593,7 +593,7 @@ class ShareController extends Controller
             ['email' => $validated['email']],
             [
                 'name' => $validated['name'],
-                'whatsapp' => $validated['whatsapp'] ?? null
+                'whatsapp' => $validated['whatsapp'] ?? null,
             ],
         );
 
@@ -784,7 +784,10 @@ class ShareController extends Controller
      */
     public function destroyStory(Request $request, Room $room, string $story): RedirectResponse|JsonResponse
     {
-        $storyModel = Story::where('uuid', $story)->orWhere('id', $story)->first();
+        $query = Str::isUuid($story)
+            ? Story::where('uuid', $story)
+            : Story::where('id', $story);
+        $storyModel = $query->first();
         if (! $storyModel || $storyModel->room_id !== $room->id) {
             abort(404);
         }
