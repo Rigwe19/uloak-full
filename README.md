@@ -91,6 +91,7 @@ PAYPAL_WEBHOOK_ID=...
   - `storage_used_bytes`, `storage_limit_bytes`, `expires_at`, `contributions_closed_at`
   - `referral_partner_id` (FK `partners`), `welcome_message` (text), `wedding_dates` (json)
   - Legacy rows have `tier_type = NULL` → `isLegacy() === true` → unlimited, never gated.
+  - **Access control** — `App\Policies\RoomPolicy` gates dashboard/API room `view|update|delete`. `view/update` = creator or `room_user` pivot member; `delete/manage` = creator only. `DashboardService` and API `index` only return the user’s own/member rooms (never all active rooms). Bulk `download-media` accepts an authenticated owner/member OR a house-member session. Public `/share/rooms/{slug}` stays slug-accessible by design.
 - **Media / Story** — `media.size` summed via `Room::stories()->with Media`; global rollup `cloudinary_usage`.
 - **Payment** — `payments` (`user_id`, `room_id nullable`, `amount` minor units, `currency CHAR(3)`, `provider enum paystack|paypal|stripe`, `provider_reference`, `idempotency_key UNIQUE`, `status pending|successful|failed`, `region enum`, `partner_id`, `commission_amount minor`, `utm json`, `paid_at`).
 - **Subscription** — `subscriptions` (`user_id`, `tier family_monthly|family_yearly`, `status active|past_due|canceled|expired`, `current_period_start/end`, `cancel_at_period_end bool`, provider refs, `region/currency`).

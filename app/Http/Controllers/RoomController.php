@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Media\MediaManager;
 use App\Models\Client;
+use App\Models\HouseMember;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\RoomMember;
@@ -30,6 +31,8 @@ class RoomController extends Controller
 
     public function show(Room $room): Response
     {
+        $this->authorize('view', $room);
+
         $room = $this->roomService->getRoomDetails($room);
         $room->loadCount('stories');
         $pendingTributes = $room->tributes()->where('is_approved', false)->latest()->get();
@@ -162,6 +165,8 @@ class RoomController extends Controller
 
     public function feed(Room $room): Response
     {
+        $this->authorize('view', $room);
+
         $stories = Story::where('room_id', $room->id)
             ->where('type', 'video')
             ->with('user')
@@ -212,6 +217,8 @@ class RoomController extends Controller
 
     public function update(Request $request, Room $room): RedirectResponse
     {
+        $this->authorize('update', $room);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -357,6 +364,15 @@ class RoomController extends Controller
      */
     public function downloadMedia(Room $room)
     {
+        if (session()->has('house_member_id')) {
+            $ownerId = (int) session('house_owner_id');
+            $this->authorizeHouseAccess($room, $ownerId);
+        } else {
+            abort_if(auth()->guest(), 403);
+
+            $this->authorize('view', $room);
+        }
+
         $files = [];
         $tributes = $room->tributes;
         $stories = $room->stories;
@@ -486,6 +502,20 @@ class RoomController extends Controller
         }
 
         return $this->mediaManager->uploadImage($file);
+    }
+
+    protected function authorizeHouseAccess(Room $room, int $ownerId): void
+    {
+        $allMemberIds = HouseMember::query()
+            ->where('owner_id', $ownerId)
+            ->pluck('id')
+            ->values()
+            ->toArray();
+
+        $accessible = $room->created_by === $ownerId
+            || in_array($room->created_by_house_member_id, $allMemberIds);
+
+        abort_unless($accessible, 403);
     }
 
     // ── Family Member Management ──

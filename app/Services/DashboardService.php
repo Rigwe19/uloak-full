@@ -16,7 +16,7 @@ class DashboardService
     {
         $userRooms = $this->getRoomsWithCounts(
             Room::where(function ($query) use ($user) {
-                $query->where('status', 'active')
+                $query->where('created_by', $user->id)
                     ->orWhereIn('id', $user->rooms()->select('rooms.id'));
             })->with(['members'])
         );

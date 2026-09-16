@@ -315,7 +315,7 @@ export default function About({ page }: Props) {
                     </div>
                 </section>
 
-                {/* Founder Section */}
+                {/* Founder Section
                 <section className="bg-surface/10 px-6 py-32 md:px-12 lg:px-24">
                     <div className="mx-auto max-w-7xl">
                         <div className="grid grid-cols-1 items-center gap-20 lg:grid-cols-2">
@@ -368,7 +368,7 @@ export default function About({ page }: Props) {
                             </div>
                         </div>
                     </div>
-                </section>
+                </section> */}
 
                 {/* Company Expressions */}
                 <section className="px-6 py-32 md:px-12 lg:px-24">

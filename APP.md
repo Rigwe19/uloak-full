@@ -44,6 +44,7 @@ app/Services/RoomService.php  # the paywall gate (1 Starter / general only)
 app/Http/Controllers/{PageController#weddings/pricing,WeddingsController}
 app/Http/Controllers/Billing/{Checkout,Webhook,Subscription}Controller
 app/Http/Middleware/{TrackReferral,EnsureContributionsOpen}
+app/Policies/RoomPolicy.php  # view/update/delete/manage for rooms (auto-registered)
 resources/js/pages/{weddings.tsx,weddings/create.tsx,pricing.tsx,checkout/status.tsx}
 resources/js/components/pricing/{RegionSelector,StickyCTA}
 routes/web.php, routes/console.php (01:00 close-expired-starters)
@@ -52,6 +53,7 @@ public/images/01..10-ulo-*.jpg
 ```
 
 ## Conventions / gotchas
+- **Room authorization**: `App\Policies\RoomPolicy` (auto-registered) is the single access gate for dashboard/API room `show|update|delete`. `view`/`update` = room creator OR `room_user` pivot member; `delete`/`manage` = creator only. Enforced via `$this->authorize()` in `RoomController` and `Api\V1\RoomController`. `DashboardService` + API `index` only return rooms where `created_by = user.id` OR pivot member — the dashboard **never** lists other users’ active rooms. The bulk `rooms/{room}/download-media` endpoint is gated for an authenticated owner/member OR a house-member session (house members have no `users` row). Public share pages (`/share/rooms/*`) intentionally remain unauthenticated by slug.
 - `room.tier_type = NULL` is **legacy unlimited** — don't mass-assign tier, let `RoomService` set it. House-member rooms count against `ownerId` quota.
 - Dashboard `POST /dashboard/rooms` with `room_type=wedding` must **302 to weddings.create?type=wedding** (not validation error). Same for `birthday/burial…` → `weddings.create?type=…`. Price cards’ *Create a Full Room* already goes to `weddings/create`.
 - `pricing`’s Family Archive buttons hit `POST /billing/subscriptions` → JSON `authorization_url` → `window.location`; they require `auth` or redirect to `register?tier=…&region=…`.

@@ -31,7 +31,7 @@ class RoomController extends Controller
     public function index(Request $request): JsonResponse
     {
         $rooms = Room::where(function ($q) use ($request) {
-            $q->where('status', 'active')
+            $q->where('created_by', $request->user()->id)
                 ->orWhereIn('id', $request->user()->rooms()->select('rooms.id'));
         })->withCount(['stories', 'tributes'])->latest()->paginate(20);
 
@@ -40,6 +40,8 @@ class RoomController extends Controller
 
     public function show(Room $room): JsonResponse
     {
+        $this->authorize('view', $room);
+
         $room = $this->roomService->getRoomDetails($room);
         $room->loadCount(['stories', 'tributes']);
         $room->load(['tributes' => fn ($q) => $q->latest(), 'candles' => fn ($q) => $q->latest(), 'stories' => fn ($q) => $q->latest()->limit(24)]);
@@ -103,6 +105,8 @@ class RoomController extends Controller
 
     public function update(UpdateRoomRequest $request, Room $room): JsonResponse
     {
+        $this->authorize('update', $room);
+
         $validated = $request->validated();
 
         if ($request->hasFile('thumbnail')) {
@@ -140,7 +144,7 @@ class RoomController extends Controller
 
     public function destroy(Room $room): JsonResponse
     {
-        abort_unless($room->created_by === auth()->id(), 403);
+        $this->authorize('delete', $room);
         $room->delete();
 
         return response()->json(['message' => 'Room deleted.']);
