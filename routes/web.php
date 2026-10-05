@@ -47,13 +47,16 @@ Route::get('/weddings/create', [WeddingsController::class, 'create'])->middlewar
 Route::post('/weddings/create', [WeddingsController::class, 'create'])->middleware(['auth'])->name('weddings.store');
 Route::get('/pricing', [PageController::class, 'pricing'])->name('pricing');
 
-// Creator economy: public creator pages + viewer watch feeds
+// Creator economy: public creator pages + viewer watch feeds.
+// Watch pages are public by design: guests and non-subscribers get a locked
+// discovery view (teasers + upgrade CTAs), viewers get the full feed.
+// Individual stories stay gated by StoryPolicy::view.
 Route::get('/creators/{refCode}', [CreatorController::class, 'show'])->name('creators.show');
+Route::get('/watch', [WatchController::class, 'index'])->name('watch.index');
+Route::get('/watch/featured', [WatchController::class, 'featured'])->name('watch.featured');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/creators', [CreatorController::class, 'store'])->name('creators.store');
-    Route::get('/watch', [WatchController::class, 'index'])->middleware('viewer')->name('watch.index');
-    Route::get('/watch/featured', [WatchController::class, 'featured'])->middleware('viewer:vip')->name('watch.featured');
 });
 
 // Waiting List

@@ -10,10 +10,10 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import admin from '@/routes/admin';
-import type { User } from '@/types';
+import type { User as UserType } from '@/types';
 
 type Props = {
-    user: User;
+    user: UserType;
 };
 
 export function UserMenuContent({ user }: Props) {

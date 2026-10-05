@@ -247,10 +247,11 @@ Body: `creator_type? normal|vip` (VIP requests upgrade, admin approves). Idempot
 ```json
 { "data": [StoryResource normal ×30], "featured": [StoryResource VIP ×10, empty unless VIP viewer], "is_vip_viewer": false }
 ```
-`403` without an active viewer subscription. Key `['watch']`.
+`403 { message, requires_subscription: true, required_level: "viewer"|"viewer_vip", has_subscription, is_vip_viewer, pricing_url }` without an active viewer subscription — route mobile users to the right plan. Key `['watch']`.
+(Web `GET /watch` is public and renders a locked discovery page instead of 403; only the JSON API aborts.)
 
 ### `GET /api/v1/watch/featured` — auth:sanctum + `viewer:vip` middleware
-VIP-only push feed `{ data: [StoryResource VIP ×30] }`. `403` for standard viewers/guests. Key `['watch', 'featured']`.
+VIP-only push feed `{ data: [StoryResource VIP ×30] }`. `403` (same `requires_subscription` envelope, `required_level: "viewer_vip"`) for standard viewers/guests. Key `['watch', 'featured']`.
 
 ---
 

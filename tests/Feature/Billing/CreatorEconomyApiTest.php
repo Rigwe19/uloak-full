@@ -86,7 +86,10 @@ test('watch featured is vip only via api', function () {
     ]);
 
     $this->actingAs($this->user);
-    $this->getJson('/api/v1/watch/featured')->assertForbidden();
+    $response = $this->getJson('/api/v1/watch/featured');
+    $response->assertForbidden();
+    $response->assertJsonPath('requires_subscription', true);
+    $response->assertJsonPath('required_level', 'viewer_vip');
 
     $vip = User::factory()->create();
     Subscription::factory()->create([

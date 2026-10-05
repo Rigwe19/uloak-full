@@ -160,8 +160,8 @@ POST /billing/subscriptions/{id}/cancel
 POST /billing/rooms/{room}/move-to-archive
 GET  /creators/{refCode}         → CreatorController@show  (public creator page, subscribe via ?ref= link)
 POST /creators                   → CreatorController@store  auth  (become Normal creator, get ref link)
-GET  /watch                     → WatchController@index  auth+viewer  (normal feed + VIP featured block for VIP viewers)
-GET  /watch/featured            → WatchController@featured  auth+viewer:vip  (VIP-only push feed)
+GET  /watch                     → WatchController@index  public  (viewers: full feed; guests/non-viewers: locked discovery with upgrade CTAs, never 403)
+GET  /watch/featured            → WatchController@featured  public  (VIP viewers: full VIP feed; others: locked VIP discovery)
 GET  /admin/creators            → CreatorAdminController@index  admin  (profiles + earnings)
 POST /admin/creators/{profile}/approve|revoke
 POST /admin/creator-earnings/{earning}/pay
@@ -182,8 +182,8 @@ Navbar now ships `Weddings | Pricing | How Ulo Works | Ulo Studio | About`.
 - `weddings` — 12-section spec-faithful launch page, price from `region.full_room_formatted`, sticky mobile CTA `Create Wedding Room • {price}`.
 - `weddings/create` — occasion dropdown (so **burial/birthday/etc. all go through the same paid funnel**: `/weddings/create?type=burial` pre-selects Burial, same checkout price).
 - `pricing` — strip `05-merchandise-family + 08-event-kit`, 3 cards + **Viewer Standard / Viewer VIP cards** (region-aware, `?ref=` preserved into `POST /billing/subscriptions`), private-by-default, FAQ 12, `RegionSelector` + `StickyCTA → /weddings/create`.
-- `watch/index` — viewer feed (`viewer` middleware): normal stories + VIP featured block for VIP viewers.
-- `watch/featured` — VIP-only push feed (`viewer:vip` middleware).
+- `watch/index` — public discovery page: locked teasers + plan/sign-in CTAs for guests and non-viewers, full feed for viewers (GuestLayout vs AppLayout).
+- `watch/featured` — public VIP discovery page with VIP upsell; full feed for VIP viewers.
 - `creators/show` — public creator page with `Subscribe via my link → /pricing?ref=CODE`.
 - `admin/creators` — approve/revoke VIP + mark earnings paid.
 - `checkout/status` — polls `GET /billing/payments/{id}/status` every 3s; all pages ship `05,08` etc. so every `public/images/01..10` appears at least once site-wide. `pnpm build` manifest confirms `weddings, weddings/create, pricing, checkout/status`.

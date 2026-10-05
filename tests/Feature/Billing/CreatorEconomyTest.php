@@ -194,7 +194,12 @@ test('normal creator cannot publish vip story', function () {
     $response->assertSessionHasErrors('visibility');
 });
 
-test('watch featured requires vip subscription', function () {
+test('watch pages render locked discovery instead of 403', function () {
+    // Guest: locked discovery, never a redirect or error page.
+    $this->get(route('watch.index'))->assertOk()->assertSee('"locked":true', false);
+    $this->get(route('watch.featured'))->assertOk()->assertSee('"locked":true', false);
+
+    // Standard viewer: index unlocked, featured locked (no 403).
     $standard = User::factory()->create();
     Subscription::factory()->create([
         'user_id' => $standard->id,
@@ -204,8 +209,10 @@ test('watch featured requires vip subscription', function () {
     ]);
 
     $this->actingAs($standard);
-    $this->get(route('watch.featured'))->assertForbidden();
+    $this->get(route('watch.index'))->assertOk()->assertSee('"locked":false', false);
+    $this->get(route('watch.featured'))->assertOk()->assertSee('"locked":true', false);
 
+    // VIP viewer: everything unlocked.
     $vip = User::factory()->create();
     Subscription::factory()->create([
         'user_id' => $vip->id,
@@ -215,7 +222,7 @@ test('watch featured requires vip subscription', function () {
     ]);
 
     $this->actingAs($vip);
-    $this->get(route('watch.featured'))->assertOk();
+    $this->get(route('watch.featured'))->assertOk()->assertSee('"locked":false', false);
 });
 
 test('subscription endpoint accepts viewer tiers with creator ref', function () {
