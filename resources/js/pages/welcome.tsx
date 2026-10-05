@@ -174,7 +174,7 @@ export default function Welcome({
     };
 
     return (
-        <GuestLayout>
+        <div>
             <Head>
                 <title>Ulo | Every Story Has a Home</title>
                 <meta
@@ -1073,6 +1073,6 @@ export default function Welcome({
                     </motion.div>
                 </section>
             </div>
-        </GuestLayout>
+        </div>
     );
 }
