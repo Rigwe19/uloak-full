@@ -8,7 +8,6 @@ import {
     User,
     Plus,
     Video,
-    Sparkles,
 } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { usePlayerStore } from '@/stores/video-player-store';

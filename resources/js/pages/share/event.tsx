@@ -17,7 +17,7 @@ import {
     Download,
     DownloadCloud,
     File as FileIcon,
-    Sparkles,
+    House,
     ArrowRight,
     X,
     Loader,
@@ -82,7 +82,7 @@ function AdBanner() {
                 <div className="relative flex flex-col items-center gap-6 text-center md:flex-row md:justify-between md:text-left">
                     <div className="space-y-3">
                         <div className="flex items-center justify-center gap-2 md:justify-start">
-                            <Sparkles size={16} className="text-accent-gold" />
+                            <House size={16} className="text-accent-gold" />
                             <span className="text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
                                 Create Your Own
                             </span>

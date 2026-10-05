@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 interface StoryFeedEmptyProps {
     hasStories: boolean;
@@ -22,7 +22,7 @@ export default function StoryFeedEmpty({
         >
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-accent-gold/20 bg-accent-gold/5 text-accent-gold/70">
-                    <Sparkles size={36} className="stroke-[1.5]" />
+                    <BookOpen size={36} className="stroke-[1.5]" />
                 </div>
                 <h3 className="mb-2 text-2xl font-bold tracking-tight text-text-primary">
                     {hasStories

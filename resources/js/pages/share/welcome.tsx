@@ -1,7 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Sparkles,
+    DoorOpen,
     User as UserIcon,
     Mail as MailIcon,
     ArrowRight,
@@ -108,7 +108,7 @@ export default function ShareWelcome({
                             >
                                 <div className="space-y-4 text-center">
                                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-gold/20 bg-accent-gold/10 text-accent-gold shadow-lg shadow-accent-gold/5">
-                                        <Sparkles size={24} />
+                                        <DoorOpen size={24} />
                                     </div>
                                     <div className="space-y-2">
                                         <h1 className="text-2xl font-bold tracking-tight text-text-primary md:text-3xl">

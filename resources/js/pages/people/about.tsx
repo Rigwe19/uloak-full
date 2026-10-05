@@ -16,7 +16,7 @@ import {
     Church,
     Map,
     TreePine,
-    Sparkles,
+    Milestone,
 } from 'lucide-react';
 import React from 'react';
 import PersonLayout from '@/layouts/person-layout';
@@ -559,7 +559,7 @@ export default function About({
                 {/* Milestones Timeline */}
                 {hasMilestones && (
                     <SectionCard
-                        icon={Sparkles}
+                        icon={Milestone}
                         title="Milestones"
                         className="md:col-span-2"
                     >

@@ -5,11 +5,11 @@ import {
     ChevronLeft,
     ChevronRight,
     Clapperboard,
+    Crown,
     FolderX,
     Info,
     Lock,
     Share2,
-    Sparkles,
     Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -717,7 +717,7 @@ export default function Welcome({
                                         className="space-y-2 rounded-2xl border border-accent-gold/25 bg-bg-dark p-5"
                                     >
                                         <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest text-accent-gold uppercase">
-                                            <Sparkles size={12} /> VIP · Featured
+                                            <Crown size={12} /> VIP · Featured
                                         </span>
                                         <h3 className="font-serif text-lg leading-snug font-semibold text-text-primary">
                                             {story.title}

@@ -4,10 +4,10 @@ import {
     Check,
     ChevronDown,
     ChevronUp,
+    Download,
     Shield,
     Users,
     Heart,
-    Sparkles,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { RegionSelector } from '@/components/pricing/RegionSelector';
@@ -778,7 +778,7 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
                                 desc: 'Which contributions are included.',
                             },
                             {
-                                icon: Sparkles,
+                                icon: Download,
                                 title: 'Export',
                                 desc: 'When to download the collected stories.',
                             },

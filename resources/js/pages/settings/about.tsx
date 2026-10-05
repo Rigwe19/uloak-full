@@ -15,7 +15,7 @@ import {
     Flag,
     Church,
     TreePine,
-    Sparkles,
+    Milestone,
     Languages,
     Quote,
     Crosshair,
@@ -671,7 +671,7 @@ export default function SettingsAbout({
 
                 {/* Milestones */}
                 {hasMilestones && (
-                    <SectionCard icon={Sparkles} title="Milestones">
+                    <SectionCard icon={Milestone} title="Milestones">
                         <div className="relative space-y-5">
                             <div className="absolute top-2 bottom-2 left-[7px] w-px bg-gradient-to-b from-accent-gold/40 via-accent-gold/20 to-transparent" />
                             {milestones.map((m: any) => (
