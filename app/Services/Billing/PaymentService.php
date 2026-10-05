@@ -7,6 +7,10 @@ use App\Enums\PaymentStatus;
 use App\Enums\Region;
 use App\Enums\RoomStatus;
 use App\Enums\RoomTier;
+use App\Enums\SubscriptionStatus;
+use App\Enums\SubscriptionTier;
+use App\Models\CreatorEarning;
+use App\Models\CreatorProfile;
 use App\Models\Partner;
 use App\Models\Payment;
 use App\Models\Room;
@@ -62,7 +66,7 @@ class PaymentService
         // Validate tier key is known.
         $known = array_merge(
             array_map(fn (RoomTier $t) => $t->value, RoomTier::cases()),
-            ['family_monthly', 'family_yearly']
+            array_map(fn (SubscriptionTier $t) => $t->value, SubscriptionTier::cases()),
         );
         if (! in_array($tierKey, $known, true)) {
             throw new \InvalidArgumentException("Unknown tier: {$tierKey}");
@@ -79,6 +83,7 @@ class PaymentService
 
         $partner = null;
         $commissionAmount = null;
+        $creatorProfile = null;
         $refCode = $input['ref_code'] ?? null;
 
         if (is_string($refCode) && $refCode !== '') {
@@ -86,11 +91,14 @@ class PaymentService
             if ($partner !== null) {
                 $commissionAmount = $partner->calculateCommission($pricing['amount'], $pricing['currency']);
             }
+
+            $creatorProfile = CreatorProfile::where('ref_code', $refCode)->first();
         }
 
         return Payment::create([
             'user_id' => $user->id,
             'room_id' => $room?->id,
+            'tier' => $tierKey,
             'amount' => $pricing['amount'],
             'currency' => $pricing['currency'],
             'provider' => $provider,
@@ -98,6 +106,7 @@ class PaymentService
             'status' => PaymentStatus::Pending,
             'region' => $region,
             'partner_id' => $partner?->id,
+            'creator_profile_id' => $creatorProfile?->id,
             'commission_amount' => $commissionAmount,
             'utm' => $input['utm'] ?? null,
         ]);
@@ -160,6 +169,10 @@ class PaymentService
                 $this->activateRoom($payment->room, $payment);
             }
 
+            if ($payment->tier !== null && SubscriptionTier::tryFrom($payment->tier) !== null) {
+                $this->activateSubscription($payment);
+            }
+
             return $payment->refresh();
         });
     }
@@ -186,6 +199,60 @@ class PaymentService
             'contributions_closed_at' => null,
             'referral_partner_id' => $payment->partner_id ?? $room->referral_partner_id,
         ]);
+    }
+
+    /**
+     * Create (idempotently) a Subscription row for subscription-tier payments
+     * (family_* viewer_*) and accrue the referring creator's revenue split.
+     * Room one-off payments (full_room) skip this path.
+     */
+    protected function activateSubscription(Payment $payment): void
+    {
+        $tier = SubscriptionTier::tryFrom((string) $payment->tier);
+
+        if ($tier === null) {
+            return;
+        }
+
+        if ($payment->subscription_id !== null) {
+            return;
+        }
+
+        $now = now();
+        $periodEnd = $tier->interval() === 'year' ? $now->copy()->addYear() : $now->copy()->addMonth();
+
+        $subscription = $payment->user->subscriptions()->create([
+            'referred_creator_profile_id' => $payment->creator_profile_id,
+            'tier' => $tier,
+            'status' => SubscriptionStatus::Active,
+            'current_period_start' => $now,
+            'current_period_end' => $periodEnd,
+            'cancel_at_period_end' => false,
+            'provider' => $payment->provider,
+            'provider_reference' => $payment->provider_reference,
+            'provider_customer_reference' => null,
+            'region' => $payment->region,
+            'currency' => $payment->currency,
+        ]);
+
+        $payment->update(['subscription_id' => $subscription->id]);
+
+        if ($payment->creator_profile_id !== null) {
+            $profile = CreatorProfile::find($payment->creator_profile_id);
+
+            if ($profile !== null && ! CreatorEarning::where('payment_id', $payment->id)->exists()) {
+                CreatorEarning::create([
+                    'creator_profile_id' => $profile->id,
+                    'payment_id' => $payment->id,
+                    'subscription_id' => $subscription->id,
+                    'viewer_user_id' => $payment->user_id,
+                    'amount_minor' => $profile->calculateEarning((int) $payment->amount),
+                    'currency' => $payment->currency,
+                    'split_pct' => $profile->splitPct(),
+                    'status' => 'pending',
+                ]);
+            }
+        }
     }
 
     /**

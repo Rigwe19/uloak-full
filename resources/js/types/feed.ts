@@ -1,3 +1,10 @@
+export interface TaggedStoryPerson {
+    id: number;
+    uuid: string;
+    display_name: string;
+    person_room_slug: string | null;
+}
+
 export interface FeedStory {
     uuid: string;
     id: number;
@@ -11,6 +18,7 @@ export interface FeedStory {
     assets: { url: string; type: string; title: string; status?: string; progress?: number; media_uuid?: string }[];
     is_processing?: boolean;
     tags: string[];
+    tagged_people?: TaggedStoryPerson[];
     date: string;
     comments?: any[];
     comments_count?: number;

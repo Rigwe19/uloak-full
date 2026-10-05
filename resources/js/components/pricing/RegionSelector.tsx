@@ -14,6 +14,14 @@ export interface RegionOption {
     family_yearly_formatted: string;
     yearly_savings: number;
     yearly_savings_formatted: string;
+    viewer_monthly: number;
+    viewer_monthly_formatted: string;
+    viewer_yearly: number;
+    viewer_yearly_formatted: string;
+    viewer_vip_monthly: number;
+    viewer_vip_monthly_formatted: string;
+    viewer_vip_yearly: number;
+    viewer_vip_yearly_formatted: string;
 }
 
 interface RegionSelectorProps {

@@ -14,6 +14,10 @@ import {
 import React, { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { ResponsiveModal } from '@/components/responsive-modal';
+import {
+    PeopleTagPicker,
+    type TaggablePerson,
+} from '@/components/people-tag-picker';
 import { UploadDropzone } from '@/components/upload/UploadDropzone';
 import { UploadQueue } from '@/components/upload/UploadQueue';
 import { useUploadQueue } from '@/hooks/use-upload-queue';
@@ -35,6 +39,7 @@ interface AnnexMemoryModalProps {
     rooms?: Room[];
     onSuccess?: () => void;
     postUrl?: string;
+    taggablePeople?: TaggablePerson[];
 }
 
 type AnnexStep =
@@ -53,6 +58,7 @@ export function AnnexMemoryModal({
     rooms = [],
     onSuccess,
     postUrl,
+    taggablePeople = [],
 }: AnnexMemoryModalProps) {
     const [step, setStep] = useState<AnnexStep>(
         initialRoom ? 'selection' : 'room-select',
@@ -77,6 +83,14 @@ export function AnnexMemoryModal({
         recording: null as File | null,
         duration: '',
     });
+
+    const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
+
+    const appendPeople = (formData: FormData) => {
+        selectedPeople.forEach((id) =>
+            formData.append('person_ids[]', String(id)),
+        );
+    };
 
     const [customThumbnailPreview, setCustomThumbnailPreview] = useState<
         string | null
@@ -195,6 +209,8 @@ export function AnnexMemoryModal({
 
                 formData.append('media_uuids[]', uuid);
 
+                appendPeople(formData);
+
                 router.post(
                     postUrl || `/dashboard/rooms/${selectedRoom.slug}/stories`,
                     formData,
@@ -257,6 +273,8 @@ export function AnnexMemoryModal({
 
         uuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
 
+        appendPeople(formData);
+
         router.post(
             postUrl || `/dashboard/rooms/${selectedRoom.slug}/stories`,
             formData,
@@ -289,6 +307,7 @@ export function AnnexMemoryModal({
         setTimeout(() => {
             setStep(initialRoom ? 'selection' : 'room-select');
             setMediaType(null);
+            setSelectedPeople([]);
             // setPreviewUrl(null);
             setCustomThumbnailPreview(null);
             // setMediaUuids([]);
@@ -667,6 +686,12 @@ export function AnnexMemoryModal({
                                     className="w-full resize-none rounded-2xl border border-border-subtle bg-bg-dark px-6 py-4 text-text-primary transition-all focus:border-accent-gold/50 focus:outline-none"
                                 />
                             </div>
+
+                            <PeopleTagPicker
+                                people={taggablePeople}
+                                selected={selectedPeople}
+                                onChange={setSelectedPeople}
+                            />
 
                             {uploads.length > 0 && (
                                 <div className="space-y-3">

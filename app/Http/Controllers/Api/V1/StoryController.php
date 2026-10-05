@@ -9,17 +9,20 @@ use App\Media\MediaManager;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\Story;
+use App\Services\PersonArchiveService;
+use App\Services\StoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class StoryController extends Controller
 {
-    public function __construct(protected MediaManager $mediaManager) {}
+    public function __construct(protected MediaManager $mediaManager, protected StoryService $storyService, protected PersonArchiveService $personArchive) {}
 
     public function index(Room $room, Request $request): JsonResponse
     {
         $validated = $request->validate(['cursor' => ['nullable', 'string'], 'per_page' => ['nullable', 'integer', 'min:1', 'max:50']]);
-        $paginator = $room->stories()->latest()->cursorPaginate($validated['per_page'] ?? 24);
+        $paginator = $this->personArchive->storiesQuery($room)->latest()->cursorPaginate($validated['per_page'] ?? 24);
+        $this->personArchive->enrichStoriesWithPeople($paginator->getCollection());
 
         return response()->json([
             'data' => StoryResource::collection($paginator->getCollection()),
@@ -41,6 +44,10 @@ class StoryController extends Controller
         }
 
         $validated = $request->validated();
+
+        // Fail closed before the story exists when tagging is out of scope.
+        $this->storyService->assertStoryTagsAllowed($room, $validated['person_ids'] ?? null);
+
         $data = [
             'room_id' => $room->id,
             'user_id' => $request->user()?->id,
@@ -63,6 +70,8 @@ class StoryController extends Controller
         }
 
         $story = Story::create($data);
+
+        $this->storyService->syncStoryTags($story, $room, $validated['person_ids'] ?? null);
 
         return response()->json(['data' => new StoryResource($story)], 201);
     }

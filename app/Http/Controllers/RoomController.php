@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoomKind;
 use App\Media\MediaManager;
 use App\Models\Client;
 use App\Models\HouseMember;
@@ -10,6 +11,8 @@ use App\Models\Room;
 use App\Models\RoomMember;
 use App\Models\Story;
 use App\Services\ActivityLogger;
+use App\Services\PersonArchiveService;
+use App\Services\PersonScope;
 use App\Services\RoomService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +30,8 @@ class RoomController extends Controller
         protected RoomService $roomService,
         protected ActivityLogger $activityLogger,
         protected MediaManager $mediaManager,
+        protected PersonArchiveService $personArchive,
+        protected PersonScope $personScope,
     ) {}
 
     public function show(Room $room): Response
@@ -40,13 +45,15 @@ class RoomController extends Controller
         $allTributes = $room->tributes;
         $candles = $room->candles()->orderByRaw('CASE WHEN is_approved = false THEN 0 ELSE 1 END')->get();
 
-        $storiesPaginator = $room->stories()
+        $storiesPaginator = $this->personArchive->storiesQuery($room)
             ->latest()
             ->cursorPaginate(24);
 
         $nextCursor = $storiesPaginator->nextCursor()?->encode();
 
-        $stories = $storiesPaginator->getCollection()->map(function ($story) {
+        $stories = $this->personArchive->enrichStoriesWithPeople(
+            $storiesPaginator->getCollection()
+        )->map(function ($story) {
             $assets = $story->assets ?? [];
             $isProcessing = false;
             $enrichedAssets = $assets;
@@ -110,6 +117,7 @@ class RoomController extends Controller
                 'description' => $story->description,
                 'author' => $story->user?->name ?? $story->guest_name,
                 'tags' => $story->tags ?? [],
+                'tagged_people' => $story->tagged_people ?? [],
                 'date' => $story->created_at->format('M d, Y'),
                 'file_url' => $story->file_url
                     ? (
@@ -137,12 +145,16 @@ class RoomController extends Controller
                 ...$room->toArray(),
                 'room_type' => $room->room_type ?? null,
                 'tributes_count' => $room->tributes()->count(),
+                'archive_stories_count' => $this->personArchive->archiveCount($room),
             ],
+            'archive' => $this->personArchive->meta($room),
             'pendingTributes' => $pendingTributes,
             'approvedTributes' => $approvedTributes,
             'allTributes' => $allTributes,
 
             'stories' => $stories->values()->all(),
+
+            'taggablePeople' => $this->personScope->taggableForRoom($room),
 
             'pagination' => [
                 'next_cursor' => $nextCursor,
@@ -167,11 +179,11 @@ class RoomController extends Controller
     {
         $this->authorize('view', $room);
 
-        $stories = Story::where('room_id', $room->id)
-            ->where('type', 'video')
+        $stories = $this->personArchive->storiesQuery($room)
+            ->where('stories.type', 'video')
             ->with('user')
             ->withCount('likes')
-            ->orderBy('id', 'desc')
+            ->orderBy('stories.id', 'desc')
             ->take(10)
             ->get();
 
@@ -225,6 +237,7 @@ class RoomController extends Controller
             'privacy' => ['required', 'string', 'in:public,private'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
+            'kind' => ['nullable', 'string', 'in:'.($room->kind instanceof RoomKind ? $room->kind->value : ($room->kind ?? 'event'))],
             'enable_tributes' => ['nullable', 'boolean'],
             'enable_condolence_attendance' => ['nullable', 'boolean'],
             'enable_candle_lighting' => ['nullable', 'boolean'],
@@ -294,6 +307,8 @@ class RoomController extends Controller
             'privacy' => ['required', 'string', 'in:public,private'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
+            'kind' => ['nullable', 'string', 'in:root,branch,person,event'],
+            'person_id' => ['nullable', 'integer', 'exists:people,id', 'required_if:kind,person', 'prohibited_unless:kind,person'],
             'enable_tributes' => ['nullable', 'boolean'],
             'enable_condolence_attendance' => ['nullable', 'boolean'],
             'enable_candle_lighting' => ['nullable', 'boolean'],
@@ -331,11 +346,14 @@ class RoomController extends Controller
         // Paywall: only "general" stays free (Starter). Every other occasion type is a paid Full Room.
         // Wedding has its own dedicated funnel; the rest go to /pricing. Redirect instead of 422 so
         // the user actually lands on the paywall instead of seeing a dashboard validation error.
+        // Structural rooms (root/branch/person) are free archive infrastructure and skip this check;
+        // RoomService enforces their billing bypass authoritatively.
         $paywalledTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
+        $requestedKind = $validated['kind'] ?? 'event';
         $requestedType = $validated['room_type'] ?? 'general';
         $requestedTier = $validated['tier_type'] ?? null;
 
-        if (in_array($requestedType, $paywalledTypes, true) || $requestedTier === 'full_room' || $requestedTier === 'family_archive') {
+        if ($requestedKind === 'event' && (in_array($requestedType, $paywalledTypes, true) || $requestedTier === 'full_room' || $requestedTier === 'family_archive')) {
             return redirect()->route('weddings.create', ['type' => $requestedType !== 'general' ? $requestedType : 'wedding'])->with('info', 'This occasion requires a paid Full Room — pick the type on the next page and checkout at the same price.');
         }
 

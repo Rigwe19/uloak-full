@@ -28,6 +28,7 @@ class StoryController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'type' => ['required', 'string', 'in:video,audio,photo,document,collection'],
+            'visibility' => ['nullable', 'string', 'in:normal,vip'],
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:1048576'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
@@ -35,7 +36,13 @@ class StoryController extends Controller
             'duration' => ['nullable', 'string'],
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => ['integer', 'exists:people,id'],
         ]);
+
+        if (($validated['visibility'] ?? 'normal') === 'vip' && ! $request->user()->isVipCreator()) {
+            return redirect()->back()->withErrors(['visibility' => 'Only approved VIP creators can publish VIP stories.']);
+        }
 
         $story = $this->storyService->createStory(auth()->user(), $room, $validated);
 
@@ -54,9 +61,17 @@ class StoryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => ['integer', 'exists:people,id'],
         ]);
 
         $story->update($validated);
+
+        if (array_key_exists('person_ids', $validated)) {
+            $parent = $story->room ?? $story->event;
+            $scopeOwner = ($parent ? $this->storyService->scopeOwnerFor($parent) : null) ?? $request->user();
+            $this->storyService->syncTaggedPeople($story, $scopeOwner, $validated['person_ids']);
+        }
 
         $this->analytics->track('story.updated', story: $story);
 

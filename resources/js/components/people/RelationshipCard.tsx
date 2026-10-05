@@ -30,7 +30,11 @@ export default function RelationshipCard({
 
     return (
         <Link
-            href={`${baseUrl}/${rel.person_id}`}
+            href={
+                rel.person_room_slug
+                    ? `/dashboard/rooms/${rel.person_room_slug}`
+                    : `${baseUrl}/${rel.person_id}`
+            }
             className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface p-3 transition-all hover:border-accent-gold/30 hover:shadow-sm"
         >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gold/10 text-accent-gold">

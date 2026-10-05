@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\CreatorAdminController;
 use App\Http\Controllers\AnalyticsEventController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Billing\CheckoutController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Billing\SubscriptionController;
 use App\Http\Controllers\Billing\WebhookController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CreatorController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\EventController;
@@ -25,6 +27,7 @@ use App\Http\Controllers\ShareController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\TributeController;
 use App\Http\Controllers\WaitingListController;
+use App\Http\Controllers\WatchController;
 use App\Http\Controllers\WeddingsController;
 use App\Models\Payment;
 use Illuminate\Http\Request;
@@ -43,6 +46,15 @@ Route::get('/weddings', [PageController::class, 'weddings'])->name('weddings');
 Route::get('/weddings/create', [WeddingsController::class, 'create'])->middleware(['auth'])->name('weddings.create');
 Route::post('/weddings/create', [WeddingsController::class, 'create'])->middleware(['auth'])->name('weddings.store');
 Route::get('/pricing', [PageController::class, 'pricing'])->name('pricing');
+
+// Creator economy: public creator pages + viewer watch feeds
+Route::get('/creators/{refCode}', [CreatorController::class, 'show'])->name('creators.show');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/creators', [CreatorController::class, 'store'])->name('creators.store');
+    Route::get('/watch', [WatchController::class, 'index'])->middleware('viewer')->name('watch.index');
+    Route::get('/watch/featured', [WatchController::class, 'featured'])->middleware('viewer:vip')->name('watch.featured');
+});
 
 // Waiting List
 Route::get('/waiting-list', [WaitingListController::class, 'index'])->name('waiting-list.index');
@@ -145,6 +157,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('events/{event}/stories', [EventController::class, 'storeStory'])->name('events.stories.store');
         Route::get('events/{event}/download-media', [EventController::class, 'downloadMedia'])->name('events.download-media');
         Route::get('stories/{story}', [StoryController::class, 'show'])->name('stories.show');
+        Route::put('stories/{story}', [StoryController::class, 'update'])->name('stories.update');
         Route::get('stories/{story}/data', [StoryController::class, 'showData'])->name('stories.data');
         Route::get('stories/{story}/processing-status', [StoryController::class, 'checkProcessingStatus'])->name('stories.processing-status');
         Route::delete('stories/{story}', [StoryController::class, 'destroy'])->name('stories.destroy');
@@ -167,6 +180,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/pages/{page}', [AdminController::class, 'updatePage'])->name('pages.update');
         Route::post('/upload-image', [AdminController::class, 'uploadImage'])->name('upload-image');
         Route::get('/memberships', [AdminController::class, 'memberships'])->name('memberships');
+        Route::get('/creators', [CreatorAdminController::class, 'index'])->name('creators.index');
+        Route::post('/creators/{profile}/approve', [CreatorAdminController::class, 'approve'])->name('creators.approve');
+        Route::post('/creators/{profile}/revoke', [CreatorAdminController::class, 'revoke'])->name('creators.revoke');
+        Route::post('/creator-earnings/{earning}/pay', [CreatorAdminController::class, 'markPaid'])->name('creator-earnings.pay');
         Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs');
 

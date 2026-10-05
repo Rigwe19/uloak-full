@@ -16,6 +16,8 @@ import {
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { AnnexEventMemoryModal } from '@/components/dashboard/annex-event-memory-modal';
+import type { TaggablePerson } from '@/components/people-tag-picker';
+import { TaggedPeople } from '@/components/tagged-people';
 import { ShareQRCode } from '@/components/dashboard/share-qr-code';
 import { Button, Badge } from '@/components/dashboard/ui';
 import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
@@ -45,12 +47,14 @@ interface EventShowProps {
         path: string;
         per_page: number;
     };
+    taggablePeople?: TaggablePerson[];
 }
 
 export default function EventShow({
     event,
     stories: initialStories = [],
     pagination,
+    taggablePeople = [],
 }: EventShowProps) {
     const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [activeTab, setActiveTab] = useState('All');
@@ -585,6 +589,11 @@ export default function EventShow({
                                                     {story.date}
                                                 </span>
                                             </div>
+                                            <TaggedPeople
+                                                people={story.tagged_people}
+                                                basePath="/dashboard/rooms"
+                                                profilePath="/people"
+                                            />
                                             <div className="flex items-center justify-between gap-4">
                                                 <div className="flex shrink-0 items-center gap-2">
                                                     {/* Download button */}
@@ -638,6 +647,7 @@ export default function EventShow({
                     isOpen={isAnnexModalOpen}
                     onClose={() => setIsAnnexModalOpen(false)}
                     event={event}
+                    taggablePeople={taggablePeople}
                 />,
                 document.body,
             )}

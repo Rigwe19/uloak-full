@@ -21,6 +21,8 @@ class StoreRoomRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'privacy' => ['required', 'string', 'in:public,private'],
             'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
+            'kind' => ['nullable', 'string', 'in:root,branch,person,event'],
+            'person_id' => ['nullable', 'integer', 'exists:people,id', 'required_if:kind,person', 'prohibited_unless:kind,person'],
             'tier_type' => ['nullable', 'string', 'in:starter,full_room,family_archive'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'enable_tributes' => ['nullable', 'boolean'],

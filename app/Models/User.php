@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\SubscriptionTier;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -175,6 +176,50 @@ class User extends Authenticatable implements PasskeyUser
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function creatorProfile(): HasOne
+    {
+        return $this->hasOne(CreatorProfile::class);
+    }
+
+    public function isCreator(): bool
+    {
+        return $this->creatorProfile()->exists();
+    }
+
+    public function isVipCreator(): bool
+    {
+        $profile = $this->creatorProfile;
+
+        return $profile !== null && $profile->isVip();
+    }
+
+    public function activeViewerSubscription(): ?Subscription
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->where('current_period_end', '>', now())
+            ->whereIn('tier', [
+                SubscriptionTier::ViewerMonthly->value,
+                SubscriptionTier::ViewerYearly->value,
+                SubscriptionTier::ViewerVipMonthly->value,
+                SubscriptionTier::ViewerVipYearly->value,
+            ])
+            ->latest('current_period_end')
+            ->first();
+    }
+
+    public function canWatchVipStories(): bool
+    {
+        $sub = $this->activeViewerSubscription();
+
+        return $sub !== null && $sub->isVipViewer();
+    }
+
+    public function canWatchNormalStories(): bool
+    {
+        return $this->activeViewerSubscription() !== null;
     }
 
     public function activeSubscription(): ?Subscription

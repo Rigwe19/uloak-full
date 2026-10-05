@@ -4,18 +4,48 @@ namespace App\Services;
 
 use App\Models\Person;
 use App\Models\PersonRelationship;
+use App\Models\Room;
 use App\Person\Enums\RelationshipType;
 use Illuminate\Support\Collection;
 
 class RelationshipGraphService
 {
+    /** @var array<int, string>|null person_id => room slug, memoized per request. */
+    protected static ?array $personRoomSlugs = null;
+
+    /**
+     * Clear the memoized slug map (testing).
+     */
+    public static function flushPersonRoomSlugs(): void
+    {
+        self::$personRoomSlugs = null;
+    }
+
+    /**
+     * Slug of the person's Person Room, if one exists. Single query per
+     * request regardless of tree size; safe on empty archives.
+     */
+    public function personRoomSlug(int $personId): ?string
+    {
+        if (self::$personRoomSlugs === null) {
+            self::$personRoomSlugs = Room::whereNotNull('person_id')
+                ->pluck('slug', 'person_id')
+                ->map(fn ($slug) => (string) $slug)
+                ->all();
+        }
+
+        return self::$personRoomSlugs[$personId] ?? null;
+    }
+
     public function buildTree(Person $person, int $maxDepth = 4): array
     {
-        $visited = collect();
+        // Separate visited sets: sharing one marks the root visited during
+        // the ancestor pass, which always emptied the descendant pass.
+        // Depth still bounds adversarial cycles in either direction.
         $tree = [
             'person' => $this->personNode($person),
-            'ancestors' => $this->buildAncestors($person, $visited, $maxDepth),
-            'descendants' => $this->buildDescendants($person, $visited, $maxDepth),
+            'ancestors' => $this->buildAncestors($person, collect(), $maxDepth),
+            'descendants' => $this->buildDescendants($person, collect(), $maxDepth),
             'siblings' => $this->findSiblings($person),
             'spouses' => $this->findSpouses($person),
         ];
@@ -124,6 +154,7 @@ class RelationshipGraphService
             'name' => $person->identity?->getDisplayName() ?? 'Unknown',
             'living_status' => $person->living_status,
             'type' => $person->type,
+            'person_room_slug' => $this->personRoomSlug($person->id),
         ];
     }
 }

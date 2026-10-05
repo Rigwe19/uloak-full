@@ -44,6 +44,7 @@ class StoryResource extends JsonResource
                 'assets' => $resource['assets'] ?? null,
                 'created_at' => $createdAtFormatted,
                 'user' => $resource['user'] ?? $resource['author'] ?? null,
+                'tagged_people' => $resource['tagged_people'] ?? [],
             ];
         }
 
@@ -59,6 +60,7 @@ class StoryResource extends JsonResource
             'assets' => $this->assets,
             'created_at' => $this->created_at?->format('M d, Y'),
             'user' => $this->user?->name,
+            'tagged_people' => $this->resource->tagged_people ?? [],
         ];
     }
 }

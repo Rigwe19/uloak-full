@@ -14,6 +14,7 @@ use App\Models\Client;
 use App\Models\Media;
 use App\Models\Room;
 use App\Services\ActivityLogger;
+use App\Services\PersonArchiveService;
 use App\Services\RoomService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class RoomController extends Controller
         protected RoomService $roomService,
         protected ActivityLogger $activityLogger,
         protected MediaManager $mediaManager,
+        protected PersonArchiveService $personArchive,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -46,12 +48,22 @@ class RoomController extends Controller
         $room->loadCount(['stories', 'tributes']);
         $room->load(['tributes' => fn ($q) => $q->latest(), 'candles' => fn ($q) => $q->latest(), 'stories' => fn ($q) => $q->latest()->limit(24)]);
 
+        if ($this->personArchive->isPersonRoom($room)) {
+            $room->setRelation(
+                'stories',
+                $this->personArchive->storiesQuery($room)->with(['user'])->latest()->limit(24)->get()
+            );
+        }
+
+        $this->personArchive->enrichStoriesWithPeople($room->stories);
+
         return response()->json([
             'data' => [
                 'room' => new RoomResource($room),
                 'stories' => StoryResource::collection($room->stories),
                 'tributes' => TributeResource::collection($room->tributes),
                 'candles' => CandleResource::collection($room->candles),
+                'archive' => $this->personArchive->meta($room),
             ],
         ]);
     }
@@ -78,10 +90,11 @@ class RoomController extends Controller
         }
 
         $paywalledTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
+        $requestedKind = $validated['kind'] ?? 'event';
         $requestedType = $validated['room_type'] ?? 'general';
         $requestedTier = $validated['tier_type'] ?? null;
 
-        if (in_array($requestedType, $paywalledTypes, true) || $requestedTier === 'full_room' || $requestedTier === 'family_archive') {
+        if ($requestedKind === 'event' && (in_array($requestedType, $paywalledTypes, true) || $requestedTier === 'full_room' || $requestedTier === 'family_archive')) {
             return response()->json([
                 'message' => 'This occasion requires a paid Full Room. Use POST /api/v1/billing/checkout.',
                 'requires_checkout' => true,
@@ -155,7 +168,7 @@ class RoomController extends Controller
         $validated = $request->validate(['cursor' => ['nullable', 'integer'], 'limit' => ['nullable', 'integer', 'min:1', 'max:20']]);
         $limit = $validated['limit'] ?? 10;
 
-        $query = $room->stories()->where('type', 'video')->with(['user'])->withCount(['likes', 'comments'])->orderBy('id', 'desc');
+        $query = $this->personArchive->storiesQuery($room)->where('stories.type', 'video')->with(['user'])->withCount(['likes', 'comments'])->orderBy('stories.id', 'desc');
 
         if (! empty($validated['cursor'])) {
             $query->where('id', '<', $validated['cursor']);

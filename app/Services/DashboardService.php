@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RoomKind;
 use App\Models\Event;
 use App\Models\Room;
 use App\Models\Story;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Storage;
 
 class DashboardService
 {
+    public function __construct(protected PersonArchiveService $personArchive) {}
+
     public function getDashboardData(User $user): array
     {
         $userRooms = $this->getRoomsWithCounts(
@@ -68,6 +71,7 @@ class DashboardService
         return [
             'rooms' => $rooms,
             'events' => $events,
+            'archive' => $this->getArchiveNav($rooms),
             'recentStories' => $recentStories->map(fn ($story) => [
                 'id' => $story->id,
                 'title' => $story->title,
@@ -83,6 +87,30 @@ class DashboardService
             'house_members' => $houseMemberData,
             'notifications' => [],
         ];
+    }
+
+    /**
+     * Structural rooms (root/branch/person) for the Family Archive nav strip,
+     * each with its archive story count. Empty when the family has no
+     * structural rooms yet — the dashboard grid is then unchanged.
+     */
+    private function getArchiveNav(Collection $rooms): array
+    {
+        $structural = Room::whereIn('id', $rooms->pluck('id'))
+            ->where('kind', '!=', RoomKind::Event->value)
+            ->with('person.identity')
+            ->orderBy('id')
+            ->get();
+
+        return $structural->map(fn ($room) => [
+            'id' => $room->id,
+            'slug' => $room->slug,
+            'name' => $room->name,
+            'kind' => $room->kind instanceof RoomKind ? $room->kind->value : $room->kind,
+            'thumbnail' => $room->thumbnail,
+            'person_name' => $room->person?->identity?->getDisplayName(),
+            'archive_count' => $this->personArchive->archiveCount($room),
+        ])->values()->all();
     }
 
     private function getRoomsWithCounts($query): Collection

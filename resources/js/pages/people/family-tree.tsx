@@ -43,17 +43,24 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
                         </h3>
                         <div className="grid gap-3 sm:grid-cols-2">
                             {graph.graph.spouses.map((s: SpouseNode) => (
-                                <div
+                                <a
                                     key={s.person.id}
-                                    className="rounded-xl border border-border-subtle bg-surface p-3"
+                                    href={
+                                        s.person.person_room_slug
+                                            ? `/dashboard/rooms/${s.person.person_room_slug}`
+                                            : `${baseUrl}/${s.person.id}`
+                                    }
+                                    className="block rounded-xl border border-border-subtle bg-surface p-3 transition-colors hover:border-accent-gold/30"
                                 >
                                     <p className="text-sm font-bold text-text-primary">
                                         {s.person.name}
                                     </p>
                                     <p className="text-xs text-text-muted capitalize">
                                         {s.status}
+                                        {s.person.person_room_slug &&
+                                            ' · has archive'}
                                     </p>
-                                </div>
+                                </a>
                             ))}
                         </div>
                     </section>
@@ -66,17 +73,24 @@ export default function FamilyTree({ person, graph }: FamilyTreeProps) {
                         </h3>
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {graph.graph.siblings.map((s: SiblingNode) => (
-                                <div
+                                <a
                                     key={s.person.id}
-                                    className="rounded-xl border border-border-subtle bg-surface p-3"
+                                    href={
+                                        s.person.person_room_slug
+                                            ? `/dashboard/rooms/${s.person.person_room_slug}`
+                                            : `${baseUrl}/${s.person.id}`
+                                    }
+                                    className="block rounded-xl border border-border-subtle bg-surface p-3 transition-colors hover:border-accent-gold/30"
                                 >
                                     <p className="text-sm font-bold text-text-primary">
                                         {s.person.name}
                                     </p>
                                     <p className="text-xs text-text-muted capitalize">
                                         {s.kind}
+                                        {s.person.person_room_slug &&
+                                            ' · has archive'}
                                     </p>
-                                </div>
+                                </a>
                             ))}
                         </div>
                     </section>
@@ -153,7 +167,11 @@ function TreeView({
             {nodes.map((node, i) => (
                 <div key={node.person.id + '-' + i}>
                     <a
-                        href={`${baseUrl}/${node.person.id}`}
+                        href={
+                            node.person.person_room_slug
+                                ? `/dashboard/rooms/${node.person.person_room_slug}`
+                                : `${baseUrl}/${node.person.id}`
+                        }
                         className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm transition-colors hover:border-accent-gold/30"
                     >
                         <ChevronRight size={14} className="text-text-muted" />
@@ -163,6 +181,11 @@ function TreeView({
                         <span className="text-xs text-text-muted capitalize">
                             ({node.kind})
                         </span>
+                        {node.person.person_room_slug && (
+                            <span className="ml-auto text-[10px] font-bold tracking-widest text-accent-gold uppercase">
+                                Archive
+                            </span>
+                        )}
                     </a>
                     <TreeView
                         nodes={node.ancestors || node.descendants || []}

@@ -28,6 +28,8 @@ import { createPortal } from 'react-dom';
 import CandleSVG from '@/components/candleSVG';
 import type { Candle } from '@/components/candleThemes';
 import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
+import type { TaggablePerson } from '@/components/people-tag-picker';
+import { TaggedPeople } from '@/components/tagged-people';
 import { EditRoomModal } from '@/components/dashboard/edit-room-modal';
 import { ShareQRCode } from '@/components/dashboard/share-qr-code';
 import { AvatarGroup, Badge, Button } from '@/components/dashboard/ui';
@@ -72,6 +74,7 @@ interface RoomShowProps {
     approvedTributes: TributeDB[];
     allTributes: TributeDB[];
     candles: Candle[];
+    taggablePeople?: TaggablePerson[];
 }
 
 interface TributeDB {
@@ -101,6 +104,7 @@ export default function RoomShow({
     pendingTributes: initialPending = [],
     approvedTributes: initialApproved = [],
     allTributes: tributes,
+    taggablePeople = [],
 }: RoomShowProps) {
     const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [pendingTributes, setPendingTributes] =
@@ -1101,6 +1105,11 @@ export default function RoomShow({
                                                 <p className="line-clamp-2 text-sm font-light text-text-muted italic">
                                                     "{story.description}"
                                                 </p>
+                                                <TaggedPeople
+                                                    people={story.tagged_people}
+                                                    basePath="/dashboard/rooms"
+                                                    profilePath="/people"
+                                                />
                                             </div>
                                             <div className="flex items-center justify-between border-t border-white/5 pt-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
                                                 <div className="flex items-center gap-2">
@@ -1258,6 +1267,11 @@ export default function RoomShow({
                                             <p className="truncate text-xs text-text-muted italic md:text-sm">
                                                 "{story.description}"
                                             </p>
+                                            <TaggedPeople
+                                                people={story.tagged_people}
+                                                basePath="/dashboard/rooms"
+                                                profilePath="/people"
+                                            />
                                             <div className="flex items-center gap-2 text-[8px] font-bold tracking-[0.2em] text-text-muted uppercase md:text-[10px]">
                                                 <UserIcon
                                                     size={12}
@@ -1280,6 +1294,7 @@ export default function RoomShow({
                     isOpen={isAnnexModalOpen}
                     onClose={() => setIsAnnexModalOpen(false)}
                     room={room as any}
+                    taggablePeople={taggablePeople}
                 />,
                 document.body,
             )}

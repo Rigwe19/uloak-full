@@ -7,6 +7,9 @@ use App\Models\Media;
 use App\Models\Room;
 use App\Models\RoomMember;
 use App\Models\Story;
+use App\Services\PersonArchiveService;
+use App\Services\PersonScope;
+use App\Services\StoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +18,7 @@ use Inertia\Response as InertiaResponse;
 
 class FamilyController extends Controller
 {
-    public function __construct(protected MediaManager $mediaManager) {}
+    public function __construct(protected MediaManager $mediaManager, protected StoryService $storyService, protected PersonArchiveService $personArchive, protected PersonScope $personScope) {}
 
     /**
      * Access a room via a token (no password, no email).
@@ -77,8 +80,8 @@ class FamilyController extends Controller
             ->where('room_id', $room->id)
             ->firstOrFail();
 
-        $paginator = $room->stories()
-            ->whereNull('follow_up_to')
+        $paginator = $this->personArchive->storiesQuery($room)
+            ->whereNull('stories.follow_up_to')
             ->with([
                 'comments' => function ($q) {
                     $q->latest();
@@ -86,79 +89,83 @@ class FamilyController extends Controller
                 'followUpStories',
             ])
             ->latest()
-            ->cursorPaginate(24)
-            ->through(function ($story) {
-                $assets = $story->assets ?? [];
-                $isProcessing = false;
-                $enrichedAssets = $assets;
-                if (! empty($assets)) {
-                    $uuids = collect($assets)->pluck('media_uuid')->filter()->values()->all();
-                    if (! empty($uuids)) {
-                        $mediaMap = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
-                        $enrichedAssets = collect($assets)->map(function ($asset) use ($mediaMap, &$isProcessing) {
-                            $uuid = $asset['media_uuid'] ?? null;
-                            if ($uuid && isset($mediaMap[$uuid])) {
-                                $media = $mediaMap[$uuid];
-                                $asset['status'] = $media->status;
-                                $asset['progress'] = $media->progress;
-                                if (in_array($media->status, ['uploading', 'processing'], true)) {
-                                    $isProcessing = true;
-                                }
+            ->cursorPaginate(24);
+
+        $this->personArchive->enrichStoriesWithPeople($paginator->getCollection());
+
+        $paginator = $paginator->through(function ($story) {
+            $assets = $story->assets ?? [];
+            $isProcessing = false;
+            $enrichedAssets = $assets;
+            if (! empty($assets)) {
+                $uuids = collect($assets)->pluck('media_uuid')->filter()->values()->all();
+                if (! empty($uuids)) {
+                    $mediaMap = Media::whereIn('uuid', $uuids)->get()->keyBy('uuid');
+                    $enrichedAssets = collect($assets)->map(function ($asset) use ($mediaMap, &$isProcessing) {
+                        $uuid = $asset['media_uuid'] ?? null;
+                        if ($uuid && isset($mediaMap[$uuid])) {
+                            $media = $mediaMap[$uuid];
+                            $asset['status'] = $media->status;
+                            $asset['progress'] = $media->progress;
+                            if (in_array($media->status, ['uploading', 'processing'], true)) {
+                                $isProcessing = true;
                             }
+                        }
 
-                            return $asset;
-                        })->all();
-                    }
-                } elseif ($story->type === 'video' && empty($story->file_url)) {
-                    $isProcessing = true;
+                        return $asset;
+                    })->all();
+                }
+            } elseif ($story->type === 'video' && empty($story->file_url)) {
+                $isProcessing = true;
+            }
+
+            $thumb = $story->thumbnail;
+            if ($thumb && ! str_starts_with($thumb, 'http') && ! str_starts_with($thumb, '/storage')) {
+                $thumb = Storage::disk('public')->url(ltrim($thumb, '/'));
+            }
+            $fileUrl = $story->file_url;
+            if ($fileUrl && ! str_starts_with($fileUrl, 'http') && ! str_starts_with($fileUrl, '/storage')) {
+                $fileUrl = Storage::disk('public')->url(ltrim($fileUrl, '/'));
+            }
+            $enrichedAssets = collect($enrichedAssets)->map(function ($asset) {
+                if (isset($asset['url']) && $asset['url'] && ! str_starts_with($asset['url'], 'http') && ! str_starts_with($asset['url'], '/storage')) {
+                    $asset['url'] = Storage::disk('public')->url(ltrim($asset['url'], '/'));
                 }
 
-                $thumb = $story->thumbnail;
-                if ($thumb && ! str_starts_with($thumb, 'http') && ! str_starts_with($thumb, '/storage')) {
-                    $thumb = Storage::disk('public')->url(ltrim($thumb, '/'));
-                }
-                $fileUrl = $story->file_url;
-                if ($fileUrl && ! str_starts_with($fileUrl, 'http') && ! str_starts_with($fileUrl, '/storage')) {
-                    $fileUrl = Storage::disk('public')->url(ltrim($fileUrl, '/'));
-                }
-                $enrichedAssets = collect($enrichedAssets)->map(function ($asset) {
-                    if (isset($asset['url']) && $asset['url'] && ! str_starts_with($asset['url'], 'http') && ! str_starts_with($asset['url'], '/storage')) {
-                        $asset['url'] = Storage::disk('public')->url(ltrim($asset['url'], '/'));
-                    }
+                return $asset;
+            })->all();
 
-                    return $asset;
-                })->all();
-
-                return [
-                    'id' => $story->id,
-                    'title' => $story->title,
-                    'type' => $story->type,
-                    'description' => $story->description,
-                    'author' => $story->user?->name ?? $story->roomMember?->name ?? $story->getGuestName() ?? 'Anonymous',
-                    'thumbnail' => $thumb,
-                    'file_url' => $fileUrl,
-                    'assets' => $enrichedAssets,
-                    'is_processing' => $isProcessing,
-                    'room_member_id' => $story->room_member_id,
-                    'comments' => $story->comments->map(fn ($c) => [
-                        'id' => $c->id,
-                        'content' => $c->content,
-                        'author' => $c->authorName(),
-                        'date' => $c->created_at->diffForHumans(),
-                    ]),
-                    'comments_count' => $story->comments()->count(),
-                    'follow_ups' => $story->followUpStories->map(fn ($fs) => [
-                        'id' => $fs->id,
-                        'type' => $fs->type,
-                        'file_url' => $fs->file_url,
-                        'thumbnail' => $fs->thumbnail,
-                        'author' => $fs->user?->name ?? $fs->roomMember?->name ?? $fs->getGuestName() ?? 'Anonymous',
-                        'created_at' => $fs->created_at->format('M d, Y'),
-                    ]),
-                    'date' => $story->created_at->format('M d, Y'),
-                    'tags' => $story->tags ?? [],
-                ];
-            });
+            return [
+                'id' => $story->id,
+                'title' => $story->title,
+                'type' => $story->type,
+                'description' => $story->description,
+                'author' => $story->user?->name ?? $story->roomMember?->name ?? $story->getGuestName() ?? 'Anonymous',
+                'thumbnail' => $thumb,
+                'file_url' => $fileUrl,
+                'assets' => $enrichedAssets,
+                'is_processing' => $isProcessing,
+                'room_member_id' => $story->room_member_id,
+                'comments' => $story->comments->map(fn ($c) => [
+                    'id' => $c->id,
+                    'content' => $c->content,
+                    'author' => $c->authorName(),
+                    'date' => $c->created_at->diffForHumans(),
+                ]),
+                'comments_count' => $story->comments()->count(),
+                'follow_ups' => $story->followUpStories->map(fn ($fs) => [
+                    'id' => $fs->id,
+                    'type' => $fs->type,
+                    'file_url' => $fs->file_url,
+                    'thumbnail' => $fs->thumbnail,
+                    'author' => $fs->user?->name ?? $fs->roomMember?->name ?? $fs->getGuestName() ?? 'Anonymous',
+                    'created_at' => $fs->created_at->format('M d, Y'),
+                ]),
+                'date' => $story->created_at->format('M d, Y'),
+                'tags' => $story->tags ?? [],
+                'tagged_people' => $story->tagged_people ?? [],
+            ];
+        });
 
         return Inertia::render('family/rooms/show', [
             'room' => [
@@ -170,6 +177,8 @@ class FamilyController extends Controller
                 'room_type' => $room->room_type,
             ],
             'stories' => $paginator->items(),
+            'archive' => $this->personArchive->meta($room),
+            'taggablePeople' => $this->personScope->taggableForRoom($room),
             'pagination' => [
                 'next_cursor' => $paginator->nextCursor()?->encode(),
                 'path' => $paginator->path(),
@@ -207,7 +216,12 @@ class FamilyController extends Controller
             'recording' => ['nullable', 'file', 'max:1048576'],
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => ['integer', 'exists:people,id'],
         ]);
+
+        // Fail closed before any upload work: no story is created with partial tagging.
+        $this->storyService->assertStoryTagsAllowed($room, $validated['person_ids'] ?? null);
 
         $fileUrl = null;
         $assets = [];
@@ -299,7 +313,7 @@ class FamilyController extends Controller
             $thumbnail = $fileUrl;
         }
 
-        Story::create([
+        $story = Story::create([
             'room_id' => $room->id,
             'room_member_id' => $member->id,
             'guest_name' => $member->name,
@@ -312,6 +326,8 @@ class FamilyController extends Controller
             'assets' => $assets,
             'tags' => ['family-contribution'],
         ]);
+
+        $this->storyService->syncStoryTags($story, $room, $validated['person_ids'] ?? null);
 
         return redirect()->back()->with('success', 'Your memory has been shared!');
     }

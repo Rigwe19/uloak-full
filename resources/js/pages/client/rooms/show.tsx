@@ -2,6 +2,8 @@ import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Image, User as UserIcon } from 'lucide-react';
 import { dashboard } from '@/routes/client';
+import { TaggedPeople } from '@/components/tagged-people';
+import type { TaggedStoryPerson } from '@/types/feed';
 
 function resolveMediaUrl(url: string | null): string {
     if (!url) {
@@ -29,6 +31,7 @@ interface Story {
     thumbnail: string | null;
     file_url: string | null;
     date: string;
+    tagged_people?: TaggedStoryPerson[];
 }
 
 interface Props {
@@ -122,6 +125,10 @@ export default function ClientRoomShow({ room, stories }: Props) {
                                                 "{story.description}"
                                             </p>
                                         )}
+                                        <TaggedPeople
+                                            people={story.tagged_people}
+                                            basePath="/client/rooms"
+                                        />
                                     </div>
                                     <div className="flex items-center justify-between border-t border-white/5 pt-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
                                         <span className="flex items-center gap-1">

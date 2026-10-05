@@ -13,6 +13,10 @@ import {
 import React, { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { ResponsiveModal } from '@/components/responsive-modal';
+import {
+    PeopleTagPicker,
+    type TaggablePerson,
+} from '@/components/people-tag-picker';
 import { UploadDropzone } from '@/components/upload/UploadDropzone';
 import { UploadQueue } from '@/components/upload/UploadQueue';
 import { useUploadQueue } from '@/hooks/use-upload-queue';
@@ -32,6 +36,7 @@ interface AnnexEventMemoryModalProps {
     onClose: () => void;
     event: EventType;
     onSuccess?: () => void;
+    taggablePeople?: TaggablePerson[];
 }
 
 type AnnexStep = 'selection' | 'upload' | 'voice' | 'details' | 'success';
@@ -42,6 +47,7 @@ export function AnnexEventMemoryModal({
     onClose,
     event,
     onSuccess,
+    taggablePeople = [],
 }: AnnexEventMemoryModalProps) {
     const [step, setStep] = useState<AnnexStep>('selection');
     const [mediaType, setMediaType] = useState<MediaType | null>(null);
@@ -65,6 +71,14 @@ export function AnnexEventMemoryModal({
     const [customThumbnailPreview, setCustomThumbnailPreview] = useState<
         string | null
     >(null);
+
+    const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
+
+    const appendPeople = (formData: FormData) => {
+        selectedPeople.forEach((id) =>
+            formData.append('person_ids[]', String(id)),
+        );
+    };
 
     const handleMediaTypeSelect = (type: MediaType) => {
         setMediaType(type);
@@ -169,6 +183,8 @@ export function AnnexEventMemoryModal({
 
                 formData.append('media_uuids[]', uuid);
 
+                appendPeople(formData);
+
                 router.post(
                     `/dashboard/events/${event.slug}/stories`,
                     formData,
@@ -231,6 +247,8 @@ export function AnnexEventMemoryModal({
 
         uuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
 
+        appendPeople(formData);
+
         router.post(`/dashboard/events/${event.slug}/stories`, formData, {
             onSuccess: () => {
                 setStep('success');
@@ -258,6 +276,7 @@ export function AnnexEventMemoryModal({
         setTimeout(() => {
             setStep('selection');
             setMediaType(null);
+            setSelectedPeople([]);
             setCustomThumbnailPreview(null);
             reset();
         }, 300);
@@ -584,6 +603,12 @@ export function AnnexEventMemoryModal({
                                     />
                                 </div>
                             )}
+
+                            <PeopleTagPicker
+                                people={taggablePeople}
+                                selected={selectedPeople}
+                                onChange={setSelectedPeople}
+                            />
 
                             {/* {customThumbnailPreview ? (
                                     <div className="space-y-2">

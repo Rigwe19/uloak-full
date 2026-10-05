@@ -27,6 +27,7 @@ class Payment extends Model
     protected $fillable = [
         'user_id',
         'room_id',
+        'tier',
         'amount',
         'currency',
         'provider',
@@ -35,6 +36,8 @@ class Payment extends Model
         'status',
         'region',
         'partner_id',
+        'creator_profile_id',
+        'subscription_id',
         'commission_amount',
         'utm',
         'paid_at',
@@ -53,6 +56,16 @@ class Payment extends Model
     public function partner(): BelongsTo
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function creatorProfile(): BelongsTo
+    {
+        return $this->belongsTo(CreatorProfile::class);
+    }
+
+    public function subscription(): BelongsTo
+    {
+        return $this->belongsTo(Subscription::class);
     }
 
     protected function casts(): array

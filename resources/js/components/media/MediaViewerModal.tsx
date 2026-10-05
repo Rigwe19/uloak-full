@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VideoPlayer } from '@/components/media/VideoPlayer';
+import { TaggedPeople } from '@/components/tagged-people';
 
 const SWIPE_THRESHOLD = 60;
 
@@ -69,12 +70,18 @@ interface MediaViewerModalProps {
     stories: any[];
     initialIndex: number;
     onClose: () => void;
+    /** Base path for person-room links (defaults to dashboard). */
+    roomsBasePath?: string;
+    /** Profile path for people without a person room. */
+    profilePath?: string;
 }
 
 export function MediaViewerModal({
     stories,
     initialIndex,
     onClose,
+    roomsBasePath = '/dashboard/rooms',
+    profilePath = '/people',
 }: MediaViewerModalProps) {
     const [currentIdx, setCurrentIdx] = useState(initialIndex);
     const touchStartY = useRef(0);
@@ -249,6 +256,16 @@ export function MediaViewerModal({
                             <p className="mt-1.5 text-xs text-white/40">
                                 {[story.author, story.date].filter(Boolean).join(' · ')}
                             </p>
+                        )}
+                        {(story.tagged_people?.length ?? 0) > 0 && (
+                            <div className="mt-2 flex justify-center">
+                                <TaggedPeople
+                                    people={story.tagged_people}
+                                    basePath={roomsBasePath}
+                                    profilePath={profilePath}
+                                    className="justify-center text-xs text-white/60"
+                                />
+                            </div>
                         )}
                     </div>
 

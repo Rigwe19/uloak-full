@@ -149,6 +149,11 @@ class Person extends Model
         return $this->hasMany(PersonStoryLink::class, 'person_id');
     }
 
+    public function personRoom(): HasOne
+    {
+        return $this->hasOne(Room::class, 'person_id');
+    }
+
     public function stories(): HasManyThrough
     {
         return $this->hasManyThrough(Story::class, PersonStoryLink::class, 'person_id', 'id', 'id', 'story_id');

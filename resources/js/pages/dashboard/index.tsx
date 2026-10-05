@@ -22,6 +22,11 @@ import {
 } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
 import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
+import {
+    ArchiveNav,
+    type ArchiveNavEntry,
+} from '@/components/dashboard/archive-nav';
+import type { TaggablePerson } from '@/components/people-tag-picker';
 import { RoomCard } from '@/components/dashboard/room-card';
 import { Button, Badge, AvatarGroup } from '@/components/dashboard/ui';
 import { MediaViewerModal } from '@/components/media/MediaViewerModal';
@@ -57,13 +62,19 @@ interface DashboardProps {
             avatar: string | null;
         }[];
         notifications: any[];
+        archive?: ArchiveNavEntry[];
     };
     auth: {
         user: any;
     };
+    taggablePeople?: TaggablePerson[];
 }
 
-export default function Dashboard({ dashboardData, auth }: DashboardProps) {
+export default function Dashboard({
+    dashboardData,
+    auth,
+    taggablePeople = [],
+}: DashboardProps) {
     const {
         rooms,
         events,
@@ -71,6 +82,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
         recentStories,
         notifications,
         house_members,
+        archive = [] as ArchiveNavEntry[],
     } = dashboardData;
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -394,6 +406,9 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                 ))}
             </section>
 
+            {/* Family Archive navigation (structural rooms only) */}
+            <ArchiveNav entries={archive} />
+
             {/* Room Grid Header */}
             {!isBusinessAdmin && (
                 <section>
@@ -593,6 +608,7 @@ export default function Dashboard({ dashboardData, auth }: DashboardProps) {
                 isOpen={isNewStoryOpen}
                 onClose={() => setIsNewStoryOpen(false)}
                 rooms={rooms}
+                taggablePeople={taggablePeople}
             />
 
             {/* Create Room / Event Modal */}

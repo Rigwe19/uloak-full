@@ -37,6 +37,7 @@ export type RelationshipNode = {
     called_them?: string;
     called_me?: string;
     closeness?: number;
+    person_room_slug?: string | null;
 };
 
 export type FamilyTree = {
@@ -53,6 +54,7 @@ export type PersonNode = {
     name: string;
     living_status: string;
     type: string;
+    person_room_slug?: string | null;
 };
 
 export type TreeNode = {

@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Event;
 use App\Models\Room;
 use App\Services\ActivityLogger;
+use App\Services\PersonArchiveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ use Inertia\Response;
 
 class ClientController extends Controller
 {
-    public function __construct(protected ActivityLogger $activityLogger) {}
+    public function __construct(protected ActivityLogger $activityLogger, protected PersonArchiveService $personArchive) {}
 
     /**
      * List business admin's clients (JSON).
@@ -158,7 +159,9 @@ class ClientController extends Controller
         abort_unless($client->rooms()->where('room_id', $room->id)->exists(), 403);
 
         $room->loadCount('stories');
-        $stories = $room->stories()->with('user')->latest()->get()->map(fn ($story) => [
+        $stories = $this->personArchive->enrichStoriesWithPeople(
+            $this->personArchive->storiesQuery($room)->with('user')->latest()->get()
+        )->map(fn ($story) => [
             'uuid' => $story->uuid,
             'id' => $story->id,
             'title' => $story->title,
@@ -167,6 +170,7 @@ class ClientController extends Controller
             'description' => $story->description,
             'author' => $story->user?->name ?? $story->guest_name,
             'date' => $story->created_at->format('M d, Y'),
+            'tagged_people' => $story->tagged_people ?? [],
             'file_url' => $story->file_url ? Storage::disk('public')->url($story->file_url) : null,
             'assets' => $story->assets ?? [],
         ]);
@@ -174,6 +178,7 @@ class ClientController extends Controller
         return Inertia::render('client/rooms/show', [
             'room' => $room,
             'stories' => $stories,
+            'archive' => $this->personArchive->meta($room),
             'title' => $room->name.' - Ulo of Stories',
         ]);
     }

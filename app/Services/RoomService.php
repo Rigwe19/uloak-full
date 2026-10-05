@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RoomKind;
 use App\Enums\RoomStatus;
 use App\Enums\RoomTier;
 use App\Models\Room;
@@ -10,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 
 class RoomService
 {
-    public function __construct() {}
+    public function __construct(protected PersonScope $personScope) {}
 
     public function getRoomDetails(Room $room): Room
     {
@@ -22,9 +23,22 @@ class RoomService
      * - tier_type defaults to starter; caller passes tier_type in $data to request another tier.
      * - starter: enforces 1 active starter per owner → assigns 1GB / +30d / active.
      * - full_room / family_archive: rejected here — must go via WeddingsController (draft→payment→activate) or Subscription (archive). This keeps the paywall single-sourced.
+     * - Structural rooms (kind root/branch/person): free archive infrastructure.
+     *   tier_type is forced to null, no expiry, and they are excluded from the
+     *   starter 1-room-per-owner count. Identified by kind, never by name prefix.
      */
     public function createRoom(User $owner, array $data, ?RoomTier $forcedTier = null): Room
     {
+        $kind = RoomKind::tryFrom($data['kind'] ?? RoomKind::Event->value) ?? RoomKind::Event;
+
+        if ($kind->isStructural()) {
+            return $this->createStructuralRoom($owner, $data, $kind);
+        }
+
+        // kind=event must never carry a person link.
+        $data['kind'] = RoomKind::Event->value;
+        $data['person_id'] = null;
+
         $tier = $forcedTier
             ?? RoomTier::tryFrom($data['tier_type'] ?? RoomTier::Starter->value)
             ?? RoomTier::Starter;
@@ -43,6 +57,7 @@ class RoomService
 
         if ($tier === RoomTier::Starter) {
             $activeStarterExists = Room::where('created_by', $owner->id)
+                ->where('kind', RoomKind::Event->value)
                 ->where('tier_type', RoomTier::Starter->value)
                 ->where('status', RoomStatus::Active->value)
                 ->exists();
@@ -68,6 +83,54 @@ class RoomService
                 'tier_type' => 'Family Archives require an active subscription. See /pricing.',
             ]);
         }
+
+        $room = $owner->createdRooms()->create($data);
+        $room->members()->attach($owner);
+
+        return $room;
+    }
+
+    /**
+     * Create a free structural room (root/branch/person).
+     *
+     * tier_type is always null: no Starter entitlement, no expiry, and no
+     * consumption of the 1-active-Starter limit. kind=person additionally
+     * requires a person_id inside the owner's linkable person scope, and no
+     * two rooms may link to the same person.
+     */
+    protected function createStructuralRoom(User $owner, array $data, RoomKind $kind): Room
+    {
+        $data['kind'] = $kind->value;
+        // Structural rooms never go through paid tiers.
+        unset($data['tier_type']);
+
+        if ($kind === RoomKind::Person) {
+            if (empty($data['person_id'])) {
+                throw ValidationException::withMessages([
+                    'person_id' => 'A person room requires a person.',
+                ]);
+            }
+
+            $person = $this->personScope->assertLinkable($owner, (int) $data['person_id']);
+
+            if (Room::where('person_id', $person->id)->exists()) {
+                throw ValidationException::withMessages([
+                    'person_id' => 'This person already has a person room.',
+                ]);
+            }
+
+            $data['person_id'] = $person->id;
+        } else {
+            $data['person_id'] = null;
+        }
+
+        $data['room_type'] = $data['room_type'] ?? 'general';
+        $data['tier_type'] = null;
+        $data['status'] = $data['status'] ?? RoomStatus::Active->value;
+        $data['storage_used_bytes'] = 0;
+        $data['storage_limit_bytes'] = null;
+        $data['expires_at'] = null;
+        $data['contributions_closed_at'] = null;
 
         $room = $owner->createdRooms()->create($data);
         $room->members()->attach($owner);

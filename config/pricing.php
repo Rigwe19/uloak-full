@@ -34,6 +34,10 @@ return [
             'family_monthly' => 350_000,
             'family_yearly' => 3_500_000,
             'yearly_savings' => 700_000,
+            'viewer_monthly' => 200_000, // ₦2,000 — unlocks all normal creator stories
+            'viewer_yearly' => 2_000_000, // ₦20,000
+            'viewer_vip_monthly' => 350_000, // ₦3,500 — unlocks all + VIP stories
+            'viewer_vip_yearly' => 3_500_000, // ₦35,000
         ],
         'rest_of_africa' => [
             'label' => 'Rest of Africa',
@@ -43,6 +47,10 @@ return [
             'family_monthly' => 499,
             'family_yearly' => 4_900,
             'yearly_savings' => 1_088,
+            'viewer_monthly' => 299,
+            'viewer_yearly' => 2_900,
+            'viewer_vip_monthly' => 499,
+            'viewer_vip_yearly' => 4_900,
         ],
         'uk' => [
             'label' => 'United Kingdom',
@@ -52,6 +60,10 @@ return [
             'family_monthly' => 799,
             'family_yearly' => 7_900,
             'yearly_savings' => 1_688,
+            'viewer_monthly' => 499,
+            'viewer_yearly' => 4_900,
+            'viewer_vip_monthly' => 799,
+            'viewer_vip_yearly' => 7_900,
         ],
         'us_rest_of_world' => [
             'label' => 'United States / Rest of world',
@@ -61,6 +73,10 @@ return [
             'family_monthly' => 999,
             'family_yearly' => 9_900,
             'yearly_savings' => 2_088,
+            'viewer_monthly' => 599,
+            'viewer_yearly' => 5_900,
+            'viewer_vip_monthly' => 999,
+            'viewer_vip_yearly' => 9_900,
         ],
         'europe' => [
             'label' => 'Europe',
@@ -70,6 +86,10 @@ return [
             'family_monthly' => 999,
             'family_yearly' => 9_900,
             'yearly_savings' => 2_088,
+            'viewer_monthly' => 599,
+            'viewer_yearly' => 5_900,
+            'viewer_vip_monthly' => 999,
+            'viewer_vip_yearly' => 9_900,
         ],
     ],
 
@@ -113,5 +133,23 @@ return [
         'commission_rate' => 20.0,
         'ngn_min_commission' => 3_000_000, // 20% of ₦150k floor
         'attribution_cookie_days' => 30,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Creator Economy (Normal / VIP creators + Viewer subscriptions)
+    |--------------------------------------------------------------------------
+    |
+    | Viewers pay platform-wide: `viewer_*` unlocks all normal creator
+    | stories, `viewer_vip_*` additionally unlocks VIP stories. When a viewer
+    | subscribes via a creator ref link, the creator earns a recurring split.
+    | VIP stories are pushed in the featured feed.
+    |
+    */
+
+    'creator' => [
+        'normal_split_pct' => 70.0,
+        'vip_split_pct' => 80.0,
+        'vip_approval_required' => true,
     ],
 ];

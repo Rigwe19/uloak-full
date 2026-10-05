@@ -19,7 +19,7 @@ class CheckoutRequest extends FormRequest
         return [
             'room_id' => ['nullable', 'integer', 'exists:rooms,id'],
             'region' => ['required', 'string', 'in:nigeria,rest_of_africa,uk,us_rest_of_world,europe'],
-            'tier' => ['required', 'string', 'in:starter,full_room,family_archive,family_monthly,family_yearly'],
+            'tier' => ['required', 'string', 'in:starter,full_room,family_archive,family_monthly,family_yearly,viewer_monthly,viewer_yearly,viewer_vip_monthly,viewer_vip_yearly'],
             'provider' => ['nullable', 'string', 'in:paystack,paypal,stripe'],
             'ref_code' => ['nullable', 'string', 'max:32'],
         ];

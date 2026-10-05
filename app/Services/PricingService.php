@@ -55,6 +55,10 @@ class PricingService
             RoomTier::FullRoom->value => 'full_room',
             'family_monthly' => 'family_monthly',
             'family_yearly' => 'family_yearly',
+            'viewer_monthly' => 'viewer_monthly',
+            'viewer_yearly' => 'viewer_yearly',
+            'viewer_vip_monthly' => 'viewer_vip_monthly',
+            'viewer_vip_yearly' => 'viewer_vip_yearly',
             default => throw new \InvalidArgumentException("Unknown tier key: {$tierKey}"),
         };
 
@@ -104,6 +108,14 @@ class PricingService
                 'family_yearly_formatted' => $this->formatAmount($region['family_yearly'], $region['currency']),
                 'yearly_savings' => $region['yearly_savings'],
                 'yearly_savings_formatted' => $this->formatAmount($region['yearly_savings'], $region['currency']),
+                'viewer_monthly' => $region['viewer_monthly'],
+                'viewer_monthly_formatted' => $this->formatAmount($region['viewer_monthly'], $region['currency']),
+                'viewer_yearly' => $region['viewer_yearly'],
+                'viewer_yearly_formatted' => $this->formatAmount($region['viewer_yearly'], $region['currency']),
+                'viewer_vip_monthly' => $region['viewer_vip_monthly'],
+                'viewer_vip_monthly_formatted' => $this->formatAmount($region['viewer_vip_monthly'], $region['currency']),
+                'viewer_vip_yearly' => $region['viewer_vip_yearly'],
+                'viewer_vip_yearly_formatted' => $this->formatAmount($region['viewer_vip_yearly'], $region['currency']),
             ];
         }
 

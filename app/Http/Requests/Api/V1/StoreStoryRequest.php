@@ -24,6 +24,8 @@ class StoreStoryRequest extends FormRequest
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:32'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => ['integer', 'exists:people,id'],
             'assets' => ['nullable', 'array'],
             'follow_up_to' => ['nullable', 'integer', 'exists:stories,id'],
         ];

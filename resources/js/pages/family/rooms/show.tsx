@@ -12,6 +12,12 @@ import {
 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import {
+    PeopleTagPicker,
+    type TaggablePerson,
+} from '@/components/people-tag-picker';
+import { TaggedPeople } from '@/components/tagged-people';
+import type { TaggedStoryPerson } from '@/types/feed';
 
 function resolveMediaUrl(url: string | null): string | null {
     if (!url) {
@@ -44,6 +50,7 @@ interface Story {
     follow_ups: any[];
     date: string;
     tags: string[];
+    tagged_people?: TaggedStoryPerson[];
 }
 
 interface Props {
@@ -62,9 +69,15 @@ interface Props {
         email: string;
         relationship: string | null;
     };
+    taggablePeople: TaggablePerson[];
 }
 
-export default function FamilyRoomShow({ room, stories, member }: Props) {
+export default function FamilyRoomShow({
+    room,
+    stories,
+    member,
+    taggablePeople = [],
+}: Props) {
     const [isAnnexModalOpen, setIsAnnexModalOpen] = useState(false);
     const [storyToDelete, setStoryToDelete] = useState<Story | null>(null);
     const [deleting, setDeleting] = useState(false);
@@ -208,6 +221,10 @@ export default function FamilyRoomShow({ room, stories, member }: Props) {
                                                     "{story.description}"
                                                 </p>
                                             )}
+                                            <TaggedPeople
+                                                people={story.tagged_people}
+                                                basePath="/family/rooms"
+                                            />
                                             <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4 text-[10px] font-bold tracking-widest text-text-muted uppercase">
                                                 <div className="flex items-center gap-2">
                                                     <UserIcon
@@ -254,6 +271,7 @@ export default function FamilyRoomShow({ room, stories, member }: Props) {
                         <AddMemoryModal
                             room={room}
                             member={member}
+                            taggablePeople={taggablePeople}
                             onClose={() => setIsAnnexModalOpen(false)}
                         />
                     )}
@@ -335,10 +353,12 @@ export default function FamilyRoomShow({ room, stories, member }: Props) {
 function AddMemoryModal({
     room,
     member,
+    taggablePeople = [],
     onClose,
 }: {
     room: Props['room'];
     member: Props['member'];
+    taggablePeople?: TaggablePerson[];
     onClose: () => void;
 }) {
     const [type, setType] = useState<'photo' | 'video' | 'audio'>('photo');
@@ -349,6 +369,7 @@ function AddMemoryModal({
         description: '',
         type: 'photo' as string,
         files: [] as File[],
+        person_ids: [] as number[],
     });
 
     const handleTypeChange = (newType: string) => {
@@ -510,6 +531,14 @@ function AddMemoryModal({
                             </p>
                         )}
                     </div>
+
+                    {/* Who's in this story? */}
+                    <PeopleTagPicker
+                        people={taggablePeople}
+                        selected={data.person_ids}
+                        onChange={(ids) => setData('person_ids', ids)}
+                        error={errors.person_ids}
+                    />
 
                     {/* Submit */}
                     <button

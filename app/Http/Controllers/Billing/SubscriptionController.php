@@ -17,15 +17,15 @@ class SubscriptionController extends Controller
     ) {}
 
     /**
-     * Start or renew a Family Archive subscription.
+     * Start or renew a Family Archive or Viewer subscription.
      * Creates a pending payment for the subscription tier, then delegates to the gateway.
-     * The webhook/callback will extend or create the subscription record.
+     * The webhook/callback will create the subscription record and accrue creator earnings.
      */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'region' => ['required', 'string'],
-            'tier' => ['required', 'string', 'in:family_monthly,family_yearly'],
+            'tier' => ['required', 'string', 'in:family_monthly,family_yearly,viewer_monthly,viewer_yearly,viewer_vip_monthly,viewer_vip_yearly'],
             'provider' => ['nullable', 'string', 'in:paystack,paypal,stripe'],
             'ref_code' => ['nullable', 'string', 'max:32'],
         ]);

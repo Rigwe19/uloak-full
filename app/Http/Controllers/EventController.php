@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\Media;
 use App\Models\Story;
+use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\PersonArchiveService;
+use App\Services\PersonScope;
 use App\Services\StoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,7 +21,9 @@ class EventController extends Controller
 {
     public function __construct(
         protected StoryService $storyService,
-        protected ActivityLogger $activityLogger
+        protected ActivityLogger $activityLogger,
+        protected PersonScope $personScope,
+        protected PersonArchiveService $personArchive
     ) {}
 
     /**
@@ -26,10 +31,11 @@ class EventController extends Controller
      */
     public function show(Event $event): Response
     {
-        $stories = $event->stories()
-            ->with('media')
-            ->latest()
-            ->get();
+        $stories = $this->personArchive->enrichStoriesWithPeople(
+            $event->stories()->with('media')->latest()->get()
+        );
+
+        $creator = $event->created_by ? User::find($event->created_by) : null;
 
         return Inertia::render('dashboard/events/show', [
             'event' => [
@@ -71,6 +77,7 @@ class EventController extends Controller
                     'assets' => $assets,
                     'created_at' => $story->created_at->format('M d, Y'),
                     'user' => $story->user?->name,
+                    'tagged_people' => $story->tagged_people ?? [],
                 ];
             }),
             'clients' => $event->clients->map(fn ($client) => [
@@ -79,6 +86,7 @@ class EventController extends Controller
                 'email' => $client->email,
                 'phone' => $client->phone,
             ]),
+            'taggablePeople' => $creator ? $this->personScope->taggableFor($creator) : [],
         ]);
     }
 
@@ -216,6 +224,8 @@ class EventController extends Controller
             'duration' => ['nullable', 'string'],
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => ['integer', 'exists:people,id'],
         ]);
 
         $story = $this->storyService->createStory(auth()->user(), $event, $validated);

@@ -12,6 +12,9 @@ use App\Models\RoomGuestSubscription;
 use App\Models\Story;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\PersonArchiveService;
+use App\Services\PersonScope;
+use App\Services\StoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +30,7 @@ use ZipArchive;
 
 class ShareController extends Controller
 {
-    public function __construct(protected ActivityLogger $activityLogger, protected MediaManager $mediaManager) {}
+    public function __construct(protected ActivityLogger $activityLogger, protected MediaManager $mediaManager, protected StoryService $storyService, protected PersonArchiveService $personArchive, protected PersonScope $personScope) {}
 
     public function showRoom(string $slug): InertiaResponse
     {
@@ -63,8 +66,8 @@ class ShareController extends Controller
 
     private function showRoomShare(Room $room): InertiaResponse
     {
-        $paginator = $room->stories()
-            ->whereNull('follow_up_to')
+        $paginator = $this->personArchive->storiesQuery($room)
+            ->whereNull('stories.follow_up_to')
             ->with([
                 'comments' => function ($q) {
                     $q->latest();
@@ -78,6 +81,8 @@ class ShareController extends Controller
         // Cursor pagination needs the original created_at value to generate
         // the next cursor.
         $nextCursor = $paginator->nextCursor()?->encode();
+
+        $this->personArchive->enrichStoriesWithPeople($paginator->getCollection());
 
         $stories = $paginator->through(function ($story) {
             $assets = $story->assets ?? [];
@@ -182,6 +187,7 @@ class ShareController extends Controller
 
                 'date' => $story->created_at->format('M d, Y'),
                 'tags' => $story->tags ?? [],
+                'tagged_people' => $story->tagged_people ?? [],
             ];
         });
 
@@ -200,6 +206,10 @@ class ShareController extends Controller
             ],
 
             'stories' => $stories->items(),
+
+            'archive' => $this->personArchive->meta($room),
+
+            'taggablePeople' => $this->personScope->taggableForRoom($room),
 
             'pagination' => [
                 'next_cursor' => $nextCursor,
@@ -285,7 +295,12 @@ class ShareController extends Controller
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'recording' => ['nullable', 'file', 'max:1048576'],
             'duration' => ['nullable', 'string', 'max:20'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => ['integer', 'exists:people,id'],
         ]);
+
+        // Fail closed before any upload work: no story is created with partial tagging.
+        $this->storyService->assertStoryTagsAllowed($room, $validated['person_ids'] ?? null);
 
         $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null, $validated['guest_whatsapp'] ?? null);
 
@@ -390,7 +405,7 @@ class ShareController extends Controller
             'room_id' => $room->id,
             'user_id' => null,
             'guest_name' => $validated['guest_name'],
-            'guest_email' => $validated['guest_email'],
+            'guest_email' => $validated['guest_email'] ?? null,
             'title' => $validated['title'] ?? ($validated['type'] === 'video' ? 'Video Recording' : ($validated['type'] === 'audio' ? 'Audio Recording' : 'Photo')),
             'type' => $validated['type'],
             'description' => $validated['description'] ?? '',
@@ -403,6 +418,8 @@ class ShareController extends Controller
         if (! empty($validated['duration'])) {
             $story->update(['duration' => $validated['duration']]);
         }
+
+        $this->storyService->syncStoryTags($story, $room, $validated['person_ids'] ?? null);
 
         return redirect()->back()->with('success', 'Your memory has been shared!');
     }
@@ -490,7 +507,12 @@ class ShareController extends Controller
             'files' => ['nullable', 'array'],
             'files.*' => ['file', 'max:1048576'],
             'recording' => ['nullable', 'file', 'max:1048576'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => ['integer', 'exists:people,id'],
         ]);
+
+        // Fail closed before any upload work: no story is created with partial tagging.
+        $this->storyService->assertStoryTagsAllowed($room, $validated['person_ids'] ?? null);
 
         $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null, $validated['guest_whatsapp'] ?? null);
 
@@ -556,11 +578,11 @@ class ShareController extends Controller
             return redirect()->back()->withErrors(['files' => 'Please upload a file.']);
         }
 
-        Story::create([
+        $followUp = Story::create([
             'room_id' => $room->id,
             'user_id' => null,
             'guest_name' => $validated['guest_name'],
-            'guest_email' => $validated['guest_email'],
+            'guest_email' => $validated['guest_email'] ?? null,
             'title' => 'Follow-up media',
             'type' => $validated['type'],
             'description' => '',
@@ -570,6 +592,8 @@ class ShareController extends Controller
             'tags' => ['guest-contribution', 'follow-up'],
             'follow_up_to' => $validated['story_id'],
         ]);
+
+        $this->storyService->syncStoryTags($followUp, $room, $validated['person_ids'] ?? null);
 
         return redirect()->back()->with('success', 'Follow-up media added!');
     }

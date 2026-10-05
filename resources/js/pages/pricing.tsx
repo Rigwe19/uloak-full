@@ -142,6 +142,8 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
                         'meta[name="csrf-token"]',
                     ) as HTMLMetaElement | null
                 )?.content ?? '';
+            const params = new URLSearchParams(window.location.search);
+            const refCode = params.get('ref') ?? undefined;
             const res = await fetch('/billing/subscriptions', {
                 method: 'POST',
                 headers: {
@@ -150,7 +152,7 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
                     'X-CSRF-TOKEN': csrf,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
-                body: JSON.stringify({ region: selectedRegion, tier }),
+                body: JSON.stringify({ region: selectedRegion, tier, ref_code: refCode }),
             });
             const data = await res.json();
 
@@ -638,6 +640,108 @@ export default function Pricing({ pricing, defaultRegion }: PricingPageProps) {
                                 <span className="ml-1 text-xs opacity-80">
                                     Save {region.yearly_savings_formatted}
                                 </span>
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+
+                {/* Viewer subscriptions — watch creator stories */}
+                <div className="mx-auto mt-10 grid max-w-7xl gap-8 md:grid-cols-2">
+                    {/* Viewer Standard */}
+                    <motion.div
+                        initial="hidden"
+                        whileInView="show"
+                        viewport={viewportOnce}
+                        variants={fadeUp}
+                        className="relative flex flex-col rounded-3xl border border-border-subtle bg-surface/30 p-8"
+                    >
+                        <p className="text-[10px] font-bold tracking-widest text-accent-gold uppercase">
+                            For viewers
+                        </p>
+                        <h3 className="mt-2 text-2xl font-light text-text-primary">
+                            Viewer
+                        </h3>
+                        <p className="mt-1 text-sm text-text-muted italic">
+                            Watch all normal creator stories. Creators earn a
+                            share when you subscribe via their link.
+                        </p>
+                        <div className="mt-6">
+                            <span className="text-4xl font-light text-text-primary">
+                                {(region as any).viewer_monthly_formatted}
+                            </span>
+                            <span className="text-sm text-text-muted"> / month</span>
+                        </div>
+                        <p className="mt-1 text-xs text-text-muted">
+                            or {(region as any).viewer_yearly_formatted} / year
+                        </p>
+                        <div className="mt-6 flex flex-col gap-2">
+                            <button
+                                onClick={() => startFamilyArchive('viewer_monthly')}
+                                disabled={!!subscribing}
+                                className="flex w-full items-center justify-center rounded-full border border-white/10 bg-surface px-6 py-3 text-sm font-medium text-text-primary transition hover:bg-white/5 disabled:opacity-50"
+                            >
+                                {subscribing === 'viewer_monthly'
+                                    ? 'Starting…'
+                                    : `Start monthly — ${(region as any).viewer_monthly_formatted}`}
+                            </button>
+                            <button
+                                onClick={() => startFamilyArchive('viewer_yearly')}
+                                disabled={!!subscribing}
+                                className="flex w-full items-center justify-center rounded-full bg-accent-gold px-6 py-3 text-sm font-semibold text-bg-dark transition hover:bg-accent-gold/90 disabled:opacity-50"
+                            >
+                                {subscribing === 'viewer_yearly'
+                                    ? 'Starting…'
+                                    : `Start yearly — ${(region as any).viewer_yearly_formatted}`}
+                            </button>
+                        </div>
+                    </motion.div>
+
+                    {/* Viewer VIP */}
+                    <motion.div
+                        initial="hidden"
+                        whileInView="show"
+                        viewport={viewportOnce}
+                        variants={fadeUp}
+                        transition={{ delay: 0.08 }}
+                        className="relative flex flex-col rounded-3xl border border-accent-gold/40 bg-surface/30 p-8"
+                    >
+                        <p className="text-[10px] font-bold tracking-widest text-accent-gold uppercase">
+                            For VIP viewers
+                        </p>
+                        <h3 className="mt-2 text-2xl font-light text-text-primary">
+                            Viewer VIP
+                        </h3>
+                        <p className="mt-1 text-sm text-text-muted italic">
+                            Everything in Viewer, plus VIP stories pushed to a
+                            featured feed.
+                        </p>
+                        <div className="mt-6">
+                            <span className="text-4xl font-light text-text-primary">
+                                {(region as any).viewer_vip_monthly_formatted}
+                            </span>
+                            <span className="text-sm text-text-muted"> / month</span>
+                        </div>
+                        <p className="mt-1 text-xs text-text-muted">
+                            or {(region as any).viewer_vip_yearly_formatted} / year
+                        </p>
+                        <div className="mt-6 flex flex-col gap-2">
+                            <button
+                                onClick={() => startFamilyArchive('viewer_vip_monthly')}
+                                disabled={!!subscribing}
+                                className="flex w-full items-center justify-center rounded-full border border-white/10 bg-surface px-6 py-3 text-sm font-medium text-text-primary transition hover:bg-white/5 disabled:opacity-50"
+                            >
+                                {subscribing === 'viewer_vip_monthly'
+                                    ? 'Starting…'
+                                    : `Start monthly — ${(region as any).viewer_vip_monthly_formatted}`}
+                            </button>
+                            <button
+                                onClick={() => startFamilyArchive('viewer_vip_yearly')}
+                                disabled={!!subscribing}
+                                className="flex w-full items-center justify-center rounded-full bg-accent-gold px-6 py-3 text-sm font-semibold text-bg-dark transition hover:bg-accent-gold/90 disabled:opacity-50"
+                            >
+                                {subscribing === 'viewer_vip_yearly'
+                                    ? 'Starting…'
+                                    : `Start yearly — ${(region as any).viewer_vip_yearly_formatted}`}
                             </button>
                         </div>
                     </motion.div>

@@ -120,6 +120,8 @@ class PersonService
 
     public function getRelationshipGraph(Person $person): array
     {
+        $graphService = app(RelationshipGraphService::class);
+
         $outgoing = $person->outgoingRelationships()
             ->with(['relatedPerson', 'relatedPerson.identity'])
             ->get()
@@ -133,6 +135,7 @@ class PersonService
                 'direction' => 'outgoing',
                 'called_them' => $r->called_them,
                 'closeness' => $r->closeness,
+                'person_room_slug' => $graphService->personRoomSlug($r->related_person_id),
             ]);
 
         $incoming = $person->incomingRelationships()
@@ -148,12 +151,13 @@ class PersonService
                 'direction' => 'incoming',
                 'called_me' => $r->called_me,
                 'closeness' => $r->closeness,
+                'person_room_slug' => $graphService->personRoomSlug($r->person_id),
             ]);
 
         return [
             'outgoing' => $outgoing,
             'incoming' => $incoming,
-            'graph' => app(RelationshipGraphService::class)->buildTree($person),
+            'graph' => $graphService->buildTree($person),
         ];
     }
 

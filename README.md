@@ -86,15 +86,21 @@ PAYPAL_WEBHOOK_ID=...
 - **User** — `users` (`is_admin`, `role=business_admin`, `house_*` fields). HasMany `createdRooms`, `payments`, `subscriptions`.
 - **Room** — `rooms`. Core entity. Columns that matter for billing:
   - `room_type` — `general|birthday|burial|wedding|anniversary|memorial|graduation` (occasion)
-  - `tier_type` — `nullable` (legacy), `starter|full_room|family_archive`
+  - `kind` — `root|branch|person|event` (structural purpose; `App\Enums\RoomKind`). Pre-existing rows are `event`.
+  - `person_id` — nullable FK `people`, UNIQUE (max one Person Room per person). Only `kind=person` carries it.
+  - `tier_type` — `nullable` (legacy **or structural**), `starter|full_room|family_archive`
   - `status` — `draft|active|expired|archived`
   - `storage_used_bytes`, `storage_limit_bytes`, `expires_at`, `contributions_closed_at`
   - `referral_partner_id` (FK `partners`), `welcome_message` (text), `wedding_dates` (json)
-  - Legacy rows have `tier_type = NULL` → `isLegacy() === true` → unlimited, never gated.
+  - Legacy rows have `tier_type = NULL` → `isLegacy() === true` → unlimited, never gated. Structural rooms (`kind=root|branch|person`) are also `tier_type=NULL` (free infrastructure, no expiry) but are identified by `kind`, not legacy status — the Starter 1-room limit counts `kind=event` rows only.
+  - Person-room scope: `kind=person` requires `person_id` inside the owner's linkable scope (`App\Services\PersonScope`: owned/created people or explicit `edit` grant — same relations `PersonPolicy::edit` uses). Enforced in `RoomService`, not just request validation.
   - **Access control** — `App\Policies\RoomPolicy` gates dashboard/API room `view|update|delete`. `view/update` = creator or `room_user` pivot member; `delete/manage` = creator only. `DashboardService` and API `index` only return the user’s own/member rooms (never all active rooms). Bulk `download-media` accepts an authenticated owner/member OR a house-member session. Public `/share/rooms/{slug}` stays slug-accessible by design.
-- **Media / Story** — `media.size` summed via `Room::stories()->with Media`; global rollup `cloudinary_usage`.
-- **Payment** — `payments` (`user_id`, `room_id nullable`, `amount` minor units, `currency CHAR(3)`, `provider enum paystack|paypal|stripe`, `provider_reference`, `idempotency_key UNIQUE`, `status pending|successful|failed`, `region enum`, `partner_id`, `commission_amount minor`, `utm json`, `paid_at`).
-- **Subscription** — `subscriptions` (`user_id`, `tier family_monthly|family_yearly`, `status active|past_due|canceled|expired`, `current_period_start/end`, `cancel_at_period_end bool`, provider refs, `region/currency`).
+- **Media / Story** — `media.size` summed via `Room::stories()->with Media`; global rollup `cloudinary_usage`. Structured people tagging lives in `person_story_links(role=mentioned)` via `person_ids[]` on every story path (`StoryService::syncTaggedPeople`, scope asserted pre-create); `stories.tags` stays free-form. Person Rooms surface direct + linked stories through `PersonArchiveService::storiesQuery` (grouped, deduped, no copies) on all show/feed/index surfaces, with `archive` meta on payloads. Story payloads carry `tagged_people[]` (frontend `TaggedPeople` links to the Person Room or profile).
+- **Payment** — `payments` (`user_id`, `room_id nullable`, `tier` purchased key nullable, `amount` minor units, `currency CHAR(3)`, `provider enum paystack|paypal|stripe`, `provider_reference`, `idempotency_key UNIQUE`, `status pending|successful|failed`, `region enum`, `partner_id`, `creator_profile_id nullable`, `subscription_id nullable`, `commission_amount minor`, `utm json`, `paid_at`).
+- **Subscription** — `subscriptions` (`user_id`, `referred_creator_profile_id nullable`, `tier family_monthly|family_yearly|viewer_monthly|viewer_yearly|viewer_vip_monthly|viewer_vip_yearly`, `status active|past_due|canceled|expired`, `current_period_start/end`, `cancel_at_period_end bool`, provider refs, `region/currency`). Created idempotently by `PaymentService::activateSubscription()` on webhook/callback (previously never created in production).
+- **CreatorProfile** — `creator_profiles` (`user_id UNIQUE`, `creator_type normal|vip`, `ref_code UNIQUE`, `commission_rate nullable override`, `is_approved_vip bool`, `payout_details json`). Every creator gets a `?ref=` link; VIP requires admin approval.
+- **CreatorEarning** — `creator_earnings` (`creator_profile_id`, `payment_id UNIQUE`, `subscription_id nullable`, `viewer_user_id`, `amount_minor`, `currency`, `split_pct`, `status pending|available|paid`, `paid_at`). One row per paid viewer subscription (Normal 70% / VIP 80% defaults in `config/pricing.php:creator`). Payouts are manual in v1 (admin marks paid).
+- **Story visibility** — `stories.visibility normal|vip` (default normal). Only approved VIP creators may publish `vip`; VIP stories are pushed in the featured feed.
 - **Partner** — `partners` (`name, ref_code UNIQUE, commission_rate decimal(5,2) default 20.00, is_active`). `calculateCommission(minor, currency)` enforces ₦3,000 floor for NGN, capped at payment amount.
 
 ---
@@ -108,6 +114,8 @@ PAYPAL_WEBHOOK_ID=...
 | **Starter (free)** | 1 active Starter per `user.id`, 50 contributions, 1 GB, 30 days, individual downloads only | Free, no card |
 | **Full Room (one-off)** | 10 GB, 12 months online, unlimited guests/contribs within 10 GB, bulk download, QR, slideshow, personalised cover. **One payment per Room/occasion.** Completed Full Rooms can be moved into an active Family Archive. | Regional price (below) |
 | **Family Archive (recurring)** | 25 GB pooled, whole-family no per-person fee, admin-controlled, cancel-anytime (access to period end) | Monthly / Yearly per region, renews until canceled |
+| **Viewer Standard (recurring)** | Watch all **normal** creator stories platform-wide. Creator earns 70% when you subscribe via their link/page. | Nigeria ₦2,000/mo · ₦20,000/yr; UK £4.99/mo · £49/yr; US $5.99/mo · $59/yr; EU €5.99/mo · €59/yr; Rest of Africa $2.99/mo · $29/yr |
+| **Viewer VIP (recurring)** | Everything in Viewer **plus VIP stories** pushed in the featured feed (`/watch/featured`). Creator earns 80%. | Nigeria ₦3,500/mo · ₦35,000/yr; UK £7.99/mo · £79/yr; US $9.99/mo · $99/yr; EU €9.99/mo · €99/yr; Rest of Africa $4.99/mo · $49/yr |
 
 ### Region matrix — `config/pricing.php` (minor units, single currency per card)
 
@@ -123,7 +131,7 @@ PAYPAL_WEBHOOK_ID=...
 
 ### Paywall
 
-- Only `room_type=general` is free via **Dashboard → Create Room** (`RoomService::createRoom` assigns Starter limits, enforces 1-active-Starter per owner). Any `room_type` in `[wedding,birthday,burial,memorial,anniversary,graduation]` or `tier_type full_room|family_archive` on that endpoint **302s to `weddings.create?type={type}`** (wedding included) instead of a 422. House-member creation counts against the house `ownerId` quota.
+- Only `room_type=general` is free via **Dashboard → Create Room** (`RoomService::createRoom` assigns Starter limits, enforces 1-active-Starter per owner over `kind=event` rows only). Any `room_type` in `[wedding,birthday,burial,memorial,anniversary,graduation]` or `tier_type full_room|family_archive` on that endpoint **302s to `weddings.create?type={type}`** (wedding included) instead of a 422 — unless `kind` is `root|branch|person`, which skip the paywall entirely (`tier_type=NULL`, no expiry). House-member creation counts against the house `ownerId` quota.
 - **Weddings** funnel is the only writer of paid occasion rooms: `GET /weddings/create` (`auth`) shows an occasion selector (Wedding/Birthday/Burial/Memorial/Anniversary/Graduation) → `POST /weddings/create` creates `status=Draft, tier_type=NULL` → `PaymentService::createCheckout` (server-side price) → gateway `initialize` → `Inertia::location(authorization_url)`.
 - `verifyAndActivate` is **idempotent** (re-checks `pending` inside DB transaction, `idempotency_key UNIQUE`).
 - Contribution gate `EnsureContributionsOpen:contributions.open` on all `*/stories` stores (`share`, `dashboard`, `house`, `family`) returns `403 {reason: draft|closed|expired|storage_full|contribution_limit}` and the frontend shows `UpgradePrompt`.
@@ -146,10 +154,17 @@ GET  /pricing                  → PageController@pricing  (3 cards, RegionSelec
 POST /billing/checkout         → CheckoutController@store  auth  (room_id nullable)
 GET  /billing/callback/{provider}
 GET  /billing/payments/{payment}/status
-POST /billing/subscriptions    → SubscriptionController@store  (Family Archive)
+POST /billing/subscriptions    → SubscriptionController@store  (Family Archive + Viewer Standard/VIP; accepts ref_code, attributes creator)
 GET  /billing/subscriptions
 POST /billing/subscriptions/{id}/cancel
 POST /billing/rooms/{room}/move-to-archive
+GET  /creators/{refCode}         → CreatorController@show  (public creator page, subscribe via ?ref= link)
+POST /creators                   → CreatorController@store  auth  (become Normal creator, get ref link)
+GET  /watch                     → WatchController@index  auth+viewer  (normal feed + VIP featured block for VIP viewers)
+GET  /watch/featured            → WatchController@featured  auth+viewer:vip  (VIP-only push feed)
+GET  /admin/creators            → CreatorAdminController@index  admin  (profiles + earnings)
+POST /admin/creators/{profile}/approve|revoke
+POST /admin/creator-earnings/{earning}/pay
 POST /webhooks/{provider}      → WebhookController  (CSRF-exempt, HMAC verified)
 POST /analytics/event          → logs {event, properties, ref, utm}
 GET  /share/rooms/{slug}/stories  (contributions.open)
@@ -164,7 +179,11 @@ Navbar now ships `Weddings | Pricing | How Ulo Works | Ulo Studio | About`.
 - `welcome` — hero carousel now local `01-team-studio, 03-family-reunion, 10-corporate-gala` (was hero-*.webp), card grid 02/03/04/07/09, about band `06-uniform-lifestyle`.
 - `weddings` — 12-section spec-faithful launch page, price from `region.full_room_formatted`, sticky mobile CTA `Create Wedding Room • {price}`.
 - `weddings/create` — occasion dropdown (so **burial/birthday/etc. all go through the same paid funnel**: `/weddings/create?type=burial` pre-selects Burial, same checkout price).
-- `pricing` — strip `05-merchandise-family + 08-event-kit`, 3 cards, private-by-default, FAQ 12, `RegionSelector` + `StickyCTA → /weddings/create`.
+- `pricing` — strip `05-merchandise-family + 08-event-kit`, 3 cards + **Viewer Standard / Viewer VIP cards** (region-aware, `?ref=` preserved into `POST /billing/subscriptions`), private-by-default, FAQ 12, `RegionSelector` + `StickyCTA → /weddings/create`.
+- `watch/index` — viewer feed (`viewer` middleware): normal stories + VIP featured block for VIP viewers.
+- `watch/featured` — VIP-only push feed (`viewer:vip` middleware).
+- `creators/show` — public creator page with `Subscribe via my link → /pricing?ref=CODE`.
+- `admin/creators` — approve/revoke VIP + mark earnings paid.
 - `checkout/status` — polls `GET /billing/payments/{id}/status` every 3s; all pages ship `05,08` etc. so every `public/images/01..10` appears at least once site-wide. `pnpm build` manifest confirms `weddings, weddings/create, pricing, checkout/status`.
 
 Images live in `public/images/01-ulo-team-studio.jpg … 10-ulo-corporate-gala.jpg` (80–210K each). No unsplash remains.
@@ -181,7 +200,7 @@ php artisan test --compact           # Pest; 42–44 billing+gate tests green (p
 php vendor/pestphp/pest/bin/pest --filter=Billing
 ```
 
-New suites: `tests/Feature/Billing/{BillingTest,ContributionGateTest,ReferralTest,SubscriptionArchiveTest,RoomCreationGateTest}`.
+New suites: `tests/Feature/Billing/{BillingTest,ContributionGateTest,ReferralTest,SubscriptionArchiveTest,RoomCreationGateTest,CreatorEconomyTest}` (CreatorEconomyTest: viewer pricing, creator attribution, subscription+earning activation + idempotency, StoryPolicy gating, `viewer:vip` middleware, creator ref checkout).
 
 ---
 

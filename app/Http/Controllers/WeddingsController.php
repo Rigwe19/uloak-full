@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoomKind;
 use App\Enums\RoomStatus;
 use App\Enums\RoomTier;
 use App\Models\Partner;
@@ -83,6 +84,8 @@ class WeddingsController extends Controller
                 'welcome_message' => $validated['welcome_message'] ?? null,
                 'privacy' => $validated['privacy'] ?? 'private',
                 'room_type' => $validated['room_type'] ?? 'wedding',
+                'kind' => RoomKind::Event->value,
+                'person_id' => null,
                 'tier_type' => null, // becomes full_room only after successful payment
                 'status' => RoomStatus::Draft->value,
                 'created_by' => $user->id,

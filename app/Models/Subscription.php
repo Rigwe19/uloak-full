@@ -28,6 +28,7 @@ class Subscription extends Model
 
     protected $fillable = [
         'user_id',
+        'referred_creator_profile_id',
         'tier',
         'status',
         'current_period_start',
@@ -43,6 +44,21 @@ class Subscription extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function referredCreator(): BelongsTo
+    {
+        return $this->belongsTo(CreatorProfile::class, 'referred_creator_profile_id');
+    }
+
+    public function isViewer(): bool
+    {
+        return $this->tier->isViewer();
+    }
+
+    public function isVipViewer(): bool
+    {
+        return $this->tier->isVipViewer();
     }
 
     protected function casts(): array

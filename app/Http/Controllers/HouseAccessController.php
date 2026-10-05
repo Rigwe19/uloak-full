@@ -9,6 +9,8 @@ use App\Models\Room;
 use App\Models\Story;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\PersonArchiveService;
+use App\Services\PersonScope;
 use App\Services\RoomService;
 use App\Services\StoryService;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +26,8 @@ class HouseAccessController extends Controller
     public function __construct(
         protected ActivityLogger $activityLogger,
         protected StoryService $storyService,
+        protected PersonArchiveService $personArchive,
+        protected PersonScope $personScope,
     ) {}
 
     // public function accessViaToken(string $token): RedirectResponse
@@ -183,7 +187,7 @@ class HouseAccessController extends Controller
             'pendingTributes' => $pendingTributes,
             'approvedTributes' => $approvedTributes,
             'allTributes' => $allTributes,
-            'stories' => $room->stories->map(function ($story) {
+            'stories' => $this->personArchive->enrichStoriesWithPeople($this->personArchive->getStories($room))->map(function ($story) {
                 $assets = $story->assets ?? [];
                 $isProcessing = false;
                 $enrichedAssets = $assets;
@@ -234,12 +238,15 @@ class HouseAccessController extends Controller
                     'description' => $story->description,
                     'author' => $story->user?->name ?? $story->guest_name,
                     'tags' => $story->tags ?? [],
+                    'tagged_people' => $story->tagged_people ?? [],
                     'date' => $story->created_at->format('M d, Y'),
                     'file_url' => $fileUrl,
                     'assets' => $enrichedAssets,
                     'is_processing' => $isProcessing,
                 ];
             }),
+            'archive' => $this->personArchive->meta($room),
+            'taggablePeople' => ($houseOwner = User::find($ownerId)) ? $this->personScope->taggableFor($houseOwner) : [],
             'candles' => $room->candles()->orderByRaw('CASE WHEN is_approved = false THEN 0 ELSE 1 END')->get(),
         ]);
     }
@@ -255,6 +262,8 @@ class HouseAccessController extends Controller
             'privacy' => ['required', 'string', 'in:public,private'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
+            'kind' => ['nullable', 'string', 'in:root,branch,person,event'],
+            'person_id' => ['nullable', 'integer', 'exists:people,id', 'required_if:kind,person', 'prohibited_unless:kind,person'],
             'enable_tributes' => ['nullable', 'boolean'],
             'enable_condolence_attendance' => ['nullable', 'boolean'],
             'enable_candle_lighting' => ['nullable', 'boolean'],
@@ -290,10 +299,12 @@ class HouseAccessController extends Controller
         }
 
         // House follows the same paywall as dashboard: only "general" is free.
+        // Structural rooms (root/branch/person) skip this check; RoomService enforces their bypass.
         $paywalledTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
+        $requestedKind = $validated['kind'] ?? 'event';
         $requestedType = $validated['room_type'] ?? 'general';
         $requestedTier = $validated['tier_type'] ?? null;
-        if (in_array($requestedType, $paywalledTypes, true) || $requestedTier === 'full_room' || $requestedTier === 'family_archive') {
+        if ($requestedKind === 'event' && (in_array($requestedType, $paywalledTypes, true) || $requestedTier === 'full_room' || $requestedTier === 'family_archive')) {
             return redirect()->route('weddings.create', ['type' => $requestedType !== 'general' ? $requestedType : 'wedding'])->with('info', 'This occasion requires a paid Full Room — pick the type and checkout at the same price.');
         }
 
@@ -345,6 +356,8 @@ class HouseAccessController extends Controller
             'duration' => ['nullable', 'string'],
             'media_uuids' => ['nullable', 'array'],
             'media_uuids.*' => ['uuid', 'exists:media,uuid'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => ['integer', 'exists:people,id'],
         ]);
 
         if ($request->hasFile('thumbnail')) {

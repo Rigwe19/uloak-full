@@ -26,6 +26,8 @@ import { createPortal } from 'react-dom';
 import CandleSVG from '@/components/candleSVG';
 import type { Candle } from '@/components/candleThemes';
 import { AnnexMemoryModal } from '@/components/dashboard/annex-memory-modal';
+import type { TaggablePerson } from '@/components/people-tag-picker';
+import { TaggedPeople } from '@/components/tagged-people';
 import { EditRoomModal } from '@/components/dashboard/edit-room-modal';
 import { Badge, Button } from '@/components/dashboard/ui';
 import { VideoPlaylistPlayer } from '@/components/dashboard/video-playlist-player';
@@ -76,6 +78,7 @@ interface RoomShowProps {
     approvedTributes: TributeDB[];
     allTributes: TributeDB[];
     candles: Candle[];
+    taggablePeople?: TaggablePerson[];
 }
 
 interface TributeDB {
@@ -105,6 +108,7 @@ export default function RoomShow({
     pendingTributes: initialPending = [],
     approvedTributes: initialApproved = [],
     allTributes: tributes,
+    taggablePeople = [],
 }: RoomShowProps) {
     const [allStories, setAllStories] = useState<FeedStory[]>(initialStories);
     const [pendingTributes, setPendingTributes] =
@@ -931,6 +935,10 @@ export default function RoomShow({
                                             <p className="line-clamp-2 text-sm font-light text-text-muted italic">
                                                 "{story.description}"
                                             </p>
+                                            <TaggedPeople
+                                                people={story.tagged_people}
+                                                basePath="/house/rooms"
+                                            />
                                         </div>
                                         <div className="flex items-center justify-between border-t border-white/5 pt-6 text-[10px] font-bold tracking-[0.2em] text-text-muted uppercase">
                                             <div className="flex items-center gap-2">
@@ -961,6 +969,7 @@ export default function RoomShow({
                     onClose={() => setIsAnnexModalOpen(false)}
                     room={room as any}
                     postUrl={storeStory({ room: room.slug }).url}
+                    taggablePeople={taggablePeople}
                 />
 
                 {/* Edit Room Modal */}
@@ -978,6 +987,7 @@ export default function RoomShow({
                                 stories={displayStories}
                                 initialIndex={viewerIndex}
                                 onClose={() => setViewerIndex(null)}
+                                roomsBasePath="/house/rooms"
                             />,
                             document.body,
                         )}

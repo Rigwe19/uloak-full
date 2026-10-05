@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Enums\RoomKind;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateRoomRequest extends FormRequest
 {
@@ -16,11 +18,17 @@ class UpdateRoomRequest extends FormRequest
      */
     public function rules(): array
     {
+        // kind is immutable after creation: an event room can never morph into a
+        // free structural room (or vice versa). person_id is set once at creation.
+        $currentKind = $this->route('room')?->kind;
+        $currentKindValue = $currentKind instanceof RoomKind ? $currentKind->value : ($currentKind ?? 'event');
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'privacy' => ['required', 'string', 'in:public,private'],
             'room_type' => ['nullable', 'string', 'in:general,birthday,burial,wedding,anniversary,memorial,graduation'],
+            'kind' => ['nullable', 'string', Rule::in([$currentKindValue])],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'enable_tributes' => ['nullable', 'boolean'],
             'enable_condolence_attendance' => ['nullable', 'boolean'],

@@ -5,20 +5,31 @@ namespace App\Services;
 use App\Media\MediaManager;
 use App\Models\Event;
 use App\Models\Media;
+use App\Models\PersonStoryLink;
 use App\Models\Room;
 use App\Models\Story;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class StoryService
 {
     public function __construct(
         protected MediaManager $mediaManager,
+        protected PersonScope $personScope,
     ) {}
 
     public function createStory(User $user, Room|Event $room, array $data): Story
     {
+        $scopeOwner = $this->scopeOwnerFor($room, $user);
+
+        // Fail closed before any media work: no story is created with partial tagging.
+        $taggedPeople = null;
+        if (array_key_exists('person_ids', $data) && $data['person_ids'] !== null) {
+            $taggedPeople = $this->personScope->assertLinkableMany($scopeOwner, (array) $data['person_ids']);
+        }
+
         $story = $room->stories()->create([
             'uuid' => (string) \Str::uuid(),
             'title' => $data['title'] ?? null,
@@ -125,7 +136,100 @@ class StoryService
             }
         }
 
+        if ($taggedPeople !== null) {
+            $this->syncTaggedPeople($story, $scopeOwner, $taggedPeople->pluck('id')->all());
+        }
+
         return $story;
+    }
+
+    /**
+     * Resolve the ownership scope tagging is validated against: the room/event
+     * creator's family archive. Falls back to the contributor when the parent
+     * has no resolvable creator (defensive; all current callers have one).
+     */
+    public function scopeOwnerFor(Room|Event $room, ?User $contributor = null): ?User
+    {
+        $creatorId = $room->created_by ?? null;
+
+        if ($creatorId !== null) {
+            $creator = User::find($creatorId);
+
+            if ($creator !== null) {
+                return $creator;
+            }
+        }
+
+        return $contributor ?? auth()->user();
+    }
+
+    /**
+     * Pre-create guard for controllers that build stories directly: fails closed
+     * before the story exists when any submitted person id is out of scope.
+     *
+     * @param  array<int>|null  $personIds
+     */
+    public function assertStoryTagsAllowed(Room $room, ?array $personIds): void
+    {
+        if ($personIds === null) {
+            return;
+        }
+
+        $owner = $this->scopeOwnerFor($room);
+        abort_unless($owner !== null, 403, 'People tagging is unavailable for this room.');
+
+        $this->personScope->assertLinkableMany($owner, $personIds);
+    }
+
+    /**
+     * Post-create sync for controllers that build stories directly.
+     *
+     * @param  array<int>|null  $personIds  null = field absent, leave links unchanged.
+     */
+    public function syncStoryTags(Story $story, Room $room, ?array $personIds): void
+    {
+        if ($personIds === null) {
+            return;
+        }
+
+        $owner = $this->scopeOwnerFor($room);
+        abort_unless($owner !== null, 403, 'People tagging is unavailable for this room.');
+
+        $this->syncTaggedPeople($story, $owner, $personIds);
+    }
+
+    /**
+     * Synchronise structured people tagging for a story.
+     *
+     * Only manages `role=mentioned` links (the tagging role); any other roles
+     * are left untouched. Never touches `stories.tags` free-form JSON.
+     *
+     * @param  array<int>|null  $personIds  null = field absent, leave links unchanged.
+     *
+     * @throws ValidationException
+     */
+    public function syncTaggedPeople(Story $story, User $scopeOwner, ?array $personIds): void
+    {
+        if ($personIds === null) {
+            return;
+        }
+
+        $people = $this->personScope->assertLinkableMany($scopeOwner, $personIds);
+        $ids = $people->pluck('id')->all();
+
+        $query = $story->personLinks()->where('role', 'mentioned');
+
+        if ($ids === []) {
+            $query->delete();
+        } else {
+            $query->whereNotIn('person_id', $ids)->delete();
+        }
+
+        foreach ($ids as $id) {
+            PersonStoryLink::firstOrCreate(
+                ['person_id' => $id, 'story_id' => $story->id, 'role' => 'mentioned'],
+            );
+        }
     }
 
     protected function uploadViaPipeline(UploadedFile $file): ?Media

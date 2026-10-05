@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\StoryVisibility;
 use Database\Factories\StoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -16,6 +18,7 @@ class Story extends Model
 
     protected $fillable = [
         'uuid', 'room_id', 'event_id', 'user_id', 'room_member_id', 'guest_name', 'guest_email', 'title', 'thumbnail', 'type',
+        'visibility',
         'description', 'duration', 'file_url', 'tags', 'assets', 'transcript_id', 'transcript', 'transcript_status',
         'follow_up_to',
     ];
@@ -45,7 +48,13 @@ class Story extends Model
             'tags' => 'array',
             'assets' => 'array',
             'transcript' => 'array',
+            'visibility' => StoryVisibility::class,
         ];
+    }
+
+    public function isVip(): bool
+    {
+        return $this->visibility === StoryVisibility::Vip;
     }
 
     public function user(): BelongsTo
@@ -81,6 +90,16 @@ class Story extends Model
     public function followUpStories(): HasMany
     {
         return $this->hasMany(Story::class, 'follow_up_to');
+    }
+
+    public function personLinks(): HasMany
+    {
+        return $this->hasMany(PersonStoryLink::class);
+    }
+
+    public function taggedPeople(): BelongsToMany
+    {
+        return $this->belongsToMany(Person::class, 'person_story_links');
     }
 
     public function parentStory(): BelongsTo

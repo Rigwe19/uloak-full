@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RoomKind;
 use App\Enums\RoomStatus;
 use App\Enums\RoomTier;
 use Database\Factories\RoomFactory;
@@ -20,7 +21,7 @@ class Room extends Model
     protected $fillable = [
         'name', 'slug', 'thumbnail', 'description', 'privacy', 'created_by',
         'created_by_house_member_id',
-        'room_type', 'enable_tributes', 'enable_condolence_attendance', 'enable_candle_lighting',
+        'room_type', 'kind', 'person_id', 'enable_tributes', 'enable_condolence_attendance', 'enable_candle_lighting',
         'tribute_song', 'media_items', 'tribute_name',
         'start_date',
         'end_date',
@@ -65,6 +66,7 @@ class Room extends Model
             'enable_condolence_attendance' => 'boolean',
             'enable_candle_lighting' => 'boolean',
             'media_items' => 'array',
+            'kind' => RoomKind::class,
             'start_date' => 'date',
             'end_date' => 'date',
             'allow_download' => 'boolean',
@@ -76,6 +78,28 @@ class Room extends Model
             'storage_used_bytes' => 'integer',
             'storage_limit_bytes' => 'integer',
         ];
+    }
+
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class);
+    }
+
+    public function isStructural(): bool
+    {
+        return $this->kind instanceof RoomKind
+            ? $this->kind->isStructural()
+            : in_array($this->kind, ['root', 'branch', 'person'], true);
+    }
+
+    public function scopeStructural($query)
+    {
+        return $query->whereIn('kind', ['root', 'branch', 'person']);
+    }
+
+    public function scopeEvents($query)
+    {
+        return $query->where('kind', 'event');
     }
 
     public function stories(): HasMany

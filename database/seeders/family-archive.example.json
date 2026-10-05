@@ -1,0 +1,20 @@
+{
+    "owner_email": "keeper@example.com",
+    "root": {
+        "grandparents": [
+            { "legal_name": "Grandpa Surname", "display_name": "Grandpa", "gender": "male", "living_status": "living" },
+            { "legal_name": "Grandma Surname", "display_name": "Grandma", "gender": "female", "living_status": "living" }
+        ],
+        "room_name": "[Root] Grandpa & Grandma Surname"
+    },
+    "branches": [
+        {
+            "room_name": "[Branch] Child One & Family",
+            "child": { "legal_name": "Child One Surname", "display_name": "Child One", "living_status": "living" },
+            "partner": { "legal_name": "Partner Surname", "display_name": "Partner", "living_status": "living" },
+            "grandchildren": [
+                { "legal_name": "Grandchild One Surname", "display_name": "Grandchild One", "living_status": "living" }
+            ]
+        }
+    ]
+}

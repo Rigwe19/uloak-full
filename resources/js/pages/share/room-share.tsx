@@ -3,6 +3,11 @@ import StoryCard from '@/components/feed/StoryCard';
 import StoryFeed from '@/components/feed/StoryFeed';
 import Hero from '@/components/hero';
 import { VideoPlayer } from '@/components/media/VideoPlayer';
+import {
+    PeopleTagPicker,
+    type TaggablePerson,
+} from '@/components/people-tag-picker';
+import { TaggedPeople } from '@/components/tagged-people';
 import { ResponsiveModal } from '@/components/responsive-modal';
 import { UploadDropzone } from '@/components/upload/UploadDropzone';
 import { UploadQueue } from '@/components/upload/UploadQueue';
@@ -69,6 +74,7 @@ interface ShareRoomProps {
         tribute_name: string | null;
     };
     stories: FeedStory[];
+    taggablePeople?: TaggablePerson[];
     pagination?: {
         next_cursor: string | null;
         path: string;
@@ -338,6 +344,11 @@ function MediaViewerModal({
                             <p className="text-xs text-white/60">
                                 {story.author} · {story.date}
                             </p>
+                            <TaggedPeople
+                                people={story.tagged_people}
+                                basePath="/share/rooms"
+                                className="mt-1 text-xs"
+                            />
                         </div>
                     </div>
                 </motion.div>
@@ -941,12 +952,14 @@ function MediaCaptureHub({
     guestEmail,
     guestWhatsapp,
     roomSlug,
+    taggablePeople = [],
 }: {
     onSubmit: () => void;
     guestName: string;
     guestEmail: string;
     guestWhatsapp: string;
     roomSlug: string;
+    taggablePeople?: TaggablePerson[];
 }) {
     const [mode, setMode] = useState<CaptureMode>(null);
 
@@ -997,6 +1010,15 @@ function MediaCaptureHub({
 
     // Description
     const [description, setDescription] = useState('');
+
+    // Who's in this story?
+    const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
+
+    const appendPeople = (fd: FormData) => {
+        selectedPeople.forEach((id) =>
+            fd.append('person_ids[]', String(id)),
+        );
+    };
 
     // Submit / success
     const [isSubmittingMedia, setIsSubmittingMedia] = useState(false);
@@ -1450,6 +1472,7 @@ function MediaCaptureHub({
                     item.file.type.startsWith('video/') ? 'video' : item.file.type.startsWith('audio/') ? 'audio' : 'photo';
                 fd.append('type', t);
                 fd.append('media_uuids[]', item.mediaUuid!);
+                appendPeople(fd);
                 router.post(`/share/rooms/${roomSlug}/stories`, fd, {
                     forceFormData: true,
                     preserveScroll: true,
@@ -1496,6 +1519,7 @@ function MediaCaptureHub({
         formData.append('description', description);
         formData.append('type', firstType);
         mediaUuids.forEach((uuid) => formData.append('media_uuids[]', uuid));
+        appendPeople(formData);
 
         setIsSubmittingMedia(true);
 
@@ -1765,6 +1789,11 @@ function MediaCaptureHub({
                                                     'max(1.25rem, env(safe-area-inset-bottom))',
                                             }}
                                         >
+                                            <PeopleTagPicker
+                                                people={taggablePeople}
+                                                selected={selectedPeople}
+                                                onChange={setSelectedPeople}
+                                            />
                                             <textarea
                                                 value={description}
                                                 onChange={(e) =>
@@ -2072,6 +2101,7 @@ function MediaCaptureHub({
 export default function RoomShare({
     room,
     stories: initialStories,
+    taggablePeople = [],
     pagination,
     flash,
 }: ShareRoomProps) {
@@ -2346,6 +2376,7 @@ export default function RoomShare({
                                 guestEmail={guestEmail}
                                 guestWhatsapp={guestWhatsapp}
                                 roomSlug={room.slug}
+                                taggablePeople={taggablePeople}
                             />
                         )}
                     </div>
@@ -2384,6 +2415,10 @@ export default function RoomShare({
                                     <p className="line-clamp-2 text-xs text-text-muted italic" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
                                         {story.description || 'No description'}
                                     </p>
+                                    <TaggedPeople
+                                        people={story.tagged_people}
+                                        basePath="/share/rooms"
+                                    />
                                     <div className="flex items-center justify-between font-mono text-[10px] tracking-wider text-text-muted uppercase">
                                         <span className="flex items-center gap-1.5">
                                             <User
