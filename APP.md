@@ -59,7 +59,8 @@ app/Policies/{RoomPolicy.php,StoryPolicy.php}  # room gates + viewer story gatin
 resources/js/pages/{weddings.tsx,weddings/create.tsx,pricing.tsx,checkout/status.tsx,watch/index.tsx,watch/featured.tsx,creators/show.tsx,admin/creators.tsx}
 resources/js/components/pricing/{RegionSelector,StickyCTA}
 routes/web.php, routes/console.php (01:00 close-expired-starters)
-tests/Feature/Billing/{Billing,ContributionGate,Referral,SubscriptionArchive,RoomCreationGate,CreatorEconomy}Test.php
+openapi.json, API.md  # mobile contract — every new /api/v1 route + schema must be added to both
+tests/Feature/Billing/{Billing,ContributionGate,Referral,SubscriptionArchive,RoomCreationGate,CreatorEconomy,CreatorEconomyApi}Test.php
 tests/Feature/FamilyArchive/{RoomKind,PersonScope,StoryTagging,PersonRoomSurfacing,TaggablePeople,EventRoomPeople,FamilyTreeNav,Rollout}Test.php
 public/images/01..10-ulo-*.jpg
 ```

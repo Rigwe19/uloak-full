@@ -32,6 +32,10 @@ class StoryController extends Controller
 
     public function show(Story $story): JsonResponse
     {
+        if (auth()->user()?->cannot('view', $story)) {
+            abort(403, 'A viewer subscription is required.');
+        }
+
         $story->load(['user', 'room']);
 
         return response()->json(['data' => new StoryResource($story)]);
@@ -45,6 +49,12 @@ class StoryController extends Controller
 
         $validated = $request->validated();
 
+        $visibility = $validated['visibility'] ?? 'normal';
+
+        if ($visibility === 'vip' && ! $request->user()->isVipCreator()) {
+            return response()->json(['message' => 'Only approved VIP creators can publish VIP stories.', 'errors' => ['visibility' => ['Only approved VIP creators can publish VIP stories.']]], 422);
+        }
+
         // Fail closed before the story exists when tagging is out of scope.
         $this->storyService->assertStoryTagsAllowed($room, $validated['person_ids'] ?? null);
 
@@ -55,6 +65,7 @@ class StoryController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'type' => $validated['type'],
+            'visibility' => $visibility,
             'tags' => $validated['tags'] ?? [],
             'follow_up_to' => $validated['follow_up_to'] ?? null,
         ];

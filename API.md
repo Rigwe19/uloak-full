@@ -104,10 +104,10 @@ Same fields + `existing_media_urls` JSON string + `media_files[]`. Returns `Room
 `StoryResource` cursor paginate — `['rooms', slug, 'stories']`.
 
 ### `POST /api/v1/rooms/{room}/stories` — auth:sanctum + `contributions.open` + `throttle:guest-media`
-`StoreStoryRequest`: `title* 255`, `description ≤5000`, `type* photo|video|audio|document`, `file photo/audio ≤50MB, video ≤1GB` (`media-validation.ts` `MAX_VIDEO_SIZE=1GB`, guest upload `MediaController@handleGuestUpload` `max:1048576` (~1GB), `room-share.tsx` `maxSizeMB={1024}` for video), `thumbnail image`, `tags[] ≤32`, `assets[]`, `follow_up_to story_id`. If `contributionBlockReason !== null` → `403 { reason: draft|closed|expired|storage_full }`. `201 StoryResource`. Invalidate `['rooms', slug, 'stories']`.
+`StoreStoryRequest`: `title* 255`, `description ≤5000`, `type* photo|video|audio|document`, `visibility? normal|vip` (default `normal` — `vip` requires an approved VIP creator profile else `422 { errors.visibility }`), `file photo/audio ≤50MB, video ≤1GB` (`media-validation.ts` `MAX_VIDEO_SIZE=1GB`, guest upload `MediaController@handleGuestUpload` `max:1048576` (~1GB), `room-share.tsx` `maxSizeMB={1024}` for video), `thumbnail image`, `tags[] ≤32`, `assets[]`, `follow_up_to story_id`. If `contributionBlockReason !== null` → `403 { reason: draft|closed|expired|storage_full }`. `201 StoryResource`. Invalidate `['rooms', slug, 'stories']`.
 
 ### `GET /api/v1/stories/{story}` — auth:sanctum — `uuid` route
-`StoryResource` (with `user.name`, `file_url`, `thumbnail` absolute).
+`StoryResource` (with `user.name`, `file_url`, `thumbnail` absolute, `visibility`, `is_featured`). Viewer-gated by `StoryPolicy::view`: normal stories need any active viewer subscription, VIP stories need an active VIP viewer subscription — otherwise `403`. Owners always pass.
 
 ### `DELETE /api/v1/stories/{story}` — auth:sanctum — owner / room owner else `403`.
 
@@ -188,18 +188,18 @@ Deep link: `ulo://house/<64hex>` dev + `https://app.ulo.house/house/<token>` pro
 ```json
 {
   "data": {
-    "nigeria": { "key": "nigeria", "label": "Nigeria", "currency": "NGN", "full_room": 15000000, "full_room_formatted": "₦150,000", "family_monthly": 350000, "family_monthly_formatted": "₦3,500", "family_yearly": 3500000, "yearly_savings": 700000 },
-    "rest_of_africa": { "full_room": 19000, "full_room_formatted": "$190", ... },
-    "uk": { "full_room": 29000, "full_room_formatted": "£290", ... },
-    "us_rest_of_world": { "full_room": 35000, "full_room_formatted": "$350", ... },
-    "europe": { "full_room": 35000, "full_room_formatted": "€350", ... }
+    "nigeria": { "key": "nigeria", "label": "Nigeria", "currency": "NGN", "full_room": 15000000, "full_room_formatted": "₦150,000", "family_monthly": 350000, "family_monthly_formatted": "₦3,500", "family_yearly": 3500000, "yearly_savings": 700000, "viewer_monthly": 200000, "viewer_monthly_formatted": "₦2,000", "viewer_yearly": 2000000, "viewer_vip_monthly": 350000, "viewer_vip_yearly": 3500000 },
+    "rest_of_africa": { "full_room": 19000, "full_room_formatted": "$190", "viewer_monthly": 299, "viewer_vip_monthly": 499, ... },
+    "uk": { "full_room": 29000, "full_room_formatted": "£290", "viewer_monthly": 499, "viewer_vip_monthly": 799, ... },
+    "us_rest_of_world": { "full_room": 35000, "full_room_formatted": "$350", "viewer_monthly": 599, "viewer_vip_monthly": 999, ... },
+    "europe": { "full_room": 35000, "full_room_formatted": "€350", "viewer_monthly": 599, "viewer_vip_monthly": 999, ... }
   }
 }
 ```
 Amounts minor units (÷100). Single currency per visitor — savings `12*monthly - yearly`. Pricing funnel `pricing.tsx` `f10eb7`.
 
 ### `POST /api/v1/billing/checkout` — auth:sanctum — `CheckoutRequest`
-Body: `room_id? int`, `region* nigeria|rest_of_africa|uk|us_rest_of_world|europe`, `tier* starter|full_room|family_archive|family_monthly|family_yearly`, `provider? paystack|paypal|stripe`, `ref_code?`.
+Body: `room_id? int`, `region* nigeria|rest_of_africa|uk|us_rest_of_world|europe`, `tier* starter|full_room|family_archive|family_monthly|family_yearly|viewer_monthly|viewer_yearly|viewer_vip_monthly|viewer_vip_yearly`, `provider? paystack|paypal|stripe`, `ref_code?` (partner code or creator `ref_code` — creator attribution accrues a `creator_earnings` row on activation).
 Flow (`PaymentService::createCheckout`):
 - Resolves room ownership (`403` if not own draft).
 - Computes server-side `amount/currency` via `PricingService::checkoutPrice(region, tier)` — never trust client amount.
@@ -214,9 +214,43 @@ Flow (`PaymentService::createCheckout`):
 `403` if not own payment. Show `Checking every 3s — do not close` + gold 2px bar.
 
 ### `POST /api/v1/billing/payments/{payment}/verify` — auth:sanctum — `{ reference? }`
-Idempotently `verifyAndActivate(payment, reference)` → webhook authoritative. Returns fresh `PaymentResource`. On `successful` navigate to `rooms/[slug]` else `pricing` error.
+Idempotently `verifyAndActivate(payment, reference)` → webhook authoritative. Returns fresh `PaymentResource`. On `successful` navigate to `rooms/[slug]` else `pricing` error. For subscription tiers (`family_*`, `viewer_*`) activation also creates the `Subscription` row + a pending `creator_earnings` row when a creator `ref_code` was attributed.
 
 > Web still has `GET /checkout/{payment}` Inertia + `GET /billing/callback/{provider}` redirects — mobile uses JSON `status/verify` only.
+
+### Subscriptions — Family Archive + Viewer (mobile parity with web)
+
+Tiers: `family_monthly|family_yearly` (Family Archive) + `viewer_monthly|viewer_yearly` (all normal creator stories) + `viewer_vip_monthly|viewer_vip_yearly` (all + VIP stories). Splits: Normal creator 70%, VIP 80% (`config/pricing.php:creator`).
+
+### `GET /api/v1/subscriptions` — auth:sanctum
+`{ data: [SubscriptionResource] }` — latest first. Key `['subscriptions']`.
+
+### `POST /api/v1/subscriptions` — auth:sanctum
+Body: `region*`, `tier*` (6 subscription tiers), `provider?`, `ref_code?` (creator link code → commission).
+`201 { data: PaymentResource, authorization_url, reference }` — open the URL in WebView/Browser, then poll `GET /billing/payments/{id}/status`. On success the `Payment` carries `subscription_id` + `creator_profile_id`.
+
+### `POST /api/v1/subscriptions/{subscription}/cancel` — auth:sanctum
+Sets `cancel_at_period_end` (access to period end). `404` if not own. Invalidate `['subscriptions']`.
+
+### Creators & Watch — viewer economy (mobile `watch/` screens)
+
+### `GET /api/v1/creators/{refCode}` — public
+```json
+{ "data": { "id": 1, "user": { "id": 2, "name": "Ada" }, "creator_type": "normal|vip", "is_vip": false, "ref_code": "ABC12345", "split_pct": 70.0 }, "stories": [StoryResource ×12 normal only] }
+```
+`404` unknown code. Key `['creators', refCode]`. Subscribe CTA → `POST /api/v1/subscriptions` with `ref_code`.
+
+### `POST /api/v1/creators` — auth:sanctum
+Body: `creator_type? normal|vip` (VIP requests upgrade, admin approves). Idempotent per user (`firstOrCreate`). `201` new / `200` existing `{ data: CreatorProfileResource }`. Invalidate `['creator-profile']`.
+
+### `GET /api/v1/watch` — auth:sanctum + `viewer` middleware
+```json
+{ "data": [StoryResource normal ×30], "featured": [StoryResource VIP ×10, empty unless VIP viewer], "is_vip_viewer": false }
+```
+`403` without an active viewer subscription. Key `['watch']`.
+
+### `GET /api/v1/watch/featured` — auth:sanctum + `viewer:vip` middleware
+VIP-only push feed `{ data: [StoryResource VIP ×30] }`. `403` for standard viewers/guests. Key `['watch', 'featured']`.
 
 ---
 
@@ -251,9 +285,13 @@ Comments: web `POST /dashboard/stories/{story}/comments` (Inertia) — mobile ca
 
 **RoomResource**: `id, slug, name, description, room_type (general|wedding|birthday|burial|memorial|anniversary|graduation), tier_type, status, privacy, thumbnail absolute, tribute_name, enable_tributes, enable_candle_lighting, storage_used_bytes, storage_limit_bytes, remaining_storage_bytes, expires_at, contributions_closed_at, contributions_open bool, contribution_block_reason draft|closed|expired|storage_full|null, created_at, updated_at, stories_count, tributes_count, photos_count, videos_count, creator{id,name}`.
 
-**StoryResource**: `id, uuid, title, description, type, thumbnail absolute, file_url absolute, duration, assets, created_at "M d, Y", user "Name"`. `FeedStory` adds `author, date, tags[], likes_count, comments_count`.
+**StoryResource**: `id, uuid, title, description, type, visibility normal|vip, is_featured bool (= visibility vip), thumbnail absolute, file_url absolute, duration, assets, created_at "M d, Y", user "Name"`. `FeedStory` adds `author, date, tags[], likes_count, comments_count`.
 
-**PaymentResource**: `id, status pending|successful|failed, provider paystack|stripe|paypal, amount minor, currency NGN|USD|GBP|EUR, region, provider_reference, room{id,slug,name}, paid_at, created_at`.
+**PaymentResource**: `id, status pending|successful|failed, provider paystack|stripe|paypal, tier purchased key nullable, amount minor, currency NGN|USD|GBP|EUR, region, provider_reference, creator_profile_id nullable, subscription_id nullable, room{id,slug,name}, paid_at, created_at`.
+
+**SubscriptionResource**: `id, tier family_monthly|family_yearly|viewer_monthly|viewer_yearly|viewer_vip_monthly|viewer_vip_yearly, tier_label, is_viewer, is_vip_viewer, status, current_period_start/end ISO, cancel_at_period_end, provider, region, currency, referred_creator_profile_id nullable, created_at`.
+
+**CreatorProfileResource**: `id, user{id,name}, creator_type normal|vip, is_vip, ref_code, split_pct, created_at`.
 
 **HouseMemberResource**: `id, name, email, avatar, bio, position, created_at` (token hidden).
 
@@ -281,6 +319,11 @@ Comments: web `POST /dashboard/stories/{story}/comments` (Inertia) — mobile ca
 | House verify | `useHouseVerify(token)` | `['house', token]` |
 | Pricing | `usePricing()` | `['pricing']` |
 | Checkout status poll | `usePaymentStatus(id)` refetch 3s | `['payments', id, 'status']` |
+| Subscriptions | `useSubscriptions()` | `['subscriptions']` |
+| Creator page | `useCreator(refCode)` | `['creators', refCode]` |
+| Creator profile (own) | `useCreatorProfile()` | `['creator-profile']` |
+| Watch feed | `useWatch()` | `['watch']` |
+| Watch featured (VIP) | `useWatchFeatured()` | `['watch', 'featured']` |
 
 Invalidate `['rooms']` after create/update, `['rooms', slug]` after story contribute.
 
@@ -309,6 +352,24 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/jso
 
 # Poll status
 curl -H "Authorization: Bearer $TOKEN" $API/api/v1/billing/payments/12/status
+
+# Viewer subscription via a creator link (Standard)
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"region":"nigeria","tier":"viewer_monthly","ref_code":"ABC12345"}' \
+  $API/api/v1/subscriptions
+
+# List + cancel subscriptions
+curl -H "Authorization: Bearer $TOKEN" $API/api/v1/subscriptions
+curl -X POST -H "Authorization: Bearer $TOKEN" $API/api/v1/subscriptions/5/cancel
+
+# Become a creator + public creator page
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"creator_type":"normal"}' $API/api/v1/creators
+curl $API/api/v1/creators/ABC12345
+
+# Watch feeds (viewer sub required; featured needs VIP)
+curl -H "Authorization: Bearer $TOKEN" $API/api/v1/watch
+curl -H "Authorization: Bearer $TOKEN" $API/api/v1/watch/featured
 
 # Guest share (public)
 curl $API/api/v1/share/rooms/the-heritage-hall-abc123

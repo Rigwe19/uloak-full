@@ -1,12 +1,15 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+    BadgeCheck,
     ChevronLeft,
     ChevronRight,
+    Clapperboard,
     FolderX,
     Info,
     Lock,
     Share2,
+    Sparkles,
     Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -75,12 +78,54 @@ function StoryTypeCard({
     );
 }
 
+// Sibling sub-component: become-a-creator CTA (guests register, members post)
+function BecomeCreatorButton() {
+    const { auth } = usePage<{
+        auth: { user: { id: number } | null };
+    }>().props;
+
+    if (!auth?.user) {
+        return (
+            <Link href={register().url}>
+                <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-text-primary/10 font-semibold text-text-primary hover:bg-text-primary/5"
+                >
+                    Become a creator
+                </Button>
+            </Link>
+        );
+    }
+
+    return (
+        <Button
+            variant="outline"
+            size="lg"
+            className="border-text-primary/10 font-semibold text-text-primary hover:bg-text-primary/5"
+            onClick={() =>
+                router.post('/creators', { creator_type: 'normal' })
+            }
+        >
+            Become a creator
+        </Button>
+    );
+}
+
 export default function Welcome({
     canRegister,
     featuredRooms = [],
+    featuredVipStories = [],
 }: {
     canRegister?: boolean;
     featuredRooms?: any[];
+    featuredVipStories?: {
+        id: number;
+        uuid: string;
+        title: string;
+        creator: string | null;
+        created_at: string | null;
+    }[];
 }) {
     const [success, setSuccess] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -644,6 +689,111 @@ export default function Welcome({
                                 </p>
                             </motion.div>
                         </motion.div>
+                    </div>
+                </section>
+
+                {/* 5b. CREATORS & VIEWERS */}
+                <section className="border-t border-border-subtle bg-surface/10 py-24">
+                    <div className="mx-auto max-w-5xl space-y-10 px-6 text-center md:px-8">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-accent-gold/20 bg-accent-gold/5 text-accent-gold">
+                            <Clapperboard size={24} />
+                        </div>
+                        <h2 className="font-serif text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
+                            Watch great stories. Earn from yours.
+                        </h2>
+                        <p className="mx-auto max-w-2xl text-lg leading-relaxed font-light text-text-muted">
+                            Viewers subscribe once and unlock creator stories
+                            across Ulo. Creators earn a share of every
+                            subscription that comes through their page or
+                            link — VIP creators get their stories pushed to a
+                            featured feed.
+                        </p>
+
+                        {featuredVipStories.length > 0 && (
+                            <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 pt-2 text-left sm:grid-cols-2 md:grid-cols-3">
+                                {featuredVipStories.slice(0, 3).map((story) => (
+                                    <div
+                                        key={story.id}
+                                        className="space-y-2 rounded-2xl border border-accent-gold/25 bg-bg-dark p-5"
+                                    >
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest text-accent-gold uppercase">
+                                            <Sparkles size={12} /> VIP · Featured
+                                        </span>
+                                        <h3 className="font-serif text-lg leading-snug font-semibold text-text-primary">
+                                            {story.title}
+                                        </h3>
+                                        <p className="text-xs text-text-muted">
+                                            {story.creator ?? 'Ulo creator'}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <motion.div
+                            variants={staggerContainer}
+                            initial="hidden"
+                            whileInView="show"
+                            viewport={viewportOnce}
+                            className="mx-auto grid max-w-4xl grid-cols-1 gap-6 pt-4 text-left md:grid-cols-3"
+                        >
+                            <motion.div
+                                variants={cardReveal}
+                                whileHover={{ y: -4 }}
+                                className="space-y-3 rounded-2xl border border-border-subtle bg-surface/50 p-5"
+                            >
+                                <Users size={18} className="text-accent-gold" />
+                                <h3 className="font-serif text-base font-bold text-text-primary">
+                                    Creator — earn 70%
+                                </h3>
+                                <p className="text-xs leading-relaxed text-text-muted">
+                                    Share your page link. When viewers
+                                    subscribe through it, you keep 70% of
+                                    every subscription.
+                                </p>
+                            </motion.div>
+                            <motion.div
+                                variants={cardReveal}
+                                whileHover={{ y: -4 }}
+                                className="space-y-3 rounded-2xl border border-accent-gold/25 bg-surface/50 p-5"
+                            >
+                                <BadgeCheck
+                                    size={18}
+                                    className="text-accent-gold"
+                                />
+                                <h3 className="font-serif text-base font-bold text-text-primary">
+                                    VIP Creator — earn 80%
+                                </h3>
+                                <p className="text-xs leading-relaxed text-text-muted">
+                                    Approved VIP stories are pushed to the
+                                    featured feed so more viewers find and
+                                    watch them.
+                                </p>
+                            </motion.div>
+                            <motion.div
+                                variants={cardReveal}
+                                whileHover={{ y: -4 }}
+                                className="space-y-3 rounded-2xl border border-border-subtle bg-surface/50 p-5"
+                            >
+                                <Lock size={18} className="text-accent-gold" />
+                                <h3 className="font-serif text-base font-bold text-text-primary">
+                                    Viewer plans
+                                </h3>
+                                <p className="text-xs leading-relaxed text-text-muted">
+                                    Viewer unlocks all normal creator stories;
+                                    Viewer VIP unlocks VIP stories too.
+                                </p>
+                            </motion.div>
+                        </motion.div>
+
+                        <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
+                            <Link href="/pricing">
+                                <Button size="lg" className="font-semibold">
+                                    See viewer plans
+                                </Button>
+                            </Link>
+                            <BecomeCreatorButton />
+                        </div>
                     </div>
                 </section>
 

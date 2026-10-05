@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\V1\AuthController as V1AuthController;
 use App\Http\Controllers\Api\V1\BillingController as V1BillingController;
+use App\Http\Controllers\Api\V1\CreatorController as V1CreatorController;
 use App\Http\Controllers\Api\V1\DashboardController as V1DashboardController;
 use App\Http\Controllers\Api\V1\HouseAccessController as V1HouseAccessController;
 use App\Http\Controllers\Api\V1\NotificationController as V1NotificationController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\Api\V1\RoomController as V1RoomController;
 use App\Http\Controllers\Api\V1\SearchController as V1SearchController;
 use App\Http\Controllers\Api\V1\ShareController as V1ShareController;
 use App\Http\Controllers\Api\V1\StoryController as V1StoryController;
+use App\Http\Controllers\Api\V1\SubscriptionController as V1SubscriptionController;
+use App\Http\Controllers\Api\V1\WatchController as V1WatchController;
 use App\Http\Controllers\AssemblyAIWebhookController;
 use App\Http\Controllers\DriveImportController;
 use App\Http\Controllers\LikeController;
@@ -44,6 +47,7 @@ Route::prefix('v1')->group(function () {
     // Public (no auth) — pricing + guest share (must be fetchable without login)
     Route::get('/pricing', [V1BillingController::class, 'pricing'])->name('api.v1.pricing');
     Route::get('/share/rooms/{slug}', [V1ShareController::class, 'showRoom'])->name('api.v1.share.rooms.show');
+    Route::get('/creators/{refCode}', [V1CreatorController::class, 'show'])->name('api.v1.creators.show');
 
     // Auth — public (Sanctum token issuance)
     Route::post('/login', [V1AuthController::class, 'login'])->middleware('throttle:login')->name('api.v1.login');
@@ -97,6 +101,16 @@ Route::prefix('v1')->group(function () {
         Route::post('/billing/checkout', [V1BillingController::class, 'checkout'])->name('api.v1.billing.checkout');
         Route::get('/billing/payments/{payment}/status', [V1BillingController::class, 'status'])->name('api.v1.billing.status');
         Route::post('/billing/payments/{payment}/verify', [V1BillingController::class, 'verify'])->name('api.v1.billing.verify');
+
+        // Subscriptions — Family Archive + Viewer Standard/VIP (same tiers as web)
+        Route::get('/subscriptions', [V1SubscriptionController::class, 'index'])->name('api.v1.subscriptions.index');
+        Route::post('/subscriptions', [V1SubscriptionController::class, 'store'])->name('api.v1.subscriptions.store');
+        Route::post('/subscriptions/{subscription}/cancel', [V1SubscriptionController::class, 'cancel'])->name('api.v1.subscriptions.cancel');
+
+        // Creators — become a creator + viewer watch feeds
+        Route::post('/creators', [V1CreatorController::class, 'store'])->name('api.v1.creators.store');
+        Route::get('/watch', [V1WatchController::class, 'index'])->middleware('viewer')->name('api.v1.watch.index');
+        Route::get('/watch/featured', [V1WatchController::class, 'featured'])->middleware('viewer:vip')->name('api.v1.watch.featured');
 
         // Likes (re-use web LikeController logic — keep simple for mobile)
         Route::post('/stories/{story}/likes', [LikeController::class, 'toggle'])->name('api.v1.stories.likes.toggle');

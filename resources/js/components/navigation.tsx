@@ -53,6 +53,7 @@ export function Navbar() {
 
     const links = [
         { name: 'Weddings', path: '/weddings' },
+        { name: 'Watch', path: '/watch' },
         { name: 'Pricing', path: '/pricing' },
         { name: 'How Ulo Works', path: '/#how-it-works' },
         { name: 'Ulo Studio', path: '/services' },
@@ -232,6 +233,14 @@ export function Footer() {
                                     className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
                                 >
                                     Weddings
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="/watch"
+                                    className="text-sm text-text-muted transition-colors duration-200 hover:text-accent-gold"
+                                >
+                                    Watch stories
                                 </Link>
                             </li>
                             <li>

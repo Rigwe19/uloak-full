@@ -34,7 +34,7 @@ class BillingController extends Controller
         }
 
         $refCode = $validated['ref_code'] ?? $request->cookie('ulo_ref');
-        $utm = $request->session()->get('utm', []);
+        $utm = $request->hasSession() ? $request->session()->get('utm', []) : [];
 
         try {
             $payment = $this->payments->createCheckout($user, $room, [

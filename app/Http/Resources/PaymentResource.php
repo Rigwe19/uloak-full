@@ -15,10 +15,13 @@ class PaymentResource extends JsonResource
             'id' => $this->id,
             'status' => $this->status->value,
             'provider' => $this->provider->value,
+            'tier' => $this->tier,
             'amount' => $this->amount,
             'currency' => $this->currency,
             'region' => $this->region?->value,
             'provider_reference' => $this->provider_reference,
+            'creator_profile_id' => $this->creator_profile_id,
+            'subscription_id' => $this->subscription_id,
             'room' => $this->whenLoaded('room', fn () => $this->room ? [
                 'id' => $this->room->id,
                 'slug' => $this->room->slug,

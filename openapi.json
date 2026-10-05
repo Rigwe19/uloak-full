@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Ulo — House of Stories — Mobile API",
+    "title": "Ulo \u2014 House of Stories \u2014 Mobile API",
     "version": "1.0.0",
     "description": "Sanctum bearer JSON for Expo mobile (AGENTS.md.mobile + API.md). Base URL {APP_URL}/api/v1. Mirror of routes/api.php. Auth: Bearer <sanctum_token>. Public: GET /pricing, GET /share/rooms/{slug}.",
     "contact": {
@@ -46,6 +46,15 @@
     },
     {
       "name": "Billing"
+    },
+    {
+      "name": "Subscriptions"
+    },
+    {
+      "name": "Creators"
+    },
+    {
+      "name": "Watch"
     },
     {
       "name": "Share"
@@ -207,7 +216,7 @@
             "description": "Validation (invalid credentials or code)"
           },
           "423": {
-            "description": "Two factor required — resend with code/recovery_code"
+            "description": "Two factor required \u2014 resend with code/recovery_code"
           },
           "429": {
             "description": "Throttled (Fortify login limiter 5/min by email|ip)"
@@ -407,23 +416,546 @@
             }
           }
         }
-      },
-      "/analytics": {
-        "get": {
+      }
+    },
+    "/analytics": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Creator analytics (30d)",
+        "operationId": "getAnalytics",
+        "responses": {
+          "200": {
+            "description": "Analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms": {
+      "get": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "List rooms (paginate 20)",
+        "operationId": "listRooms",
+        "responses": {
+          "200": {
+            "description": "Rooms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Room"
+                      }
+                    },
+                    "links": {
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
           "tags": [
-            "Dashboard"
+            "Rooms"
           ],
-          "summary": "Creator analytics (30d)",
-          "operationId": "getAnalytics",
+          "summary": "Create room (only general free, else 402 requires_checkout)",
+          "operationId": "createRoom",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreRoomRequest"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreRoomRequest"
+                }
+              }
+            }
+          },
           "responses": {
-            "200": {
-              "description": "Analytics",
+            "201": {
+              "description": "Created",
               "content": {
                 "application/json": {
                   "schema": {
                     "type": "object",
                     "properties": {
                       "data": {
+                        "$ref": "#/components/schemas/Room"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "402": {
+              "description": "Requires checkout",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      },
+                      "requires_checkout": {
+                        "type": "boolean"
+                      },
+                      "room_type": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation"
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{room}": {
+      "get": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Room detail (slug, with tributes/candles/stories)",
+        "operationId": "getRoom",
+        "parameters": [
+          {
+            "name": "room",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Room slug (getRouteKeyName slug)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "room": {
+                          "$ref": "#/components/schemas/Room"
+                        },
+                        "stories": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Story"
+                          }
+                        },
+                        "tributes": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Tribute"
+                          }
+                        },
+                        "candles": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Candle"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "put": {
+          "tags": [
+            "Rooms"
+          ],
+          "summary": "Update room",
+          "operationId": "updateRoom",
+          "parameters": [
+            {
+              "name": "room",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateRoomRequest"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateRoomRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Updated",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/Room"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "tags": [
+            "Rooms"
+          ],
+          "summary": "Delete room (owner 403 else)",
+          "operationId": "deleteRoom",
+          "parameters": [
+            {
+              "name": "room",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Deleted"
+            },
+            "403": {
+              "description": "Forbidden"
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{room}/stories": {
+      "get": {
+        "tags": [
+          "Stories"
+        ],
+        "summary": "List stories cursor",
+        "operationId": "listStories",
+        "parameters": [
+          {
+            "name": "room",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Story"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/CursorPagination"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Stories"
+        ],
+        "summary": "Contribute story (contributions.open + throttle:guest-media)",
+        "operationId": "createStory",
+        "parameters": [
+          {
+            "name": "room",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreStoryRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreStoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Story"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Contributions closed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "enum": [
+                        "draft",
+                        "closed",
+                        "expired",
+                        "storage_full"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{story}": {
+      "get": {
+        "tags": [
+          "Stories"
+        ],
+        "summary": "Get story by uuid",
+        "operationId": "getStory",
+        "parameters": [
+          {
+            "name": "story",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Story",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Story"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Stories"
+        ],
+        "summary": "Delete story (owner/room owner)",
+        "operationId": "deleteStory",
+        "parameters": [
+          {
+            "name": "story",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/media/guest/{uuid}": {
+      "delete": {
+        "tags": [
+          "Media"
+        ],
+        "security": [],
+        "summary": "Delete guest media (orphaned before story, guest ownership via guest_name/email + room_slug/event_slug)",
+        "operationId": "deleteGuestMedia",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "room_slug",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "event_slug",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "guest_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "guest_email",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/stories/{story}/processing-status": {
+      "get": {
+        "tags": [
+          "Stories"
+        ],
+        "summary": "Media processing status",
+        "operationId": "getProcessingStatus",
+        "parameters": [
+          {
+            "name": "story",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "is_processing": {
+                      "type": "boolean"
+                    },
+                    "assets": {
+                      "type": "array",
+                      "items": {
                         "type": "object"
                       }
                     }
@@ -433,202 +965,313 @@
             }
           }
         }
-      },
-      "/rooms": {
-        "get": {
-          "tags": [
-            "Rooms"
-          ],
-          "summary": "List rooms (paginate 20)",
-          "operationId": "listRooms",
-          "responses": {
-            "200": {
-              "description": "Rooms",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "data": {
-                        "type": "array",
-                        "items": {
-                          "$ref": "#/components/schemas/Room"
+      }
+    },
+    "/rooms/{room}/feed": {
+      "get": {
+        "tags": [
+          "Feed"
+        ],
+        "summary": "Room video feed (reels, cursor)",
+        "operationId": "getRoomFeed",
+        "parameters": [
+          {
+            "name": "room",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feed": {
+      "get": {
+        "tags": [
+          "Feed"
+        ],
+        "summary": "Legacy feed ?room=&cursor=",
+        "operationId": "getFeedLegacy",
+        "parameters": [
+          {
+            "name": "room",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Story"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Search rooms/stories",
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "rooms",
+                "stories",
+                "tributes"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "rooms": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Room"
+                          }
+                        },
+                        "stories": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Story"
+                          }
+                        },
+                        "query": {
+                          "type": "string"
                         }
-                      },
-                      "links": {
-                        "type": "object"
-                      },
-                      "meta": {
-                        "type": "object"
                       }
                     }
                   }
                 }
               }
             }
-          },
-          "post": {
-            "tags": [
-              "Rooms"
-            ],
-            "summary": "Create room (only general free, else 402 requires_checkout)",
-            "operationId": "createRoom",
-            "requestBody": {
-              "required": true,
-              "content": {
-                "multipart/form-data": {
-                  "schema": {
-                    "$ref": "#/components/schemas/StoreRoomRequest"
-                  }
-                },
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/StoreRoomRequest"
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "List notifications paginate 20",
+        "operationId": "listNotifications",
+        "responses": {
+          "200": {
+            "description": "Notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Notification"
+                      }
+                    }
                   }
                 }
               }
-            },
-            "responses": {
-              "201": {
-                "description": "Created",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/Room"
-                        }
-                      }
-                    }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/{id}/read": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark one read",
+        "operationId": "markRead",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read"
+          }
+        }
+      }
+    },
+    "/notifications/read-all": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark all read",
+        "operationId": "markAllRead",
+        "responses": {
+          "200": {
+            "description": "Read all"
+          }
+        }
+      }
+    },
+    "/house/verify": {
+      "post": {
+        "tags": [
+          "House"
+        ],
+        "summary": "Verify house token (64hex)",
+        "operationId": "verifyHouse",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 64,
+                    "maxLength": 64
                   }
                 }
-              },
-              "402": {
-                "description": "Requires checkout",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        },
-                        "requires_checkout": {
-                          "type": "boolean"
-                        },
-                        "room_type": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "422": {
-                "description": "Validation"
               }
             }
           }
         },
-        "/rooms/{room}": {
-          "get": {
-            "tags": [
-              "Rooms"
-            ],
-            "summary": "Room detail (slug, with tributes/candles/stories)",
-            "operationId": "getRoom",
-            "parameters": [
-              {
-                "name": "room",
-                "in": "path",
-                "required": true,
+        "responses": {
+          "200": {
+            "description": "Verified",
+            "content": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
-                },
-                "description": "Room slug (getRouteKeyName slug)"
-              }
-            ],
-            "responses": {
-              "200": {
-                "description": "Detail",
-                "content": {
-                  "application/json": {
-                    "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
                       "type": "object",
                       "properties": {
-                        "data": {
+                        "house_member": {
+                          "$ref": "#/components/schemas/HouseMember"
+                        },
+                        "owner": {
                           "type": "object",
                           "properties": {
-                            "room": {
-                              "$ref": "#/components/schemas/Room"
+                            "id": {
+                              "type": "integer"
                             },
-                            "stories": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/Story"
-                              }
-                            },
-                            "tributes": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/Tribute"
-                              }
-                            },
-                            "candles": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/Candle"
-                              }
+                            "name": {
+                              "type": "string"
                             }
                           }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "put": {
-              "tags": [
-                "Rooms"
-              ],
-              "summary": "Update room",
-              "operationId": "updateRoom",
-              "parameters": [
-                {
-                  "name": "room",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              ],
-              "requestBody": {
-                "required": true,
-                "content": {
-                  "multipart/form-data": {
-                    "schema": {
-                      "$ref": "#/components/schemas/UpdateRoomRequest"
-                    }
-                  },
-                  "application/json": {
-                    "schema": {
-                      "$ref": "#/components/schemas/UpdateRoomRequest"
-                    }
-                  }
-                }
-              },
-              "responses": {
-                "200": {
-                  "description": "Updated",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
+                        },
+                        "rooms": {
+                          "type": "array",
+                          "items": {
                             "$ref": "#/components/schemas/Room"
                           }
                         }
@@ -638,1536 +1281,1419 @@
                 }
               }
             },
-            "delete": {
-              "tags": [
-                "Rooms"
-              ],
-              "summary": "Delete room (owner 403 else)",
-              "operationId": "deleteRoom",
-              "parameters": [
-                {
-                  "name": "room",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Deleted"
-                },
-                "403": {
-                  "description": "Forbidden"
-                }
-              }
+            "404": {
+              "description": "Invalid token"
             }
-          },
-          "/rooms/{room}/stories": {
-            "get": {
-              "tags": [
-                "Stories"
-              ],
-              "summary": "List stories cursor",
-              "operationId": "listStories",
-              "parameters": [
-                {
-                  "name": "room",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "name": "cursor",
-                  "in": "query",
-                  "schema": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "name": "per_page",
-                  "in": "query",
-                  "schema": {
-                    "type": "integer"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Stories",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/Story"
-                            }
-                          },
-                          "pagination": {
-                            "$ref": "#/components/schemas/CursorPagination"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "post": {
-              "tags": [
-                "Stories"
-              ],
-              "summary": "Contribute story (contributions.open + throttle:guest-media)",
-              "operationId": "createStory",
-              "parameters": [
-                {
-                  "name": "room",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              ],
-              "requestBody": {
-                "required": true,
-                "content": {
-                  "multipart/form-data": {
-                    "schema": {
-                      "$ref": "#/components/schemas/StoreStoryRequest"
-                    }
-                  },
-                  "application/json": {
-                    "schema": {
-                      "$ref": "#/components/schemas/StoreStoryRequest"
-                    }
-                  }
-                }
-              },
-              "responses": {
-                "201": {
-                  "description": "Created",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
-                            "$ref": "#/components/schemas/Story"
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "403": {
-                  "description": "Contributions closed",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "message": {
-                            "type": "string"
-                          },
-                          "reason": {
-                            "type": "string",
-                            "enum": [
-                              "draft",
-                              "closed",
-                              "expired",
-                              "storage_full"
-                            ]
-                          }
-                        }
+          }
+        }
+      }
+    },
+    "/house/members": {
+      "get": {
+        "tags": [
+          "House"
+        ],
+        "summary": "List house members (owner)",
+        "operationId": "listHouseMembers",
+        "responses": {
+          "200": {
+            "description": "Members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HouseMember"
                       }
                     }
                   }
                 }
               }
             }
-          },
-          "/stories/{story}": {
-            "get": {
-              "tags": [
-                "Stories"
-              ],
-              "summary": "Get story by uuid",
-              "operationId": "getStory",
-              "parameters": [
-                {
-                  "name": "story",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Story",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
-                            "$ref": "#/components/schemas/Story"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "delete": {
-              "tags": [
-                "Stories"
-              ],
-              "summary": "Delete story (owner/room owner)",
-              "operationId": "deleteStory",
-              "parameters": [
-                {
-                  "name": "story",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Deleted"
-                }
-              }
-            }
-          },
-          "/media/guest/{uuid}": {
-            "delete": {
-              "tags": [
-                "Media"
-              ],
-              "security": [],
-              "summary": "Delete guest media (orphaned before story, guest ownership via guest_name/email + room_slug/event_slug)",
-              "operationId": "deleteGuestMedia",
-              "parameters": [
-                {
-                  "name": "uuid",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                },
-                {
-                  "name": "room_slug",
-                  "in": "query",
-                  "schema": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "name": "event_slug",
-                  "in": "query",
-                  "schema": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "name": "guest_name",
-                  "in": "query",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "name": "guest_email",
-                  "in": "query",
-                  "schema": {
-                    "type": "string",
-                    "format": "email"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Deleted"
-                },
-                "403": {
-                  "description": "Not authorized"
-                },
-                "404": {
-                  "description": "Not found"
-                }
-              }
-            }
-          },
-          "/stories/{story}/processing-status": {
-            "get": {
-              "tags": [
-                "Stories"
-              ],
-              "summary": "Media processing status",
-              "operationId": "getProcessingStatus",
-              "parameters": [
-                {
-                  "name": "story",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Status",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "is_processing": {
-                            "type": "boolean"
-                          },
-                          "assets": {
-                            "type": "array",
-                            "items": {
-                              "type": "object"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "/rooms/{room}/feed": {
-            "get": {
-              "tags": [
-                "Feed"
-              ],
-              "summary": "Room video feed (reels, cursor)",
-              "operationId": "getRoomFeed",
-              "parameters": [
-                {
-                  "name": "room",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "name": "cursor",
-                  "in": "query",
-                  "schema": {
-                    "type": "integer"
-                  }
-                },
-                {
-                  "name": "limit",
-                  "in": "query",
-                  "schema": {
-                    "type": "integer"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Feed",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
-                            "type": "array",
-                            "items": {
-                              "type": "object"
-                            }
-                          },
-                          "next_cursor": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ]
-                          },
-                          "has_more": {
-                            "type": "boolean"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "/feed": {
-            "get": {
-              "tags": [
-                "Feed"
-              ],
-              "summary": "Legacy feed ?room=&cursor=",
-              "operationId": "getFeedLegacy",
-              "parameters": [
-                {
-                  "name": "room",
-                  "in": "query",
-                  "required": true,
-                  "schema": {
-                    "type": "integer"
-                  }
-                },
-                {
-                  "name": "cursor",
-                  "in": "query",
-                  "schema": {
-                    "type": "integer"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Feed",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/Story"
-                            }
-                          },
-                          "next_cursor": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ]
-                          },
-                          "has_more": {
-                            "type": "boolean"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "/search": {
-            "get": {
-              "tags": [
-                "Search"
-              ],
-              "summary": "Search rooms/stories",
-              "operationId": "search",
-              "parameters": [
-                {
-                  "name": "q",
-                  "in": "query",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "name": "type",
-                  "in": "query",
-                  "schema": {
-                    "type": "string",
-                    "enum": [
-                      "all",
-                      "rooms",
-                      "stories",
-                      "tributes"
-                    ]
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Results",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
-                            "type": "object",
-                            "properties": {
-                              "rooms": {
-                                "type": "array",
-                                "items": {
-                                  "$ref": "#/components/schemas/Room"
-                                }
-                              },
-                              "stories": {
-                                "type": "array",
-                                "items": {
-                                  "$ref": "#/components/schemas/Story"
-                                }
-                              },
-                              "query": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "/notifications": {
-            "get": {
-              "tags": [
-                "Notifications"
-              ],
-              "summary": "List notifications paginate 20",
-              "operationId": "listNotifications",
-              "responses": {
-                "200": {
-                  "description": "Notifications",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/Notification"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "/notifications/{id}/read": {
-            "post": {
-              "tags": [
-                "Notifications"
-              ],
-              "summary": "Mark one read",
-              "operationId": "markRead",
-              "parameters": [
-                {
-                  "name": "id",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Read"
-                }
-              }
-            }
-          },
-          "/notifications/read-all": {
-            "post": {
-              "tags": [
-                "Notifications"
-              ],
-              "summary": "Mark all read",
-              "operationId": "markAllRead",
-              "responses": {
-                "200": {
-                  "description": "Read all"
-                }
-              }
-            }
-          },
-          "/house/verify": {
-            "post": {
-              "tags": [
-                "House"
-              ],
-              "summary": "Verify house token (64hex)",
-              "operationId": "verifyHouse",
-              "requestBody": {
-                "required": true,
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "required": [
-                        "token"
-                      ],
-                      "properties": {
-                        "token": {
-                          "type": "string",
-                          "minLength": 64,
-                          "maxLength": 64
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "responses": {
-                "200": {
-                  "description": "Verified",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "data": {
-                            "type": "object",
-                            "properties": {
-                              "house_member": {
-                                "$ref": "#/components/schemas/HouseMember"
-                              },
-                              "owner": {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "integer"
-                                  },
-                                  "name": {
-                                    "type": "string"
-                                  }
-                                }
-                              },
-                              "rooms": {
-                                "type": "array",
-                                "items": {
-                                  "$ref": "#/components/schemas/Room"
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "404": {
-                    "description": "Invalid token"
-                  }
-                }
-              }
-            },
-            "/house/members": {
-              "get": {
-                "tags": [
-                  "House"
-                ],
-                "summary": "List house members (owner)",
-                "operationId": "listHouseMembers",
-                "responses": {
-                  "200": {
-                    "description": "Members",
-                    "content": {
-                      "application/json": {
-                        "schema": {
-                          "type": "object",
-                          "properties": {
-                            "data": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/HouseMember"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "post": {
-                "tags": [
-                  "House"
-                ],
-                "summary": "Add house member",
-                "operationId": "addHouseMember",
-                "requestBody": {
-                  "required": true,
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "required": [
-                          "name",
-                          "email"
-                        ],
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string",
-                            "format": "email"
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "responses": {
-                  "201": {
-                    "description": "Created"
-                  }
-                }
-              }
-            },
-            "/house/members/{houseMember}": {
-              "delete": {
-                "tags": [
-                  "House"
-                ],
-                "summary": "Remove house member",
-                "operationId": "removeHouseMember",
-                "parameters": [
-                  {
-                    "name": "houseMember",
-                    "in": "path",
-                    "required": true,
-                    "schema": {
-                      "type": "integer"
-                    }
-                  }
-                ],
-                "responses": {
-                  "200": {
-                    "description": "Removed"
-                  },
-                  "403": {
-                    "description": "Forbidden"
-                  }
-                }
-              }
-            },
-            "/billing/checkout": {
-              "post": {
-                "tags": [
-                  "Billing"
-                ],
-                "summary": "Create checkout (server-side price, idempotent)",
-                "operationId": "createCheckout",
-                "requestBody": {
-                  "required": true,
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "$ref": "#/components/schemas/CheckoutRequest"
-                      }
-                    }
-                  }
-                },
-                "responses": {
-                  "201": {
-                    "description": "Checkout",
-                    "content": {
-                      "application/json": {
-                        "schema": {
-                          "type": "object",
-                          "properties": {
-                            "data": {
-                              "$ref": "#/components/schemas/Payment"
-                            },
-                            "authorization_url": {
-                              "type": "string",
-                              "format": "uri"
-                            },
-                            "reference": {
-                              "type": "string"
-                            },
-                            "free": {
-                              "type": "boolean"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "402": {
-                    "description": "Requires checkout"
-                  }
-                }
-              }
-            },
-            "/billing/payments/{payment}/status": {
-              "get": {
-                "tags": [
-                  "Billing"
-                ],
-                "summary": "Poll payment status (3s)",
-                "operationId": "getPaymentStatus",
-                "parameters": [
-                  {
-                    "name": "payment",
-                    "in": "path",
-                    "required": true,
-                    "schema": {
-                      "type": "integer"
-                    }
-                  }
-                ],
-                "responses": {
-                  "200": {
-                    "description": "Payment",
-                    "content": {
-                      "application/json": {
-                        "schema": {
-                          "type": "object",
-                          "properties": {
-                            "data": {
-                              "$ref": "#/components/schemas/Payment"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "403": {
-                    "description": "Not owner"
-                  }
-                }
-              }
-            },
-            "/billing/payments/{payment}/verify": {
-              "post": {
-                "tags": [
-                  "Billing"
-                ],
-                "summary": "Verify and activate (idempotent)",
-                "operationId": "verifyPayment",
-                "parameters": [
-                  {
-                    "name": "payment",
-                    "in": "path",
-                    "required": true,
-                    "schema": {
-                      "type": "integer"
-                    }
-                  }
-                ],
-                "requestBody": {
-                  "required": false,
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "type": "object",
-                        "properties": {
-                          "reference": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "responses": {
-                  "200": {
-                    "description": "Verified",
-                    "content": {
-                      "application/json": {
-                        "schema": {
-                          "type": "object",
-                          "properties": {
-                            "data": {
-                              "$ref": "#/components/schemas/Payment"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "components": {
-            "securitySchemes": {
-              "bearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "Sanctum"
-              }
-            },
-            "schemas": {
-              "User": {
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "House"
+        ],
+        "summary": "Add house member",
+        "operationId": "addHouseMember",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
                 "type": "object",
+                "required": [
+                  "name",
+                  "email"
+                ],
                 "properties": {
-                  "id": {
-                    "type": "integer"
-                  },
                   "name": {
                     "type": "string"
                   },
                   "email": {
                     "type": "string",
                     "format": "email"
-                  },
-                  "profile_photo_url": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "is_admin": {
-                    "type": "boolean"
-                  },
-                  "email_verified_at": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "date-time"
                   }
                 }
-              },
-              "Room": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer"
-                  },
-                  "slug": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "room_type": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "enum": [
-                      "general",
-                      "wedding",
-                      "birthday",
-                      "burial",
-                      "memorial",
-                      "anniversary",
-                      "graduation",
-                      null
-                    ]
-                  },
-                  "tier_type": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "enum": [
-                      "starter",
-                      "full_room",
-                      "family_archive",
-                      null
-                    ]
-                  },
-                  "status": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "enum": [
-                      "draft",
-                      "active",
-                      null
-                    ]
-                  },
-                  "privacy": {
-                    "type": "string",
-                    "enum": [
-                      "public",
-                      "private"
-                    ]
-                  },
-                  "thumbnail": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "uri"
-                  },
-                  "tribute_name": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "enable_tributes": {
-                    "type": "boolean"
-                  },
-                  "enable_candle_lighting": {
-                    "type": "boolean"
-                  },
-                  "storage_used_bytes": {
-                    "type": "integer"
-                  },
-                  "storage_limit_bytes": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "remaining_storage_bytes": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "expires_at": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "date-time"
-                  },
-                  "contributions_closed_at": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "date-time"
-                  },
-                  "contributions_open": {
-                    "type": "boolean"
-                  },
-                  "contribution_block_reason": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "enum": [
-                      "draft",
-                      "closed",
-                      "expired",
-                      "storage_full",
-                      null
-                    ]
-                  },
-                  "stories_count": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "tributes_count": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  }
-                }
-              },
-              "Story": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer"
-                  },
-                  "uuid": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "photo",
-                      "video",
-                      "audio",
-                      "document"
-                    ]
-                  },
-                  "thumbnail": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "uri"
-                  },
-                  "file_url": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "uri"
-                  },
-                  "duration": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "assets": {
-                    "type": [
-                      "array",
-                      "null"
-                    ],
-                    "items": {
-                      "type": "object"
-                    }
-                  },
-                  "created_at": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "user": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                }
-              },
-              "Payment": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "pending",
-                      "successful",
-                      "failed"
-                    ]
-                  },
-                  "provider": {
-                    "type": "string",
-                    "enum": [
-                      "paystack",
-                      "stripe",
-                      "paypal"
-                    ]
-                  },
-                  "amount": {
-                    "type": "integer",
-                    "description": "minor units (kobo/cents)"
-                  },
-                  "currency": {
-                    "type": "string",
-                    "enum": [
-                      "NGN",
-                      "USD",
-                      "GBP",
-                      "EUR"
-                    ]
-                  },
-                  "region": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "provider_reference": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "room": {
-                    "type": [
-                      "object",
-                      "null"
-                    ],
-                    "properties": {
-                      "id": {
-                        "type": "integer"
-                      },
-                      "slug": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "paid_at": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "date-time"
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              },
-              "HouseMember": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "avatar": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "bio": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "position": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              },
-              "Tribute": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer"
-                  },
-                  "room_id": {
-                    "type": "integer"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "images": {
-                    "type": "array",
-                    "items": {
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/house/members/{houseMember}": {
+      "delete": {
+        "tags": [
+          "House"
+        ],
+        "summary": "Remove house member",
+        "operationId": "removeHouseMember",
+        "parameters": [
+          {
+            "name": "houseMember",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removed"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/billing/checkout": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Create checkout (server-side price, idempotent)",
+        "operationId": "createCheckout",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Checkout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Payment"
+                    },
+                    "authorization_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "reference": {
                       "type": "string"
-                    }
-                  },
-                  "video": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "audio": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "is_approved": {
-                    "type": "boolean"
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              },
-              "Candle": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer"
-                  },
-                  "room_id": {
-                    "type": "integer"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "is_approved": {
-                    "type": "boolean"
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              },
-              "Notification": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "type": "string"
-                  },
-                  "data": {
-                    "type": "object"
-                  },
-                  "read_at": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "date-time"
-                  },
-                  "created_at": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              },
-              "PricingRegion": {
-                "type": "object",
-                "properties": {
-                  "key": {
-                    "type": "string"
-                  },
-                  "label": {
-                    "type": "string"
-                  },
-                  "currency": {
-                    "type": "string"
-                  },
-                  "full_room": {
-                    "type": "integer"
-                  },
-                  "full_room_formatted": {
-                    "type": "string"
-                  },
-                  "family_monthly": {
-                    "type": "integer"
-                  },
-                  "family_yearly": {
-                    "type": "integer"
-                  },
-                  "yearly_savings": {
-                    "type": "integer"
-                  }
-                }
-              },
-              "CursorPagination": {
-                "type": "object",
-                "properties": {
-                  "next_cursor": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "per_page": {
-                    "type": "integer"
-                  },
-                  "path": {
-                    "type": "string"
-                  }
-                }
-              },
-              "StoreRoomRequest": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "privacy"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "privacy": {
-                    "type": "string",
-                    "enum": [
-                      "public",
-                      "private"
-                    ]
-                  },
-                  "room_type": {
-                    "type": "string",
-                    "enum": [
-                      "general",
-                      "wedding",
-                      "birthday",
-                      "burial",
-                      "memorial",
-                      "anniversary",
-                      "graduation"
-                    ]
-                  },
-                  "tier_type": {
-                    "type": "string",
-                    "enum": [
-                      "starter",
-                      "full_room",
-                      "family_archive"
-                    ]
-                  },
-                  "thumbnail": {
-                    "type": "string",
-                    "format": "binary"
-                  },
-                  "enable_tributes": {
-                    "type": "boolean"
-                  },
-                  "enable_candle_lighting": {
-                    "type": "boolean"
-                  }
-                }
-              },
-              "UpdateRoomRequest": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "privacy"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "privacy": {
-                    "type": "string",
-                    "enum": [
-                      "public",
-                      "private"
-                    ]
-                  }
-                }
-              },
-              "StoreStoryRequest": {
-                "type": "object",
-                "required": [
-                  "title",
-                  "type"
-                ],
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "maxLength": 255
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "photo",
-                      "video",
-                      "audio",
-                      "document"
-                    ]
-                  },
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Binary — photo/audio ≤50MB, video ≤1GB (MAX_VIDEO_SIZE=1GB, MediaController max:1048576, room-share maxSizeMB 1024 for video)"
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
+                    },
+                    "free": {
+                      "type": "boolean"
                     }
                   }
                 }
-              },
-              "CheckoutRequest": {
+              }
+            }
+          },
+          "402": {
+            "description": "Requires checkout"
+          }
+        }
+      }
+    },
+    "/billing/payments/{payment}/status": {
+      "get": {
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Poll payment status (3s)",
+        "operationId": "getPaymentStatus",
+        "parameters": [
+          {
+            "name": "payment",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Payment"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not owner"
+          }
+        }
+      }
+    },
+    "/billing/payments/{payment}/verify": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Verify and activate (idempotent)",
+        "operationId": "verifyPayment",
+        "parameters": [
+          {
+            "name": "payment",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
                 "type": "object",
-                "required": [
-                  "region",
-                  "tier"
-                ],
                 "properties": {
-                  "room_id": {
-                    "type": "integer"
-                  },
-                  "region": {
-                    "type": "string",
-                    "enum": [
-                      "nigeria",
-                      "rest_of_africa",
-                      "uk",
-                      "us_rest_of_world",
-                      "europe"
-                    ]
-                  },
-                  "tier": {
-                    "type": "string",
-                    "enum": [
-                      "starter",
-                      "full_room",
-                      "family_archive",
-                      "family_monthly",
-                      "family_yearly"
-                    ]
-                  },
-                  "provider": {
-                    "type": "string",
-                    "enum": [
-                      "paystack",
-                      "paypal",
-                      "stripe"
-                    ]
-                  },
-                  "ref_code": {
+                  "reference": {
                     "type": "string"
                   }
                 }
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Payment"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriptions": {
+      "get": {
+        "tags": [
+          "Subscriptions"
+        ],
+        "summary": "List own subscriptions",
+        "operationId": "listSubscriptions",
+        "responses": {
+          "200": {
+            "description": "Subscriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Subscription"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Subscriptions"
+        ],
+        "summary": "Start a Family Archive or Viewer subscription (creator ref_code supported)",
+        "operationId": "createSubscription",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Checkout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Payment"
+                    },
+                    "authorization_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "reference": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation"
+          }
+        }
+      }
+    },
+    "/subscriptions/{subscription}/cancel": {
+      "post": {
+        "tags": [
+          "Subscriptions"
+        ],
+        "summary": "Cancel at period end",
+        "operationId": "cancelSubscription",
+        "parameters": [
+          {
+            "name": "subscription",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Subscription"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not own subscription"
+          }
+        }
+      }
+    },
+    "/creators": {
+      "post": {
+        "tags": [
+          "Creators"
+        ],
+        "summary": "Become a creator (idempotent per user)",
+        "operationId": "createCreatorProfile",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "creator_type": {
+                    "type": "string",
+                    "enum": [
+                      "normal",
+                      "vip"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CreatorProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Existing profile"
+          }
+        }
+      }
+    },
+    "/creators/{refCode}": {
+      "get": {
+        "tags": [
+          "Creators"
+        ],
+        "security": [],
+        "summary": "Public creator page by ref code",
+        "operationId": "getCreator",
+        "parameters": [
+          {
+            "name": "refCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Creator + normal stories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CreatorProfile"
+                    },
+                    "stories": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Story"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown code"
+          }
+        }
+      }
+    },
+    "/watch": {
+      "get": {
+        "tags": [
+          "Watch"
+        ],
+        "summary": "Viewer feed (normal + featured VIP for VIP viewers)",
+        "operationId": "getWatchFeed",
+        "responses": {
+          "200": {
+            "description": "Feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Story"
+                      }
+                    },
+                    "featured": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Story"
+                      }
+                    },
+                    "is_vip_viewer": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Viewer subscription required"
+          }
+        }
+      }
+    },
+    "/watch/featured": {
+      "get": {
+        "tags": [
+          "Watch"
+        ],
+        "summary": "Featured VIP-only feed",
+        "operationId": "getWatchFeatured",
+        "responses": {
+          "200": {
+            "description": "VIP stories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Story"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "VIP viewer subscription required"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "profile_photo_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_admin": {
+            "type": "boolean"
+          },
+          "email_verified_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "room_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "general",
+              "wedding",
+              "birthday",
+              "burial",
+              "memorial",
+              "anniversary",
+              "graduation",
+              null
+            ]
+          },
+          "tier_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "starter",
+              "full_room",
+              "family_archive",
+              null
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "draft",
+              "active",
+              null
+            ]
+          },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "thumbnail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "tribute_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enable_tributes": {
+            "type": "boolean"
+          },
+          "enable_candle_lighting": {
+            "type": "boolean"
+          },
+          "storage_used_bytes": {
+            "type": "integer"
+          },
+          "storage_limit_bytes": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "remaining_storage_bytes": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "contributions_closed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "contributions_open": {
+            "type": "boolean"
+          },
+          "contribution_block_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "draft",
+              "closed",
+              "expired",
+              "storage_full",
+              null
+            ]
+          },
+          "stories_count": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "tributes_count": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "Story": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video",
+              "audio",
+              "document"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "vip"
+            ],
+            "description": "vip stories require an active VIP viewer subscription to view; only approved VIP creators may publish vip"
+          },
+          "is_featured": {
+            "type": "boolean",
+            "description": "true when visibility is vip (pushed in the featured feed)"
+          },
+          "thumbnail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "file_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "duration": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "assets": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object"
+            }
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "successful",
+              "failed"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "paystack",
+              "stripe",
+              "paypal"
+            ]
+          },
+          "tier": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "purchased tier key (room tier or subscription tier)"
+          },
+          "creator_profile_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "attributed creator when checkout used a creator ref_code"
+          },
+          "subscription_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "created subscription for subscription-tier payments"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "minor units (kobo/cents)"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "NGN",
+              "USD",
+              "GBP",
+              "EUR"
+            ]
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider_reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "room": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "paid_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HouseMember": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "avatar": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "position": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Tribute": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "room_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "video": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "audio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_approved": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Candle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "room_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_approved": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          },
+          "read_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PricingRegion": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "full_room": {
+            "type": "integer"
+          },
+          "full_room_formatted": {
+            "type": "string"
+          },
+          "family_monthly": {
+            "type": "integer"
+          },
+          "family_yearly": {
+            "type": "integer"
+          },
+          "yearly_savings": {
+            "type": "integer"
+          },
+          "viewer_monthly": {
+            "type": "integer",
+            "description": "unlocks all normal creator stories"
+          },
+          "viewer_yearly": {
+            "type": "integer"
+          },
+          "viewer_vip_monthly": {
+            "type": "integer",
+            "description": "unlocks all + VIP featured stories"
+          },
+          "viewer_vip_yearly": {
+            "type": "integer"
+          }
+        }
+      },
+      "CursorPagination": {
+        "type": "object",
+        "properties": {
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "StoreRoomRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "privacy"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "room_type": {
+            "type": "string",
+            "enum": [
+              "general",
+              "wedding",
+              "birthday",
+              "burial",
+              "memorial",
+              "anniversary",
+              "graduation"
+            ]
+          },
+          "tier_type": {
+            "type": "string",
+            "enum": [
+              "starter",
+              "full_room",
+              "family_archive"
+            ]
+          },
+          "thumbnail": {
+            "type": "string",
+            "format": "binary"
+          },
+          "enable_tributes": {
+            "type": "boolean"
+          },
+          "enable_candle_lighting": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateRoomRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "privacy"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          }
+        }
+      },
+      "StoreStoryRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "type"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video",
+              "audio",
+              "document"
+            ]
+          },
+          "visibility": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "normal",
+              "vip",
+              null
+            ],
+            "description": "vip requires an approved VIP creator profile, else 422"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Binary \u2014 photo/audio \u226450MB, video \u22641GB (MAX_VIDEO_SIZE=1GB, MediaController max:1048576, room-share maxSizeMB 1024 for video)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CheckoutRequest": {
+        "type": "object",
+        "required": [
+          "region",
+          "tier"
+        ],
+        "properties": {
+          "room_id": {
+            "type": "integer"
+          },
+          "region": {
+            "type": "string",
+            "enum": [
+              "nigeria",
+              "rest_of_africa",
+              "uk",
+              "us_rest_of_world",
+              "europe"
+            ]
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "starter",
+              "full_room",
+              "family_archive",
+              "family_monthly",
+              "family_yearly",
+              "viewer_monthly",
+              "viewer_yearly",
+              "viewer_vip_monthly",
+              "viewer_vip_yearly"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "paystack",
+              "paypal",
+              "stripe"
+            ]
+          },
+          "ref_code": {
+            "type": "string",
+            "description": "partner code or creator ref_code (creator attribution accrues a creator_earnings row on activation)"
+          }
+        }
+      },
+      "SubscriptionRequest": {
+        "type": "object",
+        "required": [
+          "region",
+          "tier"
+        ],
+        "properties": {
+          "region": {
+            "type": "string",
+            "enum": [
+              "nigeria",
+              "rest_of_africa",
+              "uk",
+              "us_rest_of_world",
+              "europe"
+            ]
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "family_monthly",
+              "family_yearly",
+              "viewer_monthly",
+              "viewer_yearly",
+              "viewer_vip_monthly",
+              "viewer_vip_yearly"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "paystack",
+              "paypal",
+              "stripe"
+            ]
+          },
+          "ref_code": {
+            "type": "string",
+            "description": "creator ref_code \u2014 subscription attributes commission to this creator"
+          }
+        }
+      },
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "family_monthly",
+              "family_yearly",
+              "viewer_monthly",
+              "viewer_yearly",
+              "viewer_vip_monthly",
+              "viewer_vip_yearly"
+            ]
+          },
+          "tier_label": {
+            "type": "string"
+          },
+          "is_viewer": {
+            "type": "boolean"
+          },
+          "is_vip_viewer": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "past_due",
+              "canceled",
+              "expired"
+            ]
+          },
+          "current_period_start": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "current_period_end": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "cancel_at_period_end": {
+            "type": "boolean"
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "referred_creator_profile_id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "CreatorProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "user": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "creator_type": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "vip"
+            ]
+          },
+          "is_vip": {
+            "type": "boolean",
+            "description": "vip type + admin approved"
+          },
+          "ref_code": {
+            "type": "string"
+          },
+          "split_pct": {
+            "type": "number",
+            "description": "revenue share percent (normal 70, vip 80)"
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       }

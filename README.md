@@ -170,6 +170,8 @@ POST /analytics/event          → logs {event, properties, ref, utm}
 GET  /share/rooms/{slug}/stories  (contributions.open)
 ```
 
+Mobile API parity (`API.md` + `openapi.json`, base `/api/v1`, Sanctum bearer): `GET /pricing` (with viewer tiers), `POST /billing/checkout` (viewer tiers + creator `ref_code`), `GET|POST /subscriptions`, `POST /subscriptions/{id}/cancel`, `POST /creators` + `GET /creators/{refCode}` (public), `GET /watch` (`viewer` middleware) + `GET /watch/featured` (`viewer:vip`). `StoryResource` carries `visibility`/`is_featured`; `GET /stories/{uuid}` enforces the same viewer gating as web (`403` without the right subscription).
+
 Navbar now ships `Weddings | Pricing | How Ulo Works | Ulo Studio | About`.
 
 ---

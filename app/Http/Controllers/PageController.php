@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use App\Models\Partner;
 use App\Models\Room;
+use App\Models\Story;
 use App\Services\PricingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,6 +26,19 @@ class PageController extends Controller
             ->take(6)
             ->get();
 
+        $featuredVipStories = Story::with('user:id,name')
+            ->where('visibility', 'vip')
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(fn (Story $story) => [
+                'id' => $story->id,
+                'uuid' => $story->uuid,
+                'title' => $story->title,
+                'creator' => $story->user?->name,
+                'created_at' => $story->created_at?->toDateString(),
+            ]);
+
         return Inertia::render('welcome', [
             'canRegister' => Features::enabled(Features::registration()),
             'page' => $page,
@@ -32,6 +46,7 @@ class PageController extends Controller
             'meta_description' => $page?->meta_description ?? 'Ulo of Stories helps you preserve your family stories, heritage, and memories for generations to come.',
             'meta_image' => url('/images/og-image.webp'),
             'featuredRooms' => $featuredRooms,
+            'featuredVipStories' => $featuredVipStories,
         ]);
     }
 
