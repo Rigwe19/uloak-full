@@ -798,7 +798,7 @@ function GuestIdentityGate({
     initialWhatsapp,
     roomSlug,
 }: {
-    onComplete: (name: string, email: string, whatsapp: string) => void;
+    onComplete: (name: string, email: string, whatsapp?: string) => void;
     initialName: string;
     initialEmail: string;
     initialWhatsapp: string;
@@ -806,7 +806,7 @@ function GuestIdentityGate({
 }) {
     const [name, setName] = useState(initialName);
     const [email, setEmail] = useState(initialEmail);
-    const [whatsapp, setWhatsapp] = useState(initialWhatsapp);
+    const [whatsapp, setWhatsapp] = useState<string|null>(initialWhatsapp);
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -816,13 +816,13 @@ function GuestIdentityGate({
             return;
         }
 
-        onComplete(name.trim(), email.trim(), whatsapp.trim());
+        onComplete(name.trim(), email.trim(), whatsapp?.trim());
 
         // Save to database for upload reminders
         if (email.trim()) {
             router.post(
                 storeGuestSubscription.url(roomSlug),
-                { name: name.trim(), email: email.trim(), whatsapp: whatsapp.trim() || undefined },
+                { name: name.trim(), email: email.trim(), whatsapp: whatsapp?.trim() || undefined },
                 {
                     preserveScroll: true,
                     preserveState: true,
@@ -918,7 +918,7 @@ function GuestIdentityGate({
                         id="guest-whatsapp"
                         name="tel"
                         type="tel"
-                        value={whatsapp}
+                        value={whatsapp ?? ''}
                         onChange={(e) => setWhatsapp(e.target.value)}
                         placeholder="+234 801 234 5678"
                         autoComplete="tel"
@@ -2177,10 +2177,10 @@ export default function RoomShare({
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Persist guest identity in localStorage to survive page reloads
-    const completeIdentity = useCallback((name: string, email: string, whatsapp: string) => {
+    const completeIdentity = useCallback((name: string, email: string, whatsapp?: string) => {
         setGuestName(name);
         setGuestEmail(email);
-        setGuestWhatsapp(whatsapp);
+        setGuestWhatsapp(whatsapp ?? '');
         setIsIdentified(true);
         localStorage.setItem('room-share-name', name);
         localStorage.setItem('room-share-email', email);
