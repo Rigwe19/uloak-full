@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GuestIdentity extends Model
 {
@@ -40,6 +41,16 @@ class GuestIdentity extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function stories(): HasMany
+    {
+        return $this->hasMany(Story::class);
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(Media::class);
     }
 
     public function isExpired(): bool

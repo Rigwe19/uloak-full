@@ -17,6 +17,8 @@ export interface FeedStory {
     file_url: string | null;
     assets: { url: string; type: string; title: string; status?: string; progress?: number; media_uuid?: string }[];
     is_processing?: boolean;
+    can_edit?: boolean;
+    can_delete?: boolean;
     tags: string[];
     tagged_people?: TaggedStoryPerson[];
     date: string;

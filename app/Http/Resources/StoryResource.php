@@ -58,6 +58,8 @@ class StoryResource extends JsonResource
             'type' => $this->type,
             'visibility' => $this->visibility->value,
             'is_featured' => $this->visibility->value === 'vip',
+            'can_edit' => (bool) ($this->resource->can_edit ?? false),
+            'can_delete' => (bool) ($this->resource->can_delete ?? false),
             'thumbnail' => $this->thumbnail ? (str_starts_with($this->thumbnail, 'http') || str_starts_with($this->thumbnail, '/storage') ? $this->thumbnail : Storage::disk('public')->url(ltrim($this->thumbnail, '/'))) : null,
             'file_url' => $this->file_url ? (str_starts_with($this->file_url, 'http') || str_starts_with($this->file_url, '/storage') ? $this->file_url : Storage::disk('public')->url(ltrim($this->file_url, '/'))) : null,
             'duration' => $this->duration,

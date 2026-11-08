@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ['prefix' => 'broadcast', 'middleware' => ['web', 'auth']],
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'ulo_guest_identity']);
 
         $middleware->web(append: [
             TrackReferral::class,

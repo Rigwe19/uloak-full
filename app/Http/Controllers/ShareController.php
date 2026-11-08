@@ -12,6 +12,7 @@ use App\Models\RoomGuestSubscription;
 use App\Models\Story;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\GuestStoryAccess;
 use App\Services\PersonArchiveService;
 use App\Services\PersonScope;
 use App\Services\StoryService;
@@ -30,9 +31,9 @@ use ZipArchive;
 
 class ShareController extends Controller
 {
-    public function __construct(protected ActivityLogger $activityLogger, protected MediaManager $mediaManager, protected StoryService $storyService, protected PersonArchiveService $personArchive, protected PersonScope $personScope) {}
+    public function __construct(protected ActivityLogger $activityLogger, protected MediaManager $mediaManager, protected StoryService $storyService, protected PersonArchiveService $personArchive, protected PersonScope $personScope, protected GuestStoryAccess $guestAccess) {}
 
-    public function showRoom(string $slug): InertiaResponse
+    public function showRoom(Request $request, string $slug): InertiaResponse
     {
         $room = Room::where('slug', $slug)->firstOrFail();
 
@@ -40,7 +41,7 @@ class ShareController extends Controller
             return $this->showRoomTributes($room);
         }
 
-        return $this->showRoomShare($room);
+        return $this->showRoomShare($request, $room);
     }
 
     private function showRoomTributes(Room $room): InertiaResponse
@@ -64,10 +65,18 @@ class ShareController extends Controller
         ]);
     }
 
-    private function showRoomShare(Room $room): InertiaResponse
+    private function showRoomShare(Request $request, Room $room): InertiaResponse
     {
-        $paginator = $this->personArchive->storiesQuery($room)
-            ->whereNull('stories.follow_up_to')
+        $guest = $this->guestAccess->resolve($request, $room);
+        $viewer = $request->user();
+        $isFiltered = $this->guestAccess->isFiltered($viewer, $room);
+
+        $baseQuery = $this->personArchive->storiesQuery($room)
+            ->whereNull('stories.follow_up_to');
+
+        $baseQuery = $this->guestAccess->applyPrivateFilter($baseQuery, $viewer, $room, $guest);
+
+        $paginator = $baseQuery
             ->with([
                 'comments' => function ($q) {
                     $q->latest();
@@ -84,7 +93,7 @@ class ShareController extends Controller
 
         $this->personArchive->enrichStoriesWithPeople($paginator->getCollection());
 
-        $stories = $paginator->through(function ($story) {
+        $stories = $paginator->through(function ($story) use ($guest, $viewer, $room, $isFiltered) {
             $assets = $story->assets ?? [];
             $isProcessing = false;
             $enrichedAssets = $assets;
@@ -151,8 +160,16 @@ class ShareController extends Controller
                 $isProcessing = true;
             }
 
+            $canModify = $this->guestAccess->canGuestModifyStory($story, $viewer, $guest);
+
+            $followUps = $story->followUpStories;
+            if ($isFiltered) {
+                $followUps = $followUps->filter(fn ($fs) => $this->guestAccess->storyVisibleTo($fs, $viewer, $room, $guest));
+            }
+
             return [
                 'id' => $story->id,
+                'uuid' => $story->uuid,
                 'title' => $story->title,
                 'type' => $story->type,
                 'description' => $story->description,
@@ -164,6 +181,8 @@ class ShareController extends Controller
                 'file_url' => $story->file_url,
                 'assets' => $enrichedAssets,
                 'is_processing' => $isProcessing,
+                'can_edit' => $canModify,
+                'can_delete' => $canModify,
 
                 'comments' => $story->comments->map(fn ($c) => [
                     'id' => $c->id,
@@ -174,7 +193,7 @@ class ShareController extends Controller
 
                 'comments_count' => $story->comments()->count(),
 
-                'follow_ups' => $story->followUpStories->map(fn ($fs) => [
+                'follow_ups' => $followUps->map(fn ($fs) => [
                     'id' => $fs->id,
                     'type' => $fs->type,
                     'file_url' => $fs->file_url,
@@ -183,7 +202,7 @@ class ShareController extends Controller
                         ?? $fs->getGuestName()
                         ?? 'Anonymous',
                     'created_at' => $fs->created_at->format('M d, Y'),
-                ]),
+                ])->values(),
 
                 'date' => $story->created_at->format('M d, Y'),
                 'tags' => $story->tags ?? [],
@@ -192,6 +211,12 @@ class ShareController extends Controller
         });
 
         $thumbnail = $room->thumbnail;
+
+        $archiveMeta = $this->personArchive->meta($room);
+        if ($isFiltered && $archiveMeta !== null) {
+            // Do not leak total counts to filtered private guests.
+            $archiveMeta = null;
+        }
 
         return Inertia::render('share/room-share', [
             'room' => [
@@ -202,12 +227,13 @@ class ShareController extends Controller
                 'description' => $room->description,
                 'thumbnail' => $room->thumbnail,
                 'room_type' => $room->room_type,
+                'privacy' => $room->privacy,
                 'tribute_song' => $room->tribute_song,
             ],
 
             'stories' => $stories->items(),
 
-            'archive' => $this->personArchive->meta($room),
+            'archive' => $archiveMeta,
 
             'taggablePeople' => $this->personScope->taggableForRoom($room),
 
@@ -236,25 +262,44 @@ class ShareController extends Controller
         ]);
     }
 
-    public function showEvent(string $slug): InertiaResponse
+    public function showEvent(Request $request, string $slug): InertiaResponse
     {
         $event = Event::where('slug', $slug)->firstOrFail();
-        $event->loadCount('stories');
 
-        $paginator = $event->stories()->with('user')->latest()->cursorPaginate(24);
+        $guest = $this->guestAccess->resolve($request, event: $event);
+        $viewer = $request->user();
+        $isFiltered = $this->guestAccess->isFiltered($viewer, $event);
 
-        $stories = $paginator->through(fn ($story) => [
-            'id' => $story->id,
-            'title' => $story->title,
-            'thumbnail' => $story->thumbnail,
-            'type' => $story->type,
-            'description' => $story->description,
-            'author' => $story->user?->name ?? $story->getGuestName() ?? 'Anonymous',
-            'tags' => $story->tags ?? [],
-            'date' => $story->created_at->format('M d, Y'),
-            'file_url' => $story->file_url,
-            'assets' => $story->assets ?? [],
-        ]);
+        $storiesQuery = $event->stories()->with('user')->getQuery();
+        $storiesQuery = $this->guestAccess->applyPrivateFilter($storiesQuery, $viewer, $event, $guest);
+
+        if ($isFiltered) {
+            $event->setAttribute('stories_count', $storiesQuery->count());
+        } else {
+            $event->loadCount('stories');
+        }
+
+        $paginator = $storiesQuery->latest()->cursorPaginate(24);
+
+        $stories = $paginator->through(function ($story) use ($guest, $viewer) {
+            $canModify = $this->guestAccess->canGuestModifyStory($story, $viewer, $guest);
+
+            return [
+                'id' => $story->id,
+                'uuid' => $story->uuid,
+                'title' => $story->title,
+                'thumbnail' => $story->thumbnail,
+                'type' => $story->type,
+                'description' => $story->description,
+                'author' => $story->user?->name ?? $story->getGuestName() ?? 'Anonymous',
+                'tags' => $story->tags ?? [],
+                'date' => $story->created_at->format('M d, Y'),
+                'file_url' => $story->file_url,
+                'assets' => $story->assets ?? [],
+                'can_edit' => $canModify,
+                'can_delete' => $canModify,
+            ];
+        });
 
         return Inertia::render('share/event', [
             'event' => $event,
@@ -404,6 +449,7 @@ class ShareController extends Controller
         $story = Story::create([
             'room_id' => $room->id,
             'user_id' => null,
+            'guest_identity_id' => $guest->id,
             'guest_name' => $validated['guest_name'],
             'guest_email' => $validated['guest_email'] ?? null,
             'title' => $validated['title'] ?? ($validated['type'] === 'video' ? 'Video Recording' : ($validated['type'] === 'audio' ? 'Audio Recording' : 'Photo')),
@@ -421,11 +467,25 @@ class ShareController extends Controller
 
         $this->storyService->syncStoryTags($story, $room, $validated['person_ids'] ?? null);
 
-        return redirect()->back()->with('success', 'Your memory has been shared!');
+        return redirect()->back()->with('success', 'Your memory has been shared!')->withCookie($this->guestAccess->cookieFor($guest));
     }
 
     protected function resolveGuestIdentity(Request $request, ?Room $room, ?Event $event, string $name, ?string $email, ?string $whatsapp = null): GuestIdentity
     {
+        // Prefer the signed cookie identity for this room/event so private
+        // feeds survive reloads and reclaim-by-name/email re-links the cookie.
+        $cookieGuest = $this->guestAccess->resolve($request, $room, $event);
+        if ($cookieGuest) {
+            $cookieGuest->update([
+                'name' => $name,
+                'email' => $email ?? $cookieGuest->email,
+                'whatsapp' => $whatsapp ?? $cookieGuest->whatsapp,
+                'expires_at' => now()->addYear(),
+            ]);
+
+            return $cookieGuest->fresh();
+        }
+
         $ip = $request->ip();
 
         // Prefer existing unexpired identity for this room/event + email/ip to avoid churn
@@ -454,9 +514,9 @@ class ShareController extends Controller
         $existing = $query->latest()->first();
 
         if ($existing && ! $existing->isExpired()) {
-            $existing->update(['name' => $name, 'email' => $email ?? $existing->email, 'whatsapp' => $whatsapp ?? $existing->whatsapp]);
+            $existing->update(['name' => $name, 'email' => $email ?? $existing->email, 'whatsapp' => $whatsapp ?? $existing->whatsapp, 'expires_at' => now()->addYear()]);
 
-            return $existing;
+            return $existing->fresh();
         }
 
         return GuestIdentity::create([
@@ -466,7 +526,7 @@ class ShareController extends Controller
             'email' => $email,
             'whatsapp' => $whatsapp,
             'ip_address' => $ip,
-            'expires_at' => now()->addHours(24),
+            'expires_at' => now()->addYear(),
         ]);
     }
 
@@ -515,6 +575,11 @@ class ShareController extends Controller
         $this->storyService->assertStoryTagsAllowed($room, $validated['person_ids'] ?? null);
 
         $guest = $this->resolveGuestIdentity($request, $room, null, $validated['guest_name'], $validated['guest_email'] ?? null, $validated['guest_whatsapp'] ?? null);
+
+        $parentStory = Story::where('room_id', $room->id)->findOrFail($validated['story_id']);
+        if (! $this->guestAccess->storyVisibleTo($parentStory, $request->user(), $room, $guest)) {
+            return redirect()->back()->withErrors(['story_id' => 'This memory is not available to you.']);
+        }
 
         $fileUrl = null;
         $assets = [];
@@ -581,6 +646,7 @@ class ShareController extends Controller
         $followUp = Story::create([
             'room_id' => $room->id,
             'user_id' => null,
+            'guest_identity_id' => $guest->id,
             'guest_name' => $validated['guest_name'],
             'guest_email' => $validated['guest_email'] ?? null,
             'title' => 'Follow-up media',
@@ -595,7 +661,7 @@ class ShareController extends Controller
 
         $this->storyService->syncStoryTags($followUp, $room, $validated['person_ids'] ?? null);
 
-        return redirect()->back()->with('success', 'Follow-up media added!');
+        return redirect()->back()->with('success', 'Follow-up media added!')->withCookie($this->guestAccess->cookieFor($guest));
     }
 
     /**
@@ -638,6 +704,12 @@ class ShareController extends Controller
         ]);
 
         $story = Story::where('room_id', $room->id)->findOrFail($validated['story_id']);
+
+        // Private rooms: only comment on stories visible to you.
+        $guest = $this->guestAccess->resolve($request, $room);
+        if (! $this->guestAccess->storyVisibleTo($story, $request->user(), $room, $guest)) {
+            return redirect()->back()->withErrors(['story_id' => 'This memory is not available to you.']);
+        }
 
         $story->comments()->create([
             'user_id' => null,
@@ -741,6 +813,7 @@ class ShareController extends Controller
         Story::create([
             'event_id' => $event->id,
             'user_id' => null,
+            'guest_identity_id' => $guest->id,
             'guest_name' => $validated['guest_name'],
             'guest_email' => $validated['guest_email'],
             'title' => $validated['title'],
@@ -752,7 +825,7 @@ class ShareController extends Controller
             'tags' => ['guest-contribution'],
         ]);
 
-        return redirect()->back()->with('success', 'Your memory has been shared. It will appear after review.');
+        return redirect()->back()->with('success', 'Your memory has been shared. It will appear after review.')->withCookie($this->guestAccess->cookieFor($guest));
     }
 
     public function sendMagicLink(Request $request): RedirectResponse
@@ -804,76 +877,37 @@ class ShareController extends Controller
     }
 
     /**
-     * Delete a guest story from a room (guest ownership via guest_name/email or media guest_identity).
+     * Delete a guest story from a room (guest ownership via signed-cookie
+     * identity, with a legacy name/email fallback for pre-cookie rows).
      */
     public function destroyStory(Request $request, Room $room, string $story): RedirectResponse|JsonResponse
     {
-        $query = Str::isUuid($story)
-            ? Story::where('uuid', $story)
-            : Story::where('id', $story);
-        $storyModel = $query->first();
+        $storyModel = Str::isUuid($story)
+            ? Story::where('uuid', $story)->first()
+            : Story::where('id', $story)->first();
         if (! $storyModel || $storyModel->room_id !== $room->id) {
             abort(404);
         }
         $story = $storyModel;
 
+        $guest = $this->guestAccess->resolve($request, $room);
         $user = $request->user();
-        $isOwner = false;
 
-        if ($user) {
-            $isOwner = $story->user_id === $user->id || $room->created_by === $user->id || (bool) $user->is_admin;
-        }
+        $providedName = $request->input('guest_name');
+        $providedEmail = $request->input('guest_email');
+
+        $isOwner = $this->guestAccess->canGuestModifyStory($story, $user, $guest, $providedName, $providedEmail);
 
         if (! $isOwner) {
-            $request->validate([
-                'guest_name' => ['required', 'string', 'max:255'],
-                'guest_email' => ['nullable', 'email', 'max:255'],
-            ]);
-
-            $providedName = strtolower(trim($request->input('guest_name')));
-            $providedEmail = $request->input('guest_email') ? strtolower(trim($request->input('guest_email'))) : null;
-
-            $storyGuestName = $story->guest_name ? strtolower(trim($story->guest_name)) : null;
-            $storyGuestEmail = $story->guest_email ? strtolower(trim($story->guest_email)) : null;
-
-            $nameMatch = $storyGuestName === $providedName;
-            $emailMatch = $storyGuestEmail ? $storyGuestEmail === $providedEmail : true;
-
-            if ($nameMatch && $emailMatch) {
-                $isOwner = true;
-            } else {
-                // Fallback: check via attached media guest identities
-                $uuids = collect($story->assets ?? [])->pluck('media_uuid')->filter()->toArray();
-                if (! empty($uuids)) {
-                    $medias = Media::whereIn('uuid', $uuids)->get();
-                    foreach ($medias as $media) {
-                        if ($media->guest_identity_id) {
-                            $guest = GuestIdentity::find($media->guest_identity_id);
-                            if ($guest && strtolower(trim($guest->name)) === $providedName) {
-                                $guestEmail = $guest->email ? strtolower(trim($guest->email)) : null;
-                                $emailOk = $guestEmail ? $guestEmail === $providedEmail : true;
-                                if ($emailOk) {
-                                    $isOwner = true;
-                                    break;
-                                }
-                            }
-                        }
-                        $metaName = $media->metadata['guest_name'] ?? null;
-                        $metaEmail = $media->metadata['guest_email'] ?? null;
-                        if ($metaName && strtolower(trim($metaName)) === $providedName) {
-                            $metaEmailNorm = $metaEmail ? strtolower(trim($metaEmail)) : null;
-                            $emailOk = $metaEmailNorm ? $metaEmailNorm === $providedEmail : true;
-                            if ($emailOk) {
-                                $isOwner = true;
-                                break;
-                            }
-                        }
-                    }
-                }
+            // Preserve legacy validation contract for unauthenticated
+            // deleters without a cookie identity.
+            if (! $user && ! $guest) {
+                $request->validate([
+                    'guest_name' => ['required', 'string', 'max:255'],
+                    'guest_email' => ['nullable', 'email', 'max:255'],
+                ]);
             }
-        }
 
-        if (! $isOwner) {
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json(['message' => 'Not authorized to delete this story.'], 403);
             }
@@ -907,12 +941,68 @@ class ShareController extends Controller
     }
 
     /**
+     * Edit a guest story's title/description (own uploads only).
+     * Media replacement stays owner-only via dashboard StoryController.
+     */
+    public function updateGuestStory(Request $request, Room $room, string $story): RedirectResponse|JsonResponse
+    {
+        $storyModel = Str::isUuid($story)
+            ? Story::where('uuid', $story)->first()
+            : Story::where('id', $story)->first();
+        if (! $storyModel || $storyModel->room_id !== $room->id) {
+            abort(404);
+        }
+        $story = $storyModel;
+
+        $guest = $this->guestAccess->resolve($request, $room);
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'guest_name' => ['nullable', 'string', 'max:255'],
+            'guest_email' => ['nullable', 'email', 'max:255'],
+        ]);
+
+        $canEdit = $this->guestAccess->canGuestModifyStory(
+            $story,
+            $user,
+            $guest,
+            $validated['guest_name'] ?? $request->input('guest_name'),
+            $validated['guest_email'] ?? $request->input('guest_email')
+        );
+
+        if (! $canEdit) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Not authorized to edit this story.'], 403);
+            }
+
+            return redirect()->back()->withErrors(['story' => 'Not authorized to edit this story.']);
+        }
+
+        $story->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? $story->description,
+        ]);
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json(['success' => true, 'story' => $story->fresh()]);
+        }
+
+        return redirect()->back()->with('success', 'Memory updated.');
+    }
+
+    /**
      * Download all media from a shared event as a ZIP file.
      */
-    public function downloadEventMedia(string $slug)
+    public function downloadEventMedia(Request $request, string $slug)
     {
         $event = Event::where('slug', $slug)->firstOrFail();
-        $stories = $event->stories;
+        $guest = $this->guestAccess->resolve($request, event: $event);
+        $viewer = $request->user();
+        $storiesQuery = $event->stories()->with('user')->getQuery();
+        $storiesQuery = $this->guestAccess->applyPrivateFilter($storiesQuery, $viewer, $event, $guest);
+        $stories = $storiesQuery->get();
         $files = [];
 
         foreach ($stories as $story) {

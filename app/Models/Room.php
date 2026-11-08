@@ -92,6 +92,16 @@ class Room extends Model
             : in_array($this->kind, ['root', 'branch', 'person'], true);
     }
 
+    public function isPrivate(): bool
+    {
+        return $this->privacy === 'private';
+    }
+
+    public function isPublic(): bool
+    {
+        return $this->privacy !== 'private';
+    }
+
     public function scopeStructural($query)
     {
         return $query->whereIn('kind', ['root', 'branch', 'person']);

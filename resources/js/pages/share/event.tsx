@@ -49,6 +49,7 @@ interface ShareEventProps {
         name: string;
         description: string;
         thumbnail: string;
+        privacy?: string | null;
         event_date?: string;
         stories_count: number;
         allow_download: boolean;
@@ -528,7 +529,7 @@ export default function ShareEvent({
                                         </>
                                     )}
                                     <span className="text-[10px] font-bold tracking-[0.3em] text-accent-gold uppercase">
-                                        Public Event
+                                        {event.privacy === 'private' ? 'Private Event — your uploads only' : 'Public Event'}
                                     </span>
                                 </div>
                                 <div className="space-y-4">

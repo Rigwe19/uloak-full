@@ -22,15 +22,18 @@ import {
     Check,
     Clock,
     Gift,
+    Globe,
     Heart,
     Image as ImageIcon,
     Loader2,
+    Lock,
     LogIn,
     LogOut,
     MessageCircle,
     Mic,
     Music,
     Pause,
+    Pencil,
     Play,
     Plus,
     RotateCcw,
@@ -66,6 +69,7 @@ interface ShareRoomProps {
         description: string;
         thumbnail: string;
         room_type: string;
+        privacy?: string | null;
         tribute_song: string | null;
         media_items: { url: string; type: string }[] | null;
         enable_tributes: boolean;
@@ -2120,6 +2124,10 @@ export default function RoomShare({
     );
     const [viewerStory, setViewerStory] = useState<FeedStory | null>(null);
     const [commentsStoryId, setCommentsStoryId] = useState<number | null>(null);
+    const [editingStory, setEditingStory] = useState<FeedStory | null>(null);
+    const [editTitle, setEditTitle] = useState('');
+    const [editDescription, setEditDescription] = useState('');
+    const isPrivateRoom = room.privacy === 'private';
 
     // Poll for video processing completion — while any story shows placeholder, refresh feed
     useEffect(() => {
@@ -2221,6 +2229,33 @@ export default function RoomShare({
         });
     }, [room.slug, guestName, guestEmail]);
 
+    const openEditStory = useCallback((story: FeedStory) => {
+        setEditingStory(story);
+        setEditTitle(story.title ?? '');
+        setEditDescription(story.description ?? '');
+    }, []);
+
+    const handleSaveEditStory = useCallback(() => {
+        if (!editingStory) {
+            return;
+        }
+        const identifier = (editingStory as any).uuid ?? editingStory.id;
+        router.patch(`/share/rooms/${room.slug}/stories/${identifier}`, {
+            title: editTitle,
+            description: editDescription,
+            guest_name: guestName,
+            guest_email: guestEmail,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setAllStories((prev) => prev.map((s) => s.id === editingStory.id ? { ...s, title: editTitle, description: editDescription } : s));
+                setEditingStory(null);
+                toast.success('Memory updated');
+            },
+            onError: () => toast.error('Failed to update. Please try again.'),
+        });
+    }, [editingStory, editTitle, editDescription, room.slug, guestName, guestEmail]);
+
     // Tribute song toggle
     const toggleTributeSong = useCallback(() => {
         if (!room.tribute_song) {
@@ -2315,6 +2350,22 @@ export default function RoomShare({
                             </p>
                         )}
                         <div className="mx-auto h-px w-20 bg-accent-gold/30" />
+                        <div className="flex items-center justify-center gap-2">
+                            {isPrivateRoom ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-gold/30 bg-accent-gold/10 px-4 py-1.5 font-mono text-[10px] tracking-wider text-accent-gold uppercase">
+                                    <Lock size={11} /> Private room — you only see your uploads
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 font-mono text-[10px] tracking-wider text-text-muted uppercase">
+                                    <Globe size={11} /> Public room — everyone can see uploads
+                                </span>
+                            )}
+                        </div>
+                        {isPrivateRoom && (
+                            <p className="mx-auto max-w-2xl text-xs leading-relaxed text-text-muted">
+                                This is a private room. Photos and videos from other guests are hidden from you — you’ll only see what you’ve shared. If this browser loses your identity, re-enter the name and email you used when uploading to see your memories again.
+                            </p>
+                        )}
                     </motion.div>
                 </header>
 
@@ -2390,7 +2441,7 @@ export default function RoomShare({
                             Memory Gallery
                         </span>
                         <h2 className="font-serif text-3xl font-light text-text-primary md:text-4xl">
-                            Shared Memories
+                            {isPrivateRoom ? 'Your Shared Memories' : 'Shared Memories'}
                         </h2>
                         <div className="mx-auto mt-4 h-px w-20 bg-accent-gold/30" />
                     </div>
@@ -2400,7 +2451,11 @@ export default function RoomShare({
                         nextCursor={pagination?.next_cursor ?? null}
                         routeName="share.rooms.show"
                         routeParams={{ slug: room.slug }}
-                        emptyLabel="Be the first to share a memory! Introduce yourself above and capture a photo, record a video, or upload media."
+                        emptyLabel={isPrivateRoom
+                            ? isIdentified
+                                ? 'You haven’t shared any memories yet. Capture your first one above — only you will see it here.'
+                                : 'Introduce yourself above and add your first memory. In this private room, you’ll only see what you’ve shared.'
+                            : 'Be the first to share a memory! Introduce yourself above and capture a photo, record a video, or upload media.'}
                     >
                         {(story) => (
                             <div className="overflow-hidden rounded-2xl border border-white/5 bg-surface/30 transition-all duration-300 hover:border-accent-gold/20 hover:bg-surface/50">
@@ -2435,16 +2490,26 @@ export default function RoomShare({
                                             {story.date}
                                         </span>
                                     </div>
-                                    {(story.author?.toLowerCase().trim() === guestName?.toLowerCase().trim() ||
+                                    {(story.can_delete ?? ((story.author?.toLowerCase().trim() === guestName?.toLowerCase().trim() ||
                                         (story as any).guest_name?.toLowerCase().trim() ===
-                                            guestName?.toLowerCase().trim()) && (
-                                        <button
-                                            onClick={() => handleDeleteStory(story)}
-                                            className="flex items-center gap-1.5 font-mono text-[10px] tracking-wider text-red-400/70 transition-colors hover:text-red-400"
-                                        >
-                                            <Trash2 size={10} /> Delete memory
-                                        </button>
-                                    )}
+                                            guestName?.toLowerCase().trim()))) && (
+                                            <div className="flex items-center gap-4">
+                                                {(story.can_edit ?? story.can_delete) && (
+                                                    <button
+                                                        onClick={() => openEditStory(story)}
+                                                        className="flex items-center gap-1.5 font-mono text-[10px] tracking-wider text-text-muted transition-colors hover:text-accent-gold"
+                                                    >
+                                                        <Pencil size={10} /> Edit memory
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => handleDeleteStory(story)}
+                                                    className="flex items-center gap-1.5 font-mono text-[10px] tracking-wider text-red-400/70 transition-colors hover:text-red-400"
+                                                >
+                                                    <Trash2 size={10} /> Delete memory
+                                                </button>
+                                            </div>
+                                        )}
                                     {story.follow_ups &&
                                         story.follow_ups.length > 0 && (
                                             <div className="flex items-center gap-2 font-mono text-[10px] tracking-wider text-accent-gold">
@@ -2529,6 +2594,49 @@ export default function RoomShare({
                     story={viewerStory}
                     onClose={() => setViewerStory(null)}
                 />
+            )}
+
+            {/* Edit Memory Modal (own uploads only) */}
+            {editingStory && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-md space-y-5 rounded-3xl border border-white/10 bg-surface p-6 md:p-8">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="font-mono text-[10px] tracking-[0.25em] text-accent-gold uppercase">Edit memory</p>
+                                <h3 className="mt-1 font-serif text-2xl font-light text-text-primary">Update title & description</h3>
+                            </div>
+                            <button onClick={() => setEditingStory(null)} className="rounded-full p-1 text-text-muted hover:text-text-primary" aria-label="Close">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="mb-1 block text-xs font-bold tracking-widest text-text-muted uppercase">Title</label>
+                                <input
+                                    value={editTitle}
+                                    onChange={(e) => setEditTitle(e.target.value)}
+                                    maxLength={255}
+                                    className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary focus:border-accent-gold focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-xs font-bold tracking-widest text-text-muted uppercase">Description</label>
+                                <textarea
+                                    value={editDescription}
+                                    onChange={(e) => setEditDescription(e.target.value)}
+                                    rows={4}
+                                    maxLength={5000}
+                                    className="w-full rounded-xl border border-border-subtle bg-bg-dark px-4 py-3 text-sm text-text-primary focus:border-accent-gold focus:outline-none"
+                                />
+                            </div>
+                            <p className="text-xs text-text-muted">Only your own memories can be edited. Media stays as uploaded.</p>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button onClick={() => setEditingStory(null)} className="rounded-full px-5 py-2.5 text-sm text-text-muted hover:text-text-primary">Cancel</button>
+                            <button onClick={handleSaveEditStory} disabled={!editTitle.trim()} className="rounded-full bg-accent-gold px-6 py-2.5 text-sm font-semibold text-bg-dark disabled:opacity-50">Save changes</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

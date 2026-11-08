@@ -73,6 +73,7 @@ Route::post('/share/rooms/{room}/stories', [ShareController::class, 'storeRoomCo
 Route::post('/share/rooms/{room}/stories/followup', [ShareController::class, 'storeRoomFollowUpMedia'])->middleware(['contributions.open', 'throttle:guest-media'])->name('share.rooms.stories.followup');
 Route::post('/share/rooms/{room}/subscribe', [ShareController::class, 'storeGuestSubscription'])->name('share.rooms.subscribe');
 Route::post('/share/rooms/{room}/comments', [ShareController::class, 'storeRoomComment'])->name('share.rooms.comments.store');
+Route::patch('/share/rooms/{room}/stories/{story}', [ShareController::class, 'updateGuestStory'])->name('share.rooms.stories.update');
 Route::delete('/share/rooms/{room}/stories/{story}', [ShareController::class, 'destroyStory'])->name('share.rooms.stories.destroy');
 Route::post('/share/events/{event}/contributions', [ShareController::class, 'storeEventContribution'])->middleware('throttle:guest-media')->name('share.events.contributions.store');
 Route::get('/magic-login', [ShareController::class, 'magicLogin'])->name('magic.login');

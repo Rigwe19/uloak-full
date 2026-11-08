@@ -41,6 +41,16 @@ class Event extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function isPrivate(): bool
+    {
+        return $this->privacy === 'private';
+    }
+
+    public function isPublic(): bool
+    {
+        return $this->privacy !== 'private';
+    }
+
     public function stories(): HasMany
     {
         return $this->hasMany(Story::class);

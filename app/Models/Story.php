@@ -17,7 +17,7 @@ class Story extends Model
     use HasFactory;
 
     protected $fillable = [
-        'uuid', 'room_id', 'event_id', 'user_id', 'room_member_id', 'guest_name', 'guest_email', 'title', 'thumbnail', 'type',
+        'uuid', 'room_id', 'event_id', 'user_id', 'room_member_id', 'guest_identity_id', 'guest_name', 'guest_email', 'title', 'thumbnail', 'type',
         'visibility',
         'description', 'duration', 'file_url', 'tags', 'assets', 'transcript_id', 'transcript', 'transcript_status',
         'follow_up_to',
@@ -70,6 +70,11 @@ class Story extends Model
     public function roomMember(): BelongsTo
     {
         return $this->belongsTo(RoomMember::class);
+    }
+
+    public function guestIdentity(): BelongsTo
+    {
+        return $this->belongsTo(GuestIdentity::class);
     }
 
     public function event(): BelongsTo
