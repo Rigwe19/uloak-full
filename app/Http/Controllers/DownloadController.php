@@ -12,13 +12,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DownloadController extends Controller
 {
     /**
      * Request a download and queue ZIP generation.
      */
-    public function requestDownload(Request $request): RedirectResponse
+    public function requestDownload(Request $request): RedirectResponse|Response
     {
         $validated = $request->validate([
             'email' => ['required', 'email'],

@@ -8,8 +8,8 @@ use App\Models\Room;
 use App\Models\Story;
 use App\Models\Tribute;
 use App\Models\User;
+use App\Support\MediaUrl;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Storage;
 
 class DashboardService
 {
@@ -75,12 +75,12 @@ class DashboardService
             'recentStories' => $recentStories->map(fn ($story) => [
                 'id' => $story->id,
                 'title' => $story->title,
-                'thumbnail' => $story->thumbnail ? (str_starts_with($story->thumbnail, 'http') || str_starts_with($story->thumbnail, '/storage') ? $story->thumbnail : Storage::disk('public')->url(ltrim($story->thumbnail, '/'))) : null,
+                'thumbnail' => MediaUrl::resolve($story->thumbnail, request()),
                 'type' => $story->type,
                 'date' => $story->created_at->format('M d, Y'),
                 'author' => $story->user?->name ?? $story->guest_name,
                 'description' => $story->description,
-                'file_url' => $story->file_url ? (str_starts_with($story->file_url, 'http') || str_starts_with($story->file_url, '/storage') ? $story->file_url : Storage::disk('public')->url(ltrim($story->file_url, '/'))) : null,
+                'file_url' => MediaUrl::resolve($story->file_url, request()),
                 'assets' => $story->assets ?? [],
             ]),
             'stats' => $stats,

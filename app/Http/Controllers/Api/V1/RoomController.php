@@ -16,10 +16,10 @@ use App\Models\Room;
 use App\Services\ActivityLogger;
 use App\Services\PersonArchiveService;
 use App\Services\RoomService;
+use App\Support\MediaUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class RoomController extends Controller
 {
@@ -82,11 +82,14 @@ class RoomController extends Controller
         }
         if ($request->hasFile('media_items')) {
             $mediaItems = [];
+            $totalBytes = 0;
             foreach ($request->file('media_items') as $file) {
                 $media = $this->uploadViaPipeline($file);
                 $mediaItems[] = ['url' => $media->url(), 'type' => str_starts_with($media->mime_type, 'video') ? 'video' : 'image'];
+                $totalBytes += (int) ($media->size ?? $file->getSize() ?? 0);
             }
             $validated['media_items'] = $mediaItems;
+            $validated['storage_used_bytes'] = $totalBytes;
         }
 
         $paywalledTypes = ['wedding', 'birthday', 'burial', 'memorial', 'anniversary', 'graduation'];
@@ -142,14 +145,19 @@ class RoomController extends Controller
         }
 
         $newMedia = [];
+        $newBytes = 0;
         if ($request->hasFile('media_files')) {
             foreach ($request->file('media_files') as $file) {
                 $media = $this->uploadViaPipeline($file);
                 $newMedia[] = ['url' => $media->url(), 'type' => str_starts_with($media->mime_type, 'video') ? 'video' : 'image'];
+                $newBytes += (int) ($media->size ?? $file->getSize() ?? 0);
             }
         }
 
         $validated['media_items'] = array_merge($existingMedia, $newMedia);
+        if ($newBytes > 0) {
+            $room->addStorageBytes($newBytes);
+        }
         $room->update($validated);
 
         return response()->json(['data' => new RoomResource($room->fresh())]);
@@ -181,8 +189,8 @@ class RoomController extends Controller
 
         $data = $stories->map(fn ($s) => [
             'id' => $s->id, 'uuid' => $s->uuid, 'title' => $s->title, 'description' => $s->description, 'type' => $s->type,
-            'file_url' => $s->file_url ? (str_starts_with($s->file_url, 'http') || str_starts_with($s->file_url, '/storage') ? $s->file_url : Storage::disk('public')->url(ltrim($s->file_url, '/'))) : null,
-            'thumbnail' => $s->thumbnail ? (str_starts_with($s->thumbnail, 'http') || str_starts_with($s->thumbnail, '/storage') ? $s->thumbnail : Storage::disk('public')->url(ltrim($s->thumbnail, '/'))) : null,
+            'file_url' => MediaUrl::resolve($s->file_url, $request),
+            'thumbnail' => MediaUrl::resolve($s->thumbnail, $request),
             'author' => $s->user?->name ?? $s->guest_name, 'date' => $s->created_at->format('M d, Y'),
             'likes_count' => $s->likes_count, 'comments_count' => $s->comments_count,
             'is_liked' => $user ? $s->likes()->where('user_id', $user->id)->exists() : ($guestIdentifier ? $s->likes()->where('guest_identifier', $guestIdentifier)->exists() : false),

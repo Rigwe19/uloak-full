@@ -34,7 +34,20 @@ class CandleReceived extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail', 'webpush'];
+        return ['database', 'mail', 'webpush'];
+    }
+
+    /**
+     * Get the database representation of the notification.
+     */
+    public function toDatabase($notifiable)
+    {
+        return [
+            'title' => 'New Candle Lit',
+            'body' => 'A new candle has been lit in your room and needs approval.',
+            'room_slug' => $this->candle->room->slug,
+            'type' => 'candle_received',
+        ];
     }
 
     /**

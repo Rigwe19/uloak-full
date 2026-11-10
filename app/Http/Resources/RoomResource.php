@@ -3,25 +3,29 @@
 namespace App\Http\Resources;
 
 use App\Models\Room;
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 /** @mixin Room */
 class RoomResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $scheme = (string) config('universal-links.scheme', 'ulo');
+
         return [
             'id' => $this->id,
             'slug' => $this->slug,
             'name' => $this->name,
             'description' => $this->description,
+            'share_url' => url()->route('share.rooms.show', $this->slug),
+            'deep_link' => $scheme.'://share/rooms/'.$this->slug,
             'room_type' => $this->room_type,
             'tier_type' => $this->tier_type?->value,
             'status' => $this->status?->value,
             'privacy' => $this->privacy,
-            'thumbnail' => $this->thumbnail ? (str_starts_with($this->thumbnail, 'http') || str_starts_with($this->thumbnail, '/storage') ? $this->thumbnail : Storage::disk('public')->url(ltrim($this->thumbnail, '/'))) : null,
+            'thumbnail' => $this->thumbnail ? MediaUrl::resolve($this->thumbnail, $request) : null,
             'tribute_name' => $this->tribute_name,
             'enable_tributes' => (bool) $this->enable_tributes,
             'enable_candle_lighting' => (bool) $this->enable_candle_lighting,

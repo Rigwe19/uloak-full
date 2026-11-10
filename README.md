@@ -152,6 +152,8 @@ GET  /weddings                 → PageController@weddings  (12-section launch p
 GET  /weddings/create          → WeddingsController@create  auth  (form: title, couple names, wedding_dates json, occasion selector, order summary)
 POST /weddings/create          → WeddingsController@create  auth  (draft + Payment + gateway redirect)
 GET  /pricing                  → PageController@pricing  (3 cards, RegionSelector, visual strip 05+08)
+GET  /.well-known/apple-app-site-association  → WellKnownController@appleAppSiteAssociation  iOS Universal Links for /share/*
+GET  /.well-known/assetlinks.json              → WellKnownController@assetLinks  Android App Links for /share/*
 POST /billing/checkout         → CheckoutController@store  auth  (room_id nullable)
 GET  /billing/callback/{provider}
 GET  /billing/payments/{payment}/status
@@ -207,7 +209,7 @@ php artisan test --compact           # Pest; 42–44 billing+gate tests green (p
 php vendor/pestphp/pest/bin/pest --filter=Billing
 ```
 
-New suites: `tests/Feature/Billing/{BillingTest,ContributionGateTest,ReferralTest,SubscriptionArchiveTest,RoomCreationGateTest,CreatorEconomyTest}` (CreatorEconomyTest: viewer pricing, creator attribution, subscription+earning activation + idempotency, StoryPolicy gating, `viewer:vip` middleware, creator ref checkout). Privacy/guests: `tests/Feature/GuestPrivacyVisibilityTest.php` (private own-only feed + public see-all, cookie mint/link, own-only delete/edit, legacy fallback, API parity, follow-up visibility).
+New suites: `tests/Feature/Billing/{BillingTest,ContributionGateTest,ReferralTest,SubscriptionArchiveTest,RoomCreationGateTest,CreatorEconomyTest}` (CreatorEconomyTest: viewer pricing, creator attribution, subscription+earning activation + idempotency, StoryPolicy gating, `viewer:vip` middleware, creator ref checkout). Privacy/guests: `tests/Feature/GuestPrivacyVisibilityTest.php` (private own-only feed + public see-all, cookie mint/link, own-only delete/edit, legacy fallback, API parity, follow-up visibility). Missing screens: `tests/Feature/{MissingScreensTest,SettingsDangerPrivacyTest,AdminActionsTest}.php` (error/waiting-list/story viewer, privacy persistence + danger-zone export/archive/delete, admin user/room/enquiry/report actions).
 
 ---
 

@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     MessageSquare,
@@ -129,14 +129,32 @@ export default function AdminEnquiries({ enquiries }: Props) {
                                     </div>
 
                                     <div className="flex shrink-0 gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-2"
+                                        <a
+                                            href={`mailto:${enquiry.email}?subject=Re:%20${encodeURIComponent(enquiry.subject)}`}
                                         >
-                                            Reply <ArrowUpRight size={14} />
-                                        </Button>
-                                        <button className="rounded-xl border border-border-subtle bg-surface/50 p-2.5 text-text-muted transition-all hover:border-red-400/30 hover:bg-red-400/10 hover:text-red-400">
+                                            <Button variant="outline" size="sm" className="gap-2">
+                                                Reply <ArrowUpRight size={14} />
+                                            </Button>
+                                        </a>
+                                        {enquiry.status === 'new' && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="gap-2"
+                                                onClick={() => router.patch(`/admin/enquiries/${enquiry.id}/status`, { status: 'read' })}
+                                            >
+                                                <CheckCircle2 size={14} /> Mark read
+                                            </Button>
+                                        )}
+                                        <button
+                                            className="rounded-xl border border-border-subtle bg-surface/50 p-2.5 text-text-muted transition-all hover:border-red-400/30 hover:bg-red-400/10 hover:text-red-400"
+                                            title="Delete enquiry"
+                                            onClick={() => {
+                                                if (confirm(`Delete enquiry from ${enquiry.name}?`)) {
+                                                    router.delete(`/admin/enquiries/${enquiry.id}`);
+                                                }
+                                            }}
+                                        >
                                             <Trash2 size={18} />
                                         </button>
                                     </div>

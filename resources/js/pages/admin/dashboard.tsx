@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     Users as UsersIcon,
@@ -72,9 +72,11 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                             now.
                         </p>
                     </div>
-                    <Button variant="outline" size="sm">
-                        Download Report
-                    </Button>
+                    <a href="/admin/report">
+                        <Button variant="outline" size="sm">
+                            Download Report
+                        </Button>
+                    </a>
                 </div>
 
                 {/* Stats Grid */}
@@ -119,9 +121,9 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                             <h3 className="text-lg font-bold text-text-primary">
                                 Recent Enquiries
                             </h3>
-                            <button className="flex items-center gap-1 text-xs font-bold text-accent-gold transition-all hover:underline">
+                            <Link href="/admin/enquiries" className="flex items-center gap-1 text-xs font-bold text-accent-gold transition-all hover:underline">
                                 View All <ChevronRight size={14} />
-                            </button>
+                            </Link>
                         </div>
 
                         <div className="overflow-hidden rounded-2xl border border-border-subtle bg-surface/20 backdrop-blur-sm">
@@ -170,11 +172,9 @@ export default function AdminDashboard({ stats, recentEnquiries }: Props) {
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <button className="rounded-lg p-2 text-text-muted transition-all hover:bg-surface hover:text-accent-gold">
-                                                            <ArrowUpRight
-                                                                size={16}
-                                                            />
-                                                        </button>
+                                                        <Link href="/admin/enquiries" className="rounded-lg p-2 text-text-muted transition-all hover:bg-surface hover:text-accent-gold">
+                                                            <ArrowUpRight size={16} />
+                                                        </Link>
                                                     </td>
                                                 </tr>
                                             ))

@@ -36,6 +36,92 @@ class AdminController extends Controller
         ]);
     }
 
+    public function toggleUserAdmin(Request $request, User $user)
+    {
+        abort_unless($request->user()->is_admin, 403);
+
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors(['user' => 'You cannot demote yourself.']);
+        }
+
+        if ($user->is_admin && User::where('is_admin', true)->count() <= 1) {
+            return back()->withErrors(['user' => 'Cannot demote the last admin.']);
+        }
+
+        $user->update(['is_admin' => ! (bool) $user->is_admin]);
+
+        return back()->with('success', $user->is_admin ? 'User promoted to admin.' : 'Admin demoted to user.');
+    }
+
+    public function destroyUser(Request $request, User $user)
+    {
+        abort_unless($request->user()->is_admin, 403);
+
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors(['user' => 'You cannot delete yourself.']);
+        }
+
+        if ($user->is_admin && User::where('is_admin', true)->count() <= 1) {
+            return back()->withErrors(['user' => 'Cannot delete the last admin.']);
+        }
+
+        $user->delete();
+
+        return back()->with('success', 'User deleted.');
+    }
+
+    public function destroyRoom(Request $request, Room $room)
+    {
+        abort_unless($request->user()->is_admin, 403);
+
+        $room->delete();
+
+        return back()->with('success', 'Room deleted.');
+    }
+
+    public function updateEnquiryStatus(Request $request, Enquiry $enquiry)
+    {
+        abort_unless($request->user()->is_admin, 403);
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:new,read,closed'],
+        ]);
+
+        $enquiry->update($validated);
+
+        return back()->with('success', 'Enquiry updated.');
+    }
+
+    public function destroyEnquiry(Request $request, Enquiry $enquiry)
+    {
+        abort_unless($request->user()->is_admin, 403);
+
+        $enquiry->delete();
+
+        return back()->with('success', 'Enquiry deleted.');
+    }
+
+    public function downloadReport(Request $request)
+    {
+        abort_unless($request->user()->is_admin, 403);
+
+        $rows = [
+            ['metric', 'value'],
+            ['totalUsers', User::count()],
+            ['totalRooms', Room::count()],
+            ['totalStories', Story::count()],
+            ['newEnquiries', Enquiry::where('status', 'new')->count()],
+            ['generated_at', now()->toIso8601String()],
+        ];
+
+        $csv = collect($rows)->map(fn ($row) => implode(',', $row))->implode("\n");
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="ulo-report-'.now()->format('Y-m-d').'.csv"',
+        ]);
+    }
+
     public function rooms(): Response
     {
         return Inertia::render('admin/rooms', [

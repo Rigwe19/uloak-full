@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     Users as UsersIcon,
@@ -139,13 +139,23 @@ export default function AdminUsers({ users }: Props) {
                                             <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                                                 <button
                                                     className="rounded-lg p-2 text-text-muted transition-all hover:bg-surface hover:text-accent-gold"
-                                                    title="Edit User"
+                                                    title={user.is_admin ? 'Demote admin' : 'Promote to admin'}
+                                                    onClick={() => {
+                                                        if (confirm(user.is_admin ? `Demote ${user.name} from admin?` : `Promote ${user.name} to admin?`)) {
+                                                            router.patch(`/admin/users/${user.id}/toggle-admin`);
+                                                        }
+                                                    }}
                                                 >
                                                     <Edit3 size={16} />
                                                 </button>
                                                 <button
                                                     className="rounded-lg p-2 text-text-muted transition-all hover:bg-surface hover:text-red-400"
-                                                    title="Deactivate User"
+                                                    title="Delete user"
+                                                    onClick={() => {
+                                                        if (confirm(`Delete ${user.name}? This cannot be undone.`)) {
+                                                            router.delete(`/admin/users/${user.id}`);
+                                                        }
+                                                    }}
                                                 >
                                                     <UserX size={16} />
                                                 </button>

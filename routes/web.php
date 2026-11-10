@@ -29,6 +29,7 @@ use App\Http\Controllers\TributeController;
 use App\Http\Controllers\WaitingListController;
 use App\Http\Controllers\WatchController;
 use App\Http\Controllers\WeddingsController;
+use App\Http\Controllers\WellKnownController;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,10 @@ Route::get('/weddings', [PageController::class, 'weddings'])->name('weddings');
 Route::get('/weddings/create', [WeddingsController::class, 'create'])->middleware(['auth'])->name('weddings.create');
 Route::post('/weddings/create', [WeddingsController::class, 'create'])->middleware(['auth'])->name('weddings.store');
 Route::get('/pricing', [PageController::class, 'pricing'])->name('pricing');
+
+// Universal / App Links verification (Expo native deep linking for share pages).
+Route::get('/.well-known/apple-app-site-association', [WellKnownController::class, 'appleAppSiteAssociation'])->name('well-known.apple');
+Route::get('/.well-known/assetlinks.json', [WellKnownController::class, 'assetLinks'])->name('well-known.android');
 
 // Creator economy: public creator pages + viewer watch feeds.
 // Watch pages are public by design: guests and non-subscribers get a locked
@@ -176,9 +181,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/report', [AdminController::class, 'downloadReport'])->name('report');
         Route::get('/users', [AdminController::class, 'users'])->name('users');
+        Route::patch('/users/{user}/toggle-admin', [AdminController::class, 'toggleUserAdmin'])->name('users.toggle-admin');
+        Route::delete('/users/{user}', [AdminController::class, 'destroyUser'])->name('users.destroy');
         Route::get('/rooms', [AdminController::class, 'rooms'])->name('rooms');
+        Route::delete('/rooms/{room}', [AdminController::class, 'destroyRoom'])->name('rooms.destroy');
         Route::get('/enquiries', [AdminController::class, 'enquiries'])->name('enquiries');
+        Route::patch('/enquiries/{enquiry}/status', [AdminController::class, 'updateEnquiryStatus'])->name('enquiries.status');
+        Route::delete('/enquiries/{enquiry}', [AdminController::class, 'destroyEnquiry'])->name('enquiries.destroy');
         Route::get('/pages', [AdminController::class, 'pages'])->name('pages');
         Route::get('/pages/{page}/edit', [AdminController::class, 'editPage'])->name('pages.edit');
         Route::patch('/pages/{page}', [AdminController::class, 'updatePage'])->name('pages.update');

@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     DoorOpen,
@@ -78,15 +78,21 @@ export default function AdminRooms({ rooms }: Props) {
                                     <DoorOpen size={24} />
                                 </div>
                                 <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                    <button
+                                    <Link
+                                        href={`/dashboard/rooms/${room.slug}`}
                                         className="rounded-lg p-2 text-text-muted transition-all hover:bg-surface hover:text-accent-gold"
                                         title="View Room"
                                     >
                                         <Eye size={16} />
-                                    </button>
+                                    </Link>
                                     <button
                                         className="rounded-lg p-2 text-text-muted transition-all hover:bg-surface hover:text-red-400"
                                         title="Delete Room"
+                                        onClick={() => {
+                                            if (confirm(`Delete room “${room.name}”? This cannot be undone.`)) {
+                                                router.delete(`/admin/rooms/${room.id}`);
+                                            }
+                                        }}
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -145,8 +151,11 @@ export default function AdminRooms({ rooms }: Props) {
                         </motion.div>
                     ))}
 
-                    {/* Add Room Placeholder */}
-                    <button className="group flex flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed border-border-subtle bg-transparent p-12 transition-all hover:border-accent-gold/30 hover:bg-accent-gold/5">
+                    {/* Create via dashboard */}
+                    <Link
+                        href="/dashboard"
+                        className="group flex flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed border-border-subtle bg-transparent p-12 transition-all hover:border-accent-gold/30 hover:bg-accent-gold/5"
+                    >
                         <div className="rounded-2xl bg-surface p-4 text-text-muted shadow-lg shadow-black/20 transition-all group-hover:scale-110 group-hover:text-accent-gold">
                             <DoorOpen size={32} />
                         </div>
@@ -158,7 +167,7 @@ export default function AdminRooms({ rooms }: Props) {
                                 Initialize a new memory space
                             </p>
                         </div>
-                    </button>
+                    </Link>
                 </div>
             </div>
         </AdminLayout>

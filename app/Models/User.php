@@ -22,7 +22,7 @@ use Laravel\Passkeys\PasskeyAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'email', 'avatar', 'password', 'is_admin', 'role', 'house_thumbnail', 'house_pattern', 'house_pattern_upload'])]
+#[Fillable(['name', 'email', 'avatar', 'password', 'is_admin', 'role', 'house_thumbnail', 'house_pattern', 'house_pattern_upload', 'privacy_settings'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -87,6 +87,11 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(SocialAccount::class);
     }
 
+    public function devicePushTokens(): HasMany
+    {
+        return $this->hasMany(DevicePushToken::class);
+    }
+
     public function passkeys(): HasMany
     {
         return $this->hasMany(Passkey::class, 'user_id');
@@ -130,7 +135,27 @@ class User extends Authenticatable implements PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'is_admin' => 'boolean',
             'role' => 'string',
+            'privacy_settings' => 'array',
         ];
+    }
+
+    /**
+     * Default privacy toggles, merged with any persisted values.
+     *
+     * @return array{global_discovery: bool, member_uploads: bool, high_fidelity: bool}
+     */
+    public static function privacyDefaults(): array
+    {
+        return [
+            'global_discovery' => false,
+            'member_uploads' => true,
+            'high_fidelity' => true,
+        ];
+    }
+
+    public function privacySettings(): array
+    {
+        return array_merge(self::privacyDefaults(), $this->privacy_settings ?? []);
     }
 
     /**

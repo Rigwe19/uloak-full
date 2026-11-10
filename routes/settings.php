@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\HouseMemberController;
 use App\Http\Controllers\PersonController;
+use App\Http\Controllers\Settings\DangerZoneController;
+use App\Http\Controllers\Settings\PrivacySettingsController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
@@ -24,11 +26,10 @@ Route::middleware(['auth'])->group(function () {
     Route::put('settings/person', [PersonController::class, 'settingsUpdate'])->name('settings.person.update');
 
     // Danger Zone
-    Route::get('settings/danger-zone', function () {
-        return Inertia::render('settings/danger-zone', [
-            'title' => 'Danger Zone - Ulo of Stories',
-        ]);
-    })->name('settings.danger-zone');
+    Route::get('settings/danger-zone', [DangerZoneController::class, 'show'])->name('settings.danger-zone');
+    Route::get('settings/danger-zone/export', [DangerZoneController::class, 'export'])->name('settings.danger-zone.export');
+    Route::post('settings/danger-zone/archive', [DangerZoneController::class, 'archive'])->name('settings.danger-zone.archive');
+    Route::post('settings/danger-zone/restore', [DangerZoneController::class, 'restore'])->name('settings.danger-zone.restore');
 
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
@@ -48,11 +49,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/house/pattern-upload', [HouseMemberController::class, 'updatePatternUpload'])->name('house.pattern-upload');
     Route::delete('settings/house/pattern-upload', [HouseMemberController::class, 'clearPatternUpload'])->name('house.pattern-upload.clear');
 
-    Route::get('settings/privacy', function () {
-        return Inertia::render('settings/privacy', [
-            'title' => 'Privacy Settings - Ulo of Stories',
-        ]);
-    })->name('privacy.edit');
+    Route::get('settings/privacy', [PrivacySettingsController::class, 'edit'])->name('privacy.edit');
+    Route::put('settings/privacy', [PrivacySettingsController::class, 'update'])->name('privacy.update');
 
     Route::put('settings/password', [SecurityController::class, 'update'])
         ->middleware('throttle:6,1')

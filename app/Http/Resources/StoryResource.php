@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class StoryResource extends JsonResource
 {
@@ -22,8 +22,8 @@ class StoryResource extends JsonResource
             $fileUrl = $resource['file_url'] ?? null;
             $createdAt = $resource['created_at'] ?? $resource['date'] ?? null;
 
-            $thumbnailResolved = $thumbnail ? (str_starts_with($thumbnail, 'http') || str_starts_with($thumbnail, '/storage') ? $thumbnail : Storage::disk('public')->url(ltrim($thumbnail, '/'))) : null;
-            $fileUrlResolved = $fileUrl ? (str_starts_with($fileUrl, 'http') || str_starts_with($fileUrl, '/storage') ? $fileUrl : Storage::disk('public')->url(ltrim($fileUrl, '/'))) : null;
+            $thumbnailResolved = MediaUrl::resolve($thumbnail, $request);
+            $fileUrlResolved = MediaUrl::resolve($fileUrl, $request);
 
             $createdAtFormatted = null;
             if ($createdAt instanceof \DateTimeInterface) {
@@ -60,8 +60,8 @@ class StoryResource extends JsonResource
             'is_featured' => $this->visibility->value === 'vip',
             'can_edit' => (bool) ($this->resource->can_edit ?? false),
             'can_delete' => (bool) ($this->resource->can_delete ?? false),
-            'thumbnail' => $this->thumbnail ? (str_starts_with($this->thumbnail, 'http') || str_starts_with($this->thumbnail, '/storage') ? $this->thumbnail : Storage::disk('public')->url(ltrim($this->thumbnail, '/'))) : null,
-            'file_url' => $this->file_url ? (str_starts_with($this->file_url, 'http') || str_starts_with($this->file_url, '/storage') ? $this->file_url : Storage::disk('public')->url(ltrim($this->file_url, '/'))) : null,
+            'thumbnail' => MediaUrl::resolve($this->thumbnail, $request),
+            'file_url' => MediaUrl::resolve($this->file_url, $request),
             'duration' => $this->duration,
             'assets' => $this->assets,
             'created_at' => $this->created_at?->format('M d, Y'),

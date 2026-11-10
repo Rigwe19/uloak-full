@@ -35,7 +35,20 @@ class TributeReceived extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail', WebPushChannel::class];
+        return ['mail', 'database', WebPushChannel::class];
+    }
+
+    /**
+     * Get the database representation of the notification.
+     */
+    public function toDatabase($notifiable)
+    {
+        return [
+            'title' => 'New Tribute Received',
+            'body' => 'A new tribute has been submitted for your room and needs approval.',
+            'room_slug' => $this->tribute->room->slug,
+            'type' => 'tribute_received',
+        ];
     }
 
     /**

@@ -38,6 +38,7 @@ import {
     Plus,
     RotateCcw,
     Send,
+    Smartphone,
     Square,
     Trash2,
     Upload,
@@ -71,6 +72,8 @@ interface ShareRoomProps {
         room_type: string;
         privacy?: string | null;
         tribute_song: string | null;
+        share_url?: string | null;
+        deep_link?: string | null;
         media_items: { url: string; type: string }[] | null;
         enable_tributes: boolean;
         enable_condolence_attendance: boolean;
@@ -2365,6 +2368,21 @@ export default function RoomShare({
                             <p className="mx-auto max-w-2xl text-xs leading-relaxed text-text-muted">
                                 This is a private room. Photos and videos from other guests are hidden from you — you’ll only see what you’ve shared. If this browser loses your identity, re-enter the name and email you used when uploading to see your memories again.
                             </p>
+                        )}
+                        {room.deep_link && (
+                            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                                <button
+                                    onClick={() => {
+                                        window.location.href = room.deep_link as string;
+                                    }}
+                                    className="inline-flex items-center gap-2 rounded-full border border-accent-gold/40 bg-accent-gold/10 px-5 py-2.5 text-xs font-bold tracking-wider text-accent-gold uppercase transition hover:bg-accent-gold/20"
+                                >
+                                    <Smartphone size={14} /> Open in app
+                                </button>
+                                <p className="w-full text-[11px] text-text-muted">
+                                    Have the Ulo app? This link opens straight in the app. No app? Keep browsing here.
+                                </p>
+                            </div>
                         )}
                     </motion.div>
                 </header>

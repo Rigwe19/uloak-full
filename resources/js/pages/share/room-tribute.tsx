@@ -10,6 +10,7 @@ import {
     Play,
     RotateCcw,
     Send,
+    Smartphone,
     Square,
     User,
     Video,
@@ -40,6 +41,7 @@ interface RoomTributeProps {
         tribute_name: string | null;
         room_type: string;
     };
+    deep_link?: string | null;
     tributes: {
         id: number;
         name: string;
@@ -381,6 +383,7 @@ function AudioRecorder({ onAudioReady, onCancel }: AudioRecorderProps) {
 /* ─── Main page ──────────────────────────────────────────── */
 export default function RoomTribute({
     room,
+    deep_link,
     tributes: initialTributes,
     candles,
 }: RoomTributeProps) {
@@ -630,6 +633,19 @@ export default function RoomTribute({
     return (
         <div className="relative min-h-screen bg-bg-dark">
             <Head title={room.name} />
+
+            {deep_link && (
+                <div className="relative z-10 mx-auto flex max-w-7xl justify-end px-4 pt-4 md:px-8">
+                    <button
+                        onClick={() => {
+                            window.location.href = deep_link;
+                        }}
+                        className="inline-flex items-center gap-2 rounded-full border border-accent-gold/40 bg-accent-gold/10 px-4 py-2 text-xs font-bold tracking-wider text-accent-gold uppercase transition hover:bg-accent-gold/20"
+                    >
+                        <Smartphone size={14} /> Open in app
+                    </button>
+                </div>
+            )}
 
             {/* Background */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">

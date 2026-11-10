@@ -52,8 +52,11 @@ class ShareController extends Controller
         $thumbnail = $room->thumbnail
             ?? optional($room->approvedTributes->first())->image_url;
 
+        $scheme = (string) config('universal-links.scheme', 'ulo');
+
         return Inertia::render('share/room-tribute', [
             'room' => $room,
+            'deep_link' => $scheme.'://share/rooms/'.$room->slug,
             'tributes' => $room->approvedTributes,
             'candles' => $candles,
             'title' => $room->name.' - Ulo of Stories',
@@ -218,6 +221,8 @@ class ShareController extends Controller
             $archiveMeta = null;
         }
 
+        $scheme = (string) config('universal-links.scheme', 'ulo');
+
         return Inertia::render('share/room-share', [
             'room' => [
                 'id' => $room->id,
@@ -229,6 +234,8 @@ class ShareController extends Controller
                 'room_type' => $room->room_type,
                 'privacy' => $room->privacy,
                 'tribute_song' => $room->tribute_song,
+                'share_url' => url()->route('share.rooms.show', $room->slug),
+                'deep_link' => $scheme.'://share/rooms/'.$room->slug,
             ],
 
             'stories' => $stories->items(),
@@ -302,7 +309,7 @@ class ShareController extends Controller
         });
 
         return Inertia::render('share/event', [
-            'event' => $event,
+            'event' => $event->setAttribute('deep_link', (string) config('universal-links.scheme', 'ulo').'://share/events/'.$event->slug),
             'stories' => $stories->items(),
             'pagination' => [
                 'next_cursor' => $paginator->nextCursor()?->encode(),

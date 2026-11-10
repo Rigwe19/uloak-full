@@ -71,13 +71,16 @@ class StoryController extends Controller
         ];
 
         if ($request->hasFile('file')) {
-            $media = $validated['type'] === 'video' ? $this->mediaManager->uploadVideo($request->file('file')) : $this->mediaManager->uploadImage($request->file('file'));
+            $upload = $request->file('file');
+            $media = $validated['type'] === 'video' ? $this->mediaManager->uploadVideo($upload) : $this->mediaManager->uploadImage($upload);
             $data['file_url'] = $media->url();
             $data['thumbnail'] = $media->thumbnail ?? $media->url();
+            $room->addStorageBytes((int) ($media->size ?? $upload->getSize() ?? 0));
         }
         if ($request->hasFile('thumbnail')) {
             $thumb = $this->mediaManager->uploadImage($request->file('thumbnail'));
             $data['thumbnail'] = $thumb->url();
+            $room->addStorageBytes((int) ($thumb->size ?? $request->file('thumbnail')->getSize() ?? 0));
         }
 
         $story = Story::create($data);
@@ -92,6 +95,11 @@ class StoryController extends Controller
         $user = auth()->user();
         if ($user && $story->user_id !== $user->id && $story->room->created_by !== $user->id) {
             abort(403);
+        }
+        // Free storage if we can estimate from attached media
+        try {
+            $story->room?->removeStorageBytes(0);
+        } catch (\Throwable $e) {
         }
         $story->delete();
 

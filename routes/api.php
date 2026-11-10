@@ -3,15 +3,20 @@
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\V1\AuthController as V1AuthController;
 use App\Http\Controllers\Api\V1\BillingController as V1BillingController;
+use App\Http\Controllers\Api\V1\CommentController as V1CommentController;
 use App\Http\Controllers\Api\V1\CreatorController as V1CreatorController;
 use App\Http\Controllers\Api\V1\DashboardController as V1DashboardController;
+use App\Http\Controllers\Api\V1\DevicePushTokenController as V1PushTokenController;
+use App\Http\Controllers\Api\V1\EventController as V1EventController;
 use App\Http\Controllers\Api\V1\HouseAccessController as V1HouseAccessController;
 use App\Http\Controllers\Api\V1\NotificationController as V1NotificationController;
 use App\Http\Controllers\Api\V1\RoomController as V1RoomController;
+use App\Http\Controllers\Api\V1\RoomMemberController as V1RoomMemberController;
 use App\Http\Controllers\Api\V1\SearchController as V1SearchController;
 use App\Http\Controllers\Api\V1\ShareController as V1ShareController;
 use App\Http\Controllers\Api\V1\StoryController as V1StoryController;
 use App\Http\Controllers\Api\V1\SubscriptionController as V1SubscriptionController;
+use App\Http\Controllers\Api\V1\TributeController as V1TributeController;
 use App\Http\Controllers\Api\V1\WatchController as V1WatchController;
 use App\Http\Controllers\AssemblyAIWebhookController;
 use App\Http\Controllers\DriveImportController;
@@ -48,6 +53,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/pricing', [V1BillingController::class, 'pricing'])->name('api.v1.pricing');
     Route::get('/share/rooms/{slug}', [V1ShareController::class, 'showRoom'])->name('api.v1.share.rooms.show');
     Route::get('/creators/{refCode}', [V1CreatorController::class, 'show'])->name('api.v1.creators.show');
+    Route::post('/share/rooms/{slug}/tributes', [V1TributeController::class, 'storeShare'])->middleware('throttle:guest-media')->name('api.v1.share.rooms.tributes.store');
+    Route::post('/share/rooms/{slug}/candles', [V1TributeController::class, 'lightCandleShare'])->name('api.v1.share.rooms.candles.store');
+    Route::post('/share/rooms/{slug}/comments', [V1CommentController::class, 'storeShare'])->name('api.v1.share.rooms.comments.store');
 
     // Auth — public (Sanctum token issuance)
     Route::post('/login', [V1AuthController::class, 'login'])->middleware('throttle:login')->name('api.v1.login');
@@ -58,6 +66,8 @@ Route::prefix('v1')->group(function () {
         // Auth
         Route::get('/me', [V1AuthController::class, 'me'])->name('api.v1.me');
         Route::post('/logout', [V1AuthController::class, 'logout'])->name('api.v1.logout');
+        Route::post('/me/push-token', [V1PushTokenController::class, 'store'])->name('api.v1.me.push-token.store');
+        Route::delete('/me/push-token', [V1PushTokenController::class, 'destroy'])->name('api.v1.me.push-token.destroy');
 
         // Dashboard + Analytics (mobile home)
         Route::get('/dashboard', [V1DashboardController::class, 'index'])->name('api.v1.dashboard');
@@ -115,5 +125,30 @@ Route::prefix('v1')->group(function () {
         // Likes (re-use web LikeController logic — keep simple for mobile)
         Route::post('/stories/{story}/likes', [LikeController::class, 'toggle'])->name('api.v1.stories.likes.toggle');
         Route::get('/stories/{story}/likes/status', [LikeController::class, 'status'])->name('api.v1.stories.likes.status');
+
+        // Tributes & Candles (v1 JSON) — mirrors web TributeController but returns JSON for mobile
+        Route::post('/rooms/{room}/tributes', [V1TributeController::class, 'store'])->middleware('contributions.open')->name('api.v1.rooms.tributes.store');
+        Route::post('/rooms/{room}/candles', [V1TributeController::class, 'lightCandle'])->middleware('contributions.open')->name('api.v1.rooms.candles.store');
+        Route::patch('/tributes/{tribute}/approve', [V1TributeController::class, 'approve'])->name('api.v1.tributes.approve');
+        Route::patch('/candles/{candle}/approve', [V1TributeController::class, 'approveCandle'])->name('api.v1.candles.approve');
+        Route::delete('/tributes/{tribute}', [V1TributeController::class, 'destroy'])->name('api.v1.tributes.destroy');
+
+        // Events (V1 JSON mirror of web EventController)
+        Route::get('/events', [V1EventController::class, 'index'])->name('api.v1.events.index');
+        Route::post('/events', [V1EventController::class, 'store'])->name('api.v1.events.store');
+        Route::get('/events/{event}', [V1EventController::class, 'show'])->name('api.v1.events.show');
+        Route::delete('/events/{event}', [V1EventController::class, 'destroy'])->name('api.v1.events.destroy');
+        Route::post('/events/{event}/stories', [V1EventController::class, 'storeStory'])->name('api.v1.events.stories.store');
+
+        // Room members (family access) — mirror web RoomController@members
+        Route::get('/rooms/{room}/members', [V1RoomMemberController::class, 'index'])->name('api.v1.rooms.members.index');
+        Route::post('/rooms/{room}/members', [V1RoomMemberController::class, 'store'])->name('api.v1.rooms.members.store');
+        Route::delete('/rooms/{room}/members/{member}', [V1RoomMemberController::class, 'destroy'])->name('api.v1.rooms.members.destroy');
+        Route::post('/rooms/{room}/members/{member}/regenerate-token', [V1RoomMemberController::class, 'regenerateToken'])->name('api.v1.rooms.members.regenerate');
+
+        // Comments — stories + share (guest)
+        Route::get('/stories/{story}/comments', [V1CommentController::class, 'index'])->name('api.v1.stories.comments.index');
+        Route::post('/stories/{story}/comments', [V1CommentController::class, 'store'])->name('api.v1.stories.comments.store');
+        // Share/guest comment handled via authenticated room route above; guest via public below
     });
 });

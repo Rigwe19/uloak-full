@@ -19,6 +19,7 @@ import {
     File as FileIcon,
     House,
     ArrowRight,
+    Smartphone,
     X,
     Loader,
 } from 'lucide-react';
@@ -50,6 +51,7 @@ interface ShareEventProps {
         description: string;
         thumbnail: string;
         privacy?: string | null;
+        deep_link?: string | null;
         event_date?: string;
         stories_count: number;
         allow_download: boolean;
@@ -539,6 +541,16 @@ export default function ShareEvent({
                                     <p className="max-w-2xl text-lg leading-relaxed font-light text-text-muted">
                                         {event.description}
                                     </p>
+                                    {event.deep_link && (
+                                        <button
+                                            onClick={() => {
+                                                window.location.href = event.deep_link as string;
+                                            }}
+                                            className="inline-flex items-center gap-2 rounded-full border border-accent-gold/40 bg-accent-gold/10 px-5 py-2.5 text-xs font-bold tracking-wider text-accent-gold uppercase transition hover:bg-accent-gold/20"
+                                        >
+                                            <Smartphone size={14} /> Open in app
+                                        </button>
+                                    )}
                                     {event.event_date && (
                                         <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-accent-gold uppercase">
                                             <Calendar size={14} />

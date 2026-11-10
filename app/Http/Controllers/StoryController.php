@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Media;
 use App\Models\Room;
 use App\Models\Story;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\AnalyticsService;
 use App\Services\StoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class StoryController extends Controller
 {
@@ -18,6 +21,27 @@ class StoryController extends Controller
         protected ActivityLogger $activityLogger,
         protected AnalyticsService $analytics
     ) {}
+
+    /**
+     * Show a single story in the full-screen viewer.
+     */
+    public function show(Request $request, Story $story)
+    {
+        $this->authorizeViewing($story, $request->user());
+
+        $room = $story->room;
+        $payload = $this->storyPayload($story);
+        [$prev, $next] = $this->neighborPreviews($story);
+
+        return Inertia::render('dashboard/stories/show', [
+            'story' => $payload,
+            'room' => $room
+                ? ['id' => $room->id, 'slug' => $room->slug, 'name' => $room->name]
+                : ['id' => 0, 'slug' => 'dashboard', 'name' => $story->event?->name ?? 'Stories'],
+            'prevStory' => $prev,
+            'nextStory' => $next,
+        ]);
+    }
 
     /**
      * Store a new story.
@@ -223,6 +247,131 @@ class StoryController extends Controller
         $this->authorize('update', $story);
     }
 
+    protected function authorizeViewing(Story $story, ?User $user): void
+    {
+        abort_if($user === null, 401);
+
+        if ((bool) $user->is_admin) {
+            return;
+        }
+
+        if ($story->user_id !== null && $story->user_id === $user->id) {
+            return;
+        }
+
+        $room = $story->room;
+        if ($room !== null) {
+            $this->authorize('view', $room);
+
+            return;
+        }
+
+        $event = $story->event;
+        if ($event !== null) {
+            abort_unless(($event->created_by ?? null) === $user->id, 403);
+
+            return;
+        }
+
+        abort(404);
+    }
+
+    /**
+     * Shape a story for the dashboard story viewer.
+     */
+    protected function storyPayload(Story $story): array
+    {
+        $story->loadMissing(['user', 'comments']);
+
+        $thumbnail = $story->thumbnail
+            ? (str_starts_with($story->thumbnail, 'http') || str_starts_with($story->thumbnail, '/storage')
+                ? $story->thumbnail
+                : Storage::disk('public')->url(ltrim($story->thumbnail, '/')))
+            : null;
+
+        $fileUrl = $story->file_url
+            ? (str_starts_with($story->file_url, 'http') || str_starts_with($story->file_url, '/storage')
+                ? $story->file_url
+                : Storage::disk('public')->url(ltrim($story->file_url, '/')))
+            : null;
+
+        $assets = collect($story->assets ?? [])->map(function (array $asset) {
+            $url = $asset['url'] ?? null;
+            if ($url && ! str_starts_with($url, 'http') && ! str_starts_with($url, '/storage')) {
+                $url = Storage::disk('public')->url(ltrim($url, '/'));
+            }
+
+            return [...$asset, 'url' => $url];
+        })->values()->all();
+
+        return [
+            'uuid' => $story->uuid,
+            'id' => $story->id,
+            'title' => $story->title,
+            'description' => $story->description ?? '',
+            'type' => $story->type,
+            'thumbnail' => $thumbnail,
+            'author' => $story->user?->name ?? $story->guest_name ?? 'Anonymous',
+            'date' => $story->created_at?->format('M d, Y'),
+            'tags' => $story->tags ?? [],
+            'assets' => $assets,
+            'fileUrl' => $fileUrl,
+            'sprite' => $story->transcript ?? null,
+            'transcript' => $story->transcript ?? null,
+            'comments' => $story->comments->sortByDesc('created_at')->values()->map(fn ($comment) => [
+                'id' => $comment->id,
+                'content' => $comment->content,
+                'author' => $comment->authorName(),
+                'date' => $comment->created_at?->diffForHumans(),
+            ])->all(),
+        ];
+    }
+
+    protected function previewPayload(Story $story): array
+    {
+        $thumbnail = $story->thumbnail
+            ? (str_starts_with($story->thumbnail, 'http') || str_starts_with($story->thumbnail, '/storage')
+                ? $story->thumbnail
+                : Storage::disk('public')->url(ltrim($story->thumbnail, '/')))
+            : null;
+
+        return [
+            'uuid' => $story->uuid,
+            'id' => $story->id,
+            'title' => $story->title,
+            'thumbnail' => $thumbnail,
+        ];
+    }
+
+    /**
+     * @return array{0: ?array, 1: ?array} [prev, next] previews in latest-first order.
+     */
+    protected function neighborPreviews(Story $story): array
+    {
+        if ($story->room_id !== null) {
+            $siblings = Story::where('room_id', $story->room_id)
+                ->whereNull('stories.follow_up_to')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get(['id', 'uuid', 'title', 'thumbnail']);
+        } else {
+            $siblings = Story::where('event_id', $story->event_id)
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get(['id', 'uuid', 'title', 'thumbnail']);
+        }
+
+        $index = $siblings->search(fn ($candidate) => $candidate->id === $story->id);
+        if ($index === false) {
+            return [null, null];
+        }
+
+        $prev = $index > 0 ? $this->previewPayload($siblings[$index - 1]) : null;
+        $next = $index < $siblings->count() - 1 ? $this->previewPayload($siblings[$index + 1]) : null;
+
+        return [$prev, $next];
+    }
+
     /**
      * Get story data for editing.
      */
@@ -230,9 +379,13 @@ class StoryController extends Controller
     {
         $this->authorizeStory($story);
 
+        [$prev, $next] = $this->neighborPreviews($story);
+
         return response()->json([
-            'story' => $story,
+            'story' => $this->storyPayload($story),
             'assets' => $story->getReadyAssetsAttribute(),
+            'prevStory' => $prev,
+            'nextStory' => $next,
         ]);
     }
 
